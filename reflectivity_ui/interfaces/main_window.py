@@ -150,6 +150,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.counts_roi_label.hide()
         self.ui.eventActive.hide()
 
+        # Initially hide the tabs used for multiple peaks
+        self.max_data_tab_count = 4
+        self.data_tab_count = 1
+        self.ui.tabWidget.setTabVisible(2, False)
+        self.ui.tabWidget.setTabVisible(3, False)
+        self.ui.tabWidget.setTabVisible(4, False)
+
     # Actions defined in Qt Designer
     def file_open_dialog(self):
         """
@@ -445,6 +452,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def autoRef(self):
         self.file_handler.automated_file_selection()
+
+
+    def addDataTable(self):
+        """Reveal a new data tab for a reduction table"""
+        if self.data_tab_count < self.max_data_tab_count:
+            self.data_tab_count += 1
+            self.ui.tabWidget.setTabVisible(self.data_tab_count, True)
+
+        if self.data_tab_count == self.max_data_tab_count:
+            self.ui.addTabButton.setEnabled(False)
+
 
     def reduceDatasets(self):
         r"""
