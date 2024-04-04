@@ -25,7 +25,10 @@ from PyQt5 import QtCore, QtWidgets
 import logging
 import os
 import sys
+from enum import Enum
 
+
+DataTabButtonMode = Enum('DataTabButtonMode', ['ADD', 'REMOVE'])
 
 class MainWindow(QtWidgets.QMainWindow):
     """
@@ -151,8 +154,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.eventActive.hide()
 
         # Initially hide the tabs used for multiple peaks
+        self.min_data_tab_count = 1
         self.max_data_tab_count = 4
         self.data_tab_count = 1
+        self.data_tab_button_mode = DataTabButtonMode.ADD
         self.ui.tabWidget.setTabVisible(2, False)
         self.ui.tabWidget.setTabVisible(3, False)
         self.ui.tabWidget.setTabVisible(4, False)
@@ -453,16 +458,29 @@ class MainWindow(QtWidgets.QMainWindow):
     def autoRef(self):
         self.file_handler.automated_file_selection()
 
-
     def addDataTable(self):
-        """Reveal a new data tab for a reduction table"""
-        if self.data_tab_count < self.max_data_tab_count:
+        """Add/remove data tabs for additional peaks/ROI:s"""
+        if self.data_tab_button_mode == DataTabButtonMode.ADD:
             self.data_tab_count += 1
             self.ui.tabWidget.setTabVisible(self.data_tab_count, True)
+            self.data_manager.add_additional_reduction_table(self.data_tab_count)
+
+        elif self.data_tab_button_mode == DataTabButtonMode.REMOVE:
+            self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
+            self.data_manager.remove_additional_reduction_table(self.data_tab_count)
+            self.data_tab_count -= 1
 
         if self.data_tab_count == self.max_data_tab_count:
-            self.ui.addTabButton.setEnabled(False)
+            self.ui.addTabButton.setText("-")
+            self.data_tab_button_mode = DataTabButtonMode.REMOVE
 
+        if self.data_tab_count == self.min_data_tab_count:
+            self.ui.addTabButton.setText("+")
+            self.data_tab_button_mode = DataTabButtonMode.ADD
+
+    def setCurrentReductionTable(self, index):
+        """Update the current reduction table"""
+        self.data_manager.set_active_reduction_list_index(index)
 
     def reduceDatasets(self):
         r"""

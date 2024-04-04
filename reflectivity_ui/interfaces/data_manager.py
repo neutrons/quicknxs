@@ -9,6 +9,7 @@ import os
 import time
 import numpy as np
 import logging
+import copy
 from reflectivity_ui.interfaces.data_handling.data_set import NexusData
 from reflectivity_ui.interfaces.data_handling.filepath import RunNumbers, FilePath
 from .data_handling import data_manipulation
@@ -32,7 +33,8 @@ class DataManager(object):
 
         # The following is information about the data to be combined together
         # List of data sets
-        self.reduction_list = []  # type: List[NexusData]
+        self.active_reduction_list_index = 1
+        self.peak_reduction_lists = {self.active_reduction_list_index: []}  # type: dict[int, list[NexusData]]
         self.direct_beam_list = []  # type: List[NexusData]
         # List of cross-sections common to all reduced data sets
         self.reduction_states = []  # type: List[str]  # List of cross-section states
@@ -60,6 +62,14 @@ class DataManager(object):
         if self._nexus_data is None:
             return None
         return self._nexus_data.file_path
+
+    @property
+    def reduction_list(self):
+        return self.peak_reduction_lists[self.active_reduction_list_index]
+    
+    @reduction_list.setter
+    def reduction_list(self, value):
+        self.peak_reduction_lists[self.active_reduction_list_index] = value
 
     def get_cachesize(self):
         return len(self._cache)
@@ -813,3 +823,17 @@ class DataManager(object):
         self.direct_beam_list.clear()
         # Reload files and add to reduction and direct beam lists
         self.load_direct_beam_and_data_files(db_files, data_files, configuration, progress, True)
+
+    def add_additional_reduction_table(self, tab_index: int):
+        """Add reduction table for an additional ROI/peak"""
+        reduction_list_tab1 = self.peak_reduction_lists.get(1, None)
+        if reduction_list_tab1:
+            self.peak_reduction_lists[tab_index] = copy.deepcopy(reduction_list_tab1)
+
+    def remove_additional_reduction_table(self, tab_index: int):
+        """Remove reduction table for additional ROI/peak"""
+        if tab_index in self.peak_reduction_lists:
+            self.peak_reduction_lists.pop(tab_index)
+
+    def set_active_reduction_list_index(self, tab_index: int):
+        self.active_reduction_list_index = tab_index

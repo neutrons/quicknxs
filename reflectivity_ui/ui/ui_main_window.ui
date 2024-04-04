@@ -7035,6 +7035,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>tabWidget</sender>
+   <signal>currentChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>setCurrentReductionTable()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>785</x>
+     <y>126</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>0</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>file_open_dialog()</slot>
