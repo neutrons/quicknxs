@@ -5980,6 +5980,54 @@
    </hints>
   </connection>
   <connection>
+   <sender>reductionTable2</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reductionTableChanged(QTableWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>901</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>888</x>
+     <y>843</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable3</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reductionTableChanged(QTableWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>901</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>888</x>
+     <y>843</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable4</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reductionTableChanged(QTableWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>901</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>888</x>
+     <y>843</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>actionClear_Normalizations</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
