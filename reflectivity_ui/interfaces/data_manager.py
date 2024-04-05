@@ -71,6 +71,10 @@ class DataManager(object):
     def reduction_list(self, value):
         self.peak_reduction_lists[self.active_reduction_list_index] = value
 
+    @property
+    def main_reduction_list(self):
+        return self.peak_reduction_lists[1]
+
     def get_cachesize(self):
         return len(self._cache)
 
@@ -824,14 +828,14 @@ class DataManager(object):
         # Reload files and add to reduction and direct beam lists
         self.load_direct_beam_and_data_files(db_files, data_files, configuration, progress, True)
 
-    def add_additional_reduction_table(self, tab_index: int):
-        """Add reduction table for an additional ROI/peak"""
+    def add_additional_reduction_list(self, tab_index: int):
+        """Add reduction list for an additional ROI/peak"""
         reduction_list_tab1 = self.peak_reduction_lists.get(1, None)
         if reduction_list_tab1:
             self.peak_reduction_lists[tab_index] = copy.deepcopy(reduction_list_tab1)
 
-    def remove_additional_reduction_table(self, tab_index: int):
-        """Remove reduction table for additional ROI/peak"""
+    def remove_additional_reduction_list(self, tab_index: int):
+        """Remove reduction list for additional ROI/peak"""
         if tab_index in self.peak_reduction_lists:
             self.peak_reduction_lists.pop(tab_index)
 

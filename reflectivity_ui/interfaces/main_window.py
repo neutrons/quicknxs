@@ -463,11 +463,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.data_tab_button_mode == DataTabButtonMode.ADD:
             self.data_tab_count += 1
             self.ui.tabWidget.setTabVisible(self.data_tab_count, True)
-            self.data_manager.add_additional_reduction_table(self.data_tab_count)
+            self.data_manager.add_additional_reduction_list(self.data_tab_count)
+            self.file_handler.initialize_additional_reduction_table(self.data_tab_count)
 
         elif self.data_tab_button_mode == DataTabButtonMode.REMOVE:
             self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
-            self.data_manager.remove_additional_reduction_table(self.data_tab_count)
+            self.data_manager.remove_additional_reduction_list(self.data_tab_count)
             self.data_tab_count -= 1
 
         if self.data_tab_count == self.max_data_tab_count:

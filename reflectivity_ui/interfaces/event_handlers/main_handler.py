@@ -63,6 +63,28 @@ class MainHandler(object):
 
         self.status_bar_handler = StatusBarHandler(self.ui.statusbar)
 
+        self.current_reduction_table = 1
+
+    # @property
+    # def reductionTable(self):
+    #     if self.ui.tabWidget.currentIndex == 0:  # direct beam tab active, return the first data tab
+    #         current_table = self.ui.tabWidget.widget(1).findChild(QtWidgets.QTableWidget)
+    #     else:
+    #         current_table = self.ui.tabWidget.currentWidget().findChild(QtWidgets.QTableWidget)
+    #     return current_table
+
+    # @property
+    # def reductionTableIndex(self):
+    #     return self.ui.tabWidget.currentIndex()
+
+    def get_reduction_table_by_index(self, tab_index: int) -> QtWidgets.QTableWidget:
+        """Return the QTableWidget for the data tab with the given index"""
+        return self.ui.tabWidget.widget(tab_index).findChild(QtWidgets.QTableWidget)
+    
+    def get_active_reduction_table(self):
+        """Return the QTableWidget for the active data tab"""
+        return self.ui.tabWidget.currentWidget().findChild(QtWidgets.QTableWidget)
+
     def new_progress_reporter(self):
         """Return a progress reporter"""
         return ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
@@ -251,7 +273,8 @@ class MainHandler(object):
         # Update the reduction table if this data set is in it
         idx = self._data_manager.find_active_data_id()
         if idx is not None:
-            self.update_reduction_table(idx, self._data_manager.active_channel)
+            table_widget = self.get_active_reduction_table()
+            self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
 
         # Update the direct beam table if this data set is in it
         idx = self._data_manager.find_active_direct_beam_id()
@@ -552,7 +575,7 @@ class MainHandler(object):
             self.ui.reductionTable.setRowCount(len(self._data_manager.reduction_list))
             for idx, _ in enumerate(self._data_manager.reduction_list):
                 self._data_manager.set_active_data_from_reduction_list(idx)
-                self.update_reduction_table(idx, self._data_manager.active_channel)
+                self.update_reduction_table(self.get_active_reduction_table(), idx, self._data_manager.active_channel)
 
             direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
             self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))
@@ -565,6 +588,14 @@ class MainHandler(object):
             self.main_window.auto_change_active = False
 
             logging.info("UI updated: %s", time.time() - t_0)
+
+    def initialize_additional_reduction_table(self, tab_index: int):
+        """Initialize reduction table for additional peak by copying data from the first reduction table"""
+        table_widget = self.get_reduction_table_by_index(tab_index)
+        table_widget.setRowCount(len(self._data_manager.main_reduction_list))
+        for idx, _ in enumerate(self._data_manager.main_reduction_list):
+            self._data_manager.set_active_data_from_reduction_list(idx)
+            self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
 
     def _file_open_dialog(self, filter_=None):
         # type: (Optional[str]) -> Optional[str]
@@ -743,7 +774,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
         return True
 
-    def update_reduction_table(self, idx, d):
+    def update_reduction_table(self, table_widget, idx, d):
         """
         Update the reduction tale
         """
@@ -754,28 +785,28 @@ class MainHandler(object):
         else:
             item.setBackground(QtGui.QColor(255, 255, 255))
         item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
-        self.ui.reductionTable.setItem(idx, 0, item)
-        self.ui.reductionTable.setItem(idx, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)))
-        self.ui.reductionTable.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.cut_first_n_points)))
-        self.ui.reductionTable.setItem(idx, 3, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points)))
+        table_widget.setItem(idx, 0, item)
+        table_widget.setItem(idx, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)))
+        table_widget.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.cut_first_n_points)))
+        table_widget.setItem(idx, 3, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points)))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.peak_position))
         item.setBackground(QtGui.QColor(200, 200, 200))
-        self.ui.reductionTable.setItem(idx, 4, item)
-        self.ui.reductionTable.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width)))
+        table_widget.setItem(idx, 4, item)
+        table_widget.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width)))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.low_res_position))
         item.setBackground(QtGui.QColor(200, 200, 200))
-        self.ui.reductionTable.setItem(idx, 6, item)
-        self.ui.reductionTable.setItem(idx, 7, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width)))
+        table_widget.setItem(idx, 6, item)
+        table_widget.setItem(idx, 7, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width)))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.bck_position))
         item.setBackground(QtGui.QColor(200, 200, 200))
-        self.ui.reductionTable.setItem(idx, 8, item)
-        self.ui.reductionTable.setItem(idx, 9, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
-        self.ui.reductionTable.setItem(idx, 10, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
-        self.ui.reductionTable.setItem(idx, 11, QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle))
+        table_widget.setItem(idx, 8, item)
+        table_widget.setItem(idx, 9, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
+        table_widget.setItem(idx, 10, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
+        table_widget.setItem(idx, 11, QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle))
         norma = "none"
         if d.configuration.normalization is not None:
             norma = d.configuration.normalization
-        self.ui.reductionTable.setItem(idx, 12, QtWidgets.QTableWidgetItem(str(norma)))
+        table_widget.setItem(idx, 12, QtWidgets.QTableWidgetItem(str(norma)))
         self.main_window.auto_change_active = False
 
     def clear_reflectivity(self):
