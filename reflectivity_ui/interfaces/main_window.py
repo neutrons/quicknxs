@@ -28,7 +28,8 @@ import sys
 from enum import Enum
 
 
-DataTabButtonMode = Enum('DataTabButtonMode', ['ADD', 'REMOVE'])
+DataTabButtonMode = Enum("DataTabButtonMode", ["ADD", "REMOVE"])
+
 
 class MainWindow(QtWidgets.QMainWindow):
     """
@@ -479,9 +480,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.addTabButton.setText("+")
             self.data_tab_button_mode = DataTabButtonMode.ADD
 
-    def setCurrentReductionTable(self, index):
-        """Update the current reduction table"""
-        self.data_manager.set_active_reduction_list_index(index)
+    def setCurrentReductionTable(self, tab_index: int):
+        """Update the state for active data set and the UI"""
+        # must first update the active data state, then the UI from the active data
+        self.data_manager.set_active_reduction_list_index(tab_index)
+        self.data_manager.set_active_data_from_reduction_list(0)
+        self.file_loaded()
+        self.file_handler.active_data_changed()
 
     def reduceDatasets(self):
         r"""

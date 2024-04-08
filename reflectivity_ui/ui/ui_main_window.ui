@@ -2919,7 +2919,7 @@
                     </sizepolicy>
                    </property>
                    <attribute name="title">
-                    <string>Data (peak 2)</string>
+                    <string>Data (ROI 2)</string>
                    </attribute>
                    <attribute name="toolTip">
                     <string>A list of datasets that will be used for reduction</string>
@@ -3100,7 +3100,7 @@
                     </sizepolicy>
                    </property>
                    <attribute name="title">
-                    <string>Data (peak 3)</string>
+                    <string>Data (ROI 3)</string>
                    </attribute>
                    <attribute name="toolTip">
                     <string>A list of datasets that will be used for reduction</string>
@@ -3281,7 +3281,7 @@
                     </sizepolicy>
                    </property>
                    <attribute name="title">
-                    <string>Data (peak 4)</string>
+                    <string>Data (ROI 4)</string>
                    </attribute>
                    <attribute name="toolTip">
                     <string>A list of datasets that will be used for reduction</string>
@@ -6797,6 +6797,54 @@
   </connection>
   <connection>
    <sender>reductionTable</sender>
+   <signal>cellActivated(int,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_cell_activated(int,int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1268</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>786</x>
+     <y>430</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable2</sender>
+   <signal>cellActivated(int,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_cell_activated(int,int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1268</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>786</x>
+     <y>430</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable3</sender>
+   <signal>cellActivated(int,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_cell_activated(int,int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1268</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>786</x>
+     <y>430</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable4</sender>
    <signal>cellActivated(int,int)</signal>
    <receiver>MainWindow</receiver>
    <slot>reduction_cell_activated(int,int)</slot>
