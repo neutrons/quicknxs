@@ -66,7 +66,7 @@ class DataManager(object):
     @property
     def reduction_list(self):
         return self.peak_reduction_lists[self.active_reduction_list_index]
-    
+
     @reduction_list.setter
     def reduction_list(self, value):
         self.peak_reduction_lists[self.active_reduction_list_index] = value
@@ -214,25 +214,29 @@ class DataManager(object):
 
     def add_active_to_reduction(self):
         r"""
-        @brief Add active data set to reduction list
+        @brief Add active data set to the main reduction list
+
+        New data sets are always added to the main reduction list. Data sets are added to secondary
+        reduction lists by initializing from the main reduction list (button to add new data tab)
+        or by propagating individual data sets to other tabs (right-click menu).
         """
-        if self._nexus_data not in self.reduction_list:
+        if self._nexus_data not in self.main_reduction_list:
             if self.is_active_data_compatible():
-                if len(self.reduction_list) == 0:
+                if len(self.main_reduction_list) == 0:
                     self.reduction_states = list(self.data_sets.keys())
                 is_inserted = False
                 q_min, _ = self._nexus_data.get_q_range()
                 if q_min is None:
                     logging.error("Could not get q range information")
                     return False
-                for i in range(len(self.reduction_list)):
-                    _q_min, _ = self.reduction_list[i].get_q_range()
+                for i in range(len(self.main_reduction_list)):
+                    _q_min, _ = self.main_reduction_list[i].get_q_range()
                     if q_min <= _q_min:
-                        self.reduction_list.insert(i, self._nexus_data)
+                        self.main_reduction_list.insert(i, self._nexus_data)
                         is_inserted = True
                         break
                 if not is_inserted:
-                    self.reduction_list.append(self._nexus_data)
+                    self.main_reduction_list.append(self._nexus_data)
                 return True
             else:
                 logging.error("The data you are trying to add has different cross-sections")
@@ -256,6 +260,16 @@ class DataManager(object):
                 self.direct_beam_list.pop(i)
                 return i
         return -1
+
+    def remove_from_active_reduction_list(self, index: int):
+        """
+        Remove item from the active reduction list
+
+        Parameters
+        ----------
+        index: the index to remove
+        """
+        self.reduction_list.pop(index)
 
     def clear_direct_beam_list(self):
         """
@@ -535,7 +549,9 @@ class DataManager(object):
         elif active_only:
             self.active_channel.reflectivity(direct_beam=direct_beam, configuration=configuration)
         else:
-            nexus_data.calculate_reflectivity(direct_beam=direct_beam, configuration=configuration)
+            nexus_data.calculate_reflectivity(
+                direct_beam=direct_beam, configuration=configuration, ws_suffix=str(self.active_reduction_list_index)
+            )
 
     def find_best_direct_beam(self):
         """

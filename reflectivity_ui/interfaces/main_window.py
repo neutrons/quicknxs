@@ -482,7 +482,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def setCurrentReductionTable(self, tab_index: int):
         """Update the state for active data set and the UI"""
-        # must first update the active data state, then the UI from the active data
+        # must first update the active reduction list index, then the UI from the active data
         self.data_manager.set_active_reduction_list_index(tab_index)
         self.data_manager.set_active_data_from_reduction_list(0)
         self.file_loaded()

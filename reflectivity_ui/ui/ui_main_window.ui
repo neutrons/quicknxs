@@ -7116,6 +7116,54 @@
    </hints>
   </connection>
   <connection>
+   <sender>reductionTable2</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_table_right_click(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1508</x>
+     <y>1348</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>778</x>
+     <y>551</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable3</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_table_right_click(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1508</x>
+     <y>1348</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>778</x>
+     <y>551</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable4</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_table_right_click(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1508</x>
+     <y>1348</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>778</x>
+     <y>551</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>normalizeTable</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>

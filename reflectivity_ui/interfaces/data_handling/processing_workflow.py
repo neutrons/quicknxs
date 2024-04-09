@@ -36,7 +36,7 @@ DEFAULT_OPTIONS = dict(
     format_5cols=False,
     output_sample_size=10,
     output_directory="",
-    output_file_template="(instrument)_{numbers}_{item}_{state}.{type}",
+    output_file_template="{instrument}_{numbers}_{peak}_{item}_{state}.{type}",
     email_send=False,
     email_zip_data=False,
     email_send_plots=False,
@@ -70,23 +70,34 @@ class ProcessingWorkflow(object):
         if not self.data_manager.reduction_states:
             return
 
-        if self.output_options["export_specular"]:
-            if progress is not None:
-                progress(10, "Computing reflectivity")
-            self.specular_reflectivity()
+        # store current peak shown in the UI
+        active_peak = self.data_manager.active_reduction_list_index
 
-        if self.output_options["export_offspec"] or self.output_options["export_offspec_smooth"]:
-            if progress is not None:
-                progress(20, "Computing off-specular reflectivity")
-            self.offspec(
-                raw=self.output_options["export_offspec"], binned=self.output_options["export_offspec_smooth"]
-            )
+        for peak_index in self.data_manager.peak_reduction_lists.keys():
+            # set active data based on peak index
+            self.data_manager.set_active_reduction_list_index(peak_index)
+            self.data_manager.set_active_data_from_reduction_list(0)
 
-        if progress is not None:
-            progress(60, "Computing GISANS")
-        if self.output_options["export_gisans"]:
-            # FIXME 66 - could be an AttributeError from self.gisans().  Catch it!
-            self.gisans(progress=progress)
+            if self.output_options["export_specular"]:
+                if progress is not None:
+                    progress(10, "Computing reflectivity")
+                self.specular_reflectivity()
+
+            if self.output_options["export_offspec"] or self.output_options["export_offspec_smooth"]:
+                if progress is not None:
+                    progress(20, "Computing off-specular reflectivity")
+                self.offspec(
+                    raw=self.output_options["export_offspec"], binned=self.output_options["export_offspec_smooth"]
+                )
+
+            if progress is not None:
+                progress(60, "Computing GISANS")
+            if self.output_options["export_gisans"]:
+                # FIXME 66 - could be an AttributeError from self.gisans().  Catch it!
+                self.gisans(progress=progress)
+
+        # restore current peak shown in the UI
+        self.data_manager.set_active_reduction_list_index(active_peak)
 
         if self.output_options["email_send"]:
             self.send_email()
@@ -112,6 +123,7 @@ class ProcessingWorkflow(object):
         if pol_state is not None:
             base_name = base_name.replace("{state}", pol_state)
         base_name = base_name.replace("{type}", data_type)
+        base_name = base_name.replace("{peak}", f"peak{self.data_manager.active_reduction_list_index}")
         return os.path.join(self.output_options["output_directory"], base_name)
 
     def write_quicknxs(self, output_data, output_file_base, xs=None):

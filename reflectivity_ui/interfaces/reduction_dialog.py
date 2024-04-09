@@ -14,7 +14,7 @@ class ReductionDialog(QtWidgets.QDialog):
     Reduction dialog
     """
 
-    default_template = "(instrument)_{numbers}_{item}_{state}.{type}"
+    default_template = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
 
     def __init__(self, parent):
         super(ReductionDialog, self).__init__(parent)

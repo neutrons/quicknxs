@@ -174,10 +174,16 @@ class NexusData(object):
             logging.error("Could not set parameter %s %s", param, value)
         return has_changed
 
-    def calculate_reflectivity(self, direct_beam=None, configuration=None):
+    def calculate_reflectivity(self, direct_beam=None, configuration=None, ws_suffix: str = ""):
         """
         Loop through the cross-section data sets and update
         the reflectivity.
+
+        Parameters
+        ----------
+        direct_beam
+        configuration
+        ws_suffix
         """
         if configuration is not None:
             self.configuration = copy.deepcopy(configuration)
@@ -282,6 +288,7 @@ class NexusData(object):
         )
         _ws = ws if len(ws_list) > 1 else [ws]
         for xs in _ws:
+            api.RenameWorkspace(str(xs), str(xs) + ws_suffix)
             xs_id = xs.getRun().getProperty("cross_section_id").value
             self.cross_sections[xs_id].q = xs.readX(0)[:].copy()
             self.cross_sections[xs_id]._r = np.ma.masked_equal(xs.readY(0)[:].copy(), 0)
