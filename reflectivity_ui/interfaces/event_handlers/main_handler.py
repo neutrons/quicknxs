@@ -597,9 +597,10 @@ class MainHandler(object):
         """
         table_widget = self.get_reduction_table_by_index(tab_index)
         table_widget.setRowCount(len(self._data_manager.main_reduction_list))
-        for idx, _ in enumerate(self._data_manager.main_reduction_list):
-            self._data_manager.set_active_data_from_reduction_list(idx)
-            self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
+        active_cross_section = self._data_manager.active_channel.name
+        for idx, nexus_data in enumerate(self._data_manager.main_reduction_list):
+            active_channel = nexus_data.cross_sections[active_cross_section]
+            self.update_reduction_table(table_widget, idx, active_channel)
 
     def _file_open_dialog(self, filter_=None):
         # type: (Optional[str]) -> Optional[str]
@@ -1029,14 +1030,12 @@ class MainHandler(object):
         def _propagate_run(_pos):
             """callback function to right-click action: Propagate run to all tabs"""
             # row = table_widget.rowAt(pos.y())
-            # self._data_manager.propagate_run_to_reduction_lists(row)
+            # if 0 <= row < len(data_table):
+            #     nexus_data = data_table[row]
             pass
 
         def _remove_run(_pos):
             """callback function to right-click action: Remove run from this tab"""
-            # row = table_widget.rowAt(pos.y())
-            # table_widget.removeRow(row)
-            # self._data_manager.remove_from_active_reduction_list(row)
             self.remove_reflectivity()
 
         reduction_table_menu = QtWidgets.QMenu(table_widget)

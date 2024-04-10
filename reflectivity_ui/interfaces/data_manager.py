@@ -847,7 +847,7 @@ class DataManager(object):
     def add_additional_reduction_list(self, tab_index: int):
         """Add reduction list for an additional ROI/peak"""
         reduction_list_tab1 = self.peak_reduction_lists.get(1, None)
-        if reduction_list_tab1:
+        if reduction_list_tab1 and tab_index not in self.peak_reduction_lists:
             self.peak_reduction_lists[tab_index] = copy.deepcopy(reduction_list_tab1)
 
     def remove_additional_reduction_list(self, tab_index: int):

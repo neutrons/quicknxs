@@ -32,15 +32,28 @@ def _find_h5_data(filename):
     return filename
 
 
-def write_reflectivity_header(reduction_list, direct_beam_list, output_path, pol_states):
+def write_reflectivity_header(peak_reduction_lists, active_list_index, direct_beam_list, output_path, pol_state):
     """
     Write out reflectivity header in a format readable by QuickNXS
-    :param str output_path: output file path
-    :param str pol_states: descriptor for the polarization state
+
+    Parameters
+    ----------
+    peak_reduction_lists: dict[int, list[~reflectivity_ui.interfaces.data_handling.data_set.NexusData]]
+        All reduction lists to include as additional peaks in the header
+    active_list_index: int
+        The index of the reduction list that the output reflectivity data is for
+    direct_beam_list: list[~reflectivity_ui.interfaces.data_handling.data_set.NexusData]
+        Direct beam list
+    output_path: str
+        Output file path
+    pol_state: str
+        Descriptor for the polarization state
     """
     # Sanity check
-    if not reduction_list:
+    if active_list_index not in peak_reduction_lists or not peak_reduction_lists[active_list_index]:
         return
+
+    reduction_list = peak_reduction_lists[active_list_index]
 
     direct_beam_options = [
         "DB_ID",
@@ -82,7 +95,7 @@ def write_reflectivity_header(reduction_list, direct_beam_list, output_path, pol
     fd.write("# Type: Specular\n")
     run_list = [str(item.number) for item in reduction_list]
     fd.write("# Input file indices: %s\n" % ",".join(run_list))
-    fd.write("# Extracted states: %s\n" % pol_states)
+    fd.write("# Extracted states: %s\n" % pol_state)
     fd.write("#\n")
     fd.write("# [Direct Beam Runs]\n")
     toks = ["%8s" % item for item in direct_beam_options]
@@ -131,89 +144,118 @@ def write_reflectivity_header(reduction_list, direct_beam_list, output_path, pol
 
         par_list = ["{%s}" % p for p in direct_beam_options]
         template = "# %s\n" % "  ".join(par_list)
-        _clean_dict = {}
+        config_value_dict = {}
         for key in item:
             if isinstance(item[key], (bool, str)):
-                _clean_dict[key] = "%8s" % item[key]
+                config_value_dict[key] = "%8s" % item[key]
             else:
-                _clean_dict[key] = "%8g" % item[key]
-        fd.write(template.format(**_clean_dict))
+                config_value_dict[key] = "%8g" % item[key]
+        fd.write(template.format(**config_value_dict))
 
     # Scattering data
+    par_list = ["{%s}" % p for p in dataset_options]
+    template = "# %s\n" % "  ".join(par_list)
+
+    # Peak for reflectivity data
     fd.write("#\n")
     fd.write("# [Data Runs]\n")
     toks = ["%8s" % item for item in dataset_options]
     fd.write("# %s\n" % "  ".join(toks))
     i_direct_beam = 0
-
-    conf = None
     for data_set in reduction_list:
-        conf = data_set.cross_sections[pol_list[0]].configuration
-        ws = data_set.cross_sections[pol_list[0]].reflectivity_workspace
-        run_object = ws.getRun()
-        dpix = run_object.getProperty("DIRPIX").getStatistics().mean
-        filename = run_object.getProperty("Filename").value
-        constant_q_binning = run_object.getProperty("constant_q_binning").value
-        scatt_pos = run_object.getProperty("specular_pixel").value
-        scaling_factor = conf.scaling_factor
+        cross_section_data = data_set.cross_sections[pol_list[0]]
+        config_value_dict = get_cross_section_config_values(cross_section_data, i_direct_beam)
+        fd.write(template.format(**config_value_dict))
 
-        # For some reason, the tth value that QuickNXS expects is offset.
-        # It seems to be because that same offset is applied later in the QuickNXS calculation.
-        # Correct tth here so that it can load properly in QuickNXS and produce the same result.
-        tth = run_object.getProperty("two_theta").value
-        det_distance = run_object["SampleDetDis"].getStatistics().mean / 1000.0
-        direct_beam_pix = run_object["DIRPIX"].getStatistics().mean
-
-        # Get pixel size from instrument properties
-        if ws.getInstrument().hasParameter("pixel-width"):
-            pixel_width = float(ws.getInstrument().getNumberParameter("pixel-width")[0]) / 1000.0
-        else:
-            pixel_width = 0.0007
-        tth -= ((direct_beam_pix - scatt_pos) * pixel_width) / det_distance * 180.0 / math.pi
-
-        normalization_run = run_object.getProperty("normalization_run").value
-        if normalization_run == "None":
-            db_id = 0
-        else:
-            i_direct_beam += 1
-            db_id = i_direct_beam
-
-        item = dict(
-            scale=scaling_factor,
-            DB_ID=db_id,
-            P0=conf.cut_first_n_points,
-            PN=conf.cut_last_n_points,
-            tth=tth,
-            fan=constant_q_binning,
-            x_pos=conf.peak_position,
-            x_width=conf.peak_width,
-            y_pos=conf.low_res_position,
-            y_width=conf.low_res_width,
-            bg_pos=conf.bck_position,
-            bg_width=conf.bck_width,
-            dpix=dpix,
-            number=str(ws.getRunNumber()),
-            File=filename,
-        )
-
-        par_list = ["{%s}" % p for p in dataset_options]
-        template = "# %s\n" % "  ".join(par_list)
-        _clean_dict = {}
-        for key in item:
-            if isinstance(item[key], str):
-                _clean_dict[key] = "%8s" % item[key]
-            else:
-                _clean_dict[key] = "%8g" % item[key]
-        fd.write(template.format(**_clean_dict))
+    # Additional peaks
+    for peak_index, peak_reduction_list in peak_reduction_lists.items():
+        if peak_index == active_list_index:
+            continue
+        fd.write("#\n")
+        fd.write(f"# [Peak {peak_index} Data Runs]\n")
+        fd.write("# %s\n" % "  ".join(toks))
+        i_direct_beam = 0
+        for data_set in peak_reduction_list:
+            cross_section_data = data_set.cross_sections[pol_list[0]]
+            config_value_dict = get_cross_section_config_values(cross_section_data, i_direct_beam)
+            fd.write(template.format(**config_value_dict))
 
     fd.write("#\n")
     fd.write("# [Global Options]\n")
     fd.write("# name               value\n")
+    conf = reduction_list[0].configuration
     sample_size = 10 if conf is None else conf.sample_size
     fd.write("# sample_length      %s\n" % str(sample_size))
     fd.write("# lock_direct_beam_y %s\n" % str(Configuration.lock_direct_beam_y))
     fd.write("#\n")
     fd.close()
+
+
+def get_cross_section_config_values(cross_section_data, i_direct_beam):
+    """
+    Get dictionary of cross-section data configuration to write to QuickNXS file
+
+    Parameters
+    ----------
+    cross_section_data: ~reflectivity_ui.interfaces.data_handling.data_set.CrossSectionData
+        Cross-section to get parameter values from
+    i_direct_beam
+        Current direct beam index in the reduction list
+
+    Returns
+    -------
+    dict
+    """
+    conf = cross_section_data.configuration
+    ws = cross_section_data.reflectivity_workspace
+    run_object = ws.getRun()
+    dpix = run_object.getProperty("DIRPIX").getStatistics().mean
+    filename = run_object.getProperty("Filename").value
+    constant_q_binning = run_object.getProperty("constant_q_binning").value
+    scatt_pos = run_object.getProperty("specular_pixel").value
+    scaling_factor = conf.scaling_factor
+    # For some reason, the tth value that QuickNXS expects is offset.
+    # It seems to be because that same offset is applied later in the QuickNXS calculation.
+    # Correct tth here so that it can load properly in QuickNXS and produce the same result.
+    tth = run_object.getProperty("two_theta").value
+    det_distance = run_object["SampleDetDis"].getStatistics().mean / 1000.0
+    direct_beam_pix = run_object["DIRPIX"].getStatistics().mean
+    # Get pixel size from instrument properties
+    if ws.getInstrument().hasParameter("pixel-width"):
+        pixel_width = float(ws.getInstrument().getNumberParameter("pixel-width")[0]) / 1000.0
+    else:
+        pixel_width = 0.0007
+    tth -= ((direct_beam_pix - scatt_pos) * pixel_width) / det_distance * 180.0 / math.pi
+    normalization_run = run_object.getProperty("normalization_run").value
+    if normalization_run == "None":
+        db_id = 0
+    else:
+        i_direct_beam += 1
+        db_id = i_direct_beam
+    item = dict(
+        scale=scaling_factor,
+        DB_ID=db_id,
+        P0=conf.cut_first_n_points,
+        PN=conf.cut_last_n_points,
+        tth=tth,
+        fan=constant_q_binning,
+        x_pos=conf.peak_position,
+        x_width=conf.peak_width,
+        y_pos=conf.low_res_position,
+        y_width=conf.low_res_width,
+        bg_pos=conf.bck_position,
+        bg_width=conf.bck_width,
+        dpix=dpix,
+        number=str(ws.getRunNumber()),
+        File=filename,
+    )
+    parameter_values = {}
+    for key in item:
+        if isinstance(item[key], str):
+            parameter_values[key] = "%8s" % item[key]
+        else:
+            parameter_values[key] = "%8g" % item[key]
+    return parameter_values
 
 
 def write_reflectivity_data(output_path, data, col_names, as_5col=True):
