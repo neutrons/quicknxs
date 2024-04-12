@@ -570,14 +570,20 @@ class MainHandler(object):
 
             self.main_window.auto_change_active = True
 
+            # Update UI direct beam table
             self.ui.normalizeTable.setRowCount(len(self._data_manager.direct_beam_list))
             for idx, _ in enumerate(self._data_manager.direct_beam_list):
                 self._data_manager.set_active_data_from_direct_beam_list(idx)
                 self.update_direct_beam_table(idx, self._data_manager.active_channel)
-            self.reduction_table.setRowCount(len(self._data_manager.reduction_list))
-            for idx, _ in enumerate(self._data_manager.reduction_list):
-                self._data_manager.set_active_data_from_reduction_list(idx)
-                self.update_reduction_table(self.get_active_reduction_table(), idx, self._data_manager.active_channel)
+            # Update UI data table(s) with the loaded data
+            for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
+                self._data_manager.set_active_reduction_list_index(ipeak)
+                self.main_window.add_data_tab_by_index(ipeak)
+                table_widget = self.get_reduction_table_by_index(ipeak)
+                table_widget.setRowCount(len(self._data_manager.reduction_list))
+                for idx, _ in enumerate(self._data_manager.reduction_list):
+                    self._data_manager.set_active_data_from_reduction_list(idx)
+                    self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
 
             direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
             self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))

@@ -472,6 +472,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.data_manager.remove_additional_reduction_list(self.data_tab_count)
             self.data_tab_count -= 1
 
+        self.update_add_data_tab_button_mode()
+
+    def update_add_data_tab_button_mode(self):
+        """Update the add tab button mode after changing the number of data tabs"""
         if self.data_tab_count == self.max_data_tab_count:
             self.ui.addTabButton.setText("-")
             self.data_tab_button_mode = DataTabButtonMode.REMOVE
@@ -480,8 +484,19 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.addTabButton.setText("+")
             self.data_tab_button_mode = DataTabButtonMode.ADD
 
+    def add_data_tab_by_index(self, tab_index: int):
+        """
+        Add/update a specific data tab
+        """
+        if self.data_tab_count < tab_index <= self.max_data_tab_count:
+            self.ui.tabWidget.setTabVisible(tab_index, True)
+            self.data_tab_count = tab_index
+        self.update_add_data_tab_button_mode()
+
     def setCurrentReductionTable(self, tab_index: int):
         """Update the state for active data set and the UI"""
+        if tab_index == 0:  # direct beam tab
+            return
         # must first update the active reduction list index, then the UI from the active data
         self.data_manager.set_active_reduction_list_index(tab_index)
         self.data_manager.set_active_data_from_reduction_list(0)

@@ -2,7 +2,7 @@
 """
     Read and write quicknxs reduced files
 """
-
+import re
 import sys
 import os
 import time
@@ -164,20 +164,21 @@ def write_reflectivity_header(peak_reduction_lists, active_list_index, direct_be
     i_direct_beam = 0
     for data_set in reduction_list:
         cross_section_data = data_set.cross_sections[pol_list[0]]
-        config_value_dict = get_cross_section_config_values(cross_section_data, i_direct_beam)
+        config_value_dict = _get_cross_section_config_values(cross_section_data, i_direct_beam)
         fd.write(template.format(**config_value_dict))
 
-    # Additional peaks
+    # All peaks
     for peak_index, peak_reduction_list in peak_reduction_lists.items():
-        if peak_index == active_list_index:
-            continue
         fd.write("#\n")
-        fd.write(f"# [Peak {peak_index} Data Runs]\n")
+        if peak_index == 1:
+            fd.write("# [Main Peak Runs]\n")
+        else:
+            fd.write(f"# [Peak {peak_index} Runs]\n")
         fd.write("# %s\n" % "  ".join(toks))
         i_direct_beam = 0
         for data_set in peak_reduction_list:
             cross_section_data = data_set.cross_sections[pol_list[0]]
-            config_value_dict = get_cross_section_config_values(cross_section_data, i_direct_beam)
+            config_value_dict = _get_cross_section_config_values(cross_section_data, i_direct_beam)
             fd.write(template.format(**config_value_dict))
 
     fd.write("#\n")
@@ -191,7 +192,7 @@ def write_reflectivity_header(peak_reduction_lists, active_list_index, direct_be
     fd.close()
 
 
-def get_cross_section_config_values(cross_section_data, i_direct_beam):
+def _get_cross_section_config_values(cross_section_data, i_direct_beam):
     """
     Get dictionary of cross-section data configuration to write to QuickNXS file
 
@@ -300,13 +301,16 @@ def read_reduced_file(file_path, configuration=None):
     """
     direct_beam_runs = []
     data_runs = []
+    additional_peaks = []
+
     # reading is mocked. The file_path is the prefix of the path. File name is obtained from the mocked data
     with open(file_path, "r") as file_content:
         # Section identifier
         #   0: None
         #   1: direct beams
         #   2: data runs
-        #   3: global options
+        #   3: additional peak data runs
+        #   4: global options
         _in_section = 0
         _file_start = True
         for line in file_content.readlines():
@@ -319,8 +323,15 @@ def read_reduced_file(file_path, configuration=None):
                 _in_section = 1
             elif "[Data Runs]" in line:
                 _in_section = 2
-            elif "[Global Options]" in line:
+            elif "[Main Peak" in line:
+                # if existing, use this section instead of "[Data Runs]"
+                _in_section = 2
+                data_runs = []
+            elif "[Peak" in line:
                 _in_section = 3
+                peak_index = int(line.split("[Peak ")[1].split(" Runs]")[0])
+            elif "[Global Options]" in line:
+                _in_section = 4
 
             # Process direct beam runs
             if _in_section == 1:
@@ -359,8 +370,8 @@ def read_reduced_file(file_path, configuration=None):
                     logging.error("Could not parse reduced data file:\n %s", sys.exc_info()[1])
                     logging.error(line)
 
-            # Process data runs
-            if _in_section == 2:
+            # Process data runs and additional peaks
+            if _in_section == 2 or _in_section == 3:
                 toks = line.split()
                 if len(toks) < 16 or "DB_ID" in line:
                     continue
@@ -390,13 +401,16 @@ def read_reduced_file(file_path, configuration=None):
                         # conf.cut_last_n_points = 0
                     run_file = _find_h5_data(run_file)
                     run_file = determine_which_files_to_sum(run_file, data_file_indicies)
-                    data_runs.append([run_number, run_file, conf])
+                    if _in_section == 2:
+                        data_runs.append([run_number, run_file, conf])
+                    else:
+                        additional_peaks.append([peak_index, run_number, run_file, conf])
                 except:
                     logging.error("Could not parse reduced data file:\n %s", sys.exc_info()[1])
                     logging.error(line)
 
             # Options
-            if _in_section == 3:
+            if _in_section == 4:
                 if line.startswith("# sample_length"):
                     try:
                         conf.sample_size = float((line[len("# sample_length") :]).strip())
@@ -410,7 +424,7 @@ def read_reduced_file(file_path, configuration=None):
                     except:
                         logging.error("Could not extract direct beam y lock: %s" % line)
 
-    return direct_beam_runs, data_runs
+    return direct_beam_runs, data_runs, additional_peaks
 
 
 def determine_which_files_to_sum(run_file, data_file_indicies):

@@ -212,31 +212,36 @@ class DataManager(object):
         """
         return self.find_data_in_direct_beam_list(self._nexus_data)
 
-    def add_active_to_reduction(self):
+    def add_active_to_reduction(self, peak_index=None):
         r"""
-        @brief Add active data set to the main reduction list
+        @brief Add active data set to reduction list
 
         New data sets are always added to the main reduction list. Data sets are added to secondary
         reduction lists by initializing from the main reduction list (button to add new data tab)
         or by propagating individual data sets to other tabs (right-click menu).
         """
-        if self._nexus_data not in self.main_reduction_list:
+        if peak_index:
+            reduct_list = self.peak_reduction_lists[peak_index]
+        else:
+            reduct_list = self.main_reduction_list
+
+        if self._nexus_data not in reduct_list:
             if self.is_active_data_compatible():
-                if len(self.main_reduction_list) == 0:
+                if len(reduct_list) == 0:
                     self.reduction_states = list(self.data_sets.keys())
                 is_inserted = False
                 q_min, _ = self._nexus_data.get_q_range()
                 if q_min is None:
                     logging.error("Could not get q range information")
                     return False
-                for i in range(len(self.main_reduction_list)):
-                    _q_min, _ = self.main_reduction_list[i].get_q_range()
+                for i in range(len(reduct_list)):
+                    _q_min, _ = reduct_list[i].get_q_range()
                     if q_min <= _q_min:
-                        self.main_reduction_list.insert(i, self._nexus_data)
+                        reduct_list.insert(i, self._nexus_data)
                         is_inserted = True
                         break
                 if not is_inserted:
-                    self.main_reduction_list.append(self._nexus_data)
+                    reduct_list.append(self._nexus_data)
                 return True
             else:
                 logging.error("The data you are trying to add has different cross-sections")
@@ -747,22 +752,24 @@ class DataManager(object):
         :param ProgressReporter progress: progress reporter
         """
         t_0 = time.time()
-        db_files, data_files = quicknxs_io.read_reduced_file(file_path, configuration)
+        db_files, data_files, additional_peaks = quicknxs_io.read_reduced_file(file_path, configuration)
         logging.info("Reduced file loaded: %s sec", time.time() - t_0)
         n_total = len(db_files) + len(data_files)
         if progress and n_total > 0:
             progress.set_value(1, message="Loaded %s" % os.path.basename(file_path), out_of=n_total)
-        self.load_direct_beam_and_data_files(db_files, data_files, configuration, progress, t_0)
+        self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, t_0)
         logging.info("DONE: %s sec", time.time() - t_0)
 
     def load_direct_beam_and_data_files(
-        self, db_files, data_files, configuration=None, progress=None, force=False, t_0=None
+        self, db_files, data_files, additional_peaks, configuration=None, progress=None, force=False, t_0=None
     ):
         """
         Load direct beam and data files and add them to the direct beam list and reduction
         list, respectively
         :param list db_files: list of (run_number, run_file, conf) for direct beam files
         :param list data_files: list of (run_number, run_file, conf) for data files
+        :param list additional_peaks: list of (run_number, run_file, conf) for data files for
+                                      additional peaks
         :param Configuration configuration: configuration to base the loaded data on
         :param ProgressReporter progress: progress reporter
         :param bool force:
@@ -814,6 +821,19 @@ class DataManager(object):
         if progress:
             progress.set_value(n_total, message="Done", out_of=n_total)
 
+        # Initialize any additional peak reduction lists
+        for peak_index, r_id, run_file, conf in additional_peaks:
+            if peak_index not in self.peak_reduction_lists:
+                self.peak_reduction_lists[peak_index] = []
+            self.set_active_reduction_list_index(peak_index)
+            # find run in main reduction list and make a copy TODO: what if it is missing?
+            run_index = [i for i, data in enumerate(self.main_reduction_list) if data.number == str(r_id)][0]
+            self._nexus_data = copy.deepcopy(self.main_reduction_list[run_index])
+            configuration.normalization = None
+            self.update_configuration(conf)
+            self.calculate_reflectivity()
+            self.add_active_to_reduction(peak_index)
+
     @property
     def current_event_files(self):
         # type: () -> List[str]
@@ -846,9 +866,8 @@ class DataManager(object):
 
     def add_additional_reduction_list(self, tab_index: int):
         """Add reduction list for an additional ROI/peak"""
-        reduction_list_tab1 = self.peak_reduction_lists.get(1, None)
-        if reduction_list_tab1 and tab_index not in self.peak_reduction_lists:
-            self.peak_reduction_lists[tab_index] = copy.deepcopy(reduction_list_tab1)
+        if self.main_reduction_list and tab_index not in self.peak_reduction_lists:
+            self.peak_reduction_lists[tab_index] = copy.deepcopy(self.main_reduction_list)
 
     def remove_additional_reduction_list(self, tab_index: int):
         """Remove reduction list for additional ROI/peak"""
