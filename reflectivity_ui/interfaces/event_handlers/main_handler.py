@@ -785,9 +785,13 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
         return True
 
-    def update_reduction_table(self, table_widget, idx, d):
+    def update_reduction_table(self, table_widget: QtWidgets.QTableWidget, idx: int, d: CrossSectionData):
         """
-        Update the reduction tale
+        Update the reduction table
+
+        :param QtWidgets.QTableWidget table_widget: Table widget to update
+        :param int idx: Row to update
+        :param CrossSectionData d: Cross-section
         """
         self.main_window.auto_change_active = True
         item = QtWidgets.QTableWidgetItem(str(d.number))
@@ -1035,10 +1039,21 @@ class MainHandler(object):
 
         def _propagate_run(_pos):
             """callback function to right-click action: Propagate run to all tabs"""
-            # row = table_widget.rowAt(pos.y())
-            # if 0 <= row < len(data_table):
-            #     nexus_data = data_table[row]
-            pass
+            row = table_widget.rowAt(pos.y())
+            if 0 <= row < len(data_table):
+                nexus_data = data_table[row]
+                active_cross_section = self._data_manager.active_channel.name
+                active_channel = nexus_data.cross_sections[active_cross_section]
+                for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
+                    if self._data_manager.copy_nexus_data_to_reduction(nexus_data, ipeak):
+                        # get widget for target reduction table
+                        target_widget = self.get_reduction_table_by_index(ipeak)
+                        idx = self._data_manager.find_run_number_in_reduction_list(nexus_data.number, peak_data)
+                        if not idx:
+                            raise RuntimeError("Run number not in reduction list")
+                        target_widget.insertRow(idx)
+                        # update UI table widget
+                        self.update_reduction_table(target_widget, idx, active_channel)
 
         def _remove_run(_pos):
             """callback function to right-click action: Remove run from this tab"""

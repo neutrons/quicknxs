@@ -20,6 +20,7 @@ from .data_handling import gisans
 
 class DataManager(object):
     MAX_CACHE = 50  # maximum number of loaded datasets (either single-file or merged-files types)
+    MAIN_REDUCTION_LIST_INDEX = 1
 
     def __init__(self, current_directory):
         self.current_directory = current_directory
@@ -73,7 +74,7 @@ class DataManager(object):
 
     @property
     def main_reduction_list(self):
-        return self.peak_reduction_lists[1]
+        return self.peak_reduction_lists[self.MAIN_REDUCTION_LIST_INDEX]
 
     def get_cachesize(self):
         return len(self._cache)
@@ -176,6 +177,47 @@ class DataManager(object):
                 return False
         return True
 
+    def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: list):
+        r"""
+        @brief Determine if the data set is compatible with the data sets in the reduction list.
+        """
+        # If we are starting a new reduction list, just proceed
+        if not reduction_list:
+            return True
+
+        nexus_data_states = list(nexus_data.cross_sections.keys())
+        reduction_list_states = list(reduction_list[0].cross_sections.keys())
+
+        # First, check that we have the same number of states
+        if not len(reduction_list_states) == len(nexus_data_states):
+            logging.error(
+                "Nexus data cross-sections ({}) different than those of the"
+                " reduction list ({})".format(reduction_list_states, nexus_data_states)
+            )
+            return False
+
+        # Second, make sure the states match
+        for cross_section_state in nexus_data_states:
+            if cross_section_state not in reduction_list_states:
+                logging.error(
+                    "Nexus data cross-section {} not found in those"
+                    " of the reduction list".format(cross_section_state)
+                )
+                return False
+        return True
+
+    def find_run_number_in_reduction_list(self, run_number: int, reduction_list: list[NexusData]):
+        """
+        Look for the given run number in the reduction list.
+        Return the index within the reduction list or none.
+        :param int run_number: run number to look for
+        :param list[NexusData] reduction_list: the reduction list to search
+        """
+        for i, nexus_data in enumerate(reduction_list):
+            if nexus_data.number == run_number:
+                return i
+        return None
+
     def find_data_in_reduction_list(self, nexus_data):
         """
         Look for the given data in the reduction list.
@@ -212,7 +254,7 @@ class DataManager(object):
         """
         return self.find_data_in_direct_beam_list(self._nexus_data)
 
-    def add_active_to_reduction(self, peak_index=None):
+    def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX):
         r"""
         @brief Add active data set to reduction list
 
@@ -220,10 +262,7 @@ class DataManager(object):
         reduction lists by initializing from the main reduction list (button to add new data tab)
         or by propagating individual data sets to other tabs (right-click menu).
         """
-        if peak_index:
-            reduct_list = self.peak_reduction_lists[peak_index]
-        else:
-            reduct_list = self.main_reduction_list
+        reduct_list = self.peak_reduction_lists[peak_index]
 
         if self._nexus_data not in reduct_list:
             if self.is_active_data_compatible():
@@ -246,6 +285,32 @@ class DataManager(object):
             else:
                 logging.error("The data you are trying to add has different cross-sections")
         return False
+
+    def copy_nexus_data_to_reduction(self, nexus_data_to_copy: NexusData, peak_index: int):
+        r"""
+        Add data set to the reduction list specified by `peak_index`
+        """
+        reduction_list = self.peak_reduction_lists[peak_index]
+
+        # check if run already exists in this reduction list
+        if any(run_data.number == nexus_data_to_copy.number for run_data in reduction_list):
+            return False
+
+        nexus_data = copy.deepcopy(nexus_data_to_copy)
+        if self.is_nexus_data_compatible(nexus_data, reduction_list):
+            is_inserted = False
+            q_min, _ = nexus_data.get_q_range()
+            for i in range(len(reduction_list)):
+                _q_min, _ = reduction_list[i].get_q_range()
+                if q_min <= _q_min:
+                    reduction_list.insert(i, nexus_data)
+                    is_inserted = True
+                    break
+            if not is_inserted:
+                reduction_list.append(nexus_data)
+            return True
+        else:
+            logging.error("The data you are trying to add has different cross-sections")
 
     def add_active_to_normalization(self):
         """
