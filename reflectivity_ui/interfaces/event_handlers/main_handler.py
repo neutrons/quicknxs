@@ -601,12 +601,13 @@ class MainHandler(object):
         """
         Initialize new reduction table from the main reduction table
         """
-        table_widget = self.get_reduction_table_by_index(tab_index)
-        table_widget.setRowCount(len(self._data_manager.main_reduction_list))
-        active_cross_section = self._data_manager.active_channel.name
-        for idx, nexus_data in enumerate(self._data_manager.main_reduction_list):
-            active_channel = nexus_data.cross_sections[active_cross_section]
-            self.update_reduction_table(table_widget, idx, active_channel)
+        if self._data_manager.main_reduction_list:
+            table_widget = self.get_reduction_table_by_index(tab_index)
+            table_widget.setRowCount(len(self._data_manager.main_reduction_list))
+            active_cross_section = self._data_manager.active_channel.name
+            for idx, nexus_data in enumerate(self._data_manager.main_reduction_list):
+                active_channel = nexus_data.cross_sections[active_cross_section]
+                self.update_reduction_table(table_widget, idx, active_channel)
 
     def _file_open_dialog(self, filter_=None):
         # type: (Optional[str]) -> Optional[str]

@@ -14,6 +14,7 @@ import pytest
 from reflectivity_ui.interfaces.data_handling.filepath import FilePath, RunNumbers
 from reflectivity_ui.interfaces.data_handling.instrument import Instrument
 
+pytest_plugins = ["mantid.fixtures"]
 
 this_module_path = sys.modules[__name__].__file__
 
