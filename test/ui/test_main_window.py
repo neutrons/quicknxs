@@ -271,6 +271,58 @@ class TestMainGui:
         assert conf2.direct_angle_offset_overwrite == 0
         assert conf2.use_dangle is False
 
+    def test_add_remove_data_tab(self, qtbot):
+        """Test that the add data tab button reveals/hides tabs as expected"""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+
+        def _assert_tabs_visible(tab_ids: list[bool]):
+            for idx, is_visible in enumerate(tab_ids):
+                assert window_main.ui.tabWidget.isTabVisible(idx) == is_visible
+
+        _assert_tabs_visible([True, True, False, False, False])
+
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, False, False])
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, True, False])
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, True, True])
+
+        # reached max number of tabs, button function changes to remove/hide tabs
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, True, False])
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, False, False])
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, False, False, False])
+
+    @pytest.mark.datarepo
+    def test_change_active_data_tab(self, mocker, qtbot, data_server):
+        """Test that the internal state is updated when the active data tab is changed"""
+        mock_plot_refl = mocker.patch("reflectivity_ui.interfaces.plotting.PlotManager.plot_refl", return_value=True)
+
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+
+        manager = window_main.data_manager
+        manager.load(data_server.path_to("REF_M_40782"), Configuration())
+        manager.add_active_to_reduction()
+        manager.load(data_server.path_to("REF_M_40785"), Configuration())
+        manager.add_active_to_reduction()
+
+        # add second peak tab
+        window_main.ui.addTabButton.clicked.emit()
+        assert mock_plot_refl.call_count == 0
+        # switch to second peak tab
+        window_main.ui.tabWidget.setCurrentIndex(2)
+        assert window_main.data_manager.active_reduction_list_index == 2
+        assert mock_plot_refl.call_count == 1
+        # switch to first peak tab
+        window_main.ui.tabWidget.setCurrentIndex(1)
+        assert window_main.data_manager.active_reduction_list_index == 1
+        assert mock_plot_refl.call_count == 2
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

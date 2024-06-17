@@ -93,6 +93,31 @@ class TestDataManagerTest(object):
         manager.clear_cached_unused_data()
         assert manager.get_cachesize() == 3
 
+    @pytest.mark.datarepo
+    def test_add_additional_reduction_list(self, data_server):
+        manager = DataManager(data_server.directory)
+        manager.load(data_server.path_to("REF_M_40782"), Configuration())
+        manager.add_active_to_reduction()
+        manager.load(data_server.path_to("REF_M_40785"), Configuration())
+        manager.add_active_to_reduction()
+
+        assert len(manager.peak_reduction_lists) == 1
+        assert len(manager.peak_reduction_lists[1]) == 2
+        assert manager.active_reduction_list_index == 1
+
+        manager.add_additional_reduction_list(2)
+
+        assert len(manager.peak_reduction_lists) == 2
+        assert len(manager.peak_reduction_lists[1]) == 2
+        assert len(manager.peak_reduction_lists[2]) == 2
+        assert manager.active_reduction_list_index == 1
+
+        manager.remove_additional_reduction_list(2)
+
+        assert len(manager.peak_reduction_lists) == 1
+        assert len(manager.peak_reduction_lists[1]) == 2
+        assert manager.active_reduction_list_index == 1
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
