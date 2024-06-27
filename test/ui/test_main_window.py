@@ -323,6 +323,14 @@ class TestMainGui:
         assert window_main.data_manager.active_reduction_list_index == 1
         assert mock_plot_refl.call_count == 2
 
+    def test_reduction_table_propagate_run(self):
+        """Test right-click action 'Propagate run'"""
+        pass
+
+    def test_reduction_table_remove_run(self):
+        """Test right-click action 'Remove run'"""
+        pass
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
