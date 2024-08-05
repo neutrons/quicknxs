@@ -323,9 +323,45 @@ class TestMainGui:
         assert window_main.data_manager.active_reduction_list_index == 1
         assert mock_plot_refl.call_count == 2
 
-    def test_reduction_table_propagate_run(self):
+    @pytest.mark.datarepo
+    def test_reduction_table_propagate_run(self, qtbot, data_server):
         """Test right-click action 'Propagate run'"""
-        pass
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+
+        # add direct beam run and data run
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
+        window_main.actionNorm.triggered.emit()
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
+        window_main.actionAddPlot.triggered.emit()
+
+        # add second peak tab
+        window_main.ui.addTabButton.clicked.emit()
+
+        # add another run to the primary data table
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+        window_main.actionAddPlot.triggered.emit()
+        assert len(window_main.data_manager.peak_reduction_lists[1]) == 2
+        assert len(window_main.data_manager.peak_reduction_lists[2]) == 1
+
+        # add new run to the second peak tab using right-click action
+        table = getattr(window_main.ui, "reductionTable")
+
+        def handle_menu():
+            """Trigger propagate run action and check that the run was added to the second tab"""
+            menu = table.findChild(QtWidgets.QMenu)
+            action = menu.actions()[1]
+            assert action.text() == "Propagate run to all tabs"
+            qtbot.keyClick(menu, QtCore.Qt.Key_Down)
+            qtbot.keyClick(menu, QtCore.Qt.Key_Down)
+            qtbot.keyClick(menu, QtCore.Qt.Key_Enter)
+            assert len(window_main.data_manager.peak_reduction_lists[1]) == 2
+            assert len(window_main.data_manager.peak_reduction_lists[2]) == 2
+
+        QtCore.QTimer.singleShot(200, handle_menu)
+        rect = table.visualRect(table.model().index(1, 1))  # new run on row index 1
+        pos = QtCore.QPoint(rect.x(), rect.y())
+        table.customContextMenuRequested.emit(pos)
 
     def test_reduction_table_remove_run(self):
         """Test right-click action 'Remove run'"""
