@@ -200,7 +200,7 @@ def _get_cross_section_config_values(cross_section_data, i_direct_beam):
     ----------
     cross_section_data: ~reflectivity_ui.interfaces.data_handling.data_set.CrossSectionData
         Cross-section to get parameter values from
-    i_direct_beam
+    i_direct_beam: int
         Current direct beam index in the reduction list
 
     Returns

@@ -178,8 +178,19 @@ class DataManager(object):
         return True
 
     def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: list):
-        r"""
-        @brief Determine if the data set is compatible with the data sets in the reduction list.
+        """
+        Determine if the data set is compatible with the data sets in the reduction list.
+
+        Parameters
+        ----------
+        nexus_data: NexusData
+            The data set to check if compatible with reduction list
+        reduction_list: list[NexusData]
+            The reduction list
+
+        Returns
+        -------
+        bool
         """
         # If we are starting a new reduction list, just proceed
         if not reduction_list:
@@ -209,9 +220,18 @@ class DataManager(object):
     def find_run_number_in_reduction_list(self, run_number: int, reduction_list: list[NexusData]):
         """
         Look for the given run number in the reduction list.
-        Return the index within the reduction list or none.
-        :param int run_number: run number to look for
-        :param list[NexusData] reduction_list: the reduction list to search
+
+        Parameters
+        ----------
+        run_number: int
+            Run number to look for
+        reduction_list: list[NexusData]
+            The reduction list to search
+
+        Returns
+        -------
+        int | None
+            The index in the reduction list or None
         """
         for i, nexus_data in enumerate(reduction_list):
             if nexus_data.number == run_number:
@@ -256,11 +276,21 @@ class DataManager(object):
 
     def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX):
         r"""
-        @brief Add active data set to reduction list
+        Add active data set to reduction list
 
         New data sets are always added to the main reduction list. Data sets are added to secondary
         reduction lists by initializing from the main reduction list (button to add new data tab)
         or by propagating individual data sets to other tabs (right-click menu).
+
+        Parameters
+        ----------
+        peak_index: int
+            The index of the peak in peak_reduction_lists
+
+        Returns
+        -------
+        bool
+            True if the active data set was added to the reduction list, False if it was not added
         """
         reduct_list = self.peak_reduction_lists[peak_index]
 
@@ -289,6 +319,18 @@ class DataManager(object):
     def copy_nexus_data_to_reduction(self, nexus_data_to_copy: NexusData, peak_index: int):
         r"""
         Add data set to the reduction list specified by `peak_index`
+
+        Parameters
+        ----------
+        nexus_data_to_copy: NexusData
+            Data set to copy
+        peak_index: int
+            Peak (reduction list) to copy data set to
+
+        Returns
+        -------
+        bool
+            True if the data set was added successfully, otherwise False
         """
         reduction_list = self.peak_reduction_lists[peak_index]
 
@@ -311,6 +353,7 @@ class DataManager(object):
             return True
         else:
             logging.error("The data you are trying to add has different cross-sections")
+        return False
 
     def add_active_to_normalization(self):
         """
@@ -337,7 +380,8 @@ class DataManager(object):
 
         Parameters
         ----------
-        index: the index to remove
+        index: int
+            Index of the item to remove
         """
         self.reduction_list.pop(index)
 
@@ -831,14 +875,23 @@ class DataManager(object):
         """
         Load direct beam and data files and add them to the direct beam list and reduction
         list, respectively
-        :param list db_files: list of (run_number, run_file, conf) for direct beam files
-        :param list data_files: list of (run_number, run_file, conf) for data files
-        :param list additional_peaks: list of (run_number, run_file, conf) for data files for
-                                      additional peaks
-        :param Configuration configuration: configuration to base the loaded data on
-        :param ProgressReporter progress: progress reporter
-        :param bool force:
-        :param float t_0: start time for logging data loading time
+
+        Parameters
+        ----------
+        db_files: list
+            List of (run_number, run_file, conf) for direct beam files
+        data_files: list
+            List of (run_number, run_file, conf) for data files
+        additional_peaks: list
+            List of (run_number, run_file, conf) for data files for additional peaks
+        configuration: Configuration
+            Configuration to base the loaded data on
+        progress: ProgressReporter
+            Progress reporter
+        force: bool
+            If True, ignore cache and force reloading from file
+        t_0: float
+            Start time for logging data loading time
         """
         if not t_0:
             t_0 = time.time()
@@ -930,14 +983,36 @@ class DataManager(object):
         self.load_direct_beam_and_data_files(db_files, data_files, configuration, progress, True)
 
     def add_additional_reduction_list(self, tab_index: int):
-        """Add reduction list for an additional ROI/peak"""
+        """
+        Add reduction list for an additional ROI/peak
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the peak in `self.peak_reduction_lists`
+        """
         if self.main_reduction_list and tab_index not in self.peak_reduction_lists:
             self.peak_reduction_lists[tab_index] = copy.deepcopy(self.main_reduction_list)
 
     def remove_additional_reduction_list(self, tab_index: int):
-        """Remove reduction list for additional ROI/peak"""
+        """
+        Remove reduction list for additional ROI/peak
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the peak in `self.peak_reduction_lists`
+        """
         if tab_index in self.peak_reduction_lists:
             self.peak_reduction_lists.pop(tab_index)
 
     def set_active_reduction_list_index(self, tab_index: int):
+        """
+        Set the active reduction list index
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the peak in `self.peak_reduction_lists`
+        """
         self.active_reduction_list_index = tab_index

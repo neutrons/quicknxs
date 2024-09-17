@@ -181,9 +181,12 @@ class NexusData(object):
 
         Parameters
         ----------
-        direct_beam
-        configuration
-        ws_suffix
+        direct_beam: CrossSectionData | None
+            Direct beam data
+        configuration: Configuration | None
+            The configuration
+        ws_suffix: str
+            String to add to reflectivity workspace name
         """
         if configuration is not None:
             self.configuration = copy.deepcopy(configuration)
@@ -288,6 +291,7 @@ class NexusData(object):
         )
         _ws = ws if len(ws_list) > 1 else [ws]
         for xs in _ws:
+            # add suffix to avoid overwriting ws in mantid data service, needed for multiple peaks
             api.RenameWorkspace(str(xs), str(xs) + ws_suffix)
             xs_id = xs.getRun().getProperty("cross_section_id").value
             self.cross_sections[xs_id].q = xs.readX(0)[:].copy()

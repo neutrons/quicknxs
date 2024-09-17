@@ -75,10 +75,6 @@ class MainHandler(object):
             current_table = self.ui.tabWidget.currentWidget().findChild(QtWidgets.QTableWidget)
         return current_table
 
-    # @property
-    # def reductionTableIndex(self):
-    #     return self.ui.tabWidget.currentIndex()
-
     def get_reduction_table_by_index(self, tab_index: int) -> QtWidgets.QTableWidget:
         """Return the QTableWidget for the data tab with the given index"""
         return self.ui.tabWidget.widget(tab_index).findChild(QtWidgets.QTableWidget)
@@ -600,6 +596,11 @@ class MainHandler(object):
     def initialize_additional_reduction_table(self, tab_index: int):
         """
         Initialize new reduction table from the main reduction table
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the additional tab/peak
         """
         if self._data_manager.main_reduction_list:
             table_widget = self.get_reduction_table_by_index(tab_index)
@@ -790,9 +791,14 @@ class MainHandler(object):
         """
         Update the reduction table
 
-        :param QtWidgets.QTableWidget table_widget: Table widget to update
-        :param int idx: Row to update
-        :param CrossSectionData d: Cross-section
+        Parameters
+        ----------
+        table_widget: QtWidgets.QTableWidget
+            Table widget of the table to update
+        idx: int
+            Row to update
+        d: CrossSectionData
+            Cross-section data
         """
         self.main_window.auto_change_active = True
         item = QtWidgets.QTableWidgetItem(str(d.number))
