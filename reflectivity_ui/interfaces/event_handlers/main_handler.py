@@ -1056,7 +1056,7 @@ class MainHandler(object):
                         # get widget for target reduction table
                         target_widget = self.get_reduction_table_by_index(ipeak)
                         idx = self._data_manager.find_run_number_in_reduction_list(nexus_data.number, peak_data)
-                        if not idx:
+                        if idx is None:
                             raise RuntimeError("Run number not in reduction list")
                         target_widget.insertRow(idx)
                         # update UI table widget

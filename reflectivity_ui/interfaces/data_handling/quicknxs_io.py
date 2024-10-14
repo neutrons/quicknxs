@@ -170,10 +170,7 @@ def write_reflectivity_header(peak_reduction_lists, active_list_index, direct_be
     # All peaks
     for peak_index, peak_reduction_list in peak_reduction_lists.items():
         fd.write("#\n")
-        if peak_index == 1:
-            fd.write("# [Main Peak Runs]\n")
-        else:
-            fd.write(f"# [Peak {peak_index} Runs]\n")
+        fd.write(f"# [Peak {peak_index} Runs]\n")
         fd.write("# %s\n" % "  ".join(toks))
         i_direct_beam = 0
         for data_set in peak_reduction_list:
@@ -323,7 +320,7 @@ def read_reduced_file(file_path, configuration=None):
                 _in_section = 1
             elif "[Data Runs]" in line:
                 _in_section = 2
-            elif "[Main Peak" in line:
+            elif "[Peak 1 Runs]" in line:
                 # if existing, use this section instead of "[Data Runs]"
                 _in_section = 2
                 data_runs = []

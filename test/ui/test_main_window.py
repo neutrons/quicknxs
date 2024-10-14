@@ -328,21 +328,27 @@ class TestMainGui:
         """Test right-click action 'Propagate run'"""
         window_main = MainWindow()
         qtbot.addWidget(window_main)
+        Configuration.setup_default_values()
 
         # add direct beam run and data run
         window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
         window_main.actionNorm.triggered.emit()
-        window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
         window_main.actionAddPlot.triggered.emit()
 
         # add second peak tab
         window_main.ui.addTabButton.clicked.emit()
 
         # add another run to the primary data table
-        window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
         window_main.actionAddPlot.triggered.emit()
-        assert len(window_main.data_manager.peak_reduction_lists[1]) == 2
-        assert len(window_main.data_manager.peak_reduction_lists[2]) == 1
+
+        reduction_lists = window_main.data_manager.peak_reduction_lists
+        assert len(reduction_lists[1]) == 2
+        assert reduction_lists[1][0].number == "42112"
+        assert reduction_lists[1][1].number == "42113"
+        assert len(reduction_lists[2]) == 1
+        assert reduction_lists[2][0].number == "42113"
 
         # add new run to the second peak tab using right-click action
         table = getattr(window_main.ui, "reductionTable")
@@ -359,9 +365,9 @@ class TestMainGui:
             assert len(window_main.data_manager.peak_reduction_lists[2]) == 2
 
         QtCore.QTimer.singleShot(200, handle_menu)
-        rect = table.visualRect(table.model().index(1, 1))  # new run on row index 1
-        pos = QtCore.QPoint(rect.x(), rect.y())
-        table.customContextMenuRequested.emit(pos)
+        table_item = table.item(0, 0)  # new run on row index 0
+        table_item_rect = table.visualItemRect(table_item)
+        table.customContextMenuRequested.emit(table_item_rect.topLeft())
 
     def test_reduction_table_remove_run(self):
         """Test right-click action 'Remove run'"""

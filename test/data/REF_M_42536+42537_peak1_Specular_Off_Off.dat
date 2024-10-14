@@ -15,7 +15,7 @@
 #        1         5        10     212.6        19     117.3      65.3        39        56     False       180    2.2255     42536         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42536.nxs.h5
 #   3.7201         5        10     214.9        22     121.8      56.3        39        56     False       180    4.1776     42537         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42537.nxs.h5
 #
-# [Main Peak Runs]
+# [Peak 1 Runs]
 #    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File
 #        1         5        10     212.6        19     117.3      65.3        39        56     False       180    2.2255     42536         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42536.nxs.h5
 #   3.7201         5        10     214.9        22     121.8      56.3        39        56     False       180    4.1776     42537         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42537.nxs.h5
