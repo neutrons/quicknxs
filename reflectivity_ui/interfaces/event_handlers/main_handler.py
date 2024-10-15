@@ -1553,6 +1553,9 @@ class MainHandler(object):
             is_active_data_direct_beam = True
             active_idx = self._data_manager.find_active_direct_beam_id()
 
+        # Store the active data tab
+        active_data_tab = self._data_manager.active_reduction_list_index
+
         # Reload files
         self._data_manager.clear_cached_unused_data()
         configuration = self.get_configuration()
@@ -1567,12 +1570,19 @@ class MainHandler(object):
             self._data_manager.set_active_data_from_direct_beam_list(idx)
             self.update_direct_beam_table(idx, self._data_manager.active_channel)
         self.ui.reductionTable.setRowCount(len(self._data_manager.reduction_list))
-        for idx, _ in enumerate(self._data_manager.reduction_list):
-            self._data_manager.set_active_data_from_reduction_list(idx)
-            self.update_reduction_table(idx, self._data_manager.active_channel)
+        for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
+            self._data_manager.set_active_reduction_list_index(ipeak)
+            table_widget = self.get_reduction_table_by_index(ipeak)
+            table_widget.setRowCount(len(self._data_manager.reduction_list))
+            for idx, _ in enumerate(self._data_manager.reduction_list):
+                self._data_manager.set_active_data_from_reduction_list(idx)
+                self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
 
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
         self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))
+
+        # Restore the active data tab
+        self._data_manager.set_active_reduction_list_index(active_data_tab)
 
         # Restore the active run
         if is_active_data_direct_beam:

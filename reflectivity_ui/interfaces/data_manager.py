@@ -883,7 +883,7 @@ class DataManager(object):
         data_files: list
             List of (run_number, run_file, conf) for data files
         additional_peaks: list
-            List of (run_number, run_file, conf) for data files for additional peaks
+            List of (peak_index, run_number, run_file, conf) for data files for additional peaks
         configuration: Configuration
             Configuration to base the loaded data on
         progress: ProgressReporter
@@ -966,7 +966,7 @@ class DataManager(object):
 
     def reload_files(self, configuration=None, progress=None):
         """
-        Force reload of files in the reduction list and direct beam list
+        Force reload of files in the reduction lists and direct beam list
         """
 
         def _get_nexus_conf(nexus_data):
@@ -975,12 +975,20 @@ class DataManager(object):
 
         # Get files to reload
         db_files = [(nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in self.direct_beam_list]
-        data_files = [(nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in self.reduction_list]
+        data_files = []
+        additional_peaks = []
+        for ipeak, reduction_list in self.peak_reduction_lists.items():
+            if ipeak == self.MAIN_REDUCTION_LIST_INDEX:
+                data_files = [(nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in reduction_list]
+            else:
+                additional_peaks = [
+                    (ipeak, nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in reduction_list
+                ]
         # Clear the lists
-        self.reduction_list.clear()
         self.direct_beam_list.clear()
+        [reduct_list.clear() for reduct_list in self.peak_reduction_lists.values()]
         # Reload files and add to reduction and direct beam lists
-        self.load_direct_beam_and_data_files(db_files, data_files, configuration, progress, True)
+        self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, True)
 
     def add_additional_reduction_list(self, tab_index: int):
         """

@@ -58,7 +58,7 @@ class TestDataLoader(object):
 
     def test_load_global_options(self):
         file_path = self.file("REF_M_29526_global_options.dat")
-        db_list, data_list = read_reduced_file(file_path)
+        db_list, data_list, _ = read_reduced_file(file_path)
         assert len(db_list) == 4
         assert len(data_list) == 4
         assert Configuration.lock_direct_beam_y is True
