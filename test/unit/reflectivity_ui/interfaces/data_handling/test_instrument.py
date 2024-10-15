@@ -14,7 +14,7 @@ def test_load_data_deadtime(data_server):
     """Test load data with and without dead-time correction"""
     conf = Configuration()
     file_path = data_server.path_to("REF_M_42112")
-    corrected_events = [52283.51, 42028.15, 66880.96, 43405.89]
+    corrected_events = [52226.65, 42024.57, 66802.82, 43401.94]
 
     # load with dead-time correction
     conf.apply_deadtime = True

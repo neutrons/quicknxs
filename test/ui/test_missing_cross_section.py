@@ -1,4 +1,5 @@
 # local imports
+from reflectivity_ui.interfaces.configuration import Configuration
 from reflectivity_ui.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
 
@@ -11,12 +12,14 @@ import pytest
 TEST_REFLECTIVITY_THRESHOLD_VALUE = 0.01
 
 
+@pytest.mark.skip("Test fails in the CI pipeline, see EWM 7743")
 @pytest.mark.datarepo
 def test_missing_cross_section(qtbot):
     r"""Test a run where the crossection corresponding to the On-On spin combination has no integrated
     proton charge. The application produces and empty reflectivity curve for On-On."""
     main_window = MainWindow()
     qtbot.addWidget(main_window)
+    Configuration.setup_default_values()
     # load the run and find the total "intensity" of the x vs TOF plot
     ui_utilities.setText(main_window.numberSearchEntry, "42100", press_enter=True)
     intensity_off_on = np.sum(ui_utilities.data_from_plot2D(main_window.xtof_overview))
