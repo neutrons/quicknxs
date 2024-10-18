@@ -34,8 +34,8 @@ jobs:
         id: cache-lfs
         uses: actions/cache@v3
         with:
-          path: .git/modules/test/data/reflectivity_ui-data/
-          key: ${{ runner.os }}-lfs
+          path: test/data/reflectivity_ui-data/
+          key: ${{ runner.os }}-lfs-files
 
       - name: Pull LFS files for the submodule
         if: steps.cache-lfs.outputs.cache-hit != 'true'
