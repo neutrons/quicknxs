@@ -20,7 +20,7 @@ jobs:
     outputs:
       deploy_enabled: 'false'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v3
         with:
           channels: mantid/label/main,conda-forge,defaults
@@ -28,11 +28,10 @@ jobs:
           miniconda-version: latest
           mamba-version: "*"
           environment-file: environment.yml
-          submodules: true
 
       - name: Restore/save LFS files in cache
         id: cache-lfs
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: test/data/reflectivity_ui-data/
           key: ${{ runner.os }}-lfs-files
