@@ -17,6 +17,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 **Of interest to the Developer:**
 
+- PR #106: Enable tests using the data repo git LFS files in the CI pipeline
 - PR #XYZ: one-liner description
 
 
