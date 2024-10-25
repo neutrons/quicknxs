@@ -6,6 +6,7 @@ from test.ui import ui_utilities
 # third party imports
 import numpy as np
 import pytest
+from qtpy.QtWidgets import QApplication
 
 # standard library imports
 
@@ -33,6 +34,7 @@ def test_missing_cross_section(qtbot):
     # check the x vs TOF plot has changed
     intensity_on_on = np.sum(ui_utilities.data_from_plot2D(main_window.xtof_overview))
     assert intensity_on_on / intensity_off_on < TEST_REFLECTIVITY_THRESHOLD_VALUE
+    QApplication.processEvents()
     del main_window
 
 
