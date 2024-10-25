@@ -498,8 +498,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if tab_index == 0:  # direct beam tab
             return
         # must first update the active reduction list index, then the UI from the active data
-        self.data_manager.set_active_reduction_list_index(tab_index)
-        self.data_manager.set_active_data_from_reduction_list(0)
+        self.data_manager.update_active_reduction_list(tab_index)
         if self.data_manager.data_sets:
             self.file_loaded()
             self.file_handler.active_data_changed()

@@ -1024,3 +1024,20 @@ class DataManager(object):
             Index of the peak in `self.peak_reduction_lists`
         """
         self.active_reduction_list_index = tab_index
+
+    def update_active_reduction_list(self, tab_index: int):
+        """
+        Updates the active reduction list and run
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the peak in `self.peak_reduction_lists`
+        """
+        active_data_idx = self.find_active_data_id()
+        self.set_active_reduction_list_index(tab_index)
+        # keep same selected run if available in the other reduction table
+        if active_data_idx < len(self.reduction_list):
+            self.set_active_data_from_reduction_list(active_data_idx)
+        else:
+            self.set_active_data_from_reduction_list(0)
