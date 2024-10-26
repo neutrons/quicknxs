@@ -28,10 +28,9 @@ def test_missing_cross_section(qtbot):
     main_window.selectedChannel1.click()
     # check that the reflectivity curve is empty
     _, data_y = ui_utilities.data_from_plot1D(main_window.refl)
+    for i, value in enumerate(data_y):
+        print(f"data_y[{i}] = {value}")
     test = data_y.data - data_y.data[0]
-    print("TEST_REFLECTIVITY_THRESHOLD_VALUE =", TEST_REFLECTIVITY_THRESHOLD_VALUE)
-    for i, value in enumerate(test):
-        print(f"test[{i}] = {value}")
     assert np.all(test <= TEST_REFLECTIVITY_THRESHOLD_VALUE)
     # check the x vs TOF plot has changed
     intensity_on_on = np.sum(ui_utilities.data_from_plot2D(main_window.xtof_overview))
