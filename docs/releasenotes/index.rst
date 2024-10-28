@@ -12,6 +12,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 **Of interest to the User**:
 
+- PR #91: Add ability to reduce multiple samples from the same run
 - PR #104: Update Mantid version to 6.10
 - PR #95: Optional dead-time correction (disabled by default)
 
