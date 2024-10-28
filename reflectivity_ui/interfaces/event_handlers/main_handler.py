@@ -553,7 +553,8 @@ class MainHandler(object):
 
         t_0 = time.time()
         if file_path:
-            # Clear the reduction list first so that we don't create problems later
+            # Clear the reduction lists first so that we don't create problems later
+            self.main_window.reset_data_tabs()
             self.clear_direct_beams()
             self.clear_reflectivity()
             configuration = self.get_configuration()
@@ -580,6 +581,10 @@ class MainHandler(object):
                 for idx, _ in enumerate(self._data_manager.reduction_list):
                     self._data_manager.set_active_data_from_reduction_list(idx)
                     self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
+
+            # Set the first reduction table and its first run as the active (plotted) data
+            self._data_manager.set_active_reduction_list_index(self._data_manager.MAIN_REDUCTION_LIST_INDEX)
+            self._data_manager.set_active_data_from_reduction_list(0)
 
             direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
             self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))
@@ -833,10 +838,18 @@ class MainHandler(object):
 
     def clear_reflectivity(self):
         """
-        Remove all items from the reduction list.
+        Remove all items from the reduction lists.
         """
-        self._data_manager.reduction_list = []
-        self.reduction_table.setRowCount(0)
+        # clear the reduction lists in the data manager
+        self._data_manager.clear_reduction_lists()
+        # clear the reflectivity UI table widgets
+        for itab in range(self.ui.tabWidget.count()):
+            if itab == self.DIRECT_BEAM_TAB_INDEX:
+                continue
+            tab_widget = self.get_reduction_table_by_index(itab)
+            tab_widget.setRowCount(0)
+        # remove additional data tabs
+        self.main_window.reset_data_tabs()
         self.main_window.initiate_reflectivity_plot.emit(False)
 
     def clear_direct_beams(self):

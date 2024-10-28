@@ -1037,7 +1037,14 @@ class DataManager(object):
         active_data_idx = self.find_active_data_id()
         self.set_active_reduction_list_index(tab_index)
         # keep same selected run if available in the other reduction table
-        if active_data_idx < len(self.reduction_list):
+        if active_data_idx and active_data_idx < len(self.reduction_list):
             self.set_active_data_from_reduction_list(active_data_idx)
         else:
             self.set_active_data_from_reduction_list(0)
+
+    def clear_reduction_lists(self):
+        """
+        Resets to one empty reduction list
+        """
+        self.active_reduction_list_index = 1
+        self.peak_reduction_lists = {self.active_reduction_list_index: []}

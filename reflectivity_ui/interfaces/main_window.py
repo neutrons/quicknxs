@@ -154,14 +154,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.counts_roi_label.hide()
         self.ui.eventActive.hide()
 
-        # Initially hide the tabs used for multiple peaks
-        self.min_data_tab_count = 1
-        self.max_data_tab_count = 4
-        self.data_tab_count = 1
-        self.data_tab_button_mode = DataTabButtonMode.ADD
-        self.ui.tabWidget.setTabVisible(2, False)
-        self.ui.tabWidget.setTabVisible(3, False)
-        self.ui.tabWidget.setTabVisible(4, False)
+        self.reset_data_tabs()
 
     # Actions defined in Qt Designer
     def file_open_dialog(self):
@@ -492,6 +485,19 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.tabWidget.setTabVisible(tab_index, True)
             self.data_tab_count = tab_index
         self.update_add_data_tab_button_mode()
+
+    def reset_data_tabs(self):
+        """
+        Reset UI to one visible data tab
+        """
+        self.min_data_tab_count = 1
+        self.max_data_tab_count = 4
+        self.data_tab_count = 1
+        self.data_tab_button_mode = DataTabButtonMode.ADD
+        # Initially hide the tabs used for multiple peaks
+        self.ui.tabWidget.setTabVisible(2, False)
+        self.ui.tabWidget.setTabVisible(3, False)
+        self.ui.tabWidget.setTabVisible(4, False)
 
     def setCurrentReductionTable(self, tab_index: int):
         """Update the state for active data set and the UI"""

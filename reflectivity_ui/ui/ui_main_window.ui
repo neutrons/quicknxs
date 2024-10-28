@@ -5310,7 +5310,7 @@
     <string>Clear reduction list</string>
    </property>
    <property name="toolTip">
-    <string>Remove all data sets from the reduction list</string>
+    <string>Remove all data sets from the reduction list and any additional peak reduction lists</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+Q</string>
