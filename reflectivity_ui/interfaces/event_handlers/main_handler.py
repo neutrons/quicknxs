@@ -35,7 +35,9 @@ class MainHandler(object):
     Event handler for the main application window.
     """
 
+    # Index of the direct beam tab in the reduction table tab widget
     DIRECT_BEAM_TAB_INDEX = 0
+    # Index of the first (and always visible) data tab in the reduction table tab widget
     MAIN_DATA_TAB_INDEX = 1
 
     def __init__(self, main_window):
@@ -68,6 +70,13 @@ class MainHandler(object):
 
     @property
     def reduction_table(self):
+        """
+        Returns the active reduction table widget if one of the data tabs is active, else the first one
+
+        Returns
+        -------
+        QTableWidget
+        """
         if self.ui.tabWidget.currentIndex == self.DIRECT_BEAM_TAB_INDEX:
             # get the table for the main data tab
             current_table = self.ui.tabWidget.widget(self.MAIN_DATA_TAB_INDEX).findChild(QtWidgets.QTableWidget)
@@ -78,10 +87,6 @@ class MainHandler(object):
     def get_reduction_table_by_index(self, tab_index: int) -> QtWidgets.QTableWidget:
         """Return the QTableWidget for the data tab with the given index"""
         return self.ui.tabWidget.widget(tab_index).findChild(QtWidgets.QTableWidget)
-
-    def get_active_reduction_table(self):
-        """Return the QTableWidget for the active data tab"""
-        return self.ui.tabWidget.currentWidget().findChild(QtWidgets.QTableWidget)
 
     def new_progress_reporter(self):
         """Return a progress reporter"""
@@ -271,7 +276,7 @@ class MainHandler(object):
         # Update the reduction table if this data set is in it
         idx = self._data_manager.find_active_data_id()
         if idx is not None:
-            table_widget = self.get_active_reduction_table()
+            table_widget = self.reduction_table
             self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
 
         # Update the direct beam table if this data set is in it
@@ -1044,7 +1049,7 @@ class MainHandler(object):
         :param bool is_reduction_table: True if the reduction table is active, False if the direct beam table is active
         """
         if is_reduction_table:
-            table_widget = self.get_active_reduction_table()
+            table_widget = self.reduction_table
             data_table = self._data_manager.reduction_list
         else:
             table_widget = self.ui.normalizeTable

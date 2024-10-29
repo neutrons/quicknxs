@@ -28,6 +28,8 @@ import sys
 from enum import Enum
 
 
+# The two modes of the button to add/remove data tabs for additional ROIs/peaks
+# the button is in "add" mode until it reaches the max number of tabs and then switches to "remove"
 DataTabButtonMode = Enum("DataTabButtonMode", ["ADD", "REMOVE"])
 
 

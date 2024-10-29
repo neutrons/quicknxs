@@ -187,6 +187,19 @@ class NexusData(object):
             The configuration
         ws_suffix: str
             String to add to reflectivity workspace name
+
+        Example
+        -------
+        `ws_suffix` is used when reducing multiple ROIs for the same run and cross-section, to
+        differentiate the workspace names in the Mantid data service
+
+        peak_index = 2
+        # update the active reduction list
+        data_manager.set_active_reduction_list_index(peak_index)
+        # get the first data set of the active reduction list
+        nexus_data = data_manager.reduction_list[0]
+        # calculate the reflectivity for this data set
+        nexus_data.calculate_reflectivity(ws_suffix=str(peak_index))
         """
         if configuration is not None:
             self.configuration = copy.deepcopy(configuration)
