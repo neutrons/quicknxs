@@ -174,10 +174,32 @@ class NexusData(object):
             logging.error("Could not set parameter %s %s", param, value)
         return has_changed
 
-    def calculate_reflectivity(self, direct_beam=None, configuration=None):
+    def calculate_reflectivity(self, direct_beam=None, configuration=None, ws_suffix: str = ""):
         """
         Loop through the cross-section data sets and update
         the reflectivity.
+
+        Parameters
+        ----------
+        direct_beam: CrossSectionData | None
+            Direct beam data
+        configuration: Configuration | None
+            The configuration
+        ws_suffix: str
+            String to add to reflectivity workspace name
+
+        Example
+        -------
+        `ws_suffix` is used when reducing multiple ROIs for the same run and cross-section, to
+        differentiate the workspace names in the Mantid data service
+
+        peak_index = 2
+        # update the active reduction list
+        data_manager.set_active_reduction_list_index(peak_index)
+        # get the first data set of the active reduction list
+        nexus_data = data_manager.reduction_list[0]
+        # calculate the reflectivity for this data set
+        nexus_data.calculate_reflectivity(ws_suffix=str(peak_index))
         """
         if configuration is not None:
             self.configuration = copy.deepcopy(configuration)
@@ -282,6 +304,8 @@ class NexusData(object):
         )
         _ws = ws if len(ws_list) > 1 else [ws]
         for xs in _ws:
+            # add suffix to avoid overwriting ws in mantid data service, needed for multiple peaks
+            api.RenameWorkspace(str(xs), str(xs) + ws_suffix)
             xs_id = xs.getRun().getProperty("cross_section_id").value
             self.cross_sections[xs_id].q = xs.readX(0)[:].copy()
             self.cross_sections[xs_id]._r = np.ma.masked_equal(xs.readY(0)[:].copy(), 0)

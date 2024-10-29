@@ -25,6 +25,12 @@ from PyQt5 import QtCore, QtWidgets
 import logging
 import os
 import sys
+from enum import Enum
+
+
+# The two modes of the button to add/remove data tabs for additional ROIs/peaks
+# the button is in "add" mode until it reaches the max number of tabs and then switches to "remove"
+DataTabButtonMode = Enum("DataTabButtonMode", ["ADD", "REMOVE"])
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -149,6 +155,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.histogramActive.hide()
         self.ui.counts_roi_label.hide()
         self.ui.eventActive.hide()
+
+        self.reset_data_tabs()
 
     # Actions defined in Qt Designer
     def file_open_dialog(self):
@@ -445,6 +453,63 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def autoRef(self):
         self.file_handler.automated_file_selection()
+
+    def addDataTable(self):
+        """Add/remove data tabs for additional peaks/ROI:s"""
+        if self.data_tab_button_mode == DataTabButtonMode.ADD:
+            self.data_tab_count += 1
+            self.ui.tabWidget.setTabVisible(self.data_tab_count, True)
+            self.data_manager.add_additional_reduction_list(self.data_tab_count)
+            self.file_handler.initialize_additional_reduction_table(self.data_tab_count)
+
+        elif self.data_tab_button_mode == DataTabButtonMode.REMOVE:
+            self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
+            self.data_manager.remove_additional_reduction_list(self.data_tab_count)
+            self.data_tab_count -= 1
+
+        self.update_add_data_tab_button_mode()
+
+    def update_add_data_tab_button_mode(self):
+        """Update the add tab button mode after changing the number of data tabs"""
+        if self.data_tab_count == self.max_data_tab_count:
+            self.ui.addTabButton.setText("-")
+            self.data_tab_button_mode = DataTabButtonMode.REMOVE
+
+        if self.data_tab_count == self.min_data_tab_count:
+            self.ui.addTabButton.setText("+")
+            self.data_tab_button_mode = DataTabButtonMode.ADD
+
+    def add_data_tab_by_index(self, tab_index: int):
+        """
+        Add/update a specific data tab
+        """
+        if self.data_tab_count < tab_index <= self.max_data_tab_count:
+            self.ui.tabWidget.setTabVisible(tab_index, True)
+            self.data_tab_count = tab_index
+        self.update_add_data_tab_button_mode()
+
+    def reset_data_tabs(self):
+        """
+        Reset UI to one visible data tab
+        """
+        self.min_data_tab_count = 1
+        self.max_data_tab_count = 4
+        self.data_tab_count = 1
+        self.data_tab_button_mode = DataTabButtonMode.ADD
+        # Initially hide the tabs used for multiple peaks
+        self.ui.tabWidget.setTabVisible(2, False)
+        self.ui.tabWidget.setTabVisible(3, False)
+        self.ui.tabWidget.setTabVisible(4, False)
+
+    def setCurrentReductionTable(self, tab_index: int):
+        """Update the state for active data set and the UI"""
+        if tab_index == 0:  # direct beam tab
+            return
+        # must first update the active reduction list index, then the UI from the active data
+        self.data_manager.update_active_reduction_list(tab_index)
+        if self.data_manager.data_sets:
+            self.file_loaded()
+            self.file_handler.active_data_changed()
 
     def reduceDatasets(self):
         r"""

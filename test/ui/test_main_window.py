@@ -271,6 +271,108 @@ class TestMainGui:
         assert conf2.direct_angle_offset_overwrite == 0
         assert conf2.use_dangle is False
 
+    def test_add_remove_data_tab(self, qtbot):
+        """Test that the add data tab button reveals/hides tabs as expected"""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+
+        def _assert_tabs_visible(tab_ids: list[bool]):
+            for idx, is_visible in enumerate(tab_ids):
+                assert window_main.ui.tabWidget.isTabVisible(idx) == is_visible
+
+        _assert_tabs_visible([True, True, False, False, False])
+
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, False, False])
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, True, False])
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, True, True])
+
+        # reached max number of tabs, button function changes to remove/hide tabs
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, True, False])
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, True, False, False])
+        window_main.ui.addTabButton.clicked.emit()
+        _assert_tabs_visible([True, True, False, False, False])
+
+    @pytest.mark.datarepo
+    def test_change_active_data_tab(self, mocker, qtbot, data_server):
+        """Test that the internal state is updated when the active data tab is changed"""
+        mock_plot_refl = mocker.patch("reflectivity_ui.interfaces.plotting.PlotManager.plot_refl", return_value=True)
+
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+
+        manager = window_main.data_manager
+        manager.load(data_server.path_to("REF_M_40782"), Configuration())
+        manager.add_active_to_reduction()
+        manager.load(data_server.path_to("REF_M_40785"), Configuration())
+        manager.add_active_to_reduction()
+
+        # add second peak tab
+        window_main.ui.addTabButton.clicked.emit()
+        assert mock_plot_refl.call_count == 0
+        # switch to second peak tab
+        window_main.ui.tabWidget.setCurrentIndex(2)
+        assert window_main.data_manager.active_reduction_list_index == 2
+        assert mock_plot_refl.call_count == 1
+        # switch to first peak tab
+        window_main.ui.tabWidget.setCurrentIndex(1)
+        assert window_main.data_manager.active_reduction_list_index == 1
+        assert mock_plot_refl.call_count == 2
+
+    @pytest.mark.datarepo
+    def test_reduction_table_propagate_run(self, qtbot, data_server):
+        """Test right-click action 'Propagate run'"""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+        Configuration.setup_default_values()
+
+        # add direct beam run and data run
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
+        window_main.actionNorm.triggered.emit()
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+        window_main.actionAddPlot.triggered.emit()
+
+        # add second peak tab
+        window_main.ui.addTabButton.clicked.emit()
+
+        # add another run to the primary data table
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
+        window_main.actionAddPlot.triggered.emit()
+
+        reduction_lists = window_main.data_manager.peak_reduction_lists
+        assert len(reduction_lists[1]) == 2
+        assert reduction_lists[1][0].number == "42112"
+        assert reduction_lists[1][1].number == "42113"
+        assert len(reduction_lists[2]) == 1
+        assert reduction_lists[2][0].number == "42113"
+
+        # add new run to the second peak tab using right-click action
+        table = getattr(window_main.ui, "reductionTable")
+
+        def handle_menu():
+            """Trigger propagate run action and check that the run was added to the second tab"""
+            menu = table.findChild(QtWidgets.QMenu)
+            action = menu.actions()[1]
+            assert action.text() == "Propagate run to all tabs"
+            qtbot.keyClick(menu, QtCore.Qt.Key_Down)
+            qtbot.keyClick(menu, QtCore.Qt.Key_Down)
+            qtbot.keyClick(menu, QtCore.Qt.Key_Enter)
+            assert len(window_main.data_manager.peak_reduction_lists[1]) == 2
+            assert len(window_main.data_manager.peak_reduction_lists[2]) == 2
+
+        QtCore.QTimer.singleShot(200, handle_menu)
+        table_item = table.item(0, 0)  # new run on row index 0
+        table_item_rect = table.visualItemRect(table_item)
+        table.customContextMenuRequested.emit(table_item_rect.topLeft())
+
+    def test_reduction_table_remove_run(self):
+        """Test right-click action 'Remove run'"""
+        pass
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

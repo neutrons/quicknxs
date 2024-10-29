@@ -2610,9 +2610,127 @@
                    <string extracomment="Meta data for the complied data set that will be reduced &amp; stitched"/>
                   </property>
                   <property name="currentIndex">
-                   <number>0</number>
+                   <number>1</number>
                   </property>
-                  <widget class="QWidget" name="tab">
+
+                  <widget class="QWidget" name="tab_1">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <attribute name="title">
+                    <string>Direct Beam</string>
+                   </attribute>
+                   <attribute name="toolTip">
+                    <string>A list of datasets available for wavelength normalization</string>
+                   </attribute>
+                   <layout class="QVBoxLayout" name="verticalLayout_17">
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QTableWidget" name="normalizeTable">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="contextMenuPolicy">
+                       <enum>Qt::CustomContextMenu</enum>
+                      </property>
+                      <property name="editTriggers">
+                       <set>QAbstractItemView::NoEditTriggers</set>
+                      </property>
+                      <attribute name="horizontalHeaderCascadingSectionResizes">
+                       <bool>true</bool>
+                      </attribute>
+                      <attribute name="verticalHeaderVisible">
+                       <bool>false</bool>
+                      </attribute>
+                      <attribute name="verticalHeaderDefaultSectionSize">
+                       <number>21</number>
+                      </attribute>
+                      <column>
+                       <property name="text">
+                        <string>Run No.</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Dataset number</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>x0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>X-Center of extraction window</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>xw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>X-Width of extraction window</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>y0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Y-Center of extraction window</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>yw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Y-Width of extraction window</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>bg0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Background X-Center</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>bgw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Background X-width</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>λ</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Central Wavelength</string>
+                       </property>
+                      </column>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_2">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                      <horstretch>0</horstretch>
@@ -2646,6 +2764,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="contextMenuPolicy">
+                       <enum>Qt::CustomContextMenu</enum>
+                      </property>
                       <property name="editTriggers">
                        <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
                       </property>
@@ -2660,9 +2781,6 @@
                       </property>
                       <property name="rowCount">
                        <number>0</number>
-                      </property>
-                      <property name="contextMenuPolicy">
-                       <enum>Qt::CustomContextMenu</enum>
                       </property>
                       <attribute name="horizontalHeaderVisible">
                        <bool>true</bool>
@@ -2793,7 +2911,7 @@
                     </item>
                    </layout>
                   </widget>
-                  <widget class="QWidget" name="tab_2">
+                  <widget class="QWidget" name="tab_peak_2">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                      <horstretch>0</horstretch>
@@ -2801,12 +2919,12 @@
                     </sizepolicy>
                    </property>
                    <attribute name="title">
-                    <string>Direct Beam</string>
+                    <string>Data (ROI 2)</string>
                    </attribute>
                    <attribute name="toolTip">
-                    <string>A list of datasets available for wavelength normalization</string>
+                    <string>A list of datasets that will be used for reduction</string>
                    </attribute>
-                   <layout class="QVBoxLayout" name="verticalLayout_17">
+                   <layout class="QVBoxLayout" name="verticalLayout_16">
                     <property name="leftMargin">
                      <number>0</number>
                     </property>
@@ -2820,20 +2938,44 @@
                      <number>0</number>
                     </property>
                     <item>
-                     <widget class="QTableWidget" name="normalizeTable">
+                     <widget class="QTableWidget" name="reductionTable2">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
-                      <property name="editTriggers">
-                       <set>QAbstractItemView::NoEditTriggers</set>
-                      </property>
                       <property name="contextMenuPolicy">
                        <enum>Qt::CustomContextMenu</enum>
                       </property>
+                      <property name="editTriggers">
+                       <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+                      </property>
+                      <property name="showDropIndicator" stdset="0">
+                       <bool>false</bool>
+                      </property>
+                      <property name="horizontalScrollMode">
+                       <enum>QAbstractItemView::ScrollPerPixel</enum>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>false</bool>
+                      </property>
+                      <property name="rowCount">
+                       <number>0</number>
+                      </property>
+                      <attribute name="horizontalHeaderVisible">
+                       <bool>true</bool>
+                      </attribute>
                       <attribute name="horizontalHeaderCascadingSectionResizes">
+                       <bool>true</bool>
+                      </attribute>
+                      <attribute name="horizontalHeaderDefaultSectionSize">
+                       <number>70</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderMinimumSectionSize">
+                       <number>20</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderStretchLastSection">
                        <bool>true</bool>
                       </attribute>
                       <attribute name="verticalHeaderVisible">
@@ -2847,7 +2989,31 @@
                         <string>Run No.</string>
                        </property>
                        <property name="toolTip">
-                        <string>Dataset number</string>
+                        <string>File Number</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>I0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Scaling Factor</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>NL</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Points cut from low Q side</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>NR</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Points cut from high Q side</string>
                        </property>
                       </column>
                       <column>
@@ -2855,7 +3021,7 @@
                         <string>x0</string>
                        </property>
                        <property name="toolTip">
-                        <string>X-Center of extraction window</string>
+                        <string>Center X-Pixel of Window for Reflectivity</string>
                        </property>
                       </column>
                       <column>
@@ -2863,7 +3029,7 @@
                         <string>xw</string>
                        </property>
                        <property name="toolTip">
-                        <string>X-Width of extraction window</string>
+                        <string>Width in X-Pixels of Window for Reflectivity</string>
                        </property>
                       </column>
                       <column>
@@ -2871,7 +3037,7 @@
                         <string>y0</string>
                        </property>
                        <property name="toolTip">
-                        <string>Y-Center of extraction window</string>
+                        <string>Center Y-Pixel of Window for Reflectivity</string>
                        </property>
                       </column>
                       <column>
@@ -2879,7 +3045,7 @@
                         <string>yw</string>
                        </property>
                        <property name="toolTip">
-                        <string>Y-Width of extraction window</string>
+                        <string>Width in Y-Pixels of Window for Reflectivity</string>
                        </property>
                       </column>
                       <column>
@@ -2887,7 +3053,7 @@
                         <string>bg0</string>
                        </property>
                        <property name="toolTip">
-                        <string>Background X-Center</string>
+                        <string>Background Region Center</string>
                        </property>
                       </column>
                       <column>
@@ -2895,15 +3061,393 @@
                         <string>bgw</string>
                        </property>
                        <property name="toolTip">
-                        <string>Background X-width</string>
+                        <string>Background Region Width</string>
                        </property>
                       </column>
                       <column>
                        <property name="text">
-                        <string>λ</string>
+                        <string>DPix</string>
                        </property>
                        <property name="toolTip">
-                        <string>Central Wavelength</string>
+                        <string>DirectPixel</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Theta</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Scattering angle (degrees)</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Dir. Run</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>The normalization file used for this dataset</string>
+                       </property>
+                      </column>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_peak_3">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <attribute name="title">
+                    <string>Data (ROI 3)</string>
+                   </attribute>
+                   <attribute name="toolTip">
+                    <string>A list of datasets that will be used for reduction</string>
+                   </attribute>
+                   <layout class="QVBoxLayout" name="verticalLayout_16">
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QTableWidget" name="reductionTable3">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="contextMenuPolicy">
+                       <enum>Qt::CustomContextMenu</enum>
+                      </property>
+                      <property name="editTriggers">
+                       <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+                      </property>
+                      <property name="showDropIndicator" stdset="0">
+                       <bool>false</bool>
+                      </property>
+                      <property name="horizontalScrollMode">
+                       <enum>QAbstractItemView::ScrollPerPixel</enum>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>false</bool>
+                      </property>
+                      <property name="rowCount">
+                       <number>0</number>
+                      </property>
+                      <attribute name="horizontalHeaderVisible">
+                       <bool>true</bool>
+                      </attribute>
+                      <attribute name="horizontalHeaderCascadingSectionResizes">
+                       <bool>true</bool>
+                      </attribute>
+                      <attribute name="horizontalHeaderDefaultSectionSize">
+                       <number>70</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderMinimumSectionSize">
+                       <number>20</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderStretchLastSection">
+                       <bool>true</bool>
+                      </attribute>
+                      <attribute name="verticalHeaderVisible">
+                       <bool>false</bool>
+                      </attribute>
+                      <attribute name="verticalHeaderDefaultSectionSize">
+                       <number>21</number>
+                      </attribute>
+                      <column>
+                       <property name="text">
+                        <string>Run No.</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>File Number</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>I0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Scaling Factor</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>NL</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Points cut from low Q side</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>NR</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Points cut from high Q side</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>x0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Center X-Pixel of Window for Reflectivity</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>xw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Width in X-Pixels of Window for Reflectivity</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>y0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Center Y-Pixel of Window for Reflectivity</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>yw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Width in Y-Pixels of Window for Reflectivity</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>bg0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Background Region Center</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>bgw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Background Region Width</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>DPix</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>DirectPixel</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Theta</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Scattering angle (degrees)</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Dir. Run</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>The normalization file used for this dataset</string>
+                       </property>
+                      </column>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_peak_4">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <attribute name="title">
+                    <string>Data (ROI 4)</string>
+                   </attribute>
+                   <attribute name="toolTip">
+                    <string>A list of datasets that will be used for reduction</string>
+                   </attribute>
+                   <layout class="QVBoxLayout" name="verticalLayout_16">
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QTableWidget" name="reductionTable4">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="contextMenuPolicy">
+                       <enum>Qt::CustomContextMenu</enum>
+                      </property>
+                      <property name="editTriggers">
+                       <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+                      </property>
+                      <property name="showDropIndicator" stdset="0">
+                       <bool>false</bool>
+                      </property>
+                      <property name="horizontalScrollMode">
+                       <enum>QAbstractItemView::ScrollPerPixel</enum>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>false</bool>
+                      </property>
+                      <property name="rowCount">
+                       <number>0</number>
+                      </property>
+                      <attribute name="horizontalHeaderVisible">
+                       <bool>true</bool>
+                      </attribute>
+                      <attribute name="horizontalHeaderCascadingSectionResizes">
+                       <bool>true</bool>
+                      </attribute>
+                      <attribute name="horizontalHeaderDefaultSectionSize">
+                       <number>70</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderMinimumSectionSize">
+                       <number>20</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderStretchLastSection">
+                       <bool>true</bool>
+                      </attribute>
+                      <attribute name="verticalHeaderVisible">
+                       <bool>false</bool>
+                      </attribute>
+                      <attribute name="verticalHeaderDefaultSectionSize">
+                       <number>21</number>
+                      </attribute>
+                      <column>
+                       <property name="text">
+                        <string>Run No.</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>File Number</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>I0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Scaling Factor</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>NL</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Points cut from low Q side</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>NR</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Points cut from high Q side</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>x0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Center X-Pixel of Window for Reflectivity</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>xw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Width in X-Pixels of Window for Reflectivity</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>y0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Center Y-Pixel of Window for Reflectivity</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>yw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Width in Y-Pixels of Window for Reflectivity</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>bg0</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Background Region Center</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>bgw</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Background Region Width</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>DPix</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>DirectPixel</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Theta</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Scattering angle (degrees)</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Dir. Run</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>The normalization file used for this dataset</string>
                        </property>
                       </column>
                      </widget>
@@ -2913,7 +3457,29 @@
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                 <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0">
+                  <item>
+                   <widget class="QPushButton" name="addTabButton">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>40</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>Add new data tab (for multiple peaks)</string>
+                    </property>
+                    <property name="text">
+                     <string>+</string>
+                    </property>
+                   </widget>
+                  </item>
                   <item>
                    <widget class="QPushButton" name="reduceButton">
                     <property name="sizePolicy">
@@ -4744,7 +5310,7 @@
     <string>Clear reduction list</string>
    </property>
    <property name="toolTip">
-    <string>Remove all data sets from the reduction list</string>
+    <string>Remove all data sets from the reduction list and any additional peak reduction lists</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+Q</string>
@@ -5366,6 +5932,22 @@
    </hints>
   </connection>
   <connection>
+   <sender>addTabButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>addDataTable()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1064</x>
+     <y>989</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>543</x>
+     <y>435</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>reduceButton</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -5383,6 +5965,54 @@
   </connection>
   <connection>
    <sender>reductionTable</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reductionTableChanged(QTableWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>901</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>888</x>
+     <y>843</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable2</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reductionTableChanged(QTableWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>901</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>888</x>
+     <y>843</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable3</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reductionTableChanged(QTableWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>901</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>888</x>
+     <y>843</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable4</sender>
    <signal>itemChanged(QTableWidgetItem*)</signal>
    <receiver>MainWindow</receiver>
    <slot>reductionTableChanged(QTableWidgetItem*)</slot>
@@ -6182,6 +6812,54 @@
    </hints>
   </connection>
   <connection>
+   <sender>reductionTable2</sender>
+   <signal>cellActivated(int,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_cell_activated(int,int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1268</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>786</x>
+     <y>430</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable3</sender>
+   <signal>cellActivated(int,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_cell_activated(int,int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1268</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>786</x>
+     <y>430</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable4</sender>
+   <signal>cellActivated(int,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_cell_activated(int,int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1268</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>786</x>
+     <y>430</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>normalizeTable</sender>
    <signal>cellActivated(int,int)</signal>
    <receiver>MainWindow</receiver>
@@ -6438,6 +7116,54 @@
    </hints>
   </connection>
   <connection>
+   <sender>reductionTable2</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_table_right_click(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1508</x>
+     <y>1348</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>778</x>
+     <y>551</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable3</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_table_right_click(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1508</x>
+     <y>1348</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>778</x>
+     <y>551</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reductionTable4</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reduction_table_right_click(QPoint)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1508</x>
+     <y>1348</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>778</x>
+     <y>551</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>normalizeTable</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
@@ -6450,6 +7176,22 @@
     <hint type="destinationlabel">
      <x>778</x>
      <y>551</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tabWidget</sender>
+   <signal>currentChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>setCurrentReductionTable()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>785</x>
+     <y>126</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>0</y>
     </hint>
    </hints>
   </connection>
@@ -6466,6 +7208,7 @@
   <slot>replotProjections()</slot>
   <slot>nextFile()</slot>
   <slot>prevFile()</slot>
+  <slot>addDataTable()</slot>
   <slot>reduceDatasets()</slot>
   <slot>normalizeTotalReflection()</slot>
   <slot>reductionTableChanged(QTableWidgetItem*)</slot>

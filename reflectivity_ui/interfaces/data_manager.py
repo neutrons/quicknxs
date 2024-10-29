@@ -9,6 +9,7 @@ import os
 import time
 import numpy as np
 import logging
+import copy
 from reflectivity_ui.interfaces.data_handling.data_set import NexusData
 from reflectivity_ui.interfaces.data_handling.filepath import RunNumbers, FilePath
 from .data_handling import data_manipulation
@@ -19,6 +20,7 @@ from .data_handling import gisans
 
 class DataManager(object):
     MAX_CACHE = 50  # maximum number of loaded datasets (either single-file or merged-files types)
+    MAIN_REDUCTION_LIST_INDEX = 1
 
     def __init__(self, current_directory):
         self.current_directory = current_directory
@@ -30,9 +32,12 @@ class DataManager(object):
         # Cache of loaded data: list of NexusData instances
         self._cache = list()  # type: List[NexusData]
 
-        # The following is information about the data to be combined together
-        # List of data sets
-        self.reduction_list = []  # type: List[NexusData]
+        # Current data tab (ROI)
+        self.active_reduction_list_index = 1
+        # Main data structure holding the reduction list for each ROI/peak
+        #    key: reduction list index, corresponds to the reduction table tab in the UI
+        #    value: list of NexusData
+        self.peak_reduction_lists = {self.active_reduction_list_index: []}  # type: dict[int, list[NexusData]]
         self.direct_beam_list = []  # type: List[NexusData]
         # List of cross-sections common to all reduced data sets
         self.reduction_states = []  # type: List[str]  # List of cross-section states
@@ -60,6 +65,42 @@ class DataManager(object):
         if self._nexus_data is None:
             return None
         return self._nexus_data.file_path
+
+    @property
+    def reduction_list(self):
+        """
+        Returns the reduction list for the active data tab
+
+        Returns
+        -------
+        list[NexusData]
+            The reduction list
+        """
+        return self.peak_reduction_lists[self.active_reduction_list_index]
+
+    @reduction_list.setter
+    def reduction_list(self, value):
+        """
+        Sets the reduction list for the active data tab
+
+        Parameters
+        ----------
+        value: list[NexusData]
+            The reduction list
+        """
+        self.peak_reduction_lists[self.active_reduction_list_index] = value
+
+    @property
+    def main_reduction_list(self):
+        """
+        Returns the reduction list for the first (mandatory) data tab
+
+        Returns
+        -------
+        list[NexusData]
+            The reduction list
+        """
+        return self.peak_reduction_lists[self.MAIN_REDUCTION_LIST_INDEX]
 
     def get_cachesize(self):
         return len(self._cache)
@@ -136,31 +177,69 @@ class DataManager(object):
         """
         return data_set == self._nexus_data
 
-    def is_active_data_compatible(self):
-        r"""
-        @brief Determine if the currently active data set is compatible with the data sets in the reduction list.
+    def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: list):
+        """
+        Determine if the data set is compatible with the data sets in the reduction list.
+
+        A data set is compatible if the polarization cross-section states matches those of the
+        first run in the reduction list, both the same number of states and the same states.
+
+        Parameters
+        ----------
+        nexus_data: NexusData
+            The data set to check if compatible with reduction list
+        reduction_list: list[NexusData]
+            The reduction list
+
+        Returns
+        -------
+        bool
         """
         # If we are starting a new reduction list, just proceed
-        if self.reduction_list == []:
+        if not reduction_list:
             return True
 
+        nexus_data_states = list(nexus_data.cross_sections.keys())
+        reduction_list_states = list(reduction_list[0].cross_sections.keys())
+
         # First, check that we have the same number of states
-        if not len(self.reduction_states) == len(self.data_sets.keys()):
+        if not len(reduction_list_states) == len(nexus_data_states):
             logging.error(
-                "Active data cross-sections ({}) different than those of the"
-                " reduction list ({})".format(self.reduction_states, self.data_sets.keys())
+                "Nexus data cross-sections ({}) different than those of the"
+                " reduction list ({})".format(reduction_list_states, nexus_data_states)
             )
             return False
 
         # Second, make sure the states match
-        for cross_section_state in self.data_sets.keys():
-            if cross_section_state not in self.reduction_states:
+        for cross_section_state in nexus_data_states:
+            if cross_section_state not in reduction_list_states:
                 logging.error(
-                    "Active data cross-section {} not found in those"
+                    "Nexus data cross-section {} not found in those"
                     " of the reduction list".format(cross_section_state)
                 )
                 return False
         return True
+
+    def find_run_number_in_reduction_list(self, run_number: int, reduction_list: list[NexusData]):
+        """
+        Look for the given run number in the reduction list.
+
+        Parameters
+        ----------
+        run_number: int
+            Run number to look for
+        reduction_list: list[NexusData]
+            The reduction list to search
+
+        Returns
+        -------
+        int | None
+            The index in the reduction list or None
+        """
+        for i, nexus_data in enumerate(reduction_list):
+            if nexus_data.number == run_number:
+                return i
+        return None
 
     def find_data_in_reduction_list(self, nexus_data):
         """
@@ -198,30 +277,85 @@ class DataManager(object):
         """
         return self.find_data_in_direct_beam_list(self._nexus_data)
 
-    def add_active_to_reduction(self):
+    def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX):
         r"""
-        @brief Add active data set to reduction list
+        Add active data set to reduction list
+
+        New data sets are always added to the main reduction list. Data sets are added to secondary
+        reduction lists by initializing from the main reduction list (button to add new data tab)
+        or by propagating individual data sets to other tabs (right-click menu).
+
+        Parameters
+        ----------
+        peak_index: int
+            The index of the peak in peak_reduction_lists
+
+        Returns
+        -------
+        bool
+            True if the active data set was added to the reduction list, False if it was not added
         """
-        if self._nexus_data not in self.reduction_list:
-            if self.is_active_data_compatible():
-                if len(self.reduction_list) == 0:
+        reduct_list = self.peak_reduction_lists[peak_index]
+
+        if self._nexus_data not in reduct_list:
+            if self.is_nexus_data_compatible(self._nexus_data, reduct_list):
+                if len(reduct_list) == 0:
                     self.reduction_states = list(self.data_sets.keys())
                 is_inserted = False
                 q_min, _ = self._nexus_data.get_q_range()
                 if q_min is None:
                     logging.error("Could not get q range information")
                     return False
-                for i in range(len(self.reduction_list)):
-                    _q_min, _ = self.reduction_list[i].get_q_range()
+                for i in range(len(reduct_list)):
+                    _q_min, _ = reduct_list[i].get_q_range()
                     if q_min <= _q_min:
-                        self.reduction_list.insert(i, self._nexus_data)
+                        reduct_list.insert(i, self._nexus_data)
                         is_inserted = True
                         break
                 if not is_inserted:
-                    self.reduction_list.append(self._nexus_data)
+                    reduct_list.append(self._nexus_data)
                 return True
             else:
                 logging.error("The data you are trying to add has different cross-sections")
+        return False
+
+    def copy_nexus_data_to_reduction(self, nexus_data_to_copy: NexusData, peak_index: int):
+        r"""
+        Add data set to the reduction list specified by `peak_index`
+
+        Parameters
+        ----------
+        nexus_data_to_copy: NexusData
+            Data set to copy
+        peak_index: int
+            Peak (reduction list) to copy data set to
+
+        Returns
+        -------
+        bool
+            True if the data set was added successfully, otherwise False
+        """
+        reduction_list = self.peak_reduction_lists[peak_index]
+
+        # check if run already exists in this reduction list
+        if any(run_data.number == nexus_data_to_copy.number for run_data in reduction_list):
+            return False
+
+        nexus_data = copy.deepcopy(nexus_data_to_copy)
+        if self.is_nexus_data_compatible(nexus_data, reduction_list):
+            is_inserted = False
+            q_min, _ = nexus_data.get_q_range()
+            for i in range(len(reduction_list)):
+                _q_min, _ = reduction_list[i].get_q_range()
+                if q_min <= _q_min:
+                    reduction_list.insert(i, nexus_data)
+                    is_inserted = True
+                    break
+            if not is_inserted:
+                reduction_list.append(nexus_data)
+            return True
+        else:
+            logging.error("The data you are trying to add has different cross-sections")
         return False
 
     def add_active_to_normalization(self):
@@ -242,6 +376,17 @@ class DataManager(object):
                 self.direct_beam_list.pop(i)
                 return i
         return -1
+
+    def remove_from_active_reduction_list(self, index: int):
+        """
+        Remove item from the active reduction list
+
+        Parameters
+        ----------
+        index: int
+            Index of the item to remove
+        """
+        self.reduction_list.pop(index)
 
     def clear_direct_beam_list(self):
         """
@@ -521,7 +666,9 @@ class DataManager(object):
         elif active_only:
             self.active_channel.reflectivity(direct_beam=direct_beam, configuration=configuration)
         else:
-            nexus_data.calculate_reflectivity(direct_beam=direct_beam, configuration=configuration)
+            nexus_data.calculate_reflectivity(
+                direct_beam=direct_beam, configuration=configuration, ws_suffix=str(self.active_reduction_list_index)
+            )
 
     def find_best_direct_beam(self):
         """
@@ -717,26 +864,37 @@ class DataManager(object):
         :param ProgressReporter progress: progress reporter
         """
         t_0 = time.time()
-        db_files, data_files = quicknxs_io.read_reduced_file(file_path, configuration)
+        db_files, data_files, additional_peaks = quicknxs_io.read_reduced_file(file_path, configuration)
         logging.info("Reduced file loaded: %s sec", time.time() - t_0)
         n_total = len(db_files) + len(data_files)
         if progress and n_total > 0:
             progress.set_value(1, message="Loaded %s" % os.path.basename(file_path), out_of=n_total)
-        self.load_direct_beam_and_data_files(db_files, data_files, configuration, progress, t_0)
+        self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, t_0)
         logging.info("DONE: %s sec", time.time() - t_0)
 
     def load_direct_beam_and_data_files(
-        self, db_files, data_files, configuration=None, progress=None, force=False, t_0=None
+        self, db_files, data_files, additional_peaks=None, configuration=None, progress=None, force=False, t_0=None
     ):
         """
         Load direct beam and data files and add them to the direct beam list and reduction
         list, respectively
-        :param list db_files: list of (run_number, run_file, conf) for direct beam files
-        :param list data_files: list of (run_number, run_file, conf) for data files
-        :param Configuration configuration: configuration to base the loaded data on
-        :param ProgressReporter progress: progress reporter
-        :param bool force:
-        :param float t_0: start time for logging data loading time
+
+        Parameters
+        ----------
+        db_files: list
+            List of (run_number, run_file, conf) for direct beam files
+        data_files: list
+            List of (run_number, run_file, conf) for data files
+        additional_peaks: list | None
+            List of (peak_index, run_number, run_file, conf) for data files for additional peaks
+        configuration: Configuration
+            Configuration to base the loaded data on
+        progress: ProgressReporter
+            Progress reporter
+        force: bool
+            If True, ignore cache and force reloading from file
+        t_0: float
+            Start time for logging data loading time
         """
         if not t_0:
             t_0 = time.time()
@@ -784,6 +942,20 @@ class DataManager(object):
         if progress:
             progress.set_value(n_total, message="Done", out_of=n_total)
 
+        # Initialize any additional peak reduction lists by copying the data from the main reduction list
+        if additional_peaks:
+            for peak_index, r_id, run_file, conf in additional_peaks:
+                if peak_index not in self.peak_reduction_lists:
+                    self.peak_reduction_lists[peak_index] = []
+                self.set_active_reduction_list_index(peak_index)
+                # find run in main reduction list and make a copy TODO: what if it is missing?
+                run_index = [i for i, data in enumerate(self.main_reduction_list) if data.number == str(r_id)][0]
+                self._nexus_data = copy.deepcopy(self.main_reduction_list[run_index])
+                configuration.normalization = None
+                self.update_configuration(conf)
+                self.calculate_reflectivity()
+                self.add_active_to_reduction(peak_index)
+
     @property
     def current_event_files(self):
         # type: () -> List[str]
@@ -798,7 +970,7 @@ class DataManager(object):
 
     def reload_files(self, configuration=None, progress=None):
         """
-        Force reload of files in the reduction list and direct beam list
+        Force reload of files in the reduction lists and direct beam list
         """
 
         def _get_nexus_conf(nexus_data):
@@ -807,9 +979,76 @@ class DataManager(object):
 
         # Get files to reload
         db_files = [(nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in self.direct_beam_list]
-        data_files = [(nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in self.reduction_list]
+        data_files = []
+        additional_peaks = []
+        for ipeak, reduction_list in self.peak_reduction_lists.items():
+            if ipeak == self.MAIN_REDUCTION_LIST_INDEX:
+                data_files = [(nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in reduction_list]
+            else:
+                additional_peaks = [
+                    (ipeak, nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in reduction_list
+                ]
         # Clear the lists
-        self.reduction_list.clear()
         self.direct_beam_list.clear()
+        [reduct_list.clear() for reduct_list in self.peak_reduction_lists.values()]
         # Reload files and add to reduction and direct beam lists
-        self.load_direct_beam_and_data_files(db_files, data_files, configuration, progress, True)
+        self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, True)
+
+    def add_additional_reduction_list(self, tab_index: int):
+        """
+        Add reduction list for an additional ROI/peak
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the peak in `self.peak_reduction_lists`
+        """
+        if self.main_reduction_list and tab_index not in self.peak_reduction_lists:
+            self.peak_reduction_lists[tab_index] = copy.deepcopy(self.main_reduction_list)
+
+    def remove_additional_reduction_list(self, tab_index: int):
+        """
+        Remove reduction list for additional ROI/peak
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the peak in `self.peak_reduction_lists`
+        """
+        if tab_index in self.peak_reduction_lists:
+            self.peak_reduction_lists.pop(tab_index)
+
+    def set_active_reduction_list_index(self, tab_index: int):
+        """
+        Set the active reduction list index
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the peak in `self.peak_reduction_lists`
+        """
+        self.active_reduction_list_index = tab_index
+
+    def update_active_reduction_list(self, tab_index: int):
+        """
+        Updates the active reduction list and run
+
+        Parameters
+        ----------
+        tab_index: int
+            Index of the peak in `self.peak_reduction_lists`
+        """
+        active_data_idx = self.find_active_data_id()
+        self.set_active_reduction_list_index(tab_index)
+        # keep same selected run if available in the other reduction table
+        if active_data_idx and active_data_idx < len(self.reduction_list):
+            self.set_active_data_from_reduction_list(active_data_idx)
+        else:
+            self.set_active_data_from_reduction_list(0)
+
+    def clear_reduction_lists(self):
+        """
+        Resets to one empty reduction list
+        """
+        self.active_reduction_list_index = 1
+        self.peak_reduction_lists = {self.active_reduction_list_index: []}

@@ -178,6 +178,44 @@ def test_reload_all_files(qtbot):
     assert data_manager._nexus_data == data_manager.reduction_list[selected_row]
 
 
+@pytest.mark.datarepo
+def test_reload_all_files_two_data_tabs(qtbot):
+    """Test function reload_all_files"""
+    main_window = MainWindow()
+    handler = MainHandler(main_window)
+    data_manager = main_window.data_manager
+    qtbot.addWidget(main_window)
+    selected_row = 0
+
+    # Add one direct beam run and two data runs
+    ui_utilities.setText(main_window.numberSearchEntry, str(40786), press_enter=True)
+    ui_utilities.set_current_file_by_run_number(main_window, 40786)
+    main_window.actionNorm.triggered.emit()
+    ui_utilities.set_current_file_by_run_number(main_window, 40785)
+    main_window.actionAddPlot.triggered.emit()
+    ui_utilities.set_current_file_by_run_number(main_window, 40782)
+    main_window.actionAddPlot.triggered.emit()
+
+    # Add second peak data tab
+    main_window.addDataTable()
+
+    # Select/plot the first data run
+    main_window.reduction_cell_activated(selected_row, 0)
+
+    # Test that reloading all files does not change the active run and data tab
+    assert main_window.ui.reductionTable.rowCount() == 2
+    assert len(data_manager.reduction_list) == 2
+    assert len(data_manager.peak_reduction_lists[2]) == 2
+    assert data_manager.active_reduction_list_index == 1
+    assert data_manager._nexus_data == data_manager.reduction_list[selected_row]
+    handler.reload_all_files()
+    assert main_window.ui.reductionTable.rowCount() == 2
+    assert len(data_manager.reduction_list) == 2
+    assert len(data_manager.peak_reduction_lists[2]) == 2
+    assert data_manager.active_reduction_list_index == 1
+    assert data_manager._nexus_data == data_manager.reduction_list[selected_row]
+
+
 def _get_nexus_data():
     """Data for testing"""
     config = Configuration()
