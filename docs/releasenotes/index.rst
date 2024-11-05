@@ -12,13 +12,14 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 **Of interest to the User**:
 
-- PR #91: Add ability to reduce multiple samples from the same run
 - PR #104: Update Mantid version to 6.10
 - PR #95: Optional dead-time correction (disabled by default)
+- PR #91: Add ability to reduce multiple samples from the same run
 
 **Of interest to the Developer:**
 
 - PR #109: Add test fixture that fixes tests changing settings in ~/.config/.refredm.conf
+- PR #108: Replace build with python-build in environment.yml
 - PR #106: Enable tests using the data repo git LFS files in the CI pipeline
 - PR #XYZ: one-liner description
 
