@@ -7,7 +7,6 @@ dependencies:
 - mantidworkbench=6.10.0
 - anaconda-client
 - boa
-- build
 - codecov
 - conda-build
 - conda-verify
@@ -20,6 +19,7 @@ dependencies:
 - pytest-cov
 - pytest-mock
 - pytest-xvfb
+- python-build
 - sphinx
 - sphinx_rtd_theme
 - toml
