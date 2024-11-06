@@ -6,7 +6,7 @@ from test.ui import ui_utilities
 
 # third party imports
 import pytest
-from qtpy import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 
 # standard library imports
