@@ -3,7 +3,7 @@ from reflectivity_ui.interfaces.configuration import Configuration
 from reflectivity_ui.interfaces.event_handlers.widgets import AcceptRejectDialog
 
 # third party imports
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QGroupBox, QHBoxLayout, QCheckBox, QPushButton
 
 
@@ -72,6 +72,6 @@ class DeadTimeEntryPoint(QGroupBox):
         # Enable the settings button if the checkbox is checked, disable otherwise
         self.settingsButton.setEnabled(state)
         # Update the global configuration state
-        Configuration.apply_deadtime = state
+        Configuration.apply_deadtime = state == Qt.CheckState.Checked
         # Trigger reloading all files to apply the new dead-time settings
         self.reload_files_signal.emit()
