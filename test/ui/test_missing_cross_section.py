@@ -15,6 +15,7 @@ TEST_REFLECTIVITY_THRESHOLD_VALUE = 0.01
 def test_missing_cross_section(qtbot):
     r"""Test a run where the crossection corresponding to the On-On spin combination has no integrated
     proton charge. The application produces and empty reflectivity curve for On-On."""
+    Configuration.setup_default_values()
     main_window = MainWindow()
     qtbot.addWidget(main_window)
     # load the run and find the total "intensity" of the x vs TOF plot
