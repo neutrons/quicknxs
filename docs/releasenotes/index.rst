@@ -17,7 +17,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 **Of interest to the Developer:**
 
-- PR #XYZ: one-liner description
+- PR #109: Add test fixture that fixes tests changing settings in ~/.config/.refredm.conf
 
 
 v3.2.0
