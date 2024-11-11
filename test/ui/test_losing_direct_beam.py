@@ -9,7 +9,6 @@ import pytest
 # standard library imports
 
 
-@pytest.mark.skip(reason="WIP")
 def test_losing_direct_beam(qtbot):
     r"""Test that reduction list runs do not lose their direct beam when the user clicks another run in the file list"""
     main_window = MainWindow()
