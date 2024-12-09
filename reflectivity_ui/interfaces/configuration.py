@@ -44,6 +44,9 @@ class Configuration(object):
     deadtime_tof_step = 100
     # Direct beam uses the same low res roi as the data run
     lock_direct_beam_y = False
+    # Number of events below which we throw away a workspace
+    # Note: not exposed in the UI, but can be modified in ~/.config/.refredm.conf
+    nbr_events_min = 100
 
     def __init__(self, settings=None):
         self.instrument = Instrument()
@@ -241,6 +244,9 @@ class Configuration(object):
         settings.setValue("deadtime_value", self.deadtime_value)
         settings.setValue("deadtime_tof_step", self.deadtime_tof_step)
 
+        # Number of events below which we throw away a workspace
+        settings.setValue("nbr_events_min", self.nbr_events_min)
+
         # Off-specular options
         settings.setValue("off_spec_x_axis", self.off_spec_x_axis)
         settings.setValue("off_spec_slice", self.off_spec_slice)
@@ -346,6 +352,9 @@ class Configuration(object):
         Configuration.deadtime_value = float(settings.value("deadtime_value", self.deadtime_value))
         Configuration.deadtime_tof_step = float(settings.value("deadtime_tof_step", self.deadtime_tof_step))
 
+        # Number of events below which we throw away a workspace
+        Configuration.nbr_events_min = int(settings.value("nbr_events_min", self.nbr_events_min))
+
         # Off-specular options
         self.off_spec_x_axis = int(settings.value("off_spec_x_axis", self.off_spec_x_axis))
         self.off_spec_slice = _verify_true("off_spec_slice", self.off_spec_slice)
@@ -403,6 +412,7 @@ class Configuration(object):
         cls.deadtime_value = 4.2
         cls.deadtime_tof_step = 100
         cls.lock_direct_beam_y = False
+        cls.nbr_events_min = 100
 
 
 def get_direct_beam_low_res_roi(data_conf, direct_beam_conf):

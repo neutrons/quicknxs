@@ -59,3 +59,26 @@ def test_mantid_algorithm_exec():
     custom_value = 4
     ws_out = mantid_algorithm_exec(TestMantidAlgo, Value=custom_value, OutputWorkspace="output")
     assert ws_out.readY(0)[0] == custom_value
+
+
+@pytest.mark.datarepo
+def test_load_data_nbr_events_min(data_server):
+    """Test load data with one cross-section with too few events"""
+    conf = Configuration()
+    file_path = data_server.path_to("REF_M_40776")
+
+    # load with no cut-off on number of events
+    conf.nbr_events_min = 0
+    ws_list = conf.instrument.load_data(file_path, conf)
+    assert len(ws_list) == 3
+
+    # load with cut-off on number of events
+    conf.nbr_events_min = 100
+    ws_list = conf.instrument.load_data(file_path, conf)
+    assert len(ws_list) == 2
+
+    # test loading with dead-time correction
+    conf.nbr_events_min = 100
+    conf.apply_deadtime = True
+    ws_list = conf.instrument.load_data(file_path, conf)
+    assert len(ws_list) == 2
