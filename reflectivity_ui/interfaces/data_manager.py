@@ -475,10 +475,11 @@ class DataManager(object):
                     self.direct_beam_list[direct_beam_list_id] = nexus_data
 
                 # Compute reflectivity
-                try:
-                    self.calculate_reflectivity()
-                except Exception as e:
-                    logging.error("Reflectivity calculation failed for %s exception %s", file_name, e)
+                if not nexus_data.is_direct_beam():
+                    try:
+                        self.calculate_reflectivity()
+                    except Exception as e:
+                        logging.error("Reflectivity calculation failed for %s exception %s", file_name, e)
 
                 # if cached reduced data exceeds maximum cache size, remove the oldest reduced data
                 while len(self._cache) >= self.MAX_CACHE:

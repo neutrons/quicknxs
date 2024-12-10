@@ -462,6 +462,10 @@ class NexusData(object):
 
         return self.cross_sections
 
+    def is_direct_beam(self):
+        """Returns True if the main cross-section is a direct beam"""
+        return self.cross_sections[self.main_cross_section].is_direct_beam
+
 
 class CrossSectionData(object):
     """
