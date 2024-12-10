@@ -52,7 +52,8 @@ def text_from_plot1D(widget: "MplWidget", line_number=0) -> tuple:
     r"""Get the text from an MplWidget representing a 1D plot
     Returns
     -------
-    X and Y data as a tuple of numpy arrays
+    str
+        The first text that is not a title or label
     """
     figure = widget.canvas.fig
     axes = figure.get_axes()[0]
