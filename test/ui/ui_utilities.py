@@ -2,6 +2,7 @@
 
 
 # third party imports
+import matplotlib.pyplot as plt
 from numpy.ma import MaskedArray
 from PyQt5 import QtCore
 
@@ -45,6 +46,23 @@ def data_from_plot2D(widget: "MplWidget") -> MaskedArray:
     figure = widget.canvas.fig
     axes = figure.get_axes()[0]
     return axes.get_images()[0].get_array()
+
+
+def text_from_plot1D(widget: "MplWidget", line_number=0) -> tuple:
+    r"""Get the text from an MplWidget representing a 1D plot
+    Returns
+    -------
+    str
+        The first text that is not a title or label
+    """
+    figure = widget.canvas.fig
+    axes = figure.get_axes()[0]
+    texts = [
+        child
+        for child in axes.get_children()
+        if isinstance(child, plt.Text) and child not in [axes.title, axes.xaxis.label, axes.yaxis.label]
+    ]
+    return texts[0].get_text()
 
 
 def set_current_file_by_run_number(widget, run_number):
