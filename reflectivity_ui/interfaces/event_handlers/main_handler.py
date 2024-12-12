@@ -77,7 +77,7 @@ class MainHandler(object):
         -------
         QTableWidget
         """
-        if self.ui.tabWidget.currentIndex == self.DIRECT_BEAM_TAB_INDEX:
+        if self.ui.tabWidget.currentIndex() == self.DIRECT_BEAM_TAB_INDEX:
             # get the table for the main data tab
             current_table = self.ui.tabWidget.widget(self.MAIN_DATA_TAB_INDEX).findChild(QtWidgets.QTableWidget)
         else:
