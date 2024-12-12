@@ -109,9 +109,14 @@ def test_reflectivity_recalculated_on_config_change(mocker, qtbot):
     main_window.actionAddPlot.triggered.emit()
     assert mock_calculate_reflectivity.call_count == 2
 
+    # add a data tab - it is automatically initialized with the two runs from the first data tab
+    main_window.addDataTable()
+    nbr_data_tabs = main_window.data_tab_count
+    assert nbr_data_tabs == 2
+
     # check that all reflectivity curves are recalculated when global binning configuration is changed
 
-    num_runs = 2
+    num_runs = 2 * nbr_data_tabs
 
     # test toggling `fanReflectivity`
     prev_call_count = mock_calculate_reflectivity.call_count
