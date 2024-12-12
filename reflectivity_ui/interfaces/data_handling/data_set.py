@@ -431,7 +431,7 @@ class NexusData(object):
 
             # Get rid of empty workspaces
             logging.info("Loading %s: %s events", str(channel), ws.getNumberEvents())
-            if ws.getNumberEvents() < N_EVENTS_CUTOFF:
+            if ws.getNumberEvents() < self.configuration.nbr_events_min:
                 logging.warning("Too few events for %s: %s", channel, ws.getNumberEvents())
                 continue
 

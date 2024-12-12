@@ -126,6 +126,31 @@ def apply_dead_time_correction(ws, configuration, error_ws=None):
     return ws
 
 
+def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
+    """
+    Removes workspaces with number of events below the cutoff from a list of workspaces
+
+    Parameters
+    ----------
+    ws_list: list[EventWorkspace]
+    nbr_events_cutoff: int
+        Minimum number of events
+
+    Returns
+    -------
+    list[EventWorkspace]
+        Input list with low event workspaces removes
+    """
+    pruned_list = []
+    for ws in ws_list:
+        xs_name = ws.getRun()["cross_section_id"].value
+        if ws.getNumberEvents() < nbr_events_cutoff:
+            logging.warning("Too few events for %s: %s", xs_name, ws.getNumberEvents())
+        else:
+            pruned_list.append(ws)
+    return pruned_list
+
+
 class Instrument(object):
     """
     Instrument class. Holds the data handling that is unique to a specific instrument.
@@ -212,7 +237,6 @@ class Instrument(object):
         """
         fp_instance = FilePath(file_path)
         xs_list = list()
-        err_list = list()
         temp_workspace_root_name = "".join(random.sample(string.ascii_letters, 12))  # random string of 12 characters
         workspace_root_name = fp_instance.run_numbers(string_representation="short")
         for path in fp_instance.single_paths:
@@ -231,6 +255,8 @@ class Instrument(object):
                     logging.warning("Could not filter data, using getDI")
                     ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
                     _path_xs_list = self.dummy_filter_cross_sections(ws, name_prefix=temp_workspace_root_name)
+                # Remove workspaces with too few events
+                _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
                 if configuration is not None and configuration.apply_deadtime:
                     # Load error events from the bank_error_events entry
                     err_ws = api.LoadErrorEventsNexus(path)
