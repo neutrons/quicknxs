@@ -614,13 +614,14 @@ class DataManager(object):
 
     def reduce_spec(self):
         """
-        Calculate reflectivity for all runs in the reduction list
+        Calculate reflectivity for all runs in all reduction lists
         """
-        for nexus_data in self.reduction_list:
-            try:
-                self.calculate_reflectivity(nexus_data=nexus_data)
-            except:
-                logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.number, sys.exc_info()[1])
+        for reduct_list in self.peak_reduction_lists.values():
+            for nexus_data in reduct_list:
+                try:
+                    self.calculate_reflectivity(nexus_data=nexus_data)
+                except:
+                    logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.number, sys.exc_info()[1])
 
     def reduce_offspec(self, progress=None):
         """
