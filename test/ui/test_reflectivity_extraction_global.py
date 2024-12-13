@@ -111,26 +111,26 @@ def test_reflectivity_recalculated_on_config_change(mocker, qtbot):
 
     # add a data tab - it is automatically initialized with the two runs from the first data tab
     main_window.addDataTable()
-    nbr_data_tabs = main_window.data_tab_count
-    assert nbr_data_tabs == 2
+    number_data_tabs = main_window.data_tab_count
+    assert number_data_tabs == 2
 
     # check that all reflectivity curves are recalculated when global binning configuration is changed
 
-    num_runs = 2 * nbr_data_tabs
+    number_runs = 2 * number_data_tabs
 
     # test toggling `fanReflectivity`
     prev_call_count = mock_calculate_reflectivity.call_count
     main_window.ui.fanReflectivity.nextCheckState()
-    assert mock_calculate_reflectivity.call_count == prev_call_count + num_runs
+    assert mock_calculate_reflectivity.call_count == prev_call_count + number_runs
 
     # test toggling `final_rebin_checkbox`
     prev_call_count = mock_calculate_reflectivity.call_count
     main_window.ui.final_rebin_checkbox.nextCheckState()
-    assert mock_calculate_reflectivity.call_count == prev_call_count + num_runs
+    assert mock_calculate_reflectivity.call_count == prev_call_count + number_runs
 
     # test editing `q_rebin_spinbox`
     prev_call_count = mock_calculate_reflectivity.call_count
     q_spinbox = main_window.ui.q_rebin_spinbox
     q_delta = q_spinbox.singleStep() if q_spinbox.value() < 0 else -q_spinbox.singleStep()
     ui_utilities.setValue(q_spinbox, q_spinbox.value() + q_delta, editing_finished=True)
-    assert mock_calculate_reflectivity.call_count == prev_call_count + num_runs
+    assert mock_calculate_reflectivity.call_count == prev_call_count + number_runs
