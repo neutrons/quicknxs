@@ -231,5 +231,31 @@ def _get_nexus_data():
     return nexus_data
 
 
+def test_reduction_table(qtbot):
+    """Test property reduction_table which is computed based on the selected tab in the UI"""
+    main_window = MainWindow()
+    handler = MainHandler(main_window)
+    data_tab_widget = main_window.ui.tabWidget
+    qtbot.addWidget(main_window)
+
+    # Add second data tab
+    main_window.addDataTable()
+    main_data_table_widget = data_tab_widget.widget(handler.MAIN_DATA_TAB_INDEX).findChild(QtWidgets.QTableWidget)
+    second_data_table_widget = data_tab_widget.widget(2).findChild(QtWidgets.QTableWidget)
+
+    # Test that the main data tab is active by default
+    assert handler.reduction_table == main_data_table_widget
+
+    # When the direct beam tab is active, `reduction_table` should return the main data table widget
+    data_tab_widget.setCurrentIndex(handler.DIRECT_BEAM_TAB_INDEX)
+    assert handler.reduction_table == main_data_table_widget
+
+    # When one of the data tabs is active, `reduction_table` should return the corresponding data table widget
+    data_tab_widget.setCurrentIndex(handler.MAIN_DATA_TAB_INDEX)
+    assert handler.reduction_table == main_data_table_widget
+    data_tab_widget.setCurrentIndex(2)
+    assert handler.reduction_table == second_data_table_widget
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

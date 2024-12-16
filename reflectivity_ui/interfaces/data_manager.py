@@ -1005,7 +1005,7 @@ class DataManager(object):
         tab_index: int
             Index of the peak in `self.peak_reduction_lists`
         """
-        if self.main_reduction_list and tab_index not in self.peak_reduction_lists:
+        if self.main_reduction_list is not None and tab_index not in self.peak_reduction_lists:
             self.peak_reduction_lists[tab_index] = copy.deepcopy(self.main_reduction_list)
 
     def remove_additional_reduction_list(self, tab_index: int):
