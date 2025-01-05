@@ -622,18 +622,21 @@ class PlotManager(object):
             ymin = 1.5
             ymax = 1e-7
             ynormed = self.main_window.data_manager.active_channel.r[P0:PN]
+            directbeam = self.main_window.data_manager.find_active_direct_beam_id()
             if len(ynormed[ynormed > 0]) >= 2:
-                ymin = min(ymin, ynormed[ynormed > 0].min())
-                ymax = _set_ymax(ymax, ynormed)
-                self.main_window.ui.refl.errorbar(
-                    self.main_window.data_manager.active_channel.q[P0:PN],
-                    ynormed,
-                    yerr=self.main_window.data_manager.active_channel.dr[P0:PN],
-                    label="Active",
-                    lw=2,
-                    capsize=1,
-                    color="black",
-                )
+                # Only plot "active" if the active data is not a direct beam
+                if directbeam is None:
+                    ymin = min(ymin, ynormed[ynormed > 0].min())
+                    ymax = _set_ymax(ymax, ynormed)
+                    self.main_window.ui.refl.errorbar(
+                        self.main_window.data_manager.active_channel.q[P0:PN],
+                        ynormed,
+                        yerr=self.main_window.data_manager.active_channel.dr[P0:PN],
+                        label="Active",
+                        lw=2,
+                        capsize=1,
+                        color="black",
+                    )
             else:
                 self.main_window.ui.refl.canvas.ax.text(
                     0.5,
