@@ -624,7 +624,6 @@ class PlotManager(object):
             ynormed = self.main_window.data_manager.active_channel.r[P0:PN]
             directbeam = self.main_window.data_manager.find_active_direct_beam_id()
             if len(ynormed[ynormed > 0]) >= 2:
-                # Only plot "active" if the active data is not a direct beam
                 if directbeam is None:
                     ymin = min(ymin, ynormed[ynormed > 0].min())
                     ymax = _set_ymax(ymax, ynormed)
