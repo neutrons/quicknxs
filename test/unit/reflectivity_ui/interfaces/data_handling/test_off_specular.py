@@ -1,7 +1,7 @@
 # local imports
-from reflectivity_ui.interfaces.configuration import Configuration
-from reflectivity_ui.interfaces.data_handling.off_specular import OffSpecular
-from reflectivity_ui.interfaces.data_manager import DataManager
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.off_specular import OffSpecular
+from quicknxs.interfaces.data_manager import DataManager
 
 # third-party imports
 import pytest

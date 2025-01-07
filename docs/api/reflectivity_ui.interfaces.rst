@@ -1,7 +1,7 @@
 reflectivity\_ui.interfaces package
 ===================================
 
-.. automodule:: reflectivity_ui.interfaces
+.. automodule:: quicknxs.interfaces
    :members:
    :undoc-members:
    :show-inheritance:
@@ -13,8 +13,8 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   reflectivity_ui.interfaces.data_handling
-   reflectivity_ui.interfaces.event_handlers
+   quicknxs.interfaces.data_handling
+   quicknxs.interfaces.event_handlers
 
 
 Submodules
@@ -23,7 +23,7 @@ Submodules
 reflectivity\_ui.interfaces.configuration. module
 -------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.configuration
+.. automodule:: quicknxs.interfaces.configuration
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ reflectivity\_ui.interfaces.configuration. module
 reflectivity\_ui.interfaces.data\_manager module
 ------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.data_manager
+.. automodule:: quicknxs.interfaces.data_manager
    :members:
    :undoc-members:
    :show-inheritance:
@@ -39,7 +39,7 @@ reflectivity\_ui.interfaces.data\_manager module
 reflectivity\_ui.interfaces.main\_window module
 -----------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.main_window
+.. automodule:: quicknxs.interfaces.main_window
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +47,7 @@ reflectivity\_ui.interfaces.main\_window module
 reflectivity\_ui.interfaces.plotting module
 -------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.plotting
+.. automodule:: quicknxs.interfaces.plotting
    :members:
    :undoc-members:
    :show-inheritance:
@@ -55,7 +55,7 @@ reflectivity\_ui.interfaces.plotting module
 reflectivity\_ui.interfaces.reduction\_dialog module
 ----------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.reduction_dialog
+.. automodule:: quicknxs.interfaces.reduction_dialog
    :members:
    :undoc-members:
    :show-inheritance:
@@ -63,7 +63,7 @@ reflectivity\_ui.interfaces.reduction\_dialog module
 reflectivity\_ui.interfaces.result\_viewer module
 -------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.result_viewer
+.. automodule:: quicknxs.interfaces.result_viewer
    :members:
    :undoc-members:
    :show-inheritance:
@@ -71,7 +71,7 @@ reflectivity\_ui.interfaces.result\_viewer module
 reflectivity\_ui.interfaces.smooth\_dialog module
 -------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.smooth_dialog
+.. automodule:: quicknxs.interfaces.smooth_dialog
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,5 +1,5 @@
 # local imports
-from reflectivity_ui.config import Settings
+from quicknxs.config import Settings
 
 # 3rd-party imports
 import pytest

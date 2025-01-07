@@ -9,7 +9,7 @@ Overview
 Developer Account
 -----------------
 
-All the development work is done via GitHub, and the developers working on ``reflectivity_ui`` must have a valid GitHub account with 2-step authentication enabled.
+All the development work is done via GitHub, and the developers working on ``quicknxs`` must have a valid GitHub account with 2-step authentication enabled.
 For developers who are part of SAE@ORNL, please contact a senior developer to add you to the project.
 
 
@@ -62,4 +62,4 @@ Once the final approval from CIS team is given, this ``qa`` branch will be merge
 At the beginning of every month, a auto pipeline will tag the current ``main`` if there are new features or bug fixes, along with publishing the new version to the production server for general users to use.
 
 By default, the ``next`` branch is published to a conda channel called ``neutrons`` whenever a feature branch is merged into ``next``.
-Similarly, the tagging of ``main`` will trigger the pipeline to publish the stable version of ``reflectivity_ui`` to both ``conda-forge`` as well as ``PyPI``.
+Similarly, the tagging of ``main`` will trigger the pipeline to publish the stable version of ``quicknxs`` to both ``conda-forge`` as well as ``PyPI``.

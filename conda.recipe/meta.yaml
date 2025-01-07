@@ -9,7 +9,7 @@
 {% set version_number = environ.get('GIT_DESCRIBE_NUMBER', '0') | string %}
 
 package:
-  name: "reflectivity_ui"
+  name: "quicknxs"
   version: {{ version }}
 
 source:
@@ -41,7 +41,7 @@ requirements:
 
 test:
   imports:
-    - reflectivity_ui
+    - quicknxs
 
 about:
   home: {{ url }}

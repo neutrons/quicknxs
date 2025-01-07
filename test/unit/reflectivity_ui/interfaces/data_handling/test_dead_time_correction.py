@@ -1,6 +1,6 @@
 # package imports
-from reflectivity_ui.interfaces.data_handling.DeadTimeCorrection import SingleReadoutDeadTimeCorrection
-from reflectivity_ui.interfaces.data_handling.instrument import mantid_algorithm_exec
+from quicknxs.interfaces.data_handling.DeadTimeCorrection import SingleReadoutDeadTimeCorrection
+from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
 
 # 3rd-party imports
 import mantid.simpleapi as api

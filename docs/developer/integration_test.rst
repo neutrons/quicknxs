@@ -7,7 +7,7 @@ The Data Repository
 ===================
 
 Integration tests will typically require data from the **data repository**
-located in `reflectivity_ui/tests/data/reflectivity_ui-data/` as a
+located in `quicknxs/tests/data/quicknxs-data/` as a
 `git submodule <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_.
 
 Git Submodule
@@ -20,10 +20,10 @@ Git Submodule
 
 **typical commands:**
 
-Here, "submodule" refers to repo `reflectivity_ui-data` and "parent" refers to repo `reflectivity_ui`
+Here, "submodule" refers to repo `quicknxs-data` and "parent" refers to repo `quicknxs`
 
 - checkout the submodule after cloning the parent with command `git submodule init`
-- find the refspec stored in the parent with command `git ls-tree $(git branch --show-current) tests/data/reflectivity_ui-data`
+- find the refspec stored in the parent with command `git ls-tree $(git branch --show-current) tests/data/quicknxs-data`
 - synchronize the submodule to the refspec stored in the parent with command `git submodule update`
 - after making commits in the sumodule, synchronize the refspec stored in the parent with commands `git add...` and `git commit...`
 
@@ -35,7 +35,7 @@ Pytest fixtures in `conftest.py` providing directories frequently accessed:
 +--------------+----------------------------------------------------------------------------+
 | Fixture      | Value (as a `pathlib.Path` object)                                         |
 +==============+============================================================================+
-| DATA_DIR     | reflectivity_ui/tests/data/reflectivity_ui-data                            |
+| DATA_DIR     | quicknxs/tests/data/quicknxs-data                            |
 +--------------+----------------------------------------------------------------------------+
 
 

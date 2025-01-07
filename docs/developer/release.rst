@@ -17,7 +17,7 @@ Candidate and Production Releases
 Conda Package
 -------------
 
-Candidate and Production releases ``reflectivity_ui`` are automatically released to the project channel
+Candidate and Production releases ``quicknxs`` are automatically released to the project channel
 `neutrons`_ whenever a new tag is pushed to the repository.
 
 To manually build a conda package (for testing puruposes only),

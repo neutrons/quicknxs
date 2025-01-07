@@ -1,7 +1,7 @@
 # local imports
-from reflectivity_ui.interfaces.configuration import Configuration
-from reflectivity_ui.interfaces.data_handling.data_set import NexusData, CrossSectionData
-from reflectivity_ui.interfaces.data_handling.quicknxs_io import (
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_set import NexusData, CrossSectionData
+from quicknxs.interfaces.data_handling.quicknxs_io import (
     read_reduced_file,
     write_reflectivity_header,
     write_reflectivity_data,

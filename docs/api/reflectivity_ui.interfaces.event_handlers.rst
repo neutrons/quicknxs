@@ -1,7 +1,7 @@
 reflectivity\_ui.interfaces.event\_handlers package
 ===================================================
 
-.. automodule:: reflectivity_ui.interfaces.event_handlers
+.. automodule:: quicknxs.interfaces.event_handlers
    :members:
    :undoc-members:
    :show-inheritance:
@@ -13,7 +13,7 @@ Submodules
 reflectivity\_ui.interfaces.event\_handlers.configuration\_handler module
 -------------------------------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.event_handlers.configuration_handler
+.. automodule:: quicknxs.interfaces.event_handlers.configuration_handler
    :members:
    :undoc-members:
    :show-inheritance:
@@ -21,7 +21,7 @@ reflectivity\_ui.interfaces.event\_handlers.configuration\_handler module
 reflectivity\_ui.interfaces.event\_handlers.main\_handler module
 ----------------------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.event_handlers.main_handler
+.. automodule:: quicknxs.interfaces.event_handlers.main_handler
    :members:
    :undoc-members:
    :show-inheritance:
@@ -29,7 +29,7 @@ reflectivity\_ui.interfaces.event\_handlers.main\_handler module
 reflectivity\_ui.interfaces.event\_handlers.plot\_handler module
 ----------------------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.event_handlers.plot_handler
+.. automodule:: quicknxs.interfaces.event_handlers.plot_handler
    :members:
    :undoc-members:
    :show-inheritance:
@@ -37,7 +37,7 @@ reflectivity\_ui.interfaces.event\_handlers.plot\_handler module
 reflectivity\_ui.interfaces.event\_handlers.progress\_reporter module
 ---------------------------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.event_handlers.progress_reporter
+.. automodule:: quicknxs.interfaces.event_handlers.progress_reporter
    :members:
    :undoc-members:
    :show-inheritance:
@@ -45,7 +45,7 @@ reflectivity\_ui.interfaces.event\_handlers.progress\_reporter module
 reflectivity\_ui.interfaces.event\_handlers.widgets module
 ----------------------------------------------------------
 
-.. automodule:: reflectivity_ui.interfaces.event_handlers.widgets
+.. automodule:: quicknxs.interfaces.event_handlers.widgets
    :members:
    :undoc-members:
    :show-inheritance:

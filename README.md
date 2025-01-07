@@ -1,8 +1,8 @@
 <!-- Badges -->
 
-![Build Status](https://github.com/neutrons/reflectivity_ui/actions/workflows/actions.yml/badge.svg)
+![Build Status](https://github.com/neutrons/quicknxs/actions/workflows/actions.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/reflectivity-ui/badge/?version=latest)](https://reflectivity-ui.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/neutrons/reflectivity_ui/branch/master/graph/badge.svg)](https://codecov.io/gh/neutrons/reflectivity_ui)
+[![codecov](https://codecov.io/gh/neutrons/quicknxs/branch/master/graph/badge.svg)](https://codecov.io/gh/neutrons/quicknxs)
 
 <!-- End Badges -->
 
@@ -40,7 +40,7 @@ python -m build --no-isolation --wheel
 now you can install QuickNXS via the generated wheel on other system
 
 ```bash
-python3 -m pip install reflectivity_ui*.whl
+python3 -m pip install quicknxs*.whl
 ```
 
 ## Run

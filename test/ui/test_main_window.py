@@ -1,7 +1,7 @@
 # local imports
-from reflectivity_ui.interfaces.configuration import Configuration
-from reflectivity_ui.interfaces.data_handling.data_set import CrossSectionData, NexusData
-from reflectivity_ui.interfaces.main_window import MainWindow
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
 
 # third party imports
@@ -36,9 +36,9 @@ class TestMainGui:
     def test_active_channel(self, mocker, qtbot):
         """Test that selecting a cross-section radio button updates the active channel"""
         # mock updating the plots
-        mocker.patch("reflectivity_ui.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
-        mocker.patch("reflectivity_ui.interfaces.plotting.PlotManager.plot_refl", return_value=True)
-        mocker.patch("reflectivity_ui.interfaces.plotting.PlotManager.plot_projections", return_value=True)
+        mocker.patch("quicknxs.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
+        mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
+        mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_projections", return_value=True)
 
         # create the SUT
         window_main = MainWindow()
@@ -66,7 +66,7 @@ class TestMainGui:
     @pytest.mark.parametrize("table_widget", ["reductionTable", "normalizeTable"])
     def test_reduction_table_right_click(self, table_widget, qtbot, mocker):
         mock_save_run_data = mocker.patch(
-            "reflectivity_ui.interfaces.event_handlers.main_handler.MainHandler.save_run_data"
+            "quicknxs.interfaces.event_handlers.main_handler.MainHandler.save_run_data"
         )
         window_main = MainWindow()
         qtbot.addWidget(window_main)
@@ -92,9 +92,9 @@ class TestMainGui:
         """Test the global vs per run reduction variables"""
 
         # mock updating the plots
-        mocker.patch("reflectivity_ui.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
-        mocker.patch("reflectivity_ui.interfaces.plotting.PlotManager.plot_refl", return_value=True)
-        mocker.patch("reflectivity_ui.interfaces.plotting.PlotManager.plot_projections", return_value=True)
+        mocker.patch("quicknxs.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
+        mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
+        mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_projections", return_value=True)
 
         window_main = MainWindow()
         qtbot.addWidget(window_main)
@@ -300,7 +300,7 @@ class TestMainGui:
     @pytest.mark.datarepo
     def test_change_active_data_tab(self, mocker, qtbot, data_server):
         """Test that the internal state is updated when the active data tab is changed"""
-        mock_plot_refl = mocker.patch("reflectivity_ui.interfaces.plotting.PlotManager.plot_refl", return_value=True)
+        mock_plot_refl = mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
 
         window_main = MainWindow()
         qtbot.addWidget(window_main)

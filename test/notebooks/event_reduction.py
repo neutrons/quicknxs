@@ -6,7 +6,7 @@ import mantid.simpleapi as api
 
 import numpy as np
 
-from reflectivity_ui.interfaces.data_handling import instrument
+from quicknxs.interfaces.data_handling import instrument
 
 
 def load_data(run="REF_M_30769"):

@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from reflectivity_ui.interfaces.configuration import Configuration
-from reflectivity_ui.interfaces.data_handling.data_set import CrossSectionData
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 
 
 def _get_cross_section_data():
@@ -37,7 +37,7 @@ class TestCrossSectionData(object):
 
     def test_get_tof_counts_table(self, mocker):
         """Test of method get_tof_counts_table"""
-        mocker.patch("reflectivity_ui.interfaces.data_handling.data_set.CrossSectionData.prepare_plot_data")
+        mocker.patch("quicknxs.interfaces.data_handling.data_set.CrossSectionData.prepare_plot_data")
         rel_tol = 1e-6
         xs = _get_cross_section_data()
         data_table, header = xs.get_tof_counts_table()

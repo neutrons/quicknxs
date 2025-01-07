@@ -1,6 +1,6 @@
 # package imports
-from reflectivity_ui.interfaces.configuration import Configuration
-from reflectivity_ui.interfaces.data_handling.instrument import mantid_algorithm_exec
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
 
 # 3rd party imports
 from mantid.api import MatrixWorkspaceProperty, PythonAlgorithm

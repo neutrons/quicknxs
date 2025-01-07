@@ -1,4 +1,4 @@
-from reflectivity_ui.interfaces.configuration import Configuration, get_direct_beam_low_res_roi
+from quicknxs.interfaces.configuration import Configuration, get_direct_beam_low_res_roi
 
 
 def test_get_direct_beam_low_res_roi():

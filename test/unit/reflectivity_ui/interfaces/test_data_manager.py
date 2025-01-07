@@ -1,8 +1,8 @@
 # local imports
-from reflectivity_ui.interfaces.data_manager import DataManager
-from reflectivity_ui.interfaces.configuration import Configuration
-import reflectivity_ui.interfaces.data_handling.data_manipulation as dm
-from reflectivity_ui.interfaces.data_handling.instrument import Instrument
+from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.configuration import Configuration
+import quicknxs.interfaces.data_handling.data_manipulation as dm
+from quicknxs.interfaces.data_handling.instrument import Instrument
 
 # 3rd-party imports
 import pytest

@@ -1,5 +1,5 @@
 # local imports
-from reflectivity_ui.interfaces.data_handling.filepath import RunNumbers, FilePath
+from quicknxs.interfaces.data_handling.filepath import RunNumbers, FilePath
 
 # 3rd-party imports
 import pytest

@@ -2,11 +2,11 @@
 import numpy as np
 from qtpy import QtWidgets, QtCore
 
-from reflectivity_ui.interfaces.configuration import Configuration
-from reflectivity_ui.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
-from reflectivity_ui.interfaces.data_handling.data_set import NexusData, CrossSectionData
-from reflectivity_ui.interfaces.main_window import MainWindow
-from reflectivity_ui.interfaces.event_handlers.main_handler import MainHandler
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
+from quicknxs.interfaces.data_handling.data_set import NexusData, CrossSectionData
+from quicknxs.interfaces.main_window import MainWindow
+from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 
 # 3rd-party imports
 from PyQt5.QtWidgets import QApplication
@@ -78,10 +78,10 @@ class TestMainHandler(object):
     def test_stitch_reflectivity_errors(self, mocker, error_type, error_msg):
         """Test that stitch_reflectivity catches errors in stitching and calls report_message"""
         # Mock exception raised in stitch_data_sets
-        mocker.patch("reflectivity_ui.interfaces.data_manager.DataManager.stitch_data_sets", side_effect=error_type)
+        mocker.patch("quicknxs.interfaces.data_manager.DataManager.stitch_data_sets", side_effect=error_type)
         # Mock call to function report_message
         mock_report_message = mocker.patch(
-            "reflectivity_ui.interfaces.event_handlers.main_handler.MainHandler.report_message"
+            "quicknxs.interfaces.event_handlers.main_handler.MainHandler.report_message"
         )
         self.handler.stitch_reflectivity()
         assert error_msg in mock_report_message.call_args[0][0]
@@ -90,20 +90,20 @@ class TestMainHandler(object):
 def test_save_run_data(tmp_path, qtbot, mocker):
     """Test of method save_run_data"""
     mocker.patch(
-        "reflectivity_ui.interfaces.event_handlers.main_handler.QtWidgets.QFileDialog.getExistingDirectory",
+        "quicknxs.interfaces.event_handlers.main_handler.QtWidgets.QFileDialog.getExistingDirectory",
         return_value=tmp_path,
     )
     mocker.patch(
-        "reflectivity_ui.interfaces.event_handlers.main_handler.QtWidgets.QInputDialog.getText",
+        "quicknxs.interfaces.event_handlers.main_handler.QtWidgets.QInputDialog.getText",
         return_value=("test_save_run_data", True),
     )
     header = "col1 col2"
     mocker.patch(
-        "reflectivity_ui.interfaces.data_handling.data_set.CrossSectionData.get_tof_counts_table",
+        "quicknxs.interfaces.data_handling.data_set.CrossSectionData.get_tof_counts_table",
         return_value=(np.ones((5, 5)), header),
     )
     mocker.patch(
-        "reflectivity_ui.interfaces.event_handlers.main_handler.MainHandler.ask_question", side_effect=[False, True]
+        "quicknxs.interfaces.event_handlers.main_handler.MainHandler.ask_question", side_effect=[False, True]
     )
 
     main_window = MainWindow()

@@ -1,6 +1,6 @@
 # local imports
-from reflectivity_ui.interfaces.configuration import Configuration
-from reflectivity_ui.interfaces.main_window import MainWindow
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.main_window import MainWindow
 
 # standard imports
 import unittest.mock as mock
@@ -12,7 +12,7 @@ from qtpy import QtCore, QtWidgets
 
 def test_show_deadtime_settings_default_values(mocker, qtbot):
     """Test showing the deadtime settings dialog and keeping the default values"""
-    mock_reload_files = mocker.patch("reflectivity_ui.interfaces.main_window.MainWindow.reload_all_files")
+    mock_reload_files = mocker.patch("quicknxs.interfaces.main_window.MainWindow.reload_all_files")
     main_window = MainWindow()
     qtbot.addWidget(main_window)
     Configuration.setup_default_values()
@@ -35,9 +35,9 @@ def test_show_deadtime_settings_default_values(mocker, qtbot):
 def test_show_deadtime_settings_updated_values(mocker, qtbot):
     """Test showing the deadtime settings dialog and updating the values"""
     mocker.patch(
-        "reflectivity_ui.ui.deadtime_settings.DeadTimeSettingsView.ask_user_ok_to_reload_files", return_value=True
+        "quicknxs.ui.deadtime_settings.DeadTimeSettingsView.ask_user_ok_to_reload_files", return_value=True
     )
-    mock_reload_files = mocker.patch("reflectivity_ui.interfaces.main_window.MainWindow.reload_all_files")
+    mock_reload_files = mocker.patch("quicknxs.interfaces.main_window.MainWindow.reload_all_files")
 
     new_paralyzable = False
     new_dead_time = 5.0

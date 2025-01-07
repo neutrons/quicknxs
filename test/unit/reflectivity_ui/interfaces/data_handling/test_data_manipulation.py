@@ -1,13 +1,13 @@
 # package imports
-from reflectivity_ui.interfaces.configuration import Configuration
-from reflectivity_ui.interfaces.data_handling.data_manipulation import (
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
     smart_stitch_reflectivity,
 )
-from reflectivity_ui.interfaces.data_handling.data_set import NexusData
-from reflectivity_ui.interfaces.data_manager import DataManager
+from quicknxs.interfaces.data_handling.data_set import NexusData
+from quicknxs.interfaces.data_manager import DataManager
 
 # 3rd-party imports
 import copy
@@ -26,15 +26,15 @@ mock_reduced_file_str = (
     "#\n"
     "# [Direct Beam Runs]\n"
     "#    DB_ID        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width      dpix       tth    number      File\n"  # noqa: E501
-    "#        1         0         0       195        12     126.5       155        55        24       194         0     42099  reflectivity_ui-data/REF_M_42099.nxs.h5\n"  # noqa: E501
-    "#        2         0         0       195        12       127       154        55        24       194         0     42100  reflectivity_ui-data/REF_M_42100.nxs.h5\n"  # noqa: E501
-    "#        3         0         0       195        12       127       154        55        24       194         0     42100  reflectivity_ui-data/REF_M_42100.nxs.h5\n"  # noqa: E501
+    "#        1         0         0       195        12     126.5       155        55        24       194         0     42099  quicknxs-data/REF_M_42099.nxs.h5\n"  # noqa: E501
+    "#        2         0         0       195        12       127       154        55        24       194         0     42100  quicknxs-data/REF_M_42100.nxs.h5\n"  # noqa: E501
+    "#        3         0         0       195        12       127       154        55        24       194         0     42100  quicknxs-data/REF_M_42100.nxs.h5\n"  # noqa: E501
     "#\n"
     "# [Data Runs]\n"
     "#    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File\n"  # noqa: E501
-    "#        1        15        10       167        12     163.5      72.9        55        24     False       194  0.00653668     42112         1  reflectivity_ui-data/REF_M_42112.nxs.h5\n"  # noqa: E501
-    "# 0.183654        15        10     189.3        12     162.2      68.3        55        24     False       194  0.799577     42116           2  reflectivity_ui-data/REF_M_42116.nxs.h5\n"  # noqa: E501
-    "#   0.1375        15        10     167.5        12     159.9      67.4        55        24     False       194  0.798876     42113           3  reflectivity_ui-data/REF_M_42113.nxs.h5\n"  # noqa: E501
+    "#        1        15        10       167        12     163.5      72.9        55        24     False       194  0.00653668     42112         1  quicknxs-data/REF_M_42112.nxs.h5\n"  # noqa: E501
+    "# 0.183654        15        10     189.3        12     162.2      68.3        55        24     False       194  0.799577     42116           2  quicknxs-data/REF_M_42116.nxs.h5\n"  # noqa: E501
+    "#   0.1375        15        10     167.5        12     159.9      67.4        55        24     False       194  0.798876     42113           3  quicknxs-data/REF_M_42113.nxs.h5\n"  # noqa: E501
     "#\n"
     "# [Global Options]\n"
     "# name           value\n"
