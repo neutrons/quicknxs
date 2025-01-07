@@ -595,6 +595,23 @@ class PlotManager(object):
             self.main_window.ui.refl.draw()
             return False
 
+        if (
+            self.main_window.data_manager.active_channel.is_direct_beam
+            and not self.main_window.data_manager.reduction_list
+        ):
+            self.main_window.ui.refl.clear()
+            self.main_window.ui.refl.canvas.ax.text(
+                0.5,
+                0.5,
+                "No reflectivity for the\nselected direct-beam data!",
+                horizontalalignment="center",
+                verticalalignment="center",
+                fontsize=14,
+                transform=self.main_window.ui.refl.canvas.ax.transAxes,
+            )
+            self.main_window.ui.refl.draw()
+            return False
+
         P0 = self.main_window.ui.rangeStart.value()
         PN = len(self.main_window.data_manager.active_channel.q) - self.main_window.ui.rangeEnd.value()
 
@@ -622,9 +639,8 @@ class PlotManager(object):
             ymin = 1.5
             ymax = 1e-7
             ynormed = self.main_window.data_manager.active_channel.r[P0:PN]
-            directbeam = self.main_window.data_manager.find_active_direct_beam_id()
             if len(ynormed[ynormed > 0]) >= 2:
-                if directbeam is None:
+                if not self.main_window.data_manager.active_channel.is_direct_beam:
                     ymin = min(ymin, ynormed[ynormed > 0].min())
                     ymax = _set_ymax(ymax, ynormed)
                     self.main_window.ui.refl.errorbar(
