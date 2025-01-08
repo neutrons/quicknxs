@@ -65,9 +65,7 @@ class TestMainGui:
 
     @pytest.mark.parametrize("table_widget", ["reductionTable", "normalizeTable"])
     def test_reduction_table_right_click(self, table_widget, qtbot, mocker):
-        mock_save_run_data = mocker.patch(
-            "quicknxs.interfaces.event_handlers.main_handler.MainHandler.save_run_data"
-        )
+        mock_save_run_data = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler.save_run_data")
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         window_main.data_manager.reduction_list = [NexusData("filepath", Configuration())]

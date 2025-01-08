@@ -34,9 +34,7 @@ def test_show_deadtime_settings_default_values(mocker, qtbot):
 
 def test_show_deadtime_settings_updated_values(mocker, qtbot):
     """Test showing the deadtime settings dialog and updating the values"""
-    mocker.patch(
-        "quicknxs.ui.deadtime_settings.DeadTimeSettingsView.ask_user_ok_to_reload_files", return_value=True
-    )
+    mocker.patch("quicknxs.ui.deadtime_settings.DeadTimeSettingsView.ask_user_ok_to_reload_files", return_value=True)
     mock_reload_files = mocker.patch("quicknxs.interfaces.main_window.MainWindow.reload_all_files")
 
     new_paralyzable = False

@@ -102,9 +102,7 @@ def test_save_run_data(tmp_path, qtbot, mocker):
         "quicknxs.interfaces.data_handling.data_set.CrossSectionData.get_tof_counts_table",
         return_value=(np.ones((5, 5)), header),
     )
-    mocker.patch(
-        "quicknxs.interfaces.event_handlers.main_handler.MainHandler.ask_question", side_effect=[False, True]
-    )
+    mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler.ask_question", side_effect=[False, True])
 
     main_window = MainWindow()
     handler = MainHandler(main_window)
