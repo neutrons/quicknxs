@@ -13,6 +13,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 **Of interest to the User**:
 
 - PR #115: Skip reflectivity calculation for direct beams
+- PR #118: Skip plotting "Active" line when direct beam selected
 - PR #112: Make the minimum number of events cut-off configurable in ~/.config/.refredm.conf
 - PR #104: Update Mantid version to 6.10
 - PR #95: Optional dead-time correction (disabled by default)
