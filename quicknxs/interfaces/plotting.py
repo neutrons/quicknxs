@@ -576,103 +576,99 @@ class PlotManager(object):
         and any dataset stored. Intensities from direct beam
         measurements can be used for normalization.
         """
-        if (
-            self.main_window.data_manager.active_channel is None
-            or self.main_window.data_manager.active_channel.r is None
-            or self.main_window.data_manager.active_channel.q is None
-            or self.main_window.data_manager.active_channel.dr is None
-        ):
-            self.main_window.ui.refl.clear()
+
+        def _plot_message(message):
             self.main_window.ui.refl.canvas.ax.text(
                 0.5,
                 0.5,
-                "No data",
+                message,
                 horizontalalignment="center",
                 verticalalignment="center",
                 fontsize=14,
                 transform=self.main_window.ui.refl.canvas.ax.transAxes,
             )
             self.main_window.ui.refl.draw()
-            return False
-
-        P0 = self.main_window.ui.rangeStart.value()
-        PN = len(self.main_window.data_manager.active_channel.q) - self.main_window.ui.rangeEnd.value()
 
         self.main_window.ui.refl.clear()
+
+        if (
+            self.main_window.data_manager.active_channel is None
+            or self.main_window.data_manager.active_channel.r is None
+            or self.main_window.data_manager.active_channel.q is None
+            or self.main_window.data_manager.active_channel.dr is None
+        ):
+            _plot_message("No data")
+            return False
+
+        if (
+            self.main_window.data_manager.active_channel.is_direct_beam
+            and not self.main_window.data_manager.reduction_list
+        ):
+            _plot_message("No reflectivity for the\nselected direct-beam data!")
+            return False
+
         data = self.main_window.data_manager.active_channel
         if data.total_counts == 0:
-            self.main_window.ui.refl.canvas.ax.text(
-                0.5,
-                0.5,
-                "No points to show\nin active dataset!",
-                horizontalalignment="center",
-                verticalalignment="center",
-                fontsize=14,
-                transform=self.main_window.ui.refl.canvas.ax.transAxes,
+            _plot_message("No points to show\nin active dataset!")
+            return False
+
+        def _set_ymax(ymax, ynormed):
+            _ymax = max(ymax, ynormed.max())
+            if _ymax == np.inf:
+                _ymax = np.ma.array(ynormed, mask=~np.isfinite(ynormed)).max()
+                _ymax = max(ymax, _ymax)
+            return _ymax
+
+        ymin = 1.5
+        ymax = 1e-7
+        P0 = self.main_window.ui.rangeStart.value()
+        PN = len(self.main_window.data_manager.active_channel.q) - self.main_window.ui.rangeEnd.value()
+        ynormed = self.main_window.data_manager.active_channel.r[P0:PN]
+        if len(ynormed[ynormed > 0]) < 2:
+            _plot_message("No points to show\nin active dataset!")
+            return False
+
+        if not self.main_window.data_manager.active_channel.is_direct_beam:
+            ymin = min(ymin, ynormed[ynormed > 0].min())
+            ymax = _set_ymax(ymax, ynormed)
+            self.main_window.ui.refl.errorbar(
+                self.main_window.data_manager.active_channel.q[P0:PN],
+                ynormed,
+                yerr=self.main_window.data_manager.active_channel.dr[P0:PN],
+                label="Active",
+                lw=2,
+                capsize=1,
+                color="black",
             )
-        else:
 
-            def _set_ymax(ymax, ynormed):
-                _ymax = max(ymax, ynormed.max())
-                if _ymax == np.inf:
-                    _ymax = np.ma.array(ynormed, mask=~np.isfinite(ynormed)).max()
-                    _ymax = max(ymax, _ymax)
-                return _ymax
-
-            ymin = 1.5
-            ymax = 1e-7
-            ynormed = self.main_window.data_manager.active_channel.r[P0:PN]
-            if len(ynormed[ynormed > 0]) >= 2:
+        channel_name = self.main_window.data_manager.active_channel.name
+        for i, refli in enumerate(self.main_window.data_manager.reduction_list):
+            if refli.cross_sections[channel_name].q is None:
+                continue
+            P0i = refli.cross_sections[channel_name].configuration.cut_first_n_points
+            PNi = (
+                len(refli.cross_sections[channel_name].q)
+                - refli.cross_sections[channel_name].configuration.cut_last_n_points
+            )
+            ynormed = refli.cross_sections[channel_name].r[P0i:PNi]
+            try:
                 ymin = min(ymin, ynormed[ynormed > 0].min())
+            except ValueError:
+                pass
+            try:
                 ymax = _set_ymax(ymax, ynormed)
-                self.main_window.ui.refl.errorbar(
-                    self.main_window.data_manager.active_channel.q[P0:PN],
-                    ynormed,
-                    yerr=self.main_window.data_manager.active_channel.dr[P0:PN],
-                    label="Active",
-                    lw=2,
-                    capsize=1,
-                    color="black",
-                )
-            else:
-                self.main_window.ui.refl.canvas.ax.text(
-                    0.5,
-                    0.5,
-                    "No points to show\nin active dataset!",
-                    horizontalalignment="center",
-                    verticalalignment="center",
-                    fontsize=14,
-                    transform=self.main_window.ui.refl.canvas.ax.transAxes,
-                )
-
-            channel_name = self.main_window.data_manager.active_channel.name
-            for i, refli in enumerate(self.main_window.data_manager.reduction_list):
-                if refli.cross_sections[channel_name].q is None:
-                    continue
-                P0i = refli.cross_sections[channel_name].configuration.cut_first_n_points
-                PNi = (
-                    len(refli.cross_sections[channel_name].q)
-                    - refli.cross_sections[channel_name].configuration.cut_last_n_points
-                )
-                ynormed = refli.cross_sections[channel_name].r[P0i:PNi]
-                try:
-                    ymin = min(ymin, ynormed[ynormed > 0].min())
-                except ValueError:
-                    pass
-                try:
-                    ymax = _set_ymax(ymax, ynormed)
-                except ValueError:
-                    pass
-                self.main_window.ui.refl.errorbar(
-                    refli.cross_sections[channel_name].q[P0i:PNi],
-                    ynormed,
-                    yerr=refli.cross_sections[channel_name].dr[P0i:PNi],
-                    label=str(refli.number),
-                    capsize=1,
-                    color=self._refl_color_list[i % len(self._refl_color_list)],
-                )
-            self.main_window.ui.refl.canvas.ax.set_ylim((ymin * 0.9, ymax * 1.1))
-            self.main_window.ui.refl.set_xlabel("Q$_z$ [Å$^{-1}$]")
+            except ValueError:
+                pass
+            self.main_window.ui.refl.errorbar(
+                refli.cross_sections[channel_name].q[P0i:PNi],
+                ynormed,
+                yerr=refli.cross_sections[channel_name].dr[P0i:PNi],
+                label=str(refli.number),
+                capsize=1,
+                color=self._refl_color_list[i % len(self._refl_color_list)],
+            )
+        self.main_window.ui.refl.canvas.ax.set_ylim((ymin * 0.9, ymax * 1.1))
+        self.main_window.ui.refl.set_xlabel("Q$_z$ [Å$^{-1}$]")
 
         if self.main_window.ui.logarithmic_y.isChecked():
             self.main_window.ui.refl.set_yscale("log")
