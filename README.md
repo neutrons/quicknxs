@@ -45,7 +45,9 @@ python3 -m pip install reflectivity_ui*.whl
 
 ## Run
 
-Work in progress.
+```bash
+bin/quicknxs2
+```
 
 ## Test
 
