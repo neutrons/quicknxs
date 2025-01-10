@@ -1,4 +1,4 @@
-reflectivity\_ui.config package
+quicknxs.config package
 ===============================
 
 .. automodule:: quicknxs.config
@@ -10,7 +10,7 @@ reflectivity\_ui.config package
 Submodules
 ----------
 
-reflectivity\_ui.config.gui module
+quicknxs.config.gui module
 ----------------------------------
 
 .. automodule:: quicknxs.config.gui
@@ -18,7 +18,7 @@ reflectivity\_ui.config.gui module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.config.plotting module
+quicknxs.config.plotting module
 ---------------------------------------
 
 .. automodule:: quicknxs.config.plotting

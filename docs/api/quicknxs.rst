@@ -1,4 +1,4 @@
-reflectivity\_ui package
+quicknxs package
 ========================
 
 .. automodule:: quicknxs

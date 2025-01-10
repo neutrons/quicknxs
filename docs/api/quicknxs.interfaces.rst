@@ -1,4 +1,4 @@
-reflectivity\_ui.interfaces package
+quicknxs.interfaces package
 ===================================
 
 .. automodule:: quicknxs.interfaces
@@ -20,7 +20,7 @@ Subpackages
 Submodules
 ----------
 
-reflectivity\_ui.interfaces.configuration. module
+quicknxs.interfaces.configuration. module
 -------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.configuration
@@ -28,7 +28,7 @@ reflectivity\_ui.interfaces.configuration. module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_manager module
+quicknxs.interfaces.data\_manager module
 ------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_manager
@@ -36,7 +36,7 @@ reflectivity\_ui.interfaces.data\_manager module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.main\_window module
+quicknxs.interfaces.main\_window module
 -----------------------------------------------
 
 .. automodule:: quicknxs.interfaces.main_window
@@ -44,7 +44,7 @@ reflectivity\_ui.interfaces.main\_window module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.plotting module
+quicknxs.interfaces.plotting module
 -------------------------------------------
 
 .. automodule:: quicknxs.interfaces.plotting
@@ -52,7 +52,7 @@ reflectivity\_ui.interfaces.plotting module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.reduction\_dialog module
+quicknxs.interfaces.reduction\_dialog module
 ----------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.reduction_dialog
@@ -60,7 +60,7 @@ reflectivity\_ui.interfaces.reduction\_dialog module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.result\_viewer module
+quicknxs.interfaces.result\_viewer module
 -------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.result_viewer
@@ -68,7 +68,7 @@ reflectivity\_ui.interfaces.result\_viewer module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.smooth\_dialog module
+quicknxs.interfaces.smooth\_dialog module
 -------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.smooth_dialog

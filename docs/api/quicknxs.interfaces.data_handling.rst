@@ -1,4 +1,4 @@
-reflectivity\_ui.interfaces.data\_handling package
+quicknxs.interfaces.data\_handling package
 ==================================================
 
 .. automodule:: quicknxs.interfaces.data_handling
@@ -10,7 +10,7 @@ reflectivity\_ui.interfaces.data\_handling package
 Submodules
 ----------
 
-reflectivity\_ui.interfaces.data\_handling.data\_info module
+quicknxs.interfaces.data\_handling.data\_info module
 ------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.data_info
@@ -18,7 +18,7 @@ reflectivity\_ui.interfaces.data\_handling.data\_info module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.data\_manipulation module
+quicknxs.interfaces.data\_handling.data\_manipulation module
 --------------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.data_manipulation
@@ -26,7 +26,7 @@ reflectivity\_ui.interfaces.data\_handling.data\_manipulation module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.data\_set module
+quicknxs.interfaces.data\_handling.data\_set module
 -----------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.data_set
@@ -34,7 +34,7 @@ reflectivity\_ui.interfaces.data\_handling.data\_set module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.filepath module
+quicknxs.interfaces.data\_handling.filepath module
 ----------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.filepath
@@ -42,7 +42,7 @@ reflectivity\_ui.interfaces.data\_handling.filepath module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.gisans module
+quicknxs.interfaces.data\_handling.gisans module
 --------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.gisans
@@ -50,7 +50,7 @@ reflectivity\_ui.interfaces.data\_handling.gisans module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.instrument module
+quicknxs.interfaces.data\_handling.instrument module
 ------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.instrument
@@ -58,7 +58,7 @@ reflectivity\_ui.interfaces.data\_handling.instrument module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.off\_specular module
+quicknxs.interfaces.data\_handling.off\_specular module
 ---------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.off_specular
@@ -66,7 +66,7 @@ reflectivity\_ui.interfaces.data\_handling.off\_specular module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.peak\_finding module
+quicknxs.interfaces.data\_handling.peak\_finding module
 ---------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.peak_finding
@@ -74,7 +74,7 @@ reflectivity\_ui.interfaces.data\_handling.peak\_finding module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.processing\_workflow module
+quicknxs.interfaces.data\_handling.processing\_workflow module
 ----------------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.processing_workflow
@@ -82,7 +82,7 @@ reflectivity\_ui.interfaces.data\_handling.processing\_workflow module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.data\_handling.quicknxs\_io module
+quicknxs.interfaces.data\_handling.quicknxs\_io module
 --------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.data_handling.quicknxs_io

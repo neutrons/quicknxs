@@ -1,4 +1,4 @@
-reflectivity\_ui.ui package
+quicknxs.ui package
 ===========================
 
 .. automodule:: quicknxs.ui
@@ -10,7 +10,7 @@ reflectivity\_ui.ui package
 Submodules
 ----------
 
-reflectivity\_ui.ui.compare\_plots module
+quicknxs.ui.compare\_plots module
 ------------------------------------------
 
 .. automodule:: quicknxs.ui.compare_plots

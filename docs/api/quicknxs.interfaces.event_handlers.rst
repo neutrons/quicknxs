@@ -1,4 +1,4 @@
-reflectivity\_ui.interfaces.event\_handlers package
+quicknxs.interfaces.event\_handlers package
 ===================================================
 
 .. automodule:: quicknxs.interfaces.event_handlers
@@ -10,7 +10,7 @@ reflectivity\_ui.interfaces.event\_handlers package
 Submodules
 ----------
 
-reflectivity\_ui.interfaces.event\_handlers.configuration\_handler module
+quicknxs.interfaces.event\_handlers.configuration\_handler module
 -------------------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.event_handlers.configuration_handler
@@ -18,7 +18,7 @@ reflectivity\_ui.interfaces.event\_handlers.configuration\_handler module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.event\_handlers.main\_handler module
+quicknxs.interfaces.event\_handlers.main\_handler module
 ----------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.event_handlers.main_handler
@@ -26,7 +26,7 @@ reflectivity\_ui.interfaces.event\_handlers.main\_handler module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.event\_handlers.plot\_handler module
+quicknxs.interfaces.event\_handlers.plot\_handler module
 ----------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.event_handlers.plot_handler
@@ -34,7 +34,7 @@ reflectivity\_ui.interfaces.event\_handlers.plot\_handler module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.event\_handlers.progress\_reporter module
+quicknxs.interfaces.event\_handlers.progress\_reporter module
 ---------------------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.event_handlers.progress_reporter
@@ -42,7 +42,7 @@ reflectivity\_ui.interfaces.event\_handlers.progress\_reporter module
    :undoc-members:
    :show-inheritance:
 
-reflectivity\_ui.interfaces.event\_handlers.widgets module
+quicknxs.interfaces.event\_handlers.widgets module
 ----------------------------------------------------------
 
 .. automodule:: quicknxs.interfaces.event_handlers.widgets

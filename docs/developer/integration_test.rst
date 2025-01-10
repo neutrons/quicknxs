@@ -35,7 +35,7 @@ Pytest fixtures in `conftest.py` providing directories frequently accessed:
 +--------------+----------------------------------------------------------------------------+
 | Fixture      | Value (as a `pathlib.Path` object)                                         |
 +==============+============================================================================+
-| DATA_DIR     | quicknxs/tests/data/quicknxs-data                            |
+| DATA_DIR     | quicknxs/tests/data/quicknxs-data                                          |
 +--------------+----------------------------------------------------------------------------+
 
 
