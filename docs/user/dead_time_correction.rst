@@ -86,10 +86,10 @@ Example using ``SingleReadoutDeadTimeCorrection`` (requires :any:`test-data` fil
     import os
     import sys
     from pathlib import Path
-    from reflectivity_ui.interfaces.data_handling import DeadTimeCorrection
-    from reflectivity_ui.interfaces.data_handling.instrument import mantid_algorithm_exec
+    from quicknxs.interfaces.data_handling import DeadTimeCorrection
+    from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
     # Load events
-    path = Path().resolve().parent / "test" / "data" / "reflectivity_ui-data" / "REF_M_42112.nxs.h5"
+    path = Path().resolve().parent / "test" / "data" / "quicknxs-data" / "REF_M_42112.nxs.h5"
     path = path.as_posix()
     ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
     # Load error events

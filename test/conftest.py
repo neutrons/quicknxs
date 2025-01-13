@@ -12,8 +12,8 @@ import glob
 import pytest
 from PyQt5.QtCore import QSettings
 
-from reflectivity_ui.interfaces.data_handling.filepath import FilePath, RunNumbers
-from reflectivity_ui.interfaces.data_handling.instrument import Instrument
+from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+from quicknxs.interfaces.data_handling.instrument import Instrument
 
 pytest_plugins = ["mantid.fixtures"]
 
@@ -48,7 +48,7 @@ def DATA_DIR():
     return Path(__file__).parent / "data"
 
 
-Instrument.file_search_template = str(Path(__file__).parent / "data" / "reflectivity_ui-data" / "REF_M_%s")
+Instrument.file_search_template = str(Path(__file__).parent / "data" / "quicknxs-data" / "REF_M_%s")
 
 
 @pytest.fixture(scope="module")
@@ -58,7 +58,7 @@ def data_server(DATA_DIR):
     class _DataServe(object):
 
         _directory = str(DATA_DIR)
-        _h5_path = "reflectivity_ui-data"
+        _h5_path = "quicknxs-data"
 
         @property
         def directory(self):
@@ -81,7 +81,7 @@ def data_server(DATA_DIR):
             file_path = os.path.join(self._directory, basename)
             if os.path.isfile(file_path):
                 return file_path
-            # looking in test/data/reflectivity_ui-data
+            # looking in test/data/quicknxs-data
             file_path = os.path.join(self.directory, self.h5_path)
             file_path = os.path.join(file_path, basename)
 

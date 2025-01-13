@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1375</width>
+    <height>827</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Result Viewer</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="specular_tab">
+      <attribute name="title">
+       <string>Specular</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="CompareWidget" name="specular_compare_widget" native="true"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="offspecular_tab">
+      <attribute name="title">
+       <string>Off-Specular</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="1" column="0">
+        <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0">
+         <property name="verticalSpacing">
+          <number>6</number>
+         </property>
+         <item row="0" column="1">
+          <widget class="MPLWidget" name="offspec_mm_plot" native="true"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="MPLWidget" name="offspec_pp_plot" native="true"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="MPLWidget" name="offspec_pm_plot" native="true"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="MPLWidget" name="offspec_mp_plot" native="true"/>
+         </item>
+        </layout>
+       </item>
+       <item row="0" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMinimumSize</enum>
+         </property>
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Intensity range:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>I_min 10^</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="offspec_intensity_min">
+           <property name="minimum">
+            <double>-20.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>2.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.250000000000000</double>
+           </property>
+           <property name="value">
+            <double>-6.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>I_max 10^</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="offspec_intensity_max">
+           <property name="minimum">
+            <double>-10.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>10.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.250000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="offspec_apply_crop_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Apply cropping to all</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="offset_reset_crop_button">
+           <property name="text">
+            <string>Refresh</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="gisans_tab">
+      <attribute name="title">
+       <string>GISANS</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Intensity range:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>I_min 10^</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="gisans_intensity_min">
+           <property name="minimum">
+            <double>-20.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>2.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.250000000000000</double>
+           </property>
+           <property name="value">
+            <double>-6.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>I_max 10^</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="gisans_intensity_max">
+           <property name="minimum">
+            <double>-10.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>10.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.250000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="gisans_apply_crop_button">
+           <property name="text">
+            <string>Apply cropping to all</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="gisans_reset_crop_button">
+           <property name="text">
+            <string>Refresh</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QScrollArea" name="scrollArea">
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>1319</width>
+            <height>685</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_6">
+           <item row="0" column="0">
+            <layout class="QGridLayout" name="gridLayout_4">
+             <item row="0" column="0">
+              <widget class="QFrame" name="gisans_pp_frame">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_7">
+                <item row="0" column="0">
+                 <layout class="QGridLayout" name="gisans_pp_layout"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QFrame" name="gisans_mm_frame">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_8">
+                <item row="0" column="0">
+                 <layout class="QGridLayout" name="gisans_mm_layout"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QFrame" name="gisans_pm_frame">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_11">
+                <item row="0" column="0">
+                 <layout class="QGridLayout" name="gisans_pm_layout"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QFrame" name="gisans_mp_frame">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_12">
+                <item row="0" column="0">
+                 <layout class="QGridLayout" name="gisans_mp_layout"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Close</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CompareWidget</class>
+   <extends>QWidget</extends>
+   <header>quicknxs/ui/compare_plots.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MPLWidget</class>
+   <extends>QWidget</extends>
+   <extends>QWidget</extends>
+   <header>quicknxs/ui/mplwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tabWidget</sender>
+   <signal>currentChanged(int)</signal>
+   <receiver>Dialog</receiver>
+   <slot>update_active_tab()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>515</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>515</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>offset_reset_crop_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reset_offspec_crop()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1300</x>
+     <y>198</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>687</x>
+     <y>354</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>offspec_apply_crop_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>apply_offspec_crop()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1169</x>
+     <y>198</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>687</x>
+     <y>354</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>gisans_apply_crop_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>apply_gisans_crop()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1196</x>
+     <y>60</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>687</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>gisans_reset_crop_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reset_gisans_crop()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1313</x>
+     <y>60</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>687</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>update_active_tab()</slot>
+  <slot>apply_offspec_crop()</slot>
+  <slot>reset_offspec_crop()</slot>
+  <slot>apply_gisans_crop()</slot>
+  <slot>reset_gisans_crop()</slot>
+ </slots>
+</ui>

@@ -1,7 +1,7 @@
 import pytest
 
-from reflectivity_ui.interfaces.event_handlers.progress_reporter import ProgressReporter
-from reflectivity_ui.interfaces.main_window import MainWindow
+from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
+from quicknxs.interfaces.main_window import MainWindow
 
 
 class TestStatusBar:

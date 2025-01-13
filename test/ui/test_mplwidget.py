@@ -5,8 +5,8 @@ from numpy.testing import assert_allclose
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 
-from reflectivity_ui.interfaces.main_window import MainWindow
-from reflectivity_ui.ui.mplwidget import NavigationToolbarGeneric, NavigationToolbarReflectivity, NavigationToolbar
+from quicknxs.interfaces.main_window import MainWindow
+from quicknxs.ui.mplwidget import NavigationToolbarGeneric, NavigationToolbarReflectivity, NavigationToolbar
 
 
 def _refl_data():

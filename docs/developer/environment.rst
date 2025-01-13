@@ -37,7 +37,7 @@ Test Data
 ---------
 
 The test data will be stored in a second git repository
-`reflectivity_ui-data <https://code.ornl.gov/sns-hfir-scse/infrastructure/test-datareflectivity_ui-data>`_
+`quicknxs-data <https://code.ornl.gov/sns-hfir-scse/infrastructure/test-dataquicknxs-data>`_
 which uses git-lfs.
 To use it, first install git-lfs, then setup the git-submodule
 

@@ -15,7 +15,7 @@ dirty = "{version}+d{build_date:%Y%m%d}"
 distance-dirty = "{next_version}.dev{distance}+d{build_date:%Y%m%d%H%M}"
 
 [tool.versioningit.write]
-file = "reflectivity_ui/_version.py"
+file = "quicknxs/_version.py"
 
 [tool.pytest.ini_options]
 testpaths = ["test/"]

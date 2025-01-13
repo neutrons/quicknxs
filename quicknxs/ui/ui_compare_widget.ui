@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1185</width>
+    <height>561</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QFrame" name="frame_7">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>2</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Sunken</enum>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <widget class="MPLWidget" name="comparePlot" native="true"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="widget_6" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_15">
+       <item>
+        <widget class="QTableWidget" name="compareList">
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::NoSelection</enum>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectItems</enum>
+         </property>
+         <attribute name="horizontalHeaderCascadingSectionResizes">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderDefaultSectionSize">
+          <number>100</number>
+         </attribute>
+         <attribute name="horizontalHeaderMinimumSectionSize">
+          <number>100</number>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="verticalHeaderDefaultSectionSize">
+          <number>100</number>
+         </attribute>
+         <attribute name="verticalHeaderMinimumSectionSize">
+          <number>50</number>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>File</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Color</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Label</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="frame_8">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_10">
+          <item>
+           <widget class="QCheckBox" name="refl_preview_checkbox">
+            <property name="text">
+             <string>R(q) preview</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton">
+            <property name="toolTip">
+             <string>Clear all items</string>
+            </property>
+            <property name="text">
+             <string>Clear all</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="clear_item_button">
+            <property name="toolTip">
+             <string>Clear the selected item</string>
+            </property>
+            <property name="text">
+             <string>Clear item</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_2">
+            <property name="toolTip">
+             <string>Open a new file to plot</string>
+            </property>
+            <property name="text">
+             <string>Open File</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MPLWidget</class>
+   <extends>QWidget</extends>
+   <header>quicknxs/ui/mplwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>compareList</tabstop>
+  <tabstop>pushButton_2</tabstop>
+  <tabstop>pushButton</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>pressed()</signal>
+   <receiver>Form</receiver>
+   <slot>open_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>807</x>
+     <y>645</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>851</x>
+     <y>638</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>pressed()</signal>
+   <receiver>Form</receiver>
+   <slot>clear_plot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>812</x>
+     <y>578</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>849</x>
+     <y>575</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>compareList</sender>
+   <signal>itemChanged(QTableWidgetItem*)</signal>
+   <receiver>Form</receiver>
+   <slot>draw()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>295</x>
+     <y>601</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>673</x>
+     <y>717</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>compareList</sender>
+   <signal>cellDoubleClicked(int,int)</signal>
+   <receiver>Form</receiver>
+   <slot>edit_cell(int,int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>141</x>
+     <y>661</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>163</x>
+     <y>716</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>refl_preview_checkbox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Form</receiver>
+   <slot>refl_preview(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1067</x>
+     <y>523</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>573</x>
+     <y>350</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>clear_item_button</sender>
+   <signal>pressed()</signal>
+   <receiver>Form</receiver>
+   <slot>clear_item()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1064</x>
+     <y>606</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>573</x>
+     <y>350</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>open_file()</slot>
+  <slot>clear_plot()</slot>
+  <slot>draw()</slot>
+  <slot>edit_cell(int,int)</slot>
+  <slot>refl_preview(bool)</slot>
+  <slot>clear_item()</slot>
+ </slots>
+</ui>

@@ -1,6 +1,6 @@
 # File introduces automated checks triggered on git events
 # to enable run `pip install pre-commit && pre-commit install`
-exclude: ^reflectivity_ui/interfaces/generated/
+exclude: ^quicknxs/interfaces/generated/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0

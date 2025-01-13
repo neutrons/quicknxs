@@ -34,14 +34,14 @@ sys.excepthook = no_abort_excepthook
 
 # Avoid clash with user-installed packages
 for item in sys.path:
-    if ".local" in item and "reflectivity_ui" not in item:
+    if ".local" in item and "quicknxs" not in item:
         sys.path.remove(item)
     for item in sys.modules:
         m = sys.modules.setdefault(item, types.ModuleType(item))
         if m is not None:
             mp = m.__dict__.setdefault("__path__", [])
             for loc in mp:
-                if ".local" in loc and "reflectivity_ui" not in loc:
+                if ".local" in loc and "quicknxs" not in loc:
                     logging.warning("Removing local reference to %s" % loc)
                     mp.remove(loc)
 
@@ -51,15 +51,15 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 
 import mantid
-import reflectivity_ui
+import quicknxs
 
 print("##################################################")
-print("# QuickNXS %s " % reflectivity_ui.__version__)
+print("# QuickNXS %s " % quicknxs.__version__)
 print("#    with Mantid: %s " % mantid.__version__)
 print("##################################################")
 
 from PyQt5.QtWidgets import QApplication
-from reflectivity_ui.interfaces.main_window import MainWindow
+from quicknxs.interfaces.main_window import MainWindow
 
 
 def main():

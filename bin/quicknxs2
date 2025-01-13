@@ -38,15 +38,15 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 
 import mantid
-import reflectivity_ui
+import quicknxs
 
 print("##################################################")
-print("# QuickNXS %s " % reflectivity_ui.__version__)
+print("# QuickNXS %s " % quicknxs.__version__)
 print("#    with Mantid: %s " % mantid.__version__)
 print("##################################################")
 
 from PyQt5.QtWidgets import QApplication
-from reflectivity_ui.interfaces.main_window import MainWindow
+from quicknxs.interfaces.main_window import MainWindow
 
 
 def main():
