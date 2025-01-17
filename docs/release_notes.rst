@@ -12,6 +12,20 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 **Of interest to the User**:
 
+
+**Of interest to the Developer:**
+
+
+v4.0.0
+------
+2025-01-17
+
+In this new major version, the name of the application was changed to `quixknxs`. New improvements include
+skipping the reflectivity calculation for direct beam runs and the dead-time correction to account for
+detector saturation.
+
+**Of interest to the User**:
+
 - PR #120: rename the launcher script to "quicknxs-gui"
 - PR #119: Rename the repository to "quicknxs"
 - PR #115: Skip reflectivity calculation for direct beams
