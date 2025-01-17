@@ -95,7 +95,7 @@ jobs:
         uses: neutrons/branch-mapper@v2
         id: conda_env_name
         with:
-          prefix: quicknxs2
+          prefix: quicknxs
 
       - name: Trigger deploy
     # Disable automatic deployments until DevOps resolves the automatic Conda deployments

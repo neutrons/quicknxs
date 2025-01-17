@@ -13,7 +13,7 @@ Welcome to QuickNXS's documentation!
    user/index
    api/modules
    developer/index
-   releasenotes/index
+   release_notes
 
 Indices and tables
 ==================

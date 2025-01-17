@@ -12,6 +12,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 **Of interest to the User**:
 
+- PR #120: rename the launcher script to "quicknxs-gui"
 - PR #119: Rename the repository to "quicknxs"
 - PR #115: Skip reflectivity calculation for direct beams
 - PR #118: Skip plotting "Active" line when direct beam selected
