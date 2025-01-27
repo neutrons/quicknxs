@@ -600,10 +600,16 @@
               <property name="text">
                <string>Sample size:</string>
               </property>
+	      <property name="visible">
+		<bool>false</bool>
+	      </property>
              </widget>
             </item>
             <item row="9" column="2">
-             <widget class="QDoubleSpinBox" name="sample_size_spinbox">
+              <widget class="QDoubleSpinBox" name="sample_size_spinbox">
+		<property name="visible">
+		  <bool>false</bool>
+		</property>
               <property name="suffix">
                <string> mm</string>
               </property>
@@ -623,6 +629,9 @@
               <property name="text">
                <string>Bandwidth:</string>
               </property>
+	      <property name="visible">
+		<bool>false</bool>
+	      </property>
              </widget>
             </item>
             <item row="10" column="2">
@@ -630,6 +639,9 @@
               <property name="toolTip">
                <string>Bandwidth to use to select the TOF range when loading data.</string>
               </property>
+	      <property name="visible">
+		<bool>false</bool>
+	      </property>
               <property name="suffix">
                <string> A</string>
               </property>
