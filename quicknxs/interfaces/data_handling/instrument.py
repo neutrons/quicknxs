@@ -242,20 +242,20 @@ class Instrument(object):
         _use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG
 
         for path in fp_instance.single_paths:
-            ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
+            event_ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
 
             # If the meta data is corrupted and we are missing analyzer/polarizer data, use the
             # simple filtering.
-            missing_keys = any(key not in ws.getRun() for key in [self.pol_state, self.ana_state])
+            missing_keys = any(key not in event_ws.getRun() for key in [self.pol_state, self.ana_state])
             if missing_keys:
                 _use_slow_flipper_log = True
                 print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
 
             if _use_slow_flipper_log:
-                _path_xs_list = self.dummy_filter_cross_sections(ws, name_prefix=temp_workspace_root_name)
+                _path_xs_list = self.dummy_filter_cross_sections(event_ws, name_prefix=temp_workspace_root_name)
             else:
                 _path_xs_list = api.MRFilterCrossSections(
-                    InputWorkspace=ws,
+                    InputWorkspace=event_ws,
                     PolState=self.pol_state,
                     AnaState=self.ana_state,
                     PolVeto=self.pol_veto,
@@ -265,30 +265,42 @@ class Instrument(object):
 
             # Remove workspaces with too few events
             _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
+            print("cross_section_id" in _path_xs_list[0].getRun())
+
             if configuration is not None and configuration.apply_deadtime:
+                print("Loading error events")
                 # Load error events from the bank_error_events entry
                 err_ws = api.LoadErrorEventsNexus(path)
+                print('loaded')
                 # Split error events by cross-section for compatibility with normal events
                 if _use_slow_flipper_log:
+                    _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_workspace_root_name+'_err')
+                    print('processed')
+                    #print(_err_list)
+                else:
                     _err_list = api.MRFilterCrossSections(
                         InputWorkspace=err_ws,
                         PolState=self.pol_state,
                         AnaState=self.ana_state,
                         PolVeto=self.pol_veto,
                         AnaVeto=self.ana_veto,
-                        CrossSectionWorkspaces="%s_err_entry" % temp_workspace_root_name,
-                    )
-                else:
-                    _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_workspace_root_name)
+                        CrossSectionWorkspaces="%s_err_entry" % temp_workspace_root_name+'_err',
+                    )                  
 
                 path_xs_list = []
                 # Apply dead-time correction for each cross-section workspace
+                print(len(_path_xs_list))
+                print("cross_section_id" in _path_xs_list[0].getRun())
+
                 for ws in _path_xs_list:
+                    print('   trying', str(ws))
                     xs_name = ws.getRun()["cross_section_id"].value
+                    print("   ", str(xs_name))
                     if not xs_name == "unfiltered":
                         # Find the related workspace in with error events
                         is_found = False
                         for err_ws in _err_list:
+                            print('test')
                             if err_ws.getRun()["cross_section_id"].value == xs_name:
                                 is_found = True
                                 _ws = apply_dead_time_correction(ws, configuration, error_ws=err_ws)
@@ -323,6 +335,8 @@ class Instrument(object):
                 LogText=fp_instance.run_numbers(string_representation="short"),
                 LogType="String",
             )
+
+        print("EXIT")
         return xs_list
 
     @classmethod
