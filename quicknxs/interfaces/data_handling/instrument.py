@@ -271,12 +271,12 @@ class Instrument(object):
                 print("Loading error events")
                 # Load error events from the bank_error_events entry
                 err_ws = api.LoadErrorEventsNexus(path)
-                print('loaded')
+                print("loaded")
                 # Split error events by cross-section for compatibility with normal events
                 if _use_slow_flipper_log:
-                    _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_workspace_root_name+'_err')
-                    print('processed')
-                    #print(_err_list)
+                    _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_workspace_root_name + "_err")
+                    print("processed")
+                    # print(_err_list)
                 else:
                     _err_list = api.MRFilterCrossSections(
                         InputWorkspace=err_ws,
@@ -284,8 +284,8 @@ class Instrument(object):
                         AnaState=self.ana_state,
                         PolVeto=self.pol_veto,
                         AnaVeto=self.ana_veto,
-                        CrossSectionWorkspaces="%s_err_entry" % temp_workspace_root_name+'_err',
-                    )                  
+                        CrossSectionWorkspaces="%s_err_entry" % temp_workspace_root_name + "_err",
+                    )
 
                 path_xs_list = []
                 # Apply dead-time correction for each cross-section workspace
@@ -293,14 +293,14 @@ class Instrument(object):
                 print("cross_section_id" in _path_xs_list[0].getRun())
 
                 for ws in _path_xs_list:
-                    print('   trying', str(ws))
+                    print("   trying", str(ws))
                     xs_name = ws.getRun()["cross_section_id"].value
                     print("   ", str(xs_name))
                     if not xs_name == "unfiltered":
                         # Find the related workspace in with error events
                         is_found = False
                         for err_ws in _err_list:
-                            print('test')
+                            print("test")
                             if err_ws.getRun()["cross_section_id"].value == xs_name:
                                 is_found = True
                                 _ws = apply_dead_time_correction(ws, configuration, error_ws=err_ws)
