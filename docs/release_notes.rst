@@ -26,6 +26,7 @@ detector saturation.
 
 **Of interest to the User**:
 
+- PR #124: Hides the "Sample Size" and "Bandwidth" configurations
 - PR #120: rename the launcher script to "quicknxs-gui"
 - PR #119: Rename the repository to "quicknxs"
 - PR #115: Skip reflectivity calculation for direct beams
