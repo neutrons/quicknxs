@@ -239,28 +239,37 @@ class Instrument(object):
         xs_list = list()
         temp_workspace_root_name = "".join(random.sample(string.ascii_letters, 12))  # random string of 12 characters
         workspace_root_name = fp_instance.run_numbers(string_representation="short")
+        _use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG
+
         for path in fp_instance.single_paths:
-            is_legacy = path.endswith(".nxs")
-            if is_legacy or not self.USE_SLOW_FLIPPER_LOG:
+            ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
+
+            # If the meta data is corrupted and we are missing analyzer/polarizer data, use the 
+            # simple filtering.
+            missing_keys = any(key not in ws.getRun() for key in [self.pol_state, self.ana_state])
+            if missing_keys:
+                _use_slow_flipper_log = True
+                print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
+
+            if _use_slow_flipper_log:
+                _path_xs_list = self.dummy_filter_cross_sections(ws, name_prefix=temp_workspace_root_name)
+            else:
                 _path_xs_list = api.MRFilterCrossSections(
-                    Filename=path,
+                    InputWorkspace=ws,
                     PolState=self.pol_state,
                     AnaState=self.ana_state,
                     PolVeto=self.pol_veto,
                     AnaVeto=self.ana_veto,
                     CrossSectionWorkspaces="%s_entry" % temp_workspace_root_name,
                 )
-                # Only keep good workspaces, and get rid of the rejected events
-                if len(_path_xs_list) == 1 and not "cross_section_id" in _path_xs_list[0].getRun():
-                    logging.warning("Could not filter data, using getDI")
-                    ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
-                    _path_xs_list = self.dummy_filter_cross_sections(ws, name_prefix=temp_workspace_root_name)
-                # Remove workspaces with too few events
-                _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
-                if configuration is not None and configuration.apply_deadtime:
-                    # Load error events from the bank_error_events entry
-                    err_ws = api.LoadErrorEventsNexus(path)
-                    # Split error events by cross-section for compatibility with normal events
+                
+            # Remove workspaces with too few events
+            _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
+            if configuration is not None and configuration.apply_deadtime:
+                # Load error events from the bank_error_events entry
+                err_ws = api.LoadErrorEventsNexus(path)
+                # Split error events by cross-section for compatibility with normal events
+                if _use_slow_flipper_log:
                     _err_list = api.MRFilterCrossSections(
                         InputWorkspace=err_ws,
                         PolState=self.pol_state,
@@ -269,29 +278,29 @@ class Instrument(object):
                         AnaVeto=self.ana_veto,
                         CrossSectionWorkspaces="%s_err_entry" % temp_workspace_root_name,
                     )
-                    path_xs_list = []
-                    # Apply dead-time correction for each cross-section workspace
-                    for ws in _path_xs_list:
-                        xs_name = ws.getRun()["cross_section_id"].value
-                        if not xs_name == "unfiltered":
-                            # Find the related workspace in with error events
-                            is_found = False
-                            for err_ws in _err_list:
-                                if err_ws.getRun()["cross_section_id"].value == xs_name:
-                                    is_found = True
-                                    _ws = apply_dead_time_correction(ws, configuration, error_ws=err_ws)
-                                    path_xs_list.append(_ws)
-                            if not is_found:
-                                print("Could not find error events for [%s]" % xs_name)
-                                _ws = apply_dead_time_correction(ws, configuration, error_ws=None)
-                                path_xs_list.append(_ws)
                 else:
-                    path_xs_list = [
-                        ws for ws in _path_xs_list if not ws.getRun()["cross_section_id"].value == "unfiltered"
-                    ]
+                    _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_workspace_root_name)
+
+                path_xs_list = []
+                # Apply dead-time correction for each cross-section workspace
+                for ws in _path_xs_list:
+                    xs_name = ws.getRun()["cross_section_id"].value
+                    if not xs_name == "unfiltered":
+                        # Find the related workspace in with error events
+                        is_found = False
+                        for err_ws in _err_list:
+                            if err_ws.getRun()["cross_section_id"].value == xs_name:
+                                is_found = True
+                                _ws = apply_dead_time_correction(ws, configuration, error_ws=err_ws)
+                                path_xs_list.append(_ws)
+                        if not is_found:
+                            print("Could not find error events for [%s]" % xs_name)
+                            _ws = apply_dead_time_correction(ws, configuration, error_ws=None)
+                            path_xs_list.append(_ws)
             else:
-                ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
-                path_xs_list = self.dummy_filter_cross_sections(ws, name_prefix=temp_workspace_root_name)
+                path_xs_list = [
+                    ws for ws in _path_xs_list if not ws.getRun()["cross_section_id"].value == "unfiltered"
+                ]
 
             if len(xs_list) == 0:  # initialize xs_list with the cross sections of the first data file
                 xs_list = path_xs_list
