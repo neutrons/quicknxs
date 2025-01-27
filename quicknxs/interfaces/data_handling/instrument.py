@@ -244,7 +244,7 @@ class Instrument(object):
         for path in fp_instance.single_paths:
             ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
 
-            # If the meta data is corrupted and we are missing analyzer/polarizer data, use the 
+            # If the meta data is corrupted and we are missing analyzer/polarizer data, use the
             # simple filtering.
             missing_keys = any(key not in ws.getRun() for key in [self.pol_state, self.ana_state])
             if missing_keys:
@@ -262,7 +262,7 @@ class Instrument(object):
                     AnaVeto=self.ana_veto,
                     CrossSectionWorkspaces="%s_entry" % temp_workspace_root_name,
                 )
-                
+
             # Remove workspaces with too few events
             _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
             if configuration is not None and configuration.apply_deadtime:
