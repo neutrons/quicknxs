@@ -65,6 +65,7 @@ jobs:
 
       - name: Build Conda package
         run: |
+          cd conda.recipe
           VERSION=$(versioningit ../) conda mambabuild --output-folder . . -c mantid
           conda verify noarch/quicknxs-*.tar.bz2
 
