@@ -11,14 +11,14 @@
 
 package:
   name: "quicknxs"
-  version: {{ version }}
+  version: {{ version_number }}
 
 source:
   path: ..
 
 build:
   noarch: python
-  version: {{ version_number }}
+  version: {{ build_number }}
   string: py{{py}}
   script: {{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv
 
