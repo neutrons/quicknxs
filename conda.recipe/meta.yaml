@@ -18,7 +18,7 @@ source:
 
 build:
   noarch: python
-  version: {{ build_number }}
+  build: {{ build_number }}
   string: py{{py}}
   script: {{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv
 
