@@ -81,7 +81,7 @@ jobs:
           if [ "${IS_RC}" = "true" ]; then CONDA_LABEL="rc"; fi
           if [ "${IS_DEV}" = "true" ]; then CONDA_LABEL="dev"; fi
           echo pushing ${{ github.ref }} with label $CONDA_LABEL
-          anaconda upload --label $CONDA_LABEL noarch/quicknxs-*.tar.bz2
+          anaconda upload --label $CONDA_LABEL conda.recipe/noarch/quicknxs-*.tar.bz2
 
   trigger-deploy:
     runs-on: ubuntu-22.04
