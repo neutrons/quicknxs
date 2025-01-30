@@ -57,5 +57,5 @@ ignore = ["A001", "ARG001", "ARG002", "BLE001", "C901", "E402", "E501", "E712", 
 exclude = ["notebooks/*", "icons/*", "test/notebooks/*"]
 
 [tool.coverage.run]
-source = "src/quicknxs"
+source = ["src/quicknxs"]
 omit = ["test/*"]
