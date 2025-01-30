@@ -1,17 +1,17 @@
 # coding: utf-8
 """
-   Dialog to let the user select smoothing options
-   This code was taken as-is from QuickNXS v1
+Dialog to let the user select smoothing options
+This code was taken as-is from QuickNXS v1
 """
 # pylint: disable=bare-except
 
-from PyQt5 import QtWidgets
-
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
+from PyQt5 import QtWidgets
+
+from quicknxs.interfaces import load_ui
 
 from .configuration import Configuration
-from quicknxs.interfaces import load_ui
 
 
 class SmoothDialog(QtWidgets.QDialog):
@@ -114,7 +114,6 @@ class SmoothDialog(QtWidgets.QDialog):
             self.ui.sigmaY.setValue(sigma_y)
 
         elif self.ui.qxVSqz.isChecked():
-
             qz_max = max(Qz[I > 0].max(), qz_max)
             qz_min = min(Qz[I > 0].min(), qz_min)
             qx_min = min(qx_min, Qx[I > 0].min())
@@ -176,15 +175,9 @@ class SmoothDialog(QtWidgets.QDialog):
         if plot.cplot is not None:
             plot.cplot.set_clim([1e-6, 1.0])
         self.rect_region = Line2D([x1, x1, x2, x2, x1], [y1, y2, y2, y1, y1])
-        self.sigma_1 = Ellipse(
-            sigma_pos, self.ui.sigmaX.value() * 2, self.ui.sigmaY.value() * 2, sigma_ang, fill=False
-        )
-        self.sigma_2 = Ellipse(
-            sigma_pos, self.ui.sigmaX.value() * 4, self.ui.sigmaY.value() * 4, sigma_ang, fill=False
-        )
-        self.sigma_3 = Ellipse(
-            sigma_pos, self.ui.sigmaX.value() * 6, self.ui.sigmaY.value() * 6, sigma_ang, fill=False
-        )
+        self.sigma_1 = Ellipse(sigma_pos, self.ui.sigmaX.value() * 2, self.ui.sigmaY.value() * 2, sigma_ang, fill=False)
+        self.sigma_2 = Ellipse(sigma_pos, self.ui.sigmaX.value() * 4, self.ui.sigmaY.value() * 4, sigma_ang, fill=False)
+        self.sigma_3 = Ellipse(sigma_pos, self.ui.sigmaX.value() * 6, self.ui.sigmaY.value() * 6, sigma_ang, fill=False)
         plot.canvas.ax.add_line(self.rect_region)
         plot.canvas.ax.add_artist(self.sigma_1)
         plot.canvas.ax.add_artist(self.sigma_2)

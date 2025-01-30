@@ -13,8 +13,8 @@ Copyright (c) 2003-2017 SciPy Developers.
 All rights reserved.
 """
 
-
 import math
+
 import numpy as np
 
 __all__ = ["peak_prominences", "peak_widths", "find_peaks"]
@@ -267,7 +267,7 @@ def _peak_prominences(x, peaks, wlen):
         i_min = 0
         i_max = x.shape[0] - 1
         if not i_min <= peak <= i_max:
-            raise ValueError("peak {} is not a valid index for `x`".format(peak))
+            raise ValueError(f"peak {peak} is not a valid index for `x`")
 
         if 2 <= wlen:
             # Adjust window around the evaluated peak (within bounds);
@@ -312,7 +312,7 @@ def _peak_widths(x, peaks, rel_height, prominences, left_bases, right_bases):
     if rel_height < 0:
         raise ValueError("`rel_height` must be greater or equal to 0.0")
     if not (peaks.shape[0] == prominences.shape[0] == left_bases.shape[0] == right_bases.shape[0]):
-        raise ValueError("arrays in `prominence_data` must have the same shape " "as `peaks`")
+        raise ValueError("arrays in `prominence_data` must have the same shape as `peaks`")
 
     show_warning = False
     widths = np.empty(peaks.shape[0], dtype=np.float64)
@@ -326,7 +326,7 @@ def _peak_widths(x, peaks, rel_height, prominences, left_bases, right_bases):
         peak = peaks[p]
         # Validate bounds and order
         if not 0 <= i_min <= peak <= i_max < x.shape[0]:
-            raise ValueError("prominence data is invalid for peak {}".format(peak))
+            raise ValueError(f"prominence data is invalid for peak {peak}")
         height = width_heights[p] = x[peak] - prominences[p] * rel_height
 
         # Find intersection point on left side

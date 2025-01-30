@@ -2,7 +2,6 @@ r"""
 General settings
 """
 
-
 # standard imports
 import json
 import os
@@ -13,6 +12,7 @@ this_module_path = sys.modules[__name__].__file__
 
 class Settings(object):
     r"""Singleton object containing the GUI settings as a dictionary"""
+
     _instance = None
 
     def __new__(cls, *args, **kwargs):

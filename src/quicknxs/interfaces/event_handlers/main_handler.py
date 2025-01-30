@@ -2,32 +2,33 @@
 # pylint: disable=invalid-name, line-too-long, too-many-public-methods, too-many-instance-attributes, wrong-import-order, \
 # bare-except, protected-access, too-many-arguments, too-many-statements
 """
-    Manage file-related and UI events
+Manage file-related and UI events
 """
-import numpy as np
-
-# package imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
-from quicknxs.interfaces.data_handling.data_set import NexusData, CrossSectionData
-from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
-from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
-from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
-from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
-from quicknxs.config import Settings
-
-# 3rd-party imports
-from PyQt5 import QtGui, QtCore, QtWidgets
-from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
 
 # standard imports
 import glob
 import logging
 import math
 import os
-import sys
 import time
 import traceback
+
+import numpy as np
+from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
+
+# 3rd-party imports
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+from quicknxs.config import Settings
+
+# package imports
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
+from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
+from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
 
 
 class MainHandler(object):
@@ -154,7 +155,7 @@ class MainHandler(object):
         except RuntimeError as run_err:
             # FIXME - need to find out what kind of error it could have
             self.report_message(
-                "Error loading file(s) {} due to {}".format(self._data_manager.current_file_name, run_err),
+                f"Error loading file(s) {self._data_manager.current_file_name} due to {run_err}",
                 detailed_message=str(traceback.format_exc()),
                 pop_up=False,
                 is_error=True,
@@ -234,7 +235,7 @@ class MainHandler(object):
             try:
                 i = all_log_names.index(log_name)
             except ValueError:
-                return "{} is not a valid Log for comparison".format(log_name)
+                return f"{log_name} is not a valid Log for comparison"
             tolerances[log_name] = all_tolerances[i]
 
         # simple data structure to collect the log values from all files
@@ -248,7 +249,7 @@ class MainHandler(object):
                 except RuntimeError:
                     continue
             if workspace is None:
-                return "Could not load {}".format(file_path)
+                return f"Could not load {file_path}"
             metadata = workspace.getRun()
             for log_name in log_names:
                 try:
@@ -424,7 +425,7 @@ class MainHandler(object):
         def _reset_ui_file_list(fresh_list):
             r"""reset widget self.ui.file_list and highlight the current file_name"""
             self.ui.file_list.clear()  # Reset ui.file_list, a QtWidgets.QListWidget object
-            assert isinstance(fresh_list, list), "fresh_list must be list but not {}".format(type(fresh_list))
+            assert isinstance(fresh_list, list), f"fresh_list must be list but not {type(fresh_list)}"
             for item in fresh_list:
                 listitem = QtWidgets.QListWidgetItem(item, self.ui.file_list)
                 if item == self._data_manager.current_file_name:
@@ -947,7 +948,7 @@ class MainHandler(object):
             self.update_direct_beam_table(idx, refl.cross_sections[channels[0]])
 
         # Only recalculate if we need to, otherwise just replot
-        if not column in [1, 2, 3]:
+        if column not in [1, 2, 3]:
             try:
                 self._data_manager.calculate_reflectivity(nexus_data=refl)
             except:
@@ -1127,7 +1128,7 @@ class MainHandler(object):
                     existing_filenames.append(filename)
             newline = "\n"
             if len(existing_filenames) == 0 or self.ask_question(
-                "Overwrite existing file(s):\n{}?".format(newline.join(existing_filenames))
+                f"Overwrite existing file(s):\n{newline.join(existing_filenames)}?"
             ):
                 break
         # save one file per cross-section
@@ -1503,14 +1504,14 @@ class MainHandler(object):
             )
         except (RuntimeError, ValueError) as err:
             self.report_message(
-                "Error in stitching:\n{}".format(str(err)),
+                f"Error in stitching:\n{str(err)}",
                 detailed_message=str(traceback.format_exc()),
                 pop_up=True,
                 is_error=True,
             )
         except NormalizeToUnityQCutoffError as err:
             self.report_message(
-                "Error in normalize to unity when stitching:\n{}".format(str(err)),
+                f"Error in normalize to unity when stitching:\n{str(err)}",
                 detailed_message=str(traceback.format_exc()),
                 pop_up=True,
                 is_error=True,

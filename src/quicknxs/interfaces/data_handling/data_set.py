@@ -1,33 +1,32 @@
 """
-    Loader for event nexus files.
-    Uses Mantid Framework
+Loader for event nexus files.
+Uses Mantid Framework
 """
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, multiple-statements, bare-except, wrong-import-order, \
 # too-many-locals, too-few-public-methods, wrong-import-position, too-many-public-methods
 
-
 # local imports
-from quicknxs.interfaces.configuration import get_direct_beam_low_res_roi
-from quicknxs.interfaces.data_handling.filepath import FilePath
-from quicknxs.interfaces.data_handling.data_info import DataInfo
-from quicknxs.interfaces.data_handling.gisans import GISANS
-from quicknxs.interfaces.data_handling.off_specular import OffSpecular
-
-# 3rd-party imports
-import numpy as np
-
-# standard imports
-from collections import OrderedDict
 import copy
 import logging
 import math
-import sys
-import traceback
 import time
+import traceback
+
+# standard imports
+from collections import OrderedDict
 from typing import Union
 
 import mantid.simpleapi as api
+
+# 3rd-party imports
+import numpy as np
 from mantid.dataobjects import Workspace2D
+
+from quicknxs.interfaces.configuration import get_direct_beam_low_res_roi
+from quicknxs.interfaces.data_handling.data_info import DataInfo
+from quicknxs.interfaces.data_handling.filepath import FilePath
+from quicknxs.interfaces.data_handling.gisans import GISANS
+from quicknxs.interfaces.data_handling.off_specular import OffSpecular
 
 # Set Mantid logging level to warnings
 api.ConfigService.setLogLevel(3)
@@ -299,9 +298,7 @@ class NexusData(object):
         _scale = 0.005 / math.sin(tth) if tth > 0.0002 else 1.0
         quicknxs_scale *= _scale
 
-        ws = api.Scale(
-            InputWorkspace=output_ws, OutputWorkspace=output_ws, factor=quicknxs_scale, Operation="Multiply"
-        )
+        ws = api.Scale(InputWorkspace=output_ws, OutputWorkspace=output_ws, factor=quicknxs_scale, Operation="Multiply")
         _ws = ws if len(ws_list) > 1 else [ws]
         for xs in _ws:
             # add suffix to avoid overwriting ws in mantid data service, needed for multiple peaks
@@ -411,7 +408,7 @@ class NexusData(object):
             xs_list = self.configuration.instrument.load_data(self.file_path, self.configuration)
             logging.info("%s loaded: %s xs", self.file_path, len(xs_list))
         except RuntimeError as run_err:
-            logging.error("Could not load file(s) {}\n   {}".format(str(self.file_path), run_err))
+            logging.error(f"Could not load file(s) {str(self.file_path)}\n   {run_err}")
             return self.cross_sections
 
         progress_value = 0
@@ -1020,9 +1017,7 @@ class CrossSectionData(object):
         quicknxs_scale /= (float(peak_max) - float(peak_min)) * (float(low_res_max) - float(low_res_min))
         quicknxs_scale *= 0.005 / math.sin(tth)
 
-        ws = api.Scale(
-            InputWorkspace=output_ws, OutputWorkspace=output_ws, factor=quicknxs_scale, Operation="Multiply"
-        )
+        ws = api.Scale(InputWorkspace=output_ws, OutputWorkspace=output_ws, factor=quicknxs_scale, Operation="Multiply")
         #
 
         self.q = ws.readX(0)[:].copy()

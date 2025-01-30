@@ -1,14 +1,16 @@
 # pylint: disable=too-many-locals, too-many-arguments
 """
-    Class to execute and hold the off-specular reflectivity calculation.
+Class to execute and hold the off-specular reflectivity calculation.
 """
+
 import logging
-import numpy as np
-import scipy.stats
+from functools import reduce
 from multiprocessing import Pool
 
+import numpy as np
+import scipy.stats
+
 from quicknxs.interfaces.configuration import Configuration, get_direct_beam_low_res_roi
-from functools import reduce
 
 H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
@@ -104,9 +106,7 @@ class OffSpecular(object):
             if not direct_beam.configuration.tof_bins == self.data_set.configuration.tof_bins:
                 logging.error("Trying to normalize with a direct beam data set with different binning")
 
-            norm_y_min, norm_y_max = get_direct_beam_low_res_roi(
-                self.data_set.configuration, direct_beam.configuration
-            )
+            norm_y_min, norm_y_max = get_direct_beam_low_res_roi(self.data_set.configuration, direct_beam.configuration)
             norm_x_min, norm_x_max = direct_beam.configuration.peak_roi
             norm_raw_multi_dim = direct_beam.data[norm_x_min:norm_x_max, norm_y_min:norm_y_max, :]
 

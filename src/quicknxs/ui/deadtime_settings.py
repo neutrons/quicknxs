@@ -1,14 +1,14 @@
 # package imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
+# standard imports
+import os
 
 # third-party imports
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QDialog, QWidget
 from qtpy.uic import loadUi
 
-# standard imports
-import os
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
 
 
 class DeadTimeSettingsView(QDialog):

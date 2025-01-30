@@ -1,21 +1,22 @@
 # pylint: disable=bare-except
 """
-    Data manager. Holds information about the current data location
-    and manages the data cache.
+Data manager. Holds information about the current data location
+and manages the data cache.
 """
-import glob
-import sys
-import os
-import time
-import numpy as np
-import logging
+
 import copy
+import glob
+import logging
+import os
+import sys
+import time
+
+import numpy as np
+
 from quicknxs.interfaces.data_handling.data_set import NexusData
-from quicknxs.interfaces.data_handling.filepath import RunNumbers, FilePath
-from .data_handling import data_manipulation
-from .data_handling import quicknxs_io
-from .data_handling import off_specular
-from .data_handling import gisans
+from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+
+from .data_handling import data_manipulation, gisans, quicknxs_io
 
 
 class DataManager(object):
@@ -205,8 +206,8 @@ class DataManager(object):
         # First, check that we have the same number of states
         if not len(reduction_list_states) == len(nexus_data_states):
             logging.error(
-                "Nexus data cross-sections ({}) different than those of the"
-                " reduction list ({})".format(reduction_list_states, nexus_data_states)
+                f"Nexus data cross-sections ({reduction_list_states}) different than those of the"
+                f" reduction list ({nexus_data_states})"
             )
             return False
 
@@ -214,8 +215,7 @@ class DataManager(object):
         for cross_section_state in nexus_data_states:
             if cross_section_state not in reduction_list_states:
                 logging.error(
-                    "Nexus data cross-section {} not found in those"
-                    " of the reduction list".format(cross_section_state)
+                    f"Nexus data cross-section {cross_section_state} not found in those of the reduction list"
                 )
                 return False
         return True
@@ -362,7 +362,7 @@ class DataManager(object):
         """
         Add active data set to the direct beam list
         """
-        if not self._nexus_data in self.direct_beam_list:
+        if self._nexus_data not in self.direct_beam_list:
             self.direct_beam_list.append(self._nexus_data)
             return True
         return False

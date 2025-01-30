@@ -1,10 +1,10 @@
 # pylint: disable=invalid-name, line-too-long, too-few-public-methods, too-many-instance-attributes, wrong-import-order, bare-except
 """
-    Application configuration, including reduction options
+Application configuration, including reduction options
 """
 
-import sys
 import logging
+
 from .data_handling.instrument import Instrument
 
 # TODO extract to file based parameter setting

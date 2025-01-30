@@ -1,12 +1,11 @@
 # local imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import NexusData, CrossSectionData
-from quicknxs.interfaces.main_window import MainWindow
-from test.ui import ui_utilities
-
-
 # third party imports
 import pytest
+
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.main_window import MainWindow
+from test.ui import ui_utilities
 
 # standard library imports
 

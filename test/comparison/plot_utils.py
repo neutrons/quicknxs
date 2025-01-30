@@ -1,7 +1,7 @@
-import numpy as np
-import plotly.offline as py
-import plotly.graph_objs as go
 from functools import reduce
+
+import plotly.graph_objs as go
+import plotly.offline as py
 
 py.init_notebook_mode(connected=True)
 
@@ -12,8 +12,6 @@ def plot1d(data_list, data_names=None, x_title="", y_title="", x_log=False, y_lo
     @param data_list: list of traces [ [x1, y1], [x2, y2], ...]
     @param data_names: name for each trace, for the legend
     """
-    from plotly.offline import plot
-    import plotly.graph_objs as go
 
     # Create traces
     if not isinstance(data_list, list):
@@ -89,8 +87,6 @@ def plot_heatmap(x, y, z, x_title="", y_title="", surface=False, x_log=False, y_
     """
     Produce a 2D plot
     """
-    from plotly.offline import plot
-    import plotly.graph_objs as go
 
     x_layout = dict(
         title=x_title,
@@ -140,7 +136,12 @@ def plot_heatmap(x, y, z, x_title="", y_title="", surface=False, x_log=False, y_
     ]
     plot_type = "surface" if surface else "heatmap"
     trace = go.Heatmap(
-        z=z, x=x, y=y, autocolorscale=False, hoverinfo="x+y+z", colorscale=colorscale  # type=plot_type,
+        z=z,
+        x=x,
+        y=y,
+        autocolorscale=False,
+        hoverinfo="x+y+z",
+        colorscale=colorscale,  # type=plot_type,
     )
     fig = go.Figure(data=[trace], layout=layout)
     py.iplot(fig, show_link=False)

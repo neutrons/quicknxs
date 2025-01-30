@@ -1,14 +1,13 @@
 # package imports
+# third party imports
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import QCheckBox, QGroupBox, QHBoxLayout, QPushButton
+
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
 
-# third party imports
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QGroupBox, QHBoxLayout, QCheckBox, QPushButton
-
 
 class DeadTimeEntryPoint(QGroupBox):
-
     reload_files_signal = Signal()
 
     def __init__(self, title="Dead Time Correction"):

@@ -1,22 +1,21 @@
 # package imports
-import numpy as np
-from qtpy import QtWidgets, QtCore
-
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
-from quicknxs.interfaces.data_handling.data_set import NexusData, CrossSectionData
-from quicknxs.interfaces.main_window import MainWindow
-from quicknxs.interfaces.event_handlers.main_handler import MainHandler
-
-# 3rd-party imports
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QTimer
-import pytest
-
 # standard imports
 import os
 import sys
 
+import numpy as np
+import pytest
+from PyQt5.QtCore import QTimer
+
+# 3rd-party imports
+from PyQt5.QtWidgets import QApplication
+from qtpy import QtCore, QtWidgets
+
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.event_handlers.main_handler import MainHandler
+from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
 
 this_module_path = sys.modules[__name__].__file__
@@ -33,7 +32,6 @@ class MainWindowMock(object):
 
 
 class TestMainHandler(object):
-
     app = QApplication(sys.argv)
     application = MainWindow()
     handler = MainHandler(application)
@@ -80,9 +78,7 @@ class TestMainHandler(object):
         # Mock exception raised in stitch_data_sets
         mocker.patch("quicknxs.interfaces.data_manager.DataManager.stitch_data_sets", side_effect=error_type)
         # Mock call to function report_message
-        mock_report_message = mocker.patch(
-            "quicknxs.interfaces.event_handlers.main_handler.MainHandler.report_message"
-        )
+        mock_report_message = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler.report_message")
         self.handler.stitch_reflectivity()
         assert error_msg in mock_report_message.call_args[0][0]
 

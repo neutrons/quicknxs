@@ -1,11 +1,12 @@
 """
-   Dialog to show final reduced data.
+Dialog to show final reduced data.
 """
 # pylint: disable=bare-except
 
 import logging
-import numpy as np
+
 from PyQt5 import QtCore, QtWidgets
+
 import quicknxs.ui.mplwidget as mpl
 from quicknxs.interfaces import load_ui
 

@@ -1,5 +1,5 @@
 """
-    Computations for GISANS
+Computations for GISANS
 """
 
 import logging
@@ -82,9 +82,7 @@ class GISANS(object):
             if not direct_beam.configuration.tof_bins == self.data_set.configuration.tof_bins:
                 logging.error("Trying to normalize with a direct beam data set with different binning")
 
-            norm_y_min, norm_y_max = get_direct_beam_low_res_roi(
-                self.data_set.configuration, direct_beam.configuration
-            )
+            norm_y_min, norm_y_max = get_direct_beam_low_res_roi(self.data_set.configuration, direct_beam.configuration)
             norm_x_min, norm_x_max = direct_beam.configuration.peak_roi
             norm_raw_multi_dim = direct_beam.data[norm_x_min:norm_x_max, norm_y_min:norm_y_max, P0:PN]
 
@@ -160,7 +158,6 @@ def merge(reduction_list, pol_state, wl_min=0, wl_max=100):
 
 
 def rebin_extract(reduction_list, pol_state, wl_min, wl_max, qy_npts=50, qz_npts=50, use_pf=False):
-
     binning = (qy_npts + 1, qz_npts + 1)
     qy, qz, pf, intensity, d_intensity, _ = merge(reduction_list, pol_state, wl_min=wl_min, wl_max=wl_max)
     if use_pf:

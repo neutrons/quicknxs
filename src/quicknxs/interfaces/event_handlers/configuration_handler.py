@@ -1,12 +1,12 @@
 # local imports
-from quicknxs.interfaces.configuration import Configuration
+# standard imports
+from dataclasses import dataclass
 
 # third party imports
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QSpinBox, QCheckBox, QDoubleSpinBox, QWidget
+from PyQt5.QtWidgets import QCheckBox, QDoubleSpinBox, QSpinBox, QWidget
 
-# standard imports
-from dataclasses import dataclass
+from quicknxs.interfaces.configuration import Configuration
 
 
 class ConfigurationHandler:

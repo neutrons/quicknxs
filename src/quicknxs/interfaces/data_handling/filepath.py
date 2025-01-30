@@ -2,7 +2,6 @@ r"""
 Classes to handle string representations of sets of run numbers and absolute paths to data files
 """
 
-
 # standard imports
 import itertools
 import operator
@@ -15,6 +14,7 @@ class RunNumbers(object):
     A helper class to handle string representations of one or more run numbers. It translates from a
     string representation to a list of run numbers, and viceversa
     """
+
     merge_symbol = "+"
     range_symbol = ":"
 
@@ -77,11 +77,9 @@ class RunNumbers(object):
         @details Example: [1, 2, 3, 6] becomes '1:3+6'
         """
         ranges = list()
-        for _, g in itertools.groupby(
-            enumerate(self._numbers), lambda i_run_number: i_run_number[0] - i_run_number[1]
-        ):
+        for _, g in itertools.groupby(enumerate(self._numbers), lambda i_run_number: i_run_number[0] - i_run_number[1]):
             runs = list(map(operator.itemgetter(1), g))  # e.g. [3,4,5]
-            run_range = str(runs[0]) if len(runs) == 1 else "{}{}{}".format(runs[0], self.range_symbol, runs[-1])
+            run_range = str(runs[0]) if len(runs) == 1 else f"{runs[0]}{self.range_symbol}{runs[-1]}"
             ranges.append(run_range)
         return self.merge_symbol.join(ranges)
 
@@ -110,6 +108,7 @@ class FilePath(object):
 
     NOTE: Paths are sorted
     """
+
     merge_symbol = "+"
 
     @classmethod
@@ -144,7 +143,7 @@ class FilePath(object):
         if isinstance(file_path, list):
             file_path = self.merge_symbol.join(file_path)
         if not self.unique_dirname(file_path):
-            raise ValueError("files in {} reside in different directories".format(file_path))
+            raise ValueError(f"files in {file_path} reside in different directories")
         if self.merge_symbol in file_path:
             if sort:
                 paths = sorted(file_path.split(self.merge_symbol))
@@ -208,7 +207,7 @@ class FilePath(object):
         for path in self.single_paths:
             match = re.search(r"REF_M_(\d+)", path)
             if match is None:
-                raise ValueError("Could not extract run number in file path {}".format(path))
+                raise ValueError(f"Could not extract run number in file path {path}")
             numbers.append(int(match.groups()[0]))
         numbers.sort()  # this should be unnecessary, though, since self._file_path is already sorted
         if string_representation is None:

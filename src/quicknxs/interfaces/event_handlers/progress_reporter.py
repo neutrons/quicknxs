@@ -1,6 +1,6 @@
 """
-    Class used to report on progress. It allows for sub-tasks and
-    computes a meaningful progress status accordingly.
+Class used to report on progress. It allows for sub-tasks and
+computes a meaningful progress status accordingly.
 """
 
 

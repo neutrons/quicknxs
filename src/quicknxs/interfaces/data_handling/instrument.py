@@ -1,29 +1,27 @@
 """
-    This instrument description contains information
-    that is instrument-specific and abstracts out how we obtain
-    information from the data file
+This instrument description contains information
+that is instrument-specific and abstracts out how we obtain
+information from the data file
 """
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, bare-except
 
-
 # local
-from quicknxs.interfaces.data_handling import DeadTimeCorrection
-from quicknxs.interfaces.data_handling.filepath import FilePath
-
-# 3rd party
-from mantid.api import WorkspaceGroup, PythonAlgorithm
-from mantid.dataobjects import EventWorkspace
-import numpy as np
-import mantid.simpleapi as api
-
 # standard
 import logging
 import math
-import os
 import random
-import sys
 import string
+import sys
 
+import mantid.simpleapi as api
+import numpy as np
+
+# 3rd party
+from mantid.api import WorkspaceGroup
+from mantid.dataobjects import EventWorkspace
+
+from quicknxs.interfaces.data_handling import DeadTimeCorrection
+from quicknxs.interfaces.data_handling.filepath import FilePath
 
 # Constants
 h = 6.626e-34  # m^2 kg s^-1
@@ -221,7 +219,7 @@ class Instrument(object):
                 )
                 cross_sections.append(_ws)
             except RuntimeError as run_err:
-                logging.error("Could not filter {}: {}\nError: {}".format(pol_state, sys.exc_info()[1], run_err))
+                logging.error(f"Could not filter {pol_state}: {sys.exc_info()[1]}\nError: {run_err}")
 
         return cross_sections
 
@@ -299,9 +297,7 @@ class Instrument(object):
                             _ws = apply_dead_time_correction(ws, configuration, error_ws=None)
                             path_xs_list.append(_ws)
             else:
-                path_xs_list = [
-                    ws for ws in _path_xs_list if not ws.getRun()["cross_section_id"].value == "unfiltered"
-                ]
+                path_xs_list = [ws for ws in _path_xs_list if not ws.getRun()["cross_section_id"].value == "unfiltered"]
 
             if len(xs_list) == 0:  # initialize xs_list with the cross sections of the first data file
                 xs_list = path_xs_list

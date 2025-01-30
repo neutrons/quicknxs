@@ -2,10 +2,12 @@
 # pylint: disable=invalid-name, too-many-instance-attributes, unused-argument, protected-access, line-too-long,
 # pylint: disable=access-member-before-definition, too-many-locals, too-many-branches
 """
-    Event handlers for the main application window.
-    Most of those come straight from QuickNXS.
+Event handlers for the main application window.
+Most of those come straight from QuickNXS.
 """
+
 import time
+
 from PyQt5 import QtWidgets
 
 

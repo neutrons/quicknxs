@@ -1,12 +1,4 @@
 # local imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import NexusData, CrossSectionData
-from quicknxs.interfaces.data_handling.quicknxs_io import (
-    read_reduced_file,
-    write_reflectivity_header,
-    write_reflectivity_data,
-)
-
 # standard imports
 import os
 
@@ -14,6 +6,14 @@ import os
 import mantid.simpleapi as api
 import numpy as np
 import pytest
+
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.data_handling.quicknxs_io import (
+    read_reduced_file,
+    write_reflectivity_data,
+    write_reflectivity_header,
+)
 
 
 class TestDataLoader(object):

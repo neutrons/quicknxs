@@ -1,4 +1,11 @@
 # package imports
+# 3rd-party imports
+import copy
+
+import mantid.simpleapi as api
+import numpy as np
+import pytest
+
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
@@ -8,13 +15,6 @@ from quicknxs.interfaces.data_handling.data_manipulation import (
 )
 from quicknxs.interfaces.data_handling.data_set import NexusData
 from quicknxs.interfaces.data_manager import DataManager
-
-# 3rd-party imports
-import copy
-import mantid.simpleapi as api
-import numpy as np
-import pytest
-
 
 mock_reduced_file_str = (
     "# Datafile created by QuickNXS 3.1.0.dev2\n"

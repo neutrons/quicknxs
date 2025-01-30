@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """
-    Start script for reduction application
+Start script for reduction application
 """
-import sys
-import os
-import types
 
 import logging
 import logging.handlers
+import os
+import sys
 
 # Set log level
 logging.getLogger().setLevel(logging.INFO)
@@ -38,6 +37,7 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 
 import mantid
+
 import quicknxs
 
 print("##################################################")
@@ -46,6 +46,7 @@ print("#    with Mantid: %s " % mantid.__version__)
 print("##################################################")
 
 from PyQt5.QtWidgets import QApplication
+
 from quicknxs.interfaces.main_window import MainWindow
 
 

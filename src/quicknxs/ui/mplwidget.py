@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 # pylint: disable=invalid-name, too-many-instance-attributes
 """
-    Plotting widget taken from QuickNXS
+Plotting widget taken from QuickNXS
 
-    #TODO: refactor this or replace it with a standard solution
+#TODO: refactor this or replace it with a standard solution
 """
-import os
+
 import inspect
+import os
 import tempfile
-from PyQt5 import QtCore, QtGui, QtWidgets, QtPrintSupport
+
 import matplotlib.cm
 import matplotlib.colors
-from quicknxs.config import plotting
-
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import numpy as np
 from matplotlib.backends.backend_qt5 import NavigationToolbar2QT
-from matplotlib.cbook import Stack
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.colors import LogNorm, Normalize
 from matplotlib.figure import Figure
-import numpy as np
+from PyQt5 import QtCore, QtGui, QtPrintSupport, QtWidgets
+
+from quicknxs.config import plotting
 
 try:
     import matplotlib.backends.qt5_editor.figureoptions as figureoptions

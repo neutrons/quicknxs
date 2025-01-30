@@ -1,28 +1,27 @@
 """
-    Data processing workflow, taking results and writing them to files.
+Data processing workflow, taking results and writing them to files.
 """
 # pylint: disable=bare-except, too-many-locals
 
-import sys
-import os
-import math
 import copy
+import io
 import logging
+import math
+import os
+import smtplib
+import sys
 import time
+import zipfile
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 import numpy as np
 
-import smtplib
-from email import encoders
-from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-import zipfile
-import io
-
 from ..configuration import Configuration
-from . import quicknxs_io, data_manipulation, off_specular, gisans
-
+from . import data_manipulation, gisans, off_specular, quicknxs_io
 
 DEFAULT_OPTIONS = dict(
     export_specular=True,
@@ -170,9 +169,7 @@ class ProcessingWorkflow(object):
                 state_output_path,
                 _pol_state,
             )
-            quicknxs_io.write_reflectivity_data(
-                state_output_path, output_data[pol_state], col_names, as_5col=five_cols
-            )
+            quicknxs_io.write_reflectivity_data(state_output_path, output_data[pol_state], col_names, as_5col=five_cols)
             self.exported_data_files.append(state_output_path)
 
     def specular_reflectivity(self):
@@ -733,9 +730,7 @@ class ProcessingWorkflow(object):
             mitem = MIMEBase("application", "zip")
             mitem.set_payload(fobj.read())
             encoders.encode_base64(mitem)
-            mitem.add_header(
-                "Content-Disposition", "attachment", filename=self._email_replace("results_{numbers}.zip")
-            )
+            mitem.add_header("Content-Disposition", "attachment", filename=self._email_replace("results_{numbers}.zip"))
             msg.attach(mitem)
         else:
             # read each file, which was exported and attach it to the mail

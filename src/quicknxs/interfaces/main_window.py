@@ -2,31 +2,30 @@
 # pylint: disable=invalid-name, line-too-long, too-many-public-methods, too-many-instance-attributes,
 # pylint; disable=wrong-import-order, bare-except
 r"""
-    Main application window
+Main application window
 """
 
 # package imports
-from .data_manager import DataManager
-from .plotting import PlotManager
-from .reduction_dialog import ReductionDialog
-from .smooth_dialog import SmoothDialog
-import quicknxs
-from quicknxs.interfaces.data_handling.filepath import FilePath
-from quicknxs.interfaces.event_handlers.configuration_handler import ConfigurationHandler
-from quicknxs.interfaces.event_handlers.plot_handler import PlotHandler
-from quicknxs.interfaces.event_handlers.main_handler import MainHandler
-from quicknxs.interfaces import load_ui
-from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
+# standard imports
+import logging
+import os
+from enum import Enum
 
 # 3rd-party
 from PyQt5 import QtCore, QtWidgets
 
-# standard imports
-import logging
-import os
-import sys
-from enum import Enum
+import quicknxs
+from quicknxs.interfaces import load_ui
+from quicknxs.interfaces.data_handling.filepath import FilePath
+from quicknxs.interfaces.event_handlers.configuration_handler import ConfigurationHandler
+from quicknxs.interfaces.event_handlers.main_handler import MainHandler
+from quicknxs.interfaces.event_handlers.plot_handler import PlotHandler
+from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
 
+from .data_manager import DataManager
+from .plotting import PlotManager
+from .reduction_dialog import ReductionDialog
+from .smooth_dialog import SmoothDialog
 
 # The two modes of the button to add/remove data tabs for additional ROIs/peaks
 # the button is in "add" mode until it reaches the max number of tabs and then switches to "remove"
@@ -517,9 +516,7 @@ class MainWindow(QtWidgets.QMainWindow):
         reduction items.
         """
         if len(self.data_manager.reduction_list) == 0:
-            self.file_handler.report_message(
-                "The data to be reduced must be added to the reduction table", pop_up=True
-            )
+            self.file_handler.report_message("The data to be reduced must be added to the reduction table", pop_up=True)
             return
         dialog = ReductionDialog(self)
         dialog.exec_()

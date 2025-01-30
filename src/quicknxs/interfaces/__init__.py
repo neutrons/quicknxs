@@ -1,5 +1,7 @@
 import os
+
 from PyQt5.uic import loadUi
+
 from quicknxs import ui
 
 

@@ -1,11 +1,13 @@
 """
-   Dialog to select reduction options to choose which outputs are needed
-   and in which formats to write them.
+Dialog to select reduction options to choose which outputs are needed
+and in which formats to write them.
 """
 # pylint: disable=bare-except
 
 import os
+
 from PyQt5 import QtCore, QtWidgets
+
 from quicknxs.interfaces import load_ui
 
 
@@ -94,9 +96,7 @@ class ReductionDialog(QtWidgets.QDialog):
         Change the output directory
         """
         old_d = self.ui.directoryEntry.text()
-        new_d = QtWidgets.QFileDialog.getExistingDirectory(
-            parent=self, caption="Select new directory", directory=old_d
-        )
+        new_d = QtWidgets.QFileDialog.getExistingDirectory(parent=self, caption="Select new directory", directory=old_d)
         if new_d is not None:
             self.ui.directoryEntry.setText(new_d)
 

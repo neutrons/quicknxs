@@ -2,14 +2,14 @@
 # pylint: bare-except
 
 # local imports
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData
+# standard imports
+import logging
+import sys
 
 # third-party imports
 import numpy as np
 
-# standard imports
-import logging
-import sys
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 
 
 class PlotManager(object):

@@ -1,17 +1,17 @@
 # pylint: disable=bare-except, too-many-locals, too-many-statements, too-many-branches, wrong-import-order, too-many-arguments
 """
-    Read and write quicknxs reduced files
+Read and write quicknxs reduced files
 """
-import re
-import sys
-import os
-import time
+
 import copy
-import math
 import logging
-import numpy as np
+import math
+import os
+import sys
+import time
 
 import mantid
+import numpy as np
 
 from ... import __version__
 from ..configuration import Configuration
@@ -416,8 +416,8 @@ def read_reduced_file(file_path, configuration=None):
                 if line.startswith("# lock_direct_beam_y"):
                     try:
                         Configuration.lock_direct_beam_y = (
-                            line[len("# lock_direct_beam_y") :]
-                        ).strip().lower() == "true"
+                            (line[len("# lock_direct_beam_y") :]).strip().lower() == "true"
+                        )
                     except:
                         logging.error("Could not extract direct beam y lock: %s" % line)
 

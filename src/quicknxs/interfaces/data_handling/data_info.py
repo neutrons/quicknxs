@@ -1,20 +1,20 @@
 """
-    Meta-data information for MR reduction
+Meta-data information for MR reduction
 """
 # pylint: disable=too-few-public-methods, wrong-import-position, too-many-instance-attributes, wrong-import-order
 
-import sys
-import time
+import copy
 import logging
 import math
-import copy
-
-import numpy as np
-from scipy import ndimage
-import scipy.optimize as opt
-from .peak_finding import find_peaks, peak_prominences, peak_widths
+import sys
+import time
 
 import mantid.simpleapi as api
+import numpy as np
+import scipy.optimize as opt
+from scipy import ndimage
+
+from .peak_finding import find_peaks, peak_prominences, peak_widths
 
 NX_PIXELS = 304
 NY_PIXELS = 256
@@ -90,9 +90,9 @@ class DataInfo(object):
         sample_detector_distance = run_object["SampleDetDis"].getStatistics().mean
         source_sample_distance = run_object["ModeratorSamDis"].getStatistics().mean
         # Check units
-        if not run_object["SampleDetDis"].units in ["m", "meter"]:
+        if run_object["SampleDetDis"].units not in ["m", "meter"]:
             sample_detector_distance /= 1000.0
-        if not run_object["ModeratorSamDis"].units in ["m", "meter"]:
+        if run_object["ModeratorSamDis"].units not in ["m", "meter"]:
             source_sample_distance /= 1000.0
 
         source_detector_distance = source_sample_distance + sample_detector_distance

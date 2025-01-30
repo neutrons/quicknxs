@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=bare-except
 """
-  Widget to compare different reflectivities.
+Widget to compare different reflectivities.
 """
-import sys
-import os
-import logging
-import numpy as np
-import matplotlib.pyplot as plt
 
-from PyQt5 import QtCore, QtWidgets, QtGui
+import logging
+import os
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from quicknxs.interfaces import load_ui
+
 from ..interfaces.data_handling.processing_workflow import ProcessingWorkflow
 
 
