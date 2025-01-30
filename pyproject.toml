@@ -1,3 +1,18 @@
+[project]
+name = "quicknxs"
+description = "Magnetic Reflectivity Reduction"
+dynamic = ["version"]
+requires-python = ">=3.10"
+dependencies = ["mantid>=6.10", "matplotlib", "qtpy"]
+license = { text = "Apache-2.0" }
+keywords = ["neutrons", "quicknxs", "magnetic reflectivity"]
+readme = "README.md"
+
+[project.urls]
+homepage = "https://github.com/neutrons/quicknxs"
+repository = "https://github.com/neutrons/quicknxs"
+issues = "https://github.com/neutrons/quicknxs/issues"
+
 [build-system]
 requires = ["setuptools >= 47", "wheel", "toml", "versioningit"]
 build-backend = "setuptools.build_meta"
@@ -15,9 +30,30 @@ dirty = "{version}+d{build_date:%Y%m%d}"
 distance-dirty = "{next_version}.dev{distance}+d{build_date:%Y%m%d%H%M}"
 
 [tool.versioningit.write]
-file = "quicknxs/_version.py"
+file = "src/quicknxs/_version.py"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests*", "scripts*", "docs*", "notebooks"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yml", "*.yaml", "*.ini", "*.gx", "*.json", "*.ui"]
+
+[project.gui-scripts]
+quicknxs-gui = "quicknxs.gui:main"
 
 [tool.pytest.ini_options]
+pythonpath = [".", "src", "scripts"]
 testpaths = ["test/"]
-
+python_files = ["test*.py"]
+norecursedirs = [".git", "tmp*", "_tmp*", "__pycache__", "*dataset*", "*data_set*"]
 markers = ["datarepo: mark a test as using reflection_ui-data repository"]
+qt_log_format = "{rec.when} {rec.type_name}: {rec.message}"
+
+[tool.ruff]
+line-length = 120
+select = ["A", "ARG", "ASYNC", "BLE", "C90", "E", "F", "I", "N", "UP032", "W"]
+
+[tool.coverage.run]
+source = "src/quicknxs"
+omit = "test/*"
