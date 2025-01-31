@@ -246,7 +246,11 @@ class Instrument(object):
 
             # If the meta data is corrupted and we are missing analyzer/polarizer data, use the
             # simple filtering.
-            missing_keys = any(key not in event_ws.getRun() for key in [self.pol_state, self.ana_state])
+            polarizer = event_ws.getRun().getProperty("Polarizer").value[0]
+            analyzer = event_ws.getRun().getProperty("Analyzer").value[0]
+            missing_keys = (polarizer > 0 and self.pol_state not in event_ws.getRun()) or \
+            (analyzer > 0 and self.ana_state not in event_ws.getRun())
+
             if missing_keys:
                 _use_slow_flipper_log = True
                 print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
