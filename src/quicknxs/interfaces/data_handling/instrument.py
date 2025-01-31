@@ -246,8 +246,9 @@ class Instrument(object):
             # simple filtering.
             polarizer = event_ws.getRun().getProperty("Polarizer").value[0]
             analyzer = event_ws.getRun().getProperty("Analyzer").value[0]
-            missing_keys = (polarizer > 0 and self.pol_state not in event_ws.getRun()) or \
-            (analyzer > 0 and self.ana_state not in event_ws.getRun())
+            missing_keys = (polarizer > 0 and self.pol_state not in event_ws.getRun()) or (
+                analyzer > 0 and self.ana_state not in event_ws.getRun()
+            )
 
             if missing_keys:
                 _use_slow_flipper_log = True
