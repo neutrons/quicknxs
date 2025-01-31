@@ -28,7 +28,6 @@ jobs:
           miniconda-version: latest
           mamba-version: "*"
           environment-file: environment.yml
-          fetch-depth: 0
 
       - name: Generate cache key for submodule
         id: generate-cache-key
@@ -46,13 +45,12 @@ jobs:
 
       - name: Pull LFS files for the submodule
         if: steps.cache-lfs.outputs.cache-hit != 'true'
-        run: git submodule update --init --recursive
+        run: git submodule update --init
 
       - name: Unit test with code coverage
         run: |
-          git status
-          # run tests requiring git lfs (may need to switch to a self-hosted runner)
-          xvfb-run -a python -m pytest -vv --cov=src --cov-report=xml --cov-report=term
+            # run tests requiring git lfs (may need to switch to a self-hosted runner)
+            xvfb-run -a python -m pytest -vv --cov=src --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
