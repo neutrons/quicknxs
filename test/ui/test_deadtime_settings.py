@@ -1,13 +1,12 @@
 # local imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.main_window import MainWindow
-
 # standard imports
-import unittest.mock as mock
 
 # third-party imports
 import pytest
 from qtpy import QtCore, QtWidgets
+
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.main_window import MainWindow
 
 
 def test_show_deadtime_settings_default_values(mocker, qtbot):

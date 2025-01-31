@@ -1,5 +1,3 @@
-import pytest
-
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.main_window import MainWindow
 

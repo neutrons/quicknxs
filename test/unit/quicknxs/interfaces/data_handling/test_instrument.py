@@ -1,12 +1,13 @@
 # package imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
+import pytest
 
 # 3rd party imports
 from mantid.api import MatrixWorkspaceProperty, PythonAlgorithm
 from mantid.kernel import Direction
 from mantid.simpleapi import CreateSingleValuedWorkspace
-import pytest
+
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
 
 
 @pytest.mark.datarepo
@@ -35,6 +36,7 @@ def test_load_data_deadtime(data_server):
 
 def test_mantid_algorithm_exec():
     """Test helper function mantid_algorithm_exec"""
+
     # test wrong type of class
     class TestNotMantidAlgo:
         pass

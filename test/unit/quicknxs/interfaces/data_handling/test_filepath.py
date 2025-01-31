@@ -1,8 +1,8 @@
 # local imports
-from quicknxs.interfaces.data_handling.filepath import RunNumbers, FilePath
-
 # 3rd-party imports
 import pytest
+
+from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
 
 
 def assert_equal_arrays(actual, expected):

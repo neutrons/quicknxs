@@ -1,12 +1,11 @@
 import numpy as np
-import pytest
-from PyQt5 import QtWidgets
-from numpy.testing import assert_allclose
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
+from numpy.testing import assert_allclose
+from PyQt5 import QtWidgets
 
 from quicknxs.interfaces.main_window import MainWindow
-from quicknxs.ui.mplwidget import NavigationToolbarGeneric, NavigationToolbarReflectivity, NavigationToolbar
+from quicknxs.ui.mplwidget import NavigationToolbar, NavigationToolbarGeneric, NavigationToolbarReflectivity
 
 
 def _refl_data():

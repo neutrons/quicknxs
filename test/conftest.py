@@ -3,16 +3,16 @@ Fixtures for pytest
 """
 
 # standard imports
+# 3rd-party imports
+import glob
 import os
 import sys
 from pathlib import Path
 
-# 3rd-party imports
-import glob
 import pytest
 from PyQt5.QtCore import QSettings
 
-from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+from quicknxs.interfaces.data_handling.filepath import RunNumbers
 from quicknxs.interfaces.data_handling.instrument import Instrument
 
 pytest_plugins = ["mantid.fixtures"]
@@ -56,7 +56,6 @@ def data_server(DATA_DIR):
     r"""Object containing info and functionality for data files"""
 
     class _DataServe(object):
-
         _directory = str(DATA_DIR)
         _h5_path = "quicknxs-data"
 
@@ -88,7 +87,7 @@ def data_server(DATA_DIR):
             for ext in [".nxs.h5", "", "_event.nxs"]:
                 if os.path.isfile(file_path + ext):
                     return file_path + ext
-            raise IOError("File {0} not found in data directory {1}".format(basename, self._directory))
+            raise IOError(f"File {basename} not found in data directory {self._directory}")
 
         def get_file_paths(self, number):
             instrument = Instrument()

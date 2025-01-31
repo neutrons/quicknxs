@@ -1,9 +1,4 @@
-import sys
-import time
-import multiprocessing
-
 import mantid.simpleapi as api
-
 import numpy as np
 
 from quicknxs.interfaces.data_handling import instrument
@@ -210,9 +205,9 @@ class EventReflectivity(object):
         run_object = self._ws_sc.getRun()
         self.det_distance = run_object["SampleDetDis"].getStatistics().mean
         source_sample_distance = run_object["ModeratorSamDis"].getStatistics().mean
-        if not run_object["SampleDetDis"].units in ["m", "meter"]:
+        if run_object["SampleDetDis"].units not in ["m", "meter"]:
             self.det_distance /= 1000.0
-        if not run_object["ModeratorSamDis"].units in ["m", "meter"]:
+        if run_object["ModeratorSamDis"].units not in ["m", "meter"]:
             source_sample_distance /= 1000.0
         self.source_detector_distance = source_sample_distance + self.det_distance
 

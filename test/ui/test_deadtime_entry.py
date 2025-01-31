@@ -1,10 +1,8 @@
 # third party imports
 import pytest
-from qtpy.QtCore import Qt, QTimer  # type: ignore
-from qtpy.QtWidgets import QApplication, QDialogButtonBox
+from qtpy.QtCore import Qt  # type: ignore
 
 # local imports
-from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.main_window import MainWindow
 from quicknxs.ui.deadtime_entry import DeadTimeEntryPoint  # Make sure to import your class correctly
 from test.ui import ui_utilities

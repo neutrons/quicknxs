@@ -1,8 +1,8 @@
 # local imports
-from quicknxs.config import Settings
-
 # 3rd-party imports
 import pytest
+
+from quicknxs.config import Settings
 
 
 class TestConfiguration(object):

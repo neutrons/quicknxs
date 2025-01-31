@@ -1,10 +1,9 @@
 # local imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.gisans import GISANS
-from quicknxs.interfaces.data_manager import DataManager
-
 # third-party imports
 import pytest
+
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_manager import DataManager
 
 
 @pytest.mark.datarepo

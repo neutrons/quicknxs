@@ -1,11 +1,11 @@
 # local imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.main_window import MainWindow
-from test.ui import ui_utilities
-
 # third party imports
 import numpy as np
 import pytest
+
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.main_window import MainWindow
+from test.ui import ui_utilities
 
 # standard library imports
 
