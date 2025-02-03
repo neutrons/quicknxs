@@ -31,22 +31,7 @@ jobs:
           lfs: true
           submodules: recursive
 
-      - name: Generate cache key for submodule
-        id: generate-cache-key
-        run: |
-          # Get the submodule commit SHA
-          SUBMODULE_SHA=$(git submodule status | awk '{print $1}' | sha256sum | cut -d ' ' -f 1)
-          echo "SUBMODULE_KEY=$SUBMODULE_SHA" >> $GITHUB_ENV
-
-      - name: Restore/save LFS files in cache
-        id: cache-lfs
-        uses: actions/cache@v4
-        with:
-          path: test/data/quicknxs-data/
-          key: submodule-${{ env.SUBMODULE_KEY }}
-
-      - name: Pull LFS files for the submodule
-        if: steps.cache-lfs.outputs.cache-hit != 'true'
+      - name: Prepare LFS Submodule
         run: |
           python -m pip install -e .
           versioningit -vw
