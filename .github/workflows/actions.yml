@@ -28,7 +28,8 @@ jobs:
           miniconda-version: latest
           mamba-version: "*"
           environment-file: environment.yml
-          fetch-depth: 0
+          lfs: true
+          submodules: recursive
 
       - name: Generate cache key for submodule
         id: generate-cache-key
@@ -46,7 +47,11 @@ jobs:
 
       - name: Pull LFS files for the submodule
         if: steps.cache-lfs.outputs.cache-hit != 'true'
-        run: git submodule update --init --recursive
+        run: |
+          python -m pip install -e .
+          versioningit -vw
+          git lfs pull
+          git submodule update --init --recursive
 
       - name: Unit test with code coverage
         run: |
