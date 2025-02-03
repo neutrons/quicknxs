@@ -14,7 +14,7 @@
 
 package:
   name: "quicknxs"
-  version: {{ version_number }}
+  version: {{ version }}
 
 source:
   path: ..

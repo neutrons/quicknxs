@@ -1,0 +1,55 @@
+name: Test Suite
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [next, qa, main]
+    tags: ['v*']
+
+jobs:
+
+  linux:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          channels: mantid/label/main,conda-forge,defaults
+          python-version: '3.10'
+          miniconda-version: latest
+          mamba-version: "*"
+          environment-file: environment.yml
+          lfs: true
+          submodules: recursive
+
+      - name: Generate cache key for submodule
+        id: generate-cache-key
+        run: |
+          # Get the submodule commit SHA
+          SUBMODULE_SHA=$(git submodule status | awk '{print $1}' | sha256sum | cut -d ' ' -f 1)
+          echo "SUBMODULE_KEY=$SUBMODULE_SHA" >> $GITHUB_ENV
+      - name: Restore/save LFS files in cache
+        id: cache-lfs
+        uses: actions/cache@v4
+        with:
+          path: test/data/quicknxs-data/
+          key: submodule-${{ env.SUBMODULE_KEY }}
+      - name: Pull LFS files for the submodule
+        if: steps.cache-lfs.outputs.cache-hit != 'true'
+        run: |
+          git submodule update --init
+          git lfs pull
+      - name: Unit test with code coverage
+        run: |
+            # run tests requiring git lfs (may need to switch to a self-hosted runner)
+            xvfb-run -a python -m pytest -vv --cov=src --cov-report=xml --cov-report=term
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }} # required
