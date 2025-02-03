@@ -55,7 +55,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }} # required            
+          token: ${{ secrets.CODECOV_TOKEN }} # required
   conda-build:
     runs-on: ubuntu-22.04
     defaults:
@@ -70,7 +70,7 @@ jobs:
           miniconda-version: latest
           mamba-version: "*"
           environment-file: environment.yml
-          
+
       - name: Build Wheel
         run: |
           python -m build --wheel --no-isolation
