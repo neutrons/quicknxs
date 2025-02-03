@@ -12,13 +12,13 @@ on:
 
 jobs:
 
-  linux:
+  tests:
     runs-on: ubuntu-22.04
     defaults:
       run:
         shell: bash -l {0}
-    outputs:
-      deploy_enabled: 'false'
+    # outputs:
+    #   deploy_enabled: 'false'
     steps:
       - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v3
@@ -51,13 +51,26 @@ jobs:
         run: |
             # run tests requiring git lfs (may need to switch to a self-hosted runner)
             xvfb-run -a python -m pytest -vv --cov=src --cov-report=xml --cov-report=term
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }} # required
-
+          token: ${{ secrets.CODECOV_TOKEN }} # required            
+  conda-build:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          channels: mantid/label/main,conda-forge,defaults
+          python-version: '3.10'
+          miniconda-version: latest
+          mamba-version: "*"
+          environment-file: environment.yml
+          
       - name: Build Wheel
         run: |
           python -m build --wheel --no-isolation
@@ -83,36 +96,36 @@ jobs:
           echo pushing ${{ github.ref }} with label $CONDA_LABEL
           anaconda upload --label $CONDA_LABEL conda.recipe/noarch/quicknxs-*.tar.bz2
 
-  trigger-deploy:
-    runs-on: ubuntu-22.04
-    needs: [linux]
-    env:
-      ENABLE_DEPLOY: 'false'
-    # only trigger deploys from protected branches
-    # Disable automatic deployments until DevOps resolves the automatic Conda deployments
-    if: ${{ (needs.linux.outputs.deploy_enabled == 'true') && (github.ref_protected || github.ref_type == 'tag') }}
-    steps:
-      - name: Determine Environment
-        uses: neutrons/branch-mapper@v2
-        id: conda_env_name
-        with:
-          prefix: quicknxs
+  # trigger-deploy:
+  #   runs-on: ubuntu-22.04
+  #   needs: [linux]
+  #   env:
+  #     ENABLE_DEPLOY: 'false'
+  #   # only trigger deploys from protected branches
+  #   # Disable automatic deployments until DevOps resolves the automatic Conda deployments
+  #   if: ${{ (needs.linux.outputs.deploy_enabled == 'true') && (github.ref_protected || github.ref_type == 'tag') }}
+  #   steps:
+  #     - name: Determine Environment
+  #       uses: neutrons/branch-mapper@v2
+  #       id: conda_env_name
+  #       with:
+  #         prefix: quicknxs
 
-      - name: Trigger deploy
-    # Disable automatic deployments until DevOps resolves the automatic Conda deployments
+  #     - name: Trigger deploy
+  #   # Disable automatic deployments until DevOps resolves the automatic Conda deployments
 
-        id: trigger
-        uses: eic/trigger-gitlab-ci@v2
-        with:
-          url: https://code.ornl.gov
-          token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
-          project_id: 11852
-          ref_name: main
-          variables: |
-            PLAY="update"
-            CONDA_ENV="${{ steps.conda_env_name.outputs.name }}"
-      - name: Annotate commit
-        uses: peter-evans/commit-comment@v2
-        with:
-          body: |
-            GitLab pipeline for ${{ steps.conda_env_name.outputs.name }} has been submitted for this commit: ${{ steps.trigger.outputs.web_url }}
+  #       id: trigger
+  #       uses: eic/trigger-gitlab-ci@v2
+  #       with:
+  #         url: https://code.ornl.gov
+  #         token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+  #         project_id: 11852
+  #         ref_name: main
+  #         variables: |
+  #           PLAY="update"
+  #           CONDA_ENV="${{ steps.conda_env_name.outputs.name }}"
+  #     - name: Annotate commit
+  #       uses: peter-evans/commit-comment@v2
+  #       with:
+  #         body: |
+  #           GitLab pipeline for ${{ steps.conda_env_name.outputs.name }} has been submitted for this commit: ${{ steps.trigger.outputs.web_url }}
