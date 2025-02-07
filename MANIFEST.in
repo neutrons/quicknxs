@@ -1,1 +1,1 @@
-recursive-include src/quicknxs/icons *.png *.svg *.ico
+recursive-include src/quicknxs/icons *.png *.svg *.ico *.pdf *.qrc
