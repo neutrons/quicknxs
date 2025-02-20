@@ -25,9 +25,9 @@ class Configuration(object):
     wl_bandwidth = 3.2
     use_constant_q = False
     sample_size = 10
-    # Final Q rebin
-    do_final_rebin = True
-    final_rebin_step = -0.01
+    # Final Q rebin global options
+    do_final_rebin_global = True
+    final_rebin_step_global = -0.01
     # Normalize to unity when stitching
     normalize_to_unity = True
     total_reflectivity_q_cutoff = 0.01
@@ -104,6 +104,10 @@ class Configuration(object):
         # Cut first and last N points
         self.cut_first_n_points = 1
         self.cut_last_n_points = 1
+
+        # Final Rebin run options
+        self.do_final_rebin_run = False
+        self.final_rebin_step_run = -0.01
 
         # UI elements
         self.normalize_x_tof = False
@@ -234,8 +238,10 @@ class Configuration(object):
         settings.setValue("set_direct_angle_offset", self.set_direct_angle_offset)
         settings.setValue("direct_angle_offset_overwrite", self.direct_angle_offset_overwrite)
         settings.setValue("sample_size", self.sample_size)
-        settings.setValue("do_final_rebin", self.do_final_rebin)
-        settings.setValue("final_rebin_step", self.final_rebin_step)
+        settings.setValue("do_final_rebin", self.do_final_rebin_global)
+        settings.setValue("final_rebin_step", self.final_rebin_step_global)
+        settings.setValue("do_final_rebin_run", self.do_final_rebin_run)
+        settings.setValue("final_rebin_step_run", self.final_rebin_step_run)
         settings.setValue("lock_direct_beam_y", self.lock_direct_beam_y)
 
         # Dead time options
@@ -342,8 +348,10 @@ class Configuration(object):
             settings.value("direct_angle_offset_overwrite", self.direct_angle_offset_overwrite)
         )
         Configuration.sample_size = float(settings.value("sample_size", self.sample_size))
-        Configuration.do_final_rebin = _verify_true("do_final_rebin", self.do_final_rebin)
-        Configuration.final_rebin_step = float(settings.value("final_rebin_step", self.final_rebin_step))
+        Configuration.do_final_rebin_global = _verify_true("do_final_rebin", self.do_final_rebin_global)
+        Configuration.final_rebin_step_global = float(settings.value("final_rebin_step", self.final_rebin_step_global))
+        self.do_final_rebin_run = _verify_true("do_final_rebin_run", self.do_final_rebin_run)
+        self.final_rebin_step_run = float(settings.value("final_rebin_step_run", self.final_rebin_step_run))
         Configuration.lock_direct_beam_y = _verify_true("lock_direct_beam_y", self.lock_direct_beam_y)
 
         # Dead time options
@@ -399,8 +407,8 @@ class Configuration(object):
         cls.wl_bandwidth = 3.2
         cls.use_constant_q = False
         cls.sample_size = 10
-        cls.do_final_rebin = True
-        cls.final_rebin_step = -0.01
+        cls.do_final_rebin_global = True
+        cls.final_rebin_step_global = -0.01
         cls.normalize_to_unity = True
         cls.total_reflectivity_q_cutoff = 0.01
         cls.global_stitching = False
