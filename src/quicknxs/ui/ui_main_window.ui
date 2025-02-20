@@ -401,8 +401,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>403</width>
-             <height>244</height>
+             <width>410</width>
+             <height>269</height>
             </rect>
            </property>
            <attribute name="label">
@@ -425,9 +425,9 @@
              <number>1</number>
             </property>
             <item row="0" column="1">
-             <widget class="QCheckBox" name="final_rebin_checkbox">
+             <widget class="QCheckBox" name="final_rebin_checkbox_global">
               <property name="toolTip">
-               <string>Check for apply a final Q rebinning</string>
+               <string>Check for apply a final Q rebinning globally. This will be used instead of any per-run Q-Step values.</string>
               </property>
               <property name="text">
                <string>Final rebin</string>
@@ -445,7 +445,7 @@
              </widget>
             </item>
             <item row="0" column="3">
-             <widget class="QDoubleSpinBox" name="q_rebin_spinbox">
+             <widget class="QDoubleSpinBox" name="q_rebin_spinbox_global">
               <property name="toolTip">
                <string>Step size in Q for rebinning. Negative number produce a logarithmic binning</string>
               </property>
@@ -477,12 +477,12 @@
              </widget>
             </item>
             <item row="12" column="1" colspan="3">
-             <widget class="QCheckBox" name="direct_beam_y_lock_checkbox" native="true">
-              <property name="text">
-               <string>Lock direct beam y0 and yw to data run</string>
-              </property>
+             <widget class="QCheckBox" name="direct_beam_y_lock_checkbox">
               <property name="toolTip">
                <string>The direct beam y0 and yw are taken from the data run instead of from the direct beam table</string>
+              </property>
+              <property name="text">
+               <string>Lock direct beam y0 and yw to data run</string>
               </property>
              </widget>
             </item>
@@ -527,11 +527,11 @@
             </item>
             <item row="4" column="1" colspan="2">
              <widget class="QCheckBox" name="global_fit_checkbox">
-              <property name="text">
-               <string>Global fit when stitching</string>
-              </property>
               <property name="toolTip">
                <string>Perform stitching fit using all cross-sections</string>
+              </property>
+              <property name="text">
+               <string>Global fit when stitching</string>
               </property>
              </widget>
             </item>
@@ -544,11 +544,11 @@
             </item>
             <item row="5" column="1" colspan="2">
              <widget class="QCheckBox" name="polynomial_stitching_checkbox">
-              <property name="text">
-               <string>Polynomial fit when stitching</string>
-              </property>
               <property name="toolTip">
                <string>Use polynomial function to determine scaling factors</string>
+              </property>
+              <property name="text">
+               <string>Polynomial fit when stitching</string>
               </property>
              </widget>
             </item>
@@ -597,19 +597,19 @@
                 <height>0</height>
                </size>
               </property>
+              <property name="visible">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Sample size:</string>
               </property>
-	      <property name="visible">
-		<bool>false</bool>
-	      </property>
              </widget>
             </item>
             <item row="9" column="2">
-              <widget class="QDoubleSpinBox" name="sample_size_spinbox">
-		<property name="visible">
-		  <bool>false</bool>
-		</property>
+             <widget class="QDoubleSpinBox" name="sample_size_spinbox">
+              <property name="visible">
+               <bool>false</bool>
+              </property>
               <property name="suffix">
                <string> mm</string>
               </property>
@@ -626,22 +626,22 @@
             </item>
             <item row="10" column="1">
              <widget class="QLabel" name="label_53">
+              <property name="visible">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Bandwidth:</string>
               </property>
-	      <property name="visible">
-		<bool>false</bool>
-	      </property>
              </widget>
             </item>
             <item row="10" column="2">
              <widget class="QDoubleSpinBox" name="bandwidth_spinbox">
+              <property name="visible">
+               <bool>false</bool>
+              </property>
               <property name="toolTip">
                <string>Bandwidth to use to select the TOF range when loading data.</string>
               </property>
-	      <property name="visible">
-		<bool>false</bool>
-	      </property>
               <property name="suffix">
                <string> A</string>
               </property>
@@ -663,8 +663,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>484</width>
-             <height>386</height>
+             <width>410</width>
+             <height>253</height>
             </rect>
            </property>
            <attribute name="label">
@@ -686,51 +686,6 @@
             <property name="verticalSpacing">
              <number>0</number>
             </property>
-            <item row="1" column="2">
-             <widget class="QDoubleSpinBox" name="refYPos">
-              <property name="toolTip">
-               <string>Center of region used for extraction</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <double>400.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>128.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QLabel" name="label_3">
-              <property name="toolTip">
-               <string>Y Pixel Window</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">text-align: right;</string>
-              </property>
-              <property name="text">
-               <string>Y</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="3">
-             <widget class="QLabel" name="label_2">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>18</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Width</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-              </property>
-             </widget>
-            </item>
             <item row="5" column="3">
              <widget class="QSpinBox" name="rangeEnd">
               <property name="toolTip">
@@ -741,6 +696,57 @@
               </property>
               <property name="value">
                <number>0</number>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="2">
+             <widget class="QRadioButton" name="trustDANGLE">
+              <property name="minimumSize">
+               <size>
+                <width>76</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DANGLE</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="11" column="3">
+             <widget class="QDoubleSpinBox" name="q_rebin_spinbox_run">
+              <property name="suffix">
+               <string> 1/A</string>
+              </property>
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="minimum">
+               <double>-0.100000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.001000000000000</double>
+              </property>
+              <property name="value">
+               <double>-0.010000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="2">
+             <widget class="QLabel" name="label_5">
+              <property name="toolTip">
+               <string>Scaling factor for the reflectivity in powers of 10</string>
+              </property>
+              <property name="text">
+               <string>Scale 10^</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -760,24 +766,8 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="3">
-             <widget class="QDoubleSpinBox" name="bgWidth">
-              <property name="toolTip">
-               <string>Width of region used for extraction</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <double>400.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>4.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="2">
-             <widget class="QDoubleSpinBox" name="bgCenter">
+            <item row="1" column="2">
+             <widget class="QDoubleSpinBox" name="refYPos">
               <property name="toolTip">
                <string>Center of region used for extraction</string>
               </property>
@@ -788,20 +778,40 @@
                <double>400.000000000000000</double>
               </property>
               <property name="value">
-               <double>2.000000000000000</double>
+               <double>128.000000000000000</double>
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QLabel" name="label_4">
-              <property name="toolTip">
-               <string>X Pixel Window</string>
+            <item row="9" column="1">
+             <widget class="QLabel" name="label_30">
+              <property name="minimumSize">
+               <size>
+                <width>82</width>
+                <height>0</height>
+               </size>
               </property>
+              <property name="text">
+               <string>Trusted angle:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="2">
+             <widget class="QSpinBox" name="rangeStart">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove points from the extracted intensity on the low Q side. &lt;/p&gt;&lt;p&gt;Uses the full ToF range available in the file, so it is possible it does not have any effect for lower values.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <number>200</number>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLabel" name="label_20">
               <property name="styleSheet">
                <string notr="true">text-align: right;</string>
               </property>
               <property name="text">
-               <string>X</string>
+               <string>Cut Pts</string>
               </property>
              </widget>
             </item>
@@ -824,106 +834,6 @@
               </property>
               <property name="value">
                <double>0.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="2">
-             <widget class="QSpinBox" name="rangeStart">
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove points from the extracted intensity on the low Q side. &lt;/p&gt;&lt;p&gt;Uses the full ToF range available in the file, so it is possible it does not have any effect for lower values.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="maximum">
-               <number>200</number>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="3">
-             <widget class="QDoubleSpinBox" name="refXWidth">
-              <property name="toolTip">
-               <string>Width of region used for extraction</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="minimum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>304.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>9.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QDoubleSpinBox" name="refYWidth">
-              <property name="toolTip">
-               <string>Width of region used for extraction</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="minimum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>400.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>6.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1">
-             <widget class="QLabel" name="label_20">
-              <property name="styleSheet">
-               <string notr="true">text-align: right;</string>
-              </property>
-              <property name="text">
-               <string>Cut Pts</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="label">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>18</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Position</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="2">
-             <widget class="QLabel" name="label_5">
-              <property name="toolTip">
-               <string>Scaling factor for the reflectivity in powers of 10</string>
-              </property>
-              <property name="text">
-               <string>Scale 10^</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QCheckBox" name="bgActive">
-              <property name="styleSheet">
-               <string notr="true">text-align: right;</string>
-              </property>
-              <property name="text">
-               <string>BG X</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -955,32 +865,19 @@
               </property>
              </widget>
             </item>
-            <item row="9" column="1">
-             <widget class="QLabel" name="label_30">
-              <property name="minimumSize">
-               <size>
-                <width>82</width>
-                <height>0</height>
-               </size>
+            <item row="3" column="2">
+             <widget class="QDoubleSpinBox" name="bgCenter">
+              <property name="toolTip">
+               <string>Center of region used for extraction</string>
               </property>
-              <property name="text">
-               <string>Trusted angle:</string>
+              <property name="decimals">
+               <number>1</number>
               </property>
-             </widget>
-            </item>
-            <item row="9" column="2">
-             <widget class="QRadioButton" name="trustDANGLE">
-              <property name="minimumSize">
-               <size>
-                <width>76</width>
-                <height>0</height>
-               </size>
+              <property name="maximum">
+               <double>400.000000000000000</double>
               </property>
-              <property name="text">
-               <string>DANGLE</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
+              <property name="value">
+               <double>2.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -997,20 +894,6 @@
               </property>
               <property name="checked">
                <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="1">
-             <widget class="QCheckBox" name="set_dangle0_checkbox">
-              <property name="text">
-               <string>Set Dangle0</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="1">
-             <widget class="QCheckBox" name="set_dirpix_checkbox">
-              <property name="text">
-               <string>Set Direct Pixel</string>
               </property>
              </widget>
             </item>
@@ -1033,36 +916,200 @@
               </property>
              </widget>
             </item>
+            <item row="0" column="3">
+             <widget class="QLabel" name="label_2">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>18</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Width</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="11" column="1">
+             <widget class="QCheckBox" name="final_rebin_checkbox_run">
+              <property name="text">
+               <string>Final Rebin</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLabel" name="label_4">
+              <property name="toolTip">
+               <string>X Pixel Window</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">text-align: right;</string>
+              </property>
+              <property name="text">
+               <string>X</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLabel" name="label_3">
+              <property name="toolTip">
+               <string>Y Pixel Window</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">text-align: right;</string>
+              </property>
+              <property name="text">
+               <string>Y</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QCheckBox" name="set_dirpix_checkbox">
+              <property name="text">
+               <string>Set Direct Pixel</string>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1">
+             <widget class="QCheckBox" name="set_dangle0_checkbox">
+              <property name="text">
+               <string>Set Dangle0</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QDoubleSpinBox" name="refYWidth">
+              <property name="toolTip">
+               <string>Width of region used for extraction</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>1.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>400.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>6.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="11" column="2">
+             <widget class="QLabel" name="label_58">
+              <property name="text">
+               <string>Q Steps</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QCheckBox" name="bgActive">
+              <property name="styleSheet">
+               <string notr="true">text-align: right;</string>
+              </property>
+              <property name="text">
+               <string>BG X</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QDoubleSpinBox" name="refXWidth">
+              <property name="toolTip">
+               <string>Width of region used for extraction</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>1.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>304.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>9.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="3">
+             <widget class="QDoubleSpinBox" name="bgWidth">
+              <property name="toolTip">
+               <string>Width of region used for extraction</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <double>400.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>4.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QLabel" name="label">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>18</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Position</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+              </property>
+             </widget>
+            </item>
            </layout>
+           <zorder>refYPos</zorder>
+           <zorder>label_3</zorder>
+           <zorder>label_2</zorder>
+           <zorder>rangeEnd</zorder>
+           <zorder>refXPos</zorder>
+           <zorder>bgWidth</zorder>
+           <zorder>bgCenter</zorder>
+           <zorder>label_4</zorder>
+           <zorder>refScale</zorder>
+           <zorder>rangeStart</zorder>
+           <zorder>refXWidth</zorder>
+           <zorder>refYWidth</zorder>
+           <zorder>label_20</zorder>
+           <zorder>label</zorder>
+           <zorder>label_5</zorder>
+           <zorder>bgActive</zorder>
            <zorder>trustSANGLE</zorder>
            <zorder>trustDANGLE</zorder>
            <zorder>label_30</zorder>
            <zorder>directPixelOverwrite</zorder>
-           <zorder>fanReflectivity</zorder>
            <zorder>set_dirpix_checkbox</zorder>
            <zorder>set_dangle0_checkbox</zorder>
            <zorder>dangle0Overwrite</zorder>
-           <zorder>normalize_to_unity_checkbox</zorder>
-           <zorder>label_29</zorder>
-           <zorder>normalization_q_cutoff_spinbox</zorder>
-           <zorder>label_31</zorder>
-           <zorder>sample_size_spinbox</zorder>
-           <zorder>label_53</zorder>
-           <zorder>bandwidth_spinbox</zorder>
-           <zorder>global_fit_checkbox</zorder>
-           <zorder>polynomial_stitching_checkbox</zorder>
-           <zorder>label_56</zorder>
-           <zorder>polynomial_stitching_degree_spinbox</zorder>
-           <zorder>label_57</zorder>
-           <zorder>polynomial_stitching_points_spinbox</zorder>
+           <zorder>final_rebin_checkbox_run</zorder>
+           <zorder>label_58</zorder>
+           <zorder>q_rebin_spinbox_run</zorder>
           </widget>
           <widget class="QWidget" name="peak_finder">
            <property name="geometry">
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>373</width>
-             <height>184</height>
+             <width>381</width>
+             <height>144</height>
             </rect>
            </property>
            <attribute name="label">
@@ -2345,7 +2392,6 @@
                     </property>
                     <property name="font">
                      <font>
-                      <weight>75</weight>
                       <bold>true</bold>
                      </font>
                     </property>
@@ -2624,7 +2670,6 @@
                   <property name="currentIndex">
                    <number>1</number>
                   </property>
-
                   <widget class="QWidget" name="tab_1">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -2800,11 +2845,11 @@
                       <attribute name="horizontalHeaderCascadingSectionResizes">
                        <bool>true</bool>
                       </attribute>
-                      <attribute name="horizontalHeaderDefaultSectionSize">
-                       <number>70</number>
-                      </attribute>
                       <attribute name="horizontalHeaderMinimumSectionSize">
                        <number>20</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderDefaultSectionSize">
+                       <number>70</number>
                       </attribute>
                       <attribute name="horizontalHeaderStretchLastSection">
                        <bool>true</bool>
@@ -2919,6 +2964,11 @@
                         <string>The normalization file used for this dataset</string>
                        </property>
                       </column>
+                      <column>
+                       <property name="text">
+                        <string>Q-Steps</string>
+                       </property>
+                      </column>
                      </widget>
                     </item>
                    </layout>
@@ -2981,11 +3031,11 @@
                       <attribute name="horizontalHeaderCascadingSectionResizes">
                        <bool>true</bool>
                       </attribute>
-                      <attribute name="horizontalHeaderDefaultSectionSize">
-                       <number>70</number>
-                      </attribute>
                       <attribute name="horizontalHeaderMinimumSectionSize">
                        <number>20</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderDefaultSectionSize">
+                       <number>70</number>
                       </attribute>
                       <attribute name="horizontalHeaderStretchLastSection">
                        <bool>true</bool>
@@ -3162,11 +3212,11 @@
                       <attribute name="horizontalHeaderCascadingSectionResizes">
                        <bool>true</bool>
                       </attribute>
-                      <attribute name="horizontalHeaderDefaultSectionSize">
-                       <number>70</number>
-                      </attribute>
                       <attribute name="horizontalHeaderMinimumSectionSize">
                        <number>20</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderDefaultSectionSize">
+                       <number>70</number>
                       </attribute>
                       <attribute name="horizontalHeaderStretchLastSection">
                        <bool>true</bool>
@@ -3343,11 +3393,11 @@
                       <attribute name="horizontalHeaderCascadingSectionResizes">
                        <bool>true</bool>
                       </attribute>
-                      <attribute name="horizontalHeaderDefaultSectionSize">
-                       <number>70</number>
-                      </attribute>
                       <attribute name="horizontalHeaderMinimumSectionSize">
                        <number>20</number>
+                      </attribute>
+                      <attribute name="horizontalHeaderDefaultSectionSize">
+                       <number>70</number>
                       </attribute>
                       <attribute name="horizontalHeaderStretchLastSection">
                        <bool>true</bool>
@@ -5167,7 +5217,7 @@
      <x>0</x>
      <y>0</y>
      <width>2096</width>
-     <height>28</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuReduction">
@@ -5870,8 +5920,8 @@
    <slot>plotActiveTab()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>513</x>
+     <y>91</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -5886,8 +5936,8 @@
    <slot>plotActiveTab()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>479</x>
+     <y>91</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -5902,8 +5952,8 @@
    <slot>plotActiveTab()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>445</x>
+     <y>91</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -5950,8 +6000,8 @@
    <slot>addDataTable()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1064</x>
-     <y>989</y>
+     <x>453</x>
+     <y>992</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -5998,8 +6048,8 @@
    <slot>reductionTableChanged(QTableWidgetItem*)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>901</x>
-     <y>886</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>888</x>
@@ -6014,8 +6064,8 @@
    <slot>reductionTableChanged(QTableWidgetItem*)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>901</x>
-     <y>886</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>888</x>
@@ -6030,8 +6080,8 @@
    <slot>reductionTableChanged(QTableWidgetItem*)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>901</x>
-     <y>886</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>888</x>
@@ -6062,8 +6112,8 @@
    <slot>change_offspec_colorscale()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>152</y>
+     <x>454</x>
+     <y>108</y>
     </hint>
     <hint type="destinationlabel">
      <x>510</x>
@@ -6078,8 +6128,8 @@
    <slot>change_offspec_colorscale()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>152</y>
+     <x>487</x>
+     <y>108</y>
     </hint>
     <hint type="destinationlabel">
      <x>774</x>
@@ -6094,8 +6144,8 @@
    <slot>change_gisans_colorscale()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>466</x>
+     <y>104</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -6110,8 +6160,8 @@
    <slot>change_gisans_colorscale()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>506</x>
+     <y>104</y>
     </hint>
     <hint type="destinationlabel">
      <x>739</x>
@@ -6142,8 +6192,8 @@
    <slot>refresh_offspec()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>152</y>
+     <x>514</x>
+     <y>108</y>
     </hint>
     <hint type="destinationlabel">
      <x>862</x>
@@ -6174,8 +6224,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>691</y>
+     <x>342</x>
+     <y>721</y>
     </hint>
     <hint type="destinationlabel">
      <x>445</x>
@@ -6222,8 +6272,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>255</x>
-     <y>584</y>
+     <x>336</x>
+     <y>643</y>
     </hint>
     <hint type="destinationlabel">
      <x>188</x>
@@ -6238,8 +6288,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>169</x>
-     <y>584</y>
+     <x>171</x>
+     <y>643</y>
     </hint>
     <hint type="destinationlabel">
      <x>162</x>
@@ -6270,8 +6320,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>169</x>
-     <y>606</y>
+     <x>171</x>
+     <y>669</y>
     </hint>
     <hint type="destinationlabel">
      <x>171</x>
@@ -6286,8 +6336,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>171</x>
-     <y>671</y>
+     <x>173</x>
+     <y>695</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -6302,8 +6352,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>255</x>
-     <y>606</y>
+     <x>336</x>
+     <y>669</y>
     </hint>
     <hint type="destinationlabel">
      <x>230</x>
@@ -6318,8 +6368,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>257</x>
-     <y>671</y>
+     <x>336</x>
+     <y>695</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -6334,8 +6384,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>181</x>
-     <y>724</y>
+     <x>183</x>
+     <y>747</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -6350,8 +6400,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>275</x>
-     <y>724</y>
+     <x>342</x>
+     <y>747</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -6462,8 +6512,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>168</x>
-     <y>643</y>
+     <x>170</x>
+     <y>822</y>
     </hint>
     <hint type="destinationlabel">
      <x>543</x>
@@ -6478,8 +6528,8 @@
    <slot>reload_file()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>117</x>
-     <y>550</y>
+     <x>114</x>
+     <y>518</y>
     </hint>
     <hint type="destinationlabel">
      <x>3</x>
@@ -6542,8 +6592,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1430</x>
-     <y>648</y>
+     <x>1439</x>
+     <y>681</y>
     </hint>
     <hint type="destinationlabel">
      <x>797</x>
@@ -6558,8 +6608,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1512</x>
-     <y>648</y>
+     <x>1517</x>
+     <y>681</y>
     </hint>
     <hint type="destinationlabel">
      <x>765</x>
@@ -6574,8 +6624,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1595</x>
-     <y>648</y>
+     <x>1596</x>
+     <y>681</y>
     </hint>
     <hint type="destinationlabel">
      <x>782</x>
@@ -6590,8 +6640,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1677</x>
-     <y>648</y>
+     <x>1674</x>
+     <y>681</y>
     </hint>
     <hint type="destinationlabel">
      <x>762</x>
@@ -6607,7 +6657,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>56</x>
-     <y>654</y>
+     <y>693</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6654,8 +6704,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1430</x>
-     <y>680</y>
+     <x>1439</x>
+     <y>710</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6670,8 +6720,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1512</x>
-     <y>680</y>
+     <x>1517</x>
+     <y>710</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6686,8 +6736,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1595</x>
-     <y>680</y>
+     <x>1596</x>
+     <y>710</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6702,8 +6752,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1677</x>
-     <y>680</y>
+     <x>1674</x>
+     <y>710</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6718,8 +6768,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1430</x>
-     <y>712</y>
+     <x>1439</x>
+     <y>739</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6734,8 +6784,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1512</x>
-     <y>712</y>
+     <x>1517</x>
+     <y>739</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6750,8 +6800,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1595</x>
-     <y>712</y>
+     <x>1596</x>
+     <y>739</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6766,8 +6816,8 @@
    <slot>change_active_channel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1677</x>
-     <y>712</y>
+     <x>1674</x>
+     <y>739</y>
     </hint>
     <hint type="destinationlabel">
      <x>494</x>
@@ -6782,8 +6832,8 @@
    <slot>refresh_file_list()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>213</x>
-     <y>550</y>
+     <x>200</x>
+     <y>518</y>
     </hint>
     <hint type="destinationlabel">
      <x>0</x>
@@ -6798,8 +6848,8 @@
    <slot>match_direct_beam_clicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>334</x>
-     <y>550</y>
+     <x>394</x>
+     <y>518</y>
     </hint>
     <hint type="destinationlabel">
      <x>786</x>
@@ -6830,8 +6880,8 @@
    <slot>reduction_cell_activated(int,int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1268</x>
-     <y>886</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>786</x>
@@ -6846,8 +6896,8 @@
    <slot>reduction_cell_activated(int,int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1268</x>
-     <y>886</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>786</x>
@@ -6862,8 +6912,8 @@
    <slot>reduction_cell_activated(int,int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1268</x>
-     <y>886</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>786</x>
@@ -6911,7 +6961,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>65</x>
-     <y>582</y>
+     <y>771</y>
     </hint>
     <hint type="destinationlabel">
      <x>921</x>
@@ -6927,7 +6977,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>65</x>
-     <y>614</y>
+     <y>797</y>
     </hint>
     <hint type="destinationlabel">
      <x>921</x>
@@ -6942,8 +6992,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>240</x>
-     <y>617</y>
+     <x>242</x>
+     <y>799</y>
     </hint>
     <hint type="destinationlabel">
      <x>921</x>
@@ -6958,8 +7008,8 @@
    <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>240</x>
-     <y>585</y>
+     <x>242</x>
+     <y>773</y>
     </hint>
     <hint type="destinationlabel">
      <x>921</x>
@@ -6990,8 +7040,8 @@
    <slot>apply_offspec_crop()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>152</y>
+     <x>503</x>
+     <y>108</y>
     </hint>
     <hint type="destinationlabel">
      <x>948</x>
@@ -7006,8 +7056,8 @@
    <slot>toggle_smoothing()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>555</x>
+     <y>157</y>
     </hint>
     <hint type="destinationlabel">
      <x>948</x>
@@ -7022,8 +7072,8 @@
    <slot>update_offspec_qz_bin_width()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>1387</x>
+     <y>208</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -7038,8 +7088,8 @@
    <slot>update_offspec_qz_bin_width()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>1063</x>
+     <y>208</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -7054,8 +7104,8 @@
    <slot>update_offspec_qz_bin_width()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>440</x>
-     <y>142</y>
+     <x>937</x>
+     <y>208</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -7118,8 +7168,8 @@
    <slot>reduction_table_right_click(QPoint)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1508</x>
-     <y>1348</y>
+     <x>1677</x>
+     <y>964</y>
     </hint>
     <hint type="destinationlabel">
      <x>778</x>
@@ -7134,8 +7184,8 @@
    <slot>reduction_table_right_click(QPoint)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1508</x>
-     <y>1348</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>778</x>
@@ -7150,8 +7200,8 @@
    <slot>reduction_table_right_click(QPoint)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1508</x>
-     <y>1348</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>778</x>
@@ -7166,8 +7216,8 @@
    <slot>reduction_table_right_click(QPoint)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1508</x>
-     <y>1348</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>778</x>
@@ -7182,8 +7232,8 @@
    <slot>direct_beam_table_right_click(QPoint)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1508</x>
-     <y>1348</y>
+     <x>529</x>
+     <y>800</y>
     </hint>
     <hint type="destinationlabel">
      <x>778</x>
@@ -7198,12 +7248,44 @@
    <slot>setCurrentReductionTable()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>785</x>
-     <y>126</y>
+     <x>1198</x>
+     <y>866</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
      <y>0</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>final_rebin_checkbox_global</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>toggleFinalRebinGlobal()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>59</x>
+     <y>579</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>536</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>final_rebin_checkbox_run</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>toggleFinalRebinRun()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>110</x>
+     <y>843</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-3</x>
+     <y>801</y>
     </hint>
    </hints>
   </connection>
@@ -7259,5 +7341,7 @@
   <slot>hide_run_data()</slot>
   <slot>hide_data_table()</slot>
   <slot>reduction_table_right_click()</slot>
+  <slot>toggleFinalRebinGlobal()</slot>
+  <slot>toggleFinalRebinRun()</slot>
  </slots>
 </ui>

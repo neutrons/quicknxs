@@ -840,6 +840,15 @@ class MainHandler(object):
         if d.configuration.normalization is not None:
             norma = d.configuration.normalization
         table_widget.setItem(idx, 12, QtWidgets.QTableWidgetItem(str(norma)))
+        if d.configuration.do_final_rebin_run:
+            item = QtWidgets.QTableWidgetItem(str(d.configuration.final_rebin_step_run))
+        else:
+            item = QtWidgets.QTableWidgetItem("")
+        if d.configuration.do_final_rebin_global:
+            item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+            item.setBackground(QtGui.QColor(220, 220, 220))
+        table_widget.setItem(idx, 13, item)
+
         self.main_window.auto_change_active = False
 
     def clear_reflectivity(self):
@@ -918,6 +927,7 @@ class MainHandler(object):
             "direct_pixel",
             "scattering_angle",
             "normalization",
+            "final_rebin_step_run",
         ]
 
         # Update settings from selected option
@@ -931,6 +941,15 @@ class MainHandler(object):
             except:
                 refl.set_parameter(keys[column], None)
                 item.setText("none")
+        elif column == 13:
+            try:
+                new_value = round(float(item.text()), 3)
+                if -0.1 <= new_value <= 0.1:
+                    refl.set_parameter(keys[column], new_value)
+                    refl.set_parameter("do_final_rebin_run", True)
+            except:
+                refl.set_parameter(keys[column], None)
+                refl.set_parameter("do_final_rebin_run", False)
 
         # Update calculated data
         refl.update_calculated_values()
@@ -1247,9 +1266,19 @@ class MainHandler(object):
             )
 
         # Final rebin
-        valid_change = valid_change or not configuration.do_final_rebin == self.ui.final_rebin_checkbox.isChecked()
+        valid_change = (
+            valid_change or not configuration.do_final_rebin_global == self.ui.final_rebin_checkbox_global.isChecked()
+        )
 
-        valid_change = valid_change or not configuration.final_rebin_step == self.ui.q_rebin_spinbox.value()
+        valid_change = (
+            valid_change or not configuration.final_rebin_step_global == self.ui.q_rebin_spinbox_global.value()
+        )
+
+        valid_change = (
+            valid_change or not configuration.do_final_rebin_run == self.ui.final_rebin_checkbox_run.isChecked()
+        )
+
+        valid_change = valid_change or not configuration.final_rebin_step_run == self.ui.q_rebin_spinbox_run.value()
 
         if valid_change:
             return 1
@@ -1294,6 +1323,9 @@ class MainHandler(object):
         configuration.force_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
         configuration.match_direct_beam = self.ui.actionAutoNorm.isChecked()
 
+        configuration.do_final_rebin_run = self.ui.final_rebin_checkbox_run.isChecked()
+        configuration.final_rebin_step_run = self.ui.q_rebin_spinbox_run.value()
+
         # Use background on each side of the peak
         configuration.use_tight_bck = self.ui.use_side_bck_checkbox.isChecked()
         configuration.bck_offset = self.ui.side_bck_width.value()
@@ -1322,8 +1354,8 @@ class MainHandler(object):
         configuration.direct_pixel_overwrite = self.ui.directPixelOverwrite.value()
         configuration.direct_angle_offset_overwrite = self.ui.dangle0Overwrite.value()
         Configuration.sample_size = self.ui.sample_size_spinbox.value()
-        Configuration.do_final_rebin = self.ui.final_rebin_checkbox.isChecked()
-        Configuration.final_rebin_step = self.ui.q_rebin_spinbox.value()
+        Configuration.do_final_rebin_global = self.ui.final_rebin_checkbox_global.isChecked()
+        Configuration.final_rebin_step_global = self.ui.q_rebin_spinbox_global.value()
 
         Configuration.apply_deadtime = self.ui.deadtime_entry.applyCheckBox.isChecked()
 
@@ -1435,12 +1467,16 @@ class MainHandler(object):
         self.ui.directPixelOverwrite.setValue(configuration.direct_pixel_overwrite)
         self.ui.dangle0Overwrite.setValue(configuration.direct_angle_offset_overwrite)
         self.ui.sample_size_spinbox.setValue(configuration.sample_size)
-        self.ui.final_rebin_checkbox.setChecked(configuration.do_final_rebin)
-        self.ui.q_rebin_spinbox.setValue(configuration.final_rebin_step)
+        self.ui.final_rebin_checkbox_global.setChecked(configuration.do_final_rebin_global)
+        self.ui.q_rebin_spinbox_global.setValue(configuration.final_rebin_step_global)
 
         self.ui.deadtime_entry.applyCheckBox.setChecked(configuration.apply_deadtime)
 
         self.ui.direct_beam_y_lock_checkbox.setChecked(configuration.lock_direct_beam_y)
+
+        self.ui.final_rebin_checkbox_run.setChecked(configuration.do_final_rebin_run)
+        if configuration.final_rebin_step_run:
+            self.ui.q_rebin_spinbox_run.setValue(configuration.final_rebin_step_run)
 
         # UI elements
         self.ui.normalizeXTof.setChecked(configuration.normalize_x_tof)
@@ -1675,3 +1711,42 @@ class MainHandler(object):
         self.main_window.update_off_specular_viewer.connect(dialog.update_off_specular)
         self.main_window.update_gisans_viewer.connect(dialog.update_gisans)
         dialog.show()
+
+    def toggle_final_rebin_global(self, state):
+        r"""When the global rebin checkbox is toggled, update the run rebin checkbox
+        so that only one of them can be checked at a time."""
+        # **Ensure mutual exclusivity of the checkboxes**
+        if state == QtCore.Qt.Checked:
+            self.ui.final_rebin_checkbox_run.blockSignals(True)
+            self.ui.final_rebin_checkbox_run.setChecked(False)
+            self.ui.final_rebin_checkbox_run.blockSignals(False)
+
+        # col_index = self.ui.reductionTable.get_column_index("Q-Steps")
+        col_index = 13
+        self.ui.reductionTable.blockSignals(True)
+        for row in range(self.ui.reductionTable.rowCount()):
+            item = self.ui.reductionTable.item(row, col_index)
+            if item:
+                print(f"here {row}, {state}, {item.text()}")
+            else:
+                print("item is none")
+                item = QtWidgets.QTableWidgetItem("")
+            if item:
+                if state == QtCore.Qt.Checked:
+                    _item = QtWidgets.QTableWidgetItem(item.text())
+                    _item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+                    _item.setBackground(QtGui.QColor(220, 220, 220))
+                    self.ui.reductionTable.setItem(row, col_index, _item)
+                else:
+                    _item = QtWidgets.QTableWidgetItem(item.text())
+                    _item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+                    _item.setBackground(QtGui.QColor(255, 255, 255))
+                    self.ui.reductionTable.setItem(row, col_index, _item)
+        self.ui.reductionTable.blockSignals(False)
+
+    def toggle_final_rebin_run(self, state):
+        """When the run rebin checkbox is toggled, update the global rebin checkbox
+        so that only one of them can be checked at a time."""
+        # **Ensure mutual exclusivity of the checkboxes**
+        if state == QtCore.Qt.Checked:
+            self.ui.final_rebin_checkbox_global.setChecked(False)

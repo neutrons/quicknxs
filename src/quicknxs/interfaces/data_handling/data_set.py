@@ -234,6 +234,15 @@ class NexusData(object):
 
         direct_beam_low_res_roi = get_direct_beam_low_res_roi(conf, direct_beam.configuration)
 
+        final_rebin = False
+        q_step = 0.0
+        if conf.do_final_rebin_global:
+            final_rebin = True
+            q_step = conf.final_rebin_step_global
+        else:
+            final_rebin = conf.do_final_rebin_run
+            q_step = conf.final_rebin_step_run
+
         # The reduced data workspace may be a group or a single
         # workspace depending on the InputWorkspace parameter
         ws = api.MagnetismReflectometryReduction(
@@ -251,9 +260,9 @@ class NexusData(object):
             CutLowResNormAxis=True,
             LowResNormAxisPixelRange=direct_beam_low_res_roi,
             CutTimeAxis=True,
-            FinalRebin=conf.do_final_rebin,
+            FinalRebin=final_rebin,
             QMin=0.001,
-            QStep=conf.final_rebin_step,
+            QStep=q_step,
             RoundUpPixel=False,
             AngleOffset=angle_offset,
             UseWLTimeAxis=False,
@@ -264,7 +273,7 @@ class NexusData(object):
             ConstantQBinning=conf.use_constant_q,
             ConstQTrim=0.1,
             CropFirstAndLastPoints=False,
-            CleanupBadData=conf.do_final_rebin,
+            CleanupBadData=final_rebin,
             AcceptNullReflectivity=True,  # return empty reflectivity curves (all intensities are zero)
             ErrorWeightedBackground=False,
             SampleLength=conf.sample_size,
