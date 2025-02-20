@@ -234,7 +234,6 @@ class TestMainGui:
         assert conf1.do_final_rebin_run is True
         assert conf1.final_rebin_step_run == 0.045
 
-
         window_main.ui.final_rebin_checkbox_global.setChecked(True)
         assert conf1.do_final_rebin_run is False
         window_main.ui.final_rebin_checkbox_global.setChecked(False)
