@@ -599,7 +599,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggleFinalRebinGlobal(self, state):
         """Signal handling"""
         self.file_handler.toggle_final_rebin_global(state)
-        self.changeRegionValues()
 
     # Un-used UI signals
     # pylint: disable=missing-docstring, multiple-statements, no-self-use

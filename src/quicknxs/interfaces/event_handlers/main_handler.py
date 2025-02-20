@@ -1726,10 +1726,7 @@ class MainHandler(object):
         self.ui.reductionTable.blockSignals(True)
         for row in range(self.ui.reductionTable.rowCount()):
             item = self.ui.reductionTable.item(row, col_index)
-            if item:
-                print(f"here {row}, {state}, {item.text()}")
-            else:
-                print("item is none")
+            if item is None:
                 item = QtWidgets.QTableWidgetItem("")
             if item:
                 if state == QtCore.Qt.Checked:
