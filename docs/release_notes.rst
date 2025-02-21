@@ -12,6 +12,8 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 **Of interest to the User**:
 
+ - PR #137: Update final rebin and Q-Steps to be configurable per run or globally
+
 
 **Of interest to the Developer:**
 

@@ -401,7 +401,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>395</width>
+             <width>360</width>
              <height>269</height>
             </rect>
            </property>
@@ -1120,7 +1120,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>395</width>
+             <width>381</width>
              <height>144</height>
             </rect>
            </property>
@@ -2680,7 +2680,7 @@
                    <string extracomment="Meta data for the complied data set that will be reduced &amp; stitched"/>
                   </property>
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>4</number>
                   </property>
                   <widget class="QWidget" name="tab_1">
                    <property name="sizePolicy">
@@ -3162,6 +3162,11 @@
                         <string>The normalization file used for this dataset</string>
                        </property>
                       </column>
+                      <column>
+                       <property name="text">
+                        <string>Q-Steps</string>
+                       </property>
+                      </column>
                      </widget>
                     </item>
                    </layout>
@@ -3343,6 +3348,11 @@
                         <string>The normalization file used for this dataset</string>
                        </property>
                       </column>
+                      <column>
+                       <property name="text">
+                        <string>Q-Steps</string>
+                       </property>
+                      </column>
                      </widget>
                     </item>
                    </layout>
@@ -3522,6 +3532,11 @@
                        </property>
                        <property name="toolTip">
                         <string>The normalization file used for this dataset</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Q-Steps</string>
                        </property>
                       </column>
                      </widget>
