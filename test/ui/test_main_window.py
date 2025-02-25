@@ -102,8 +102,8 @@ class TestMainGui:
         Configuration.wl_bandwidth = 3.2
         Configuration.use_constant_q = False
         Configuration.sample_size = 10
-        Configuration.do_final_rebin = True
-        Configuration.final_rebin_step = -0.01
+        Configuration.do_final_rebin_global = True
+        Configuration.final_rebin_step_global = -0.01
         Configuration.normalize_to_unity = True
         Configuration.total_reflectivity_q_cutoff = 0.01
         Configuration.global_stitching = False
@@ -128,8 +128,8 @@ class TestMainGui:
         conf1 = window_main.data_manager.active_channel.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf1.do_final_rebin is True
-        assert conf1.final_rebin_step == -0.01
+        assert conf1.do_final_rebin_global is True
+        assert conf1.final_rebin_step_global == -0.01
         assert conf1.normalize_to_unity is True
         assert conf1.total_reflectivity_q_cutoff == 0.01
         assert conf1.global_stitching is False
@@ -158,12 +158,14 @@ class TestMainGui:
         assert conf1.set_direct_angle_offset is False
         assert conf1.direct_angle_offset_overwrite == 0
         assert conf1.use_dangle is False
+        assert conf1.do_final_rebin_run is False
+        assert conf1.final_rebin_step_run == -0.01
 
         # set UI elements to non-default
 
         # global
-        window_main.ui.final_rebin_checkbox.setChecked(False)
-        window_main.ui.q_rebin_spinbox.setValue(-0.02)
+        window_main.ui.final_rebin_checkbox_global.setChecked(False)
+        window_main.ui.q_rebin_spinbox_global.setValue(-0.02)
         window_main.ui.normalize_to_unity_checkbox.setChecked(False)
         window_main.ui.normalization_q_cutoff_spinbox.setValue(0.02)
         window_main.ui.global_fit_checkbox.setChecked(True)
@@ -190,6 +192,8 @@ class TestMainGui:
         window_main.ui.set_dangle0_checkbox.setChecked(True)
         window_main.ui.dangle0Overwrite.setValue(2.0)
         window_main.ui.trustDANGLE.setChecked(True)
+        window_main.ui.final_rebin_checkbox_run.setChecked(True)
+        window_main.ui.q_rebin_spinbox_run.setValue(0.045)
 
         window_main.file_handler.get_configuration()  # to update configuration from UI
 
@@ -197,8 +201,8 @@ class TestMainGui:
         conf1 = window_main.data_manager.active_channel.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf1.do_final_rebin is False
-        assert conf1.final_rebin_step == -0.02
+        assert conf1.do_final_rebin_global is False
+        assert conf1.final_rebin_step_global == -0.02
         assert conf1.normalize_to_unity is False
         assert conf1.total_reflectivity_q_cutoff == 0.02
         assert conf1.global_stitching is True
@@ -227,6 +231,12 @@ class TestMainGui:
         assert conf1.set_direct_angle_offset is True
         assert conf1.direct_angle_offset_overwrite == 2.0
         assert conf1.use_dangle is True
+        assert conf1.do_final_rebin_run is True
+        assert conf1.final_rebin_step_run == 0.045
+
+        window_main.ui.final_rebin_checkbox_global.setChecked(True)
+        assert conf1.do_final_rebin_run is False
+        window_main.ui.final_rebin_checkbox_global.setChecked(False)
 
         # change selected data and check that global variables are carried over but not the per run ones
 
@@ -237,8 +247,8 @@ class TestMainGui:
         conf2 = window_main.data_manager.active_channel.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf2.do_final_rebin is False
-        assert conf2.final_rebin_step == -0.02
+        assert conf2.do_final_rebin_global is False
+        assert conf2.final_rebin_step_global == -0.02
         assert conf2.normalize_to_unity is False
         assert conf2.total_reflectivity_q_cutoff == 0.02
         assert conf2.global_stitching is True

@@ -591,6 +591,16 @@ class MainWindow(QtWidgets.QMainWindow):
         r"""Reload all previously loaded files upon change in loading configuration"""
         self.file_handler.reload_all_files()
 
+    def toggleFinalRebinRun(self, state):
+        """Signal handling"""
+        self.file_handler.toggle_final_rebin_run(state)
+        self.changeRegionValues()
+
+    def toggleFinalRebinGlobal(self, state):
+        """Signal handling"""
+        self.file_handler.toggle_final_rebin_global(state)
+        self.file_handler.get_configuration()
+
     # Un-used UI signals
     # pylint: disable=missing-docstring, multiple-statements, no-self-use
     def change_gisans_colorscale(self):

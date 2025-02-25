@@ -78,8 +78,8 @@ class ConfigurationHandler:
             recalc_reflectivity: bool = False
 
         config_widgets = [
-            ConfigWidget("final_rebin_checkbox", "do_final_rebin", recalc_reflectivity=True),
-            ConfigWidget("q_rebin_spinbox", "final_rebin_step", recalc_reflectivity=True),
+            ConfigWidget("final_rebin_checkbox_global", "do_final_rebin", recalc_reflectivity=True),
+            ConfigWidget("q_rebin_spinbox_global", "final_rebin_step", recalc_reflectivity=True),
             ConfigWidget("normalize_to_unity_checkbox", "normalize_to_unity"),
             ConfigWidget("normalization_q_cutoff_spinbox", "total_reflectivity_q_cutoff"),
             ConfigWidget("global_fit_checkbox", "global_stitching"),
