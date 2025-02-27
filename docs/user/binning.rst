@@ -6,11 +6,11 @@ Binning a Reduced Workspace in QuickNXS
 Overview
 --------
 
-Binning is an essential process in reflectivity reduction within QuickNXS, organizing raw data into manageable intervals for accurate analysis. 
-It helps improve signal clarity, reduce noise, and ensure meaningful comparisons between datasets. This guide explains the available binning options 
-in QuickNXS and how to configure them for the best results. 
+Binning is an essential process in reflectivity reduction within QuickNXS, organizing raw data into manageable intervals for accurate analysis.
+It helps improve signal clarity, reduce noise, and ensure meaningful comparisons between datasets. This guide explains the available binning options
+in QuickNXS and how to configure them for the best results.
 
-.. note:: All binning options are ultimately passed to the `MagnetismReflectometryReduction algorithm <https://docs.mantidproject.org/nightly/algorithms/MagnetismReflectometryReduction-v1.html>`_ in Mantid. 
+.. note:: All binning options are ultimately passed to the `MagnetismReflectometryReduction algorithm <https://docs.mantidproject.org/nightly/algorithms/MagnetismReflectometryReduction-v1.html>`_ in Mantid.
 
 Binning Options
 ---------------
@@ -96,4 +96,3 @@ To apply binning settings effectively, follow these steps:
    - If using `Constant-Q Binning`, ensure `Q Steps` is appropriately set for linear or logarithmic binning.
 
 By adjusting these options, users can customize their reflectivity reduction workflow to achieve the desired data resolution and accuracy.
-
