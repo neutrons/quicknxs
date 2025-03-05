@@ -17,8 +17,9 @@ Binning Options
 
 The following options allow users to fine-tune binning behavior:
 
-1. **Bin Width** (Numeric Input, Applied Globally)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Bin Width** (Numeric Input, Applied Globally)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   
    - **Constraints:** Must be an integer value between 5 and 10000.
    - **What It Does:** Defines the width of bins used to rebin the input workspace.
    - **How It Works:**
@@ -29,8 +30,15 @@ The following options allow users to fine-tune binning behavior:
 
    - **How to Use It:** Enter a numeric value to specify the desired bin width.
 
-2. **Final Rebin** (Checkbox, Per-Run or Global)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   .. figure::
+      ../images/bin_width.png
+      :alt: Bin Width
+      
+      **Entering the Bin Width**
+
+
+**Final Rebin** (Checkbox, Per-Run or Global)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    - **What It Does:** Controls whether the final reduced workspace (converted to Q-space) undergoes additional rebinning.
    - **How It Works:**
@@ -42,8 +50,21 @@ The following options allow users to fine-tune binning behavior:
 
    - **How to Use It:** Check this box if you want to apply final rebinning.
 
-1. **Constant-Q Binning** (Checkbox, Applied Globally)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   .. figure::
+      ../images/final_rebin_global.png
+      :alt: Final Rebin Global
+
+      **Enabling Final Rebin Globally**
+
+   .. figure::
+      ../images/final_rebin_per_run.png
+      :alt: Final Rebin Per-Run
+
+      **Enabling Final Rebin Per-Run**
+
+
+**Constant-Q Binning** (Checkbox, Applied Globally)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    - **What It Does:** Determines whether binning remains constant in Q-space.
    - **How It Works:**
@@ -58,8 +79,14 @@ The following options allow users to fine-tune binning behavior:
 
    - **How to Use It:** Check this box if you want to maintain constant-Q binning. Ensure `Q Steps` is set appropriately for either linear or logarithmic binning.
 
-1. **Q Steps** (Numeric Input, Per-Run or Global)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   .. figure::
+      ../images/constant_q_binning.png
+      :alt: Constant-Q Binning
+
+      **Enabling Constant-Q Binning**
+
+**Q Steps** (Numeric Input, Per-Run or Global)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    - **Constraints:** Must be a floating point value between -0.1 and 0.1
    - **What It Does:** Defines the bin width for the final rebinning in Q-space.
@@ -75,6 +102,27 @@ The following options allow users to fine-tune binning behavior:
 
    - **How to Use It:** Enter a numeric value to specify the bin width for Q-space rebinning. Use negative values for logarithmic binning.
 
+   .. figure::
+      ../images/q_steps_global0.png
+      :alt: Q Steps Global
+
+
+   .. figure::
+      ../images/q_steps_global1.png
+      :alt: Q Steps Global
+
+      **Setting Q Steps Globally disables the Q-Steps column in the reduction table**
+
+   .. figure::
+      ../images/q_steps_per_run0.png
+      :alt: Q Steps Per-Run
+
+   .. figure::
+      ../images/q_steps_per_run1.png
+      :alt: Q Steps Per-Run
+
+      **Setting Q Steps Per-Run adds the value to the Q-Steps column in the reduction table**
+
 Binning Workflow
 ----------------
 
@@ -87,7 +135,7 @@ To apply binning settings effectively, follow these steps:
    - If TOF min is ≤ 0, `Bin Width` will also be used as the TOF minimum.
    - The direct beam workspace is automatically rebinned to match this setting.
 
-2. **Apply Final Binning (Optional):**
+1. **Apply Final Binning (Optional):**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    - If `Constant-Q Binning` is **enabled**, it takes priority over `Final Rebin`.
