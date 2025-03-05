@@ -19,7 +19,7 @@ The following options allow users to fine-tune binning behavior:
 
 **Bin Width** (Numeric Input, Applied Globally)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   
+
    - **Constraints:** Must be an integer value between 5 and 10000.
    - **What It Does:** Defines the width of bins used to rebin the input workspace.
    - **How It Works:**
@@ -33,7 +33,7 @@ The following options allow users to fine-tune binning behavior:
    .. figure::
       ../images/bin_width.png
       :alt: Bin Width
-      
+
       **Entering the Bin Width**
 
 
