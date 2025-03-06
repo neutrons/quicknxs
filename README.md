@@ -54,7 +54,7 @@ quicknxs-gui
 
 ## Test
 
-In order to run the tests, you will need to have cloned the [test data submodule](https://reflectivity-ui.readthedocs.io/en/latest/developer/environment.html#test-data), which requires `git-lfs` to be installed.  
+In order to run the tests, you will need to have cloned the [test data submodule](https://reflectivity-ui.readthedocs.io/en/latest/developer/environment.html#test-data), which requires `git-lfs` to be installed.
 Once you have `git-lfs` installed, you can clone the submodule with the following command:
 
 ```bash

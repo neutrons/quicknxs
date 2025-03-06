@@ -9,7 +9,6 @@ Main application window
 # standard imports
 import logging
 import os
-from enum import Enum
 
 # 3rd-party
 from PyQt5 import QtCore, QtWidgets
@@ -485,7 +484,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.min_data_tab_count = 1
         self.max_data_tab_count = 4
         self.data_tab_count = 1
-        
+
         # Initially enable the add button and disable the remove button
         self.ui.addTabButton.setEnabled(True)
         self.ui.removeTabButton.setEnabled(False)
