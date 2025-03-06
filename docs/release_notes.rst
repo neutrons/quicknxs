@@ -12,6 +12,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 **Of interest to the User**:
 
+ - PR #139: Add ability to remove added sample tabs
  - PR #137: Update final rebin and Q-Steps to be configurable per run or globally
 
 

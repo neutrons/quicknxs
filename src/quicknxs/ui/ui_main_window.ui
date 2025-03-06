@@ -3564,8 +3564,36 @@
                     <property name="toolTip">
                      <string>Add new data tab (for multiple peaks)</string>
                     </property>
-                    <property name="text">
-                     <string>+</string>
+                    <property name="icon">
+                      <iconset>
+                        <normaloff>../icons/plus.png</normaloff>
+                        ../icons/plus.png
+                      </iconset>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="removeTabButton">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>40</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>Remove last data tab (for multiple peaks)</string>
+                    </property>
+                    <property name="icon">
+                      <iconset>
+                        <normaloff>../icons/minus.png</normaloff>
+                        ../icons/minus.png
+                      </iconset>
                     </property>
                    </widget>
                   </item>

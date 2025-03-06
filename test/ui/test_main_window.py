@@ -289,19 +289,33 @@ class TestMainGui:
 
         _assert_tabs_visible([True, True, False, False, False])
 
+        # Assert that the add tab button is visible and enabled
+        assert window_main.ui.addTabButton.isVisible()
+        assert window_main.ui.addTabButton.isEnabled()
+
+        # Assert that the remove tab button is visible and not enabled (no tabs to remove)
+        assert window_main.ui.removeTabButton.isVisible()
+        assert not window_main.ui.removeTabButton.isEnabled()
+
         window_main.ui.addTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, False, False])
+        # Assert remove button is now visible
+        assert window_main.ui.removeTabButton.isEnabled()
+
         window_main.ui.addTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, True, False])
+
         window_main.ui.addTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, True, True])
+        # Assert add button is now disabled
+        assert not window_main.ui.addTabButton.isEnabled()
 
         # reached max number of tabs, button function changes to remove/hide tabs
-        window_main.ui.addTabButton.clicked.emit()
+        window_main.ui.removeTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, True, False])
-        window_main.ui.addTabButton.clicked.emit()
+        window_main.ui.removeTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, False, False])
-        window_main.ui.addTabButton.clicked.emit()
+        window_main.ui.removeTabButton.clicked.emit()
         _assert_tabs_visible([True, True, False, False, False])
 
     @pytest.mark.datarepo

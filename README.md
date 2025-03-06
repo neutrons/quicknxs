@@ -52,6 +52,16 @@ To launch the QuickNXS GUI, run the following command:
 quicknxs-gui
 ```
 
+When trying to run the GUI, you may see the following error:
+```bash
+GLib-GIO-ERROR **: 13:35:06.773: Settings schema 'org.gnome.settings-daemon.plugins.xsettings' does not contain a key named 'antialiasing'
+```
+
+In this case, try setting the `GDK_BACKEND` environment variable to `x11` before running the GUI:
+```bash
+GDK_BACKEND=x11 quicknxs-gui
+```
+
 ## Test
 
 In order to run the tests, you will need to have cloned the [test data submodule](https://reflectivity-ui.readthedocs.io/en/latest/developer/environment.html#test-data), which requires `git-lfs` to be installed.
