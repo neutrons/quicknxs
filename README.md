@@ -1,6 +1,7 @@
 <!-- Badges -->
 
-![Build Status](https://github.com/neutrons/quicknxs/actions/workflows/actions.yml/badge.svg)
+![Build Status](https://github.uom/neutrons/quicknxs/actions/workflows/package.yml/badge.svg)
+![Test Pipeline](https://github.com/neutrons/quicknxs/actions/workflows/test.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/reflectivity-ui/badge/?version=latest)](https://reflectivity-ui.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/neutrons/quicknxs/branch/master/graph/badge.svg)](https://codecov.io/gh/neutrons/quicknxs)
 
@@ -14,7 +15,7 @@ This app is a frontend for Magnetic Reflectivity Reduction.
 
 ## Install the development environment
 
-``` bash
+```bash
 conda env create -f environment.yml
 activate quicknxs
 ```
@@ -45,8 +46,23 @@ python3 -m pip install quicknxs*.whl
 
 ## Run
 
-Work in progress.
+To launch the QuickNXS GUI, run the following command:
+
+```bash
+quicknxs-gui
+```
 
 ## Test
 
-Work in progress.
+In order to run the tests, you will need to have cloned the [test data submodule](https://reflectivity-ui.readthedocs.io/en/latest/developer/environment.html#test-data), which requires `git-lfs` to be installed.  
+Once you have `git-lfs` installed, you can clone the submodule with the following command:
+
+```bash
+git submodule update --init --recursive
+```
+
+Then you can run the tests with the following command:
+
+```bash
+pytest
+```
