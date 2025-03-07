@@ -279,7 +279,10 @@ class TestMainGui:
         assert conf2.use_dangle is False
 
     def test_add_remove_data_tab(self, qtbot):
-        """Test that the add data tab button reveals/hides tabs as expected"""
+        """
+        Test that the add data tab buttons reveal/hide tabs as expected,
+        and that the add/remove buttons are disabled when the max/min number of tabs is reached
+        """
         window_main = MainWindow()
         qtbot.addWidget(window_main)
 
@@ -287,22 +290,33 @@ class TestMainGui:
             for idx, is_visible in enumerate(tab_ids):
                 assert window_main.ui.tabWidget.isTabVisible(idx) == is_visible
 
+        # Assert addTabButton enabled and removeTabButton disabled to start
+        assert window_main.ui.addTabButton.isEnabled()
+        assert not window_main.ui.removeTabButton.isEnabled()
+
         _assert_tabs_visible([True, True, False, False, False])
 
+        # Test adding tabs
         window_main.ui.addTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, False, False])
+        assert window_main.ui.removeTabButton.isEnabled()
         window_main.ui.addTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, True, False])
         window_main.ui.addTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, True, True])
 
-        # reached max number of tabs, button function changes to remove/hide tabs
-        window_main.ui.addTabButton.clicked.emit()
+        # Reached max number of tabs, assert add button is now disabled
+        assert not window_main.ui.addTabButton.isEnabled()
+
+        # Test removing tabs
+        window_main.ui.removeTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, True, False])
-        window_main.ui.addTabButton.clicked.emit()
+        assert window_main.ui.addTabButton.isEnabled()
+        window_main.ui.removeTabButton.clicked.emit()
         _assert_tabs_visible([True, True, True, False, False])
-        window_main.ui.addTabButton.clicked.emit()
+        window_main.ui.removeTabButton.clicked.emit()
         _assert_tabs_visible([True, True, False, False, False])
+        assert not window_main.ui.removeTabButton.isEnabled()
 
     @pytest.mark.datarepo
     def test_change_active_data_tab(self, mocker, qtbot, data_server):

@@ -9,7 +9,6 @@ Main application window
 # standard imports
 import logging
 import os
-from enum import Enum
 
 # 3rd-party
 from PyQt5 import QtCore, QtWidgets
@@ -26,10 +25,6 @@ from .data_manager import DataManager
 from .plotting import PlotManager
 from .reduction_dialog import ReductionDialog
 from .smooth_dialog import SmoothDialog
-
-# The two modes of the button to add/remove data tabs for additional ROIs/peaks
-# the button is in "add" mode until it reaches the max number of tabs and then switches to "remove"
-DataTabButtonMode = Enum("DataTabButtonMode", ["ADD", "REMOVE"])
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -454,29 +449,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.automated_file_selection()
 
     def addDataTable(self):
-        """Add/remove data tabs for additional peaks/ROI:s"""
-        if self.data_tab_button_mode == DataTabButtonMode.ADD:
-            self.data_tab_count += 1
-            self.ui.tabWidget.setTabVisible(self.data_tab_count, True)
-            self.data_manager.add_additional_reduction_list(self.data_tab_count)
-            self.file_handler.initialize_additional_reduction_table(self.data_tab_count)
-
-        elif self.data_tab_button_mode == DataTabButtonMode.REMOVE:
-            self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
-            self.data_manager.remove_additional_reduction_list(self.data_tab_count)
-            self.data_tab_count -= 1
-
-        self.update_add_data_tab_button_mode()
-
-    def update_add_data_tab_button_mode(self):
-        """Update the add tab button mode after changing the number of data tabs"""
+        """Add data tab for additional peaks/ROI:s"""
+        next_tab_idx = self.data_tab_count + 1
+        self.ui.tabWidget.setTabVisible(next_tab_idx, True)
+        self.data_manager.add_additional_reduction_list(next_tab_idx)
+        self.file_handler.initialize_additional_reduction_table(next_tab_idx)
+        self.data_tab_count += 1
+        self.ui.removeTabButton.setEnabled(True)
         if self.data_tab_count == self.max_data_tab_count:
-            self.ui.addTabButton.setText("-")
-            self.data_tab_button_mode = DataTabButtonMode.REMOVE
+            self.ui.addTabButton.setEnabled(False)
 
+    def removeDataTable(self):
+        """Remove last data tab for additional peaks/ROI:s"""
+        self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
+        self.data_manager.remove_additional_reduction_list(self.data_tab_count)
+        self.data_tab_count -= 1
+        self.ui.addTabButton.setEnabled(True)
         if self.data_tab_count == self.min_data_tab_count:
-            self.ui.addTabButton.setText("+")
-            self.data_tab_button_mode = DataTabButtonMode.ADD
+            self.ui.removeTabButton.setEnabled(False)
 
     def add_data_tab_by_index(self, tab_index: int):
         """
@@ -485,7 +475,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.data_tab_count < tab_index <= self.max_data_tab_count:
             self.ui.tabWidget.setTabVisible(tab_index, True)
             self.data_tab_count = tab_index
-        self.update_add_data_tab_button_mode()
+        if self.data_tab_count > self.min_data_tab_count:
+            self.ui.removeTabButton.setEnabled(True)
+        if self.data_tab_count == self.max_data_tab_count:
+            self.ui.addTabButton.setEnabled(False)
 
     def reset_data_tabs(self):
         """
@@ -494,7 +487,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.min_data_tab_count = 1
         self.max_data_tab_count = 4
         self.data_tab_count = 1
-        self.data_tab_button_mode = DataTabButtonMode.ADD
+
+        # Initially enable the add button and disable the remove button
+        self.ui.addTabButton.setEnabled(True)
+        self.ui.removeTabButton.setEnabled(False)
+
         # Initially hide the tabs used for multiple peaks
         self.ui.tabWidget.setTabVisible(2, False)
         self.ui.tabWidget.setTabVisible(3, False)
