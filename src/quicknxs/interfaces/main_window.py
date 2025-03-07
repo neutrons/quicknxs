@@ -475,7 +475,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.data_tab_count < tab_index <= self.max_data_tab_count:
             self.ui.tabWidget.setTabVisible(tab_index, True)
             self.data_tab_count = tab_index
-        self.update_add_data_tab_button_mode()
+        if self.data_tab_count > self.min_data_tab_count:
+            self.ui.removeTabButton.setEnabled(True)
+        if self.data_tab_count == self.max_data_tab_count:
+            self.ui.addTabButton.setEnabled(False)
 
     def reset_data_tabs(self):
         """
