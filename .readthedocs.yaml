@@ -17,4 +17,3 @@ python:
   install:
     - method: pip
       path: .
-      required: true
