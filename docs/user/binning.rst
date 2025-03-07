@@ -8,8 +8,8 @@ Overview
 
 Binning is an essential process in reflectivity reduction within QuickNXS, organizing raw data into manageable intervals for accurate analysis.
 Several binning options are available at various steps of the data reduction process.
-An initial time-of-flight binning options is available to process the raw data, which is later converted into Q bins. 
-A final Q rebinning is optionally available for user who want their reflectivity output in specific Q binning. 
+An initial time-of-flight binning options is available to process the raw data, which is later converted into Q bins.
+A final Q rebinning is optionally available for user who want their reflectivity output in specific Q binning.
 This guide explains the available binning options
 in QuickNXS and how to configure them for the best results.
 
@@ -69,7 +69,7 @@ The following options allow users to fine-tune binning behavior:
 **Constant-Q Binning** (Checkbox, Applied Globally)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   - **What It Does:** uses the position of each pixel and the specified TOF binning to sum counts directly in Q bins. 
+   - **What It Does:** uses the position of each pixel and the specified TOF binning to sum counts directly in Q bins.
   This differs from the traditional reflectivity calculation, which assumes that all counts in a TOF bin has the same Q value regardless of where they landed on the detector.
    - **How It Works:**
 
