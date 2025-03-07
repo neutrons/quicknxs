@@ -7,7 +7,10 @@ Overview
 --------
 
 Binning is an essential process in reflectivity reduction within QuickNXS, organizing raw data into manageable intervals for accurate analysis.
-It helps improve signal clarity, reduce noise, and ensure meaningful comparisons between datasets. This guide explains the available binning options
+Several binning options are available at various steps of the data reduction process.
+An initial time-of-flight binning options is available to process the raw data, which is later converted into Q bins. 
+A final Q rebinning is optionally available for user who want their reflectivity output in specific Q binning. 
+This guide explains the available binning options
 in QuickNXS and how to configure them for the best results.
 
 .. note:: All binning options are ultimately passed to the `MagnetismReflectometryReduction algorithm <https://docs.mantidproject.org/nightly/algorithms/MagnetismReflectometryReduction-v1.html>`_ in Mantid.
@@ -21,7 +24,7 @@ The following options allow users to fine-tune binning behavior:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    - **Constraints:** Must be an integer value between 5 and 10000.
-   - **What It Does:** Defines the width of bins used to rebin the input workspace.
+   - **What It Does:** Defines the width of bins used to rebin the input workspace in time-of-flight (TOF).
    - **How It Works:**
 
      - This step **always occurs** and cannot be skipped.
@@ -43,7 +46,7 @@ The following options allow users to fine-tune binning behavior:
    - **What It Does:** Controls whether the final reduced workspace (converted to Q-space) undergoes additional rebinning.
    - **How It Works:**
 
-     - When enabled, rebinning is performed using `Q Steps` as the bin width.
+     - When enabled, rebinning is performed using `Q Steps`, in units of 1/Å, as the bin width.
      - This option is **only available** if `Constant-Q Binning` is **disabled**.
      - If `Constant-Q Binning` is enabled, it **takes priority** over `Final Rebin`.
      - If `Final Rebin` is enabled **per-run**, the `Q Steps` values can be viewed and updated in the reduction data table under the `Q-Steps` column. If it is enabled globally, it takes priority over any per-run `Q Steps` values.
@@ -66,10 +69,12 @@ The following options allow users to fine-tune binning behavior:
 **Constant-Q Binning** (Checkbox, Applied Globally)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   - **What It Does:** Determines whether binning remains constant in Q-space.
+   - **What It Does:** uses the position of each pixel and the specified TOF binning to sum counts directly in Q bins. 
+  This differs from the traditional reflectivity calculation, which assumes that all counts in a TOF bin has the same Q value regardless of where they landed on the detector.
    - **How It Works:**
 
-     - When enabled, `Final Rebin` is disregarded.
+     - When enabled, `Final Rebin` is not performed.
+     - Enabling Constant-Q binning changes the way R(q) is calculated.
      - `Q Steps` is used to determine binning:
 
        - If **positive**, bins are evenly spaced.
@@ -88,7 +93,7 @@ The following options allow users to fine-tune binning behavior:
 **Q Steps** (Numeric Input, Per-Run or Global)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   - **Constraints:** Must be a floating point value between -0.1 and 0.1
+   - **Constraints:** Must be a floating point value between -0.1 and 0.1 units of 1/Å.
    - **What It Does:** Defines the bin width for the final rebinning in Q-space.
    - **How It Works:**
 
