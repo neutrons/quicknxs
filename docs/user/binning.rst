@@ -69,8 +69,7 @@ The following options allow users to fine-tune binning behavior:
 **Constant-Q Binning** (Checkbox, Applied Globally)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   - **What It Does:** uses the position of each pixel and the specified TOF binning to sum counts directly in Q bins.
-  This differs from the traditional reflectivity calculation, which assumes that all counts in a TOF bin has the same Q value regardless of where they landed on the detector.
+   - **What It Does:** uses the position of each pixel and the specified TOF binning to sum counts directly in Q bins. This differs from the traditional reflectivity calculation, which assumes that all counts in a TOF bin has the same Q value regardless of where they landed on the detector.
    - **How It Works:**
 
      - When enabled, `Final Rebin` is not performed.
