@@ -23,8 +23,8 @@ The following options allow users to fine-tune binning behavior:
 **Bin Width** (Numeric Input, Applied Globally)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   - **Constraints:** Must be an integer value between 5 and 10000.
-   - **What It Does:** Defines the width of bins used to rebin the input workspace in time-of-flight (TOF).
+   - **Constraints:** Must be an integer value between 5 and 10000 microseconds.
+   - **What It Does:** Defines the width, in microseconds, of bins used to rebin the input workspace in time-of-flight (TOF).
    - **How It Works:**
 
      - This step **always occurs** and cannot be skipped.
