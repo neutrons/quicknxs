@@ -15,6 +15,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
  - PR #139: Add ability to remove added sample tabs
  - PR #137: Update final rebin and Q-Steps to be configurable per run or globally
  - PR #138: Add user documentation for how binning parameters are used
+ - PR #140: Fix issue where python script output from reduction was the same for multiple samples
 
 
 **Of interest to the Developer:**
