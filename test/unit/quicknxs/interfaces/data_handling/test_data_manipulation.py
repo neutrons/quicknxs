@@ -11,6 +11,7 @@ from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
+    generate_short_script,
     smart_stitch_reflectivity,
 )
 from quicknxs.interfaces.data_handling.data_set import NexusData
@@ -219,6 +220,58 @@ class TestDataManipulation(object):
         q_cutoff = 0.5
         with pytest.raises(NormalizeToUnityQCutoffError):
             smart_stitch_reflectivity(stitching_reduction_list, "On_On", True, q_cutoff)
+
+    def test_generate_short_script(self, mocker):
+        ws1 = mocker.MagicMock()
+        ws2 = mocker.MagicMock()
+        wsg = [ws1, ws2]
+        mock_api = mocker.MagicMock()
+
+        mock_reduction_list = [
+            mocker.MagicMock(
+                cross_sections={
+                    "XS1": mocker.MagicMock(
+                        _reflectivity_wsg=wsg,
+                        number=1,
+                        configuration=mocker.MagicMock(cut_first_n_points=5, cut_last_n_points=10, scaling_factor=1.5),
+                    )
+                }
+            )
+        ]
+
+        mock_reduction_list2 = [
+            mocker.MagicMock(
+                cross_sections={
+                    "XS1": mocker.MagicMock(
+                        _reflectivity_wsg=ws2,
+                        number=1,
+                        configuration=mocker.MagicMock(cut_first_n_points=5, cut_last_n_points=10, scaling_factor=1.5),
+                    )
+                }
+            )
+        ]
+
+        mocker.patch("quicknxs.interfaces.data_handling.data_manipulation.api", mock_api)
+        mocker.patch("quicknxs.interfaces.data_handling.data_manipulation.mantid.__version__", "6.0.0")
+        mocker.patch("time.strftime", return_value="2025-03-12")
+
+        mock_api.GeneratePythonScript.return_value = "Generated script"
+        ws1.readX.return_value = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        # Call with a WorkspaceGroup
+        mock_api.mtd.__getitem__.return_value = [ws1]
+        result = generate_short_script(mock_reduction_list)
+        mock_api.GeneratePythonScript.assert_called_once_with(ws1)
+
+        mock_api.GeneratePythonScript.reset_mock()
+
+        # Call with a single workspace
+        mock_api.mtd.__getitem__.return_value = [ws2]
+        result = generate_short_script(mock_reduction_list2)
+        mock_api.GeneratePythonScript.assert_called_once_with(ws2)
+
+        assert "# Mantid version 6.0.0" in result
+        assert "Generated script" in result
 
 
 if __name__ == "__main__":

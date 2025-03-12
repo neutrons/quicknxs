@@ -37,11 +37,11 @@ def generate_short_script(reduction_list):
     logging.info("Cross section for script %s", xs)
     for i in range(len(reduction_list)):
         # If we couldn't calculate the reflectivity, we won't have a workspace available
-        if reduction_list[i].cross_sections[xs].reflectivity_workspace is None:
+        if reduction_list[i].cross_sections[xs]._reflectivity_wsg is None:
             logging.info("  No workspace: %s", i)
             continue
 
-        ws_name = "r%s" % reduction_list[i].cross_sections[xs].number
+        ws_name = str(reduction_list[i].cross_sections[xs]._reflectivity_wsg)
 
         # NOTE: It is possible that only one cross section is present in the run, therefore
         #       api.mtd[ws_name] could be a Workspace2D instead of a workspace group.
@@ -55,7 +55,7 @@ def generate_short_script(reduction_list):
             # NOTE: based on the information we have, the only possible data type here should be
             #       a workspace2D
             contain_single_crosssection = True
-            logging.info("  single cross sectoin in %s (Workspace2D)", ws_name)
+            logging.info("  single cross section in %s (Workspace2D)", ws_name)
         # short-hand it
         ws_iterable = [api.mtd[ws_name]] if contain_single_crosssection else api.mtd[ws_name]
 
