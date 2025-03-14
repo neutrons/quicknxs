@@ -219,7 +219,7 @@ class NexusData(object):
         def _as_ints(a):
             return [int(round(a[0])), int(round(a[1])) - 1]
 
-        output_ws = "r%s" % self.number
+        output_ws = "r%s_%s" % (self.number, ws_suffix)
 
         ws_norm = None
         if apply_norm and direct_beam._event_workspace is not None:
@@ -317,6 +317,7 @@ class NexusData(object):
             self.cross_sections[xs_id]._r = np.ma.masked_equal(xs.readY(0)[:].copy(), 0)
             self.cross_sections[xs_id]._dr = np.ma.masked_equal(xs.readE(0)[:].copy(), 0)
             self.cross_sections[xs_id]._reflectivity_workspace = str(xs)
+            self.cross_sections[xs_id]._reflectivity_workspacegroup = str(ws)
 
     def calculate_gisans(self, direct_beam, progress=None):
         """
