@@ -37,11 +37,11 @@ def generate_short_script(reduction_list):
     logging.info("Cross section for script %s", xs)
     for i in range(len(reduction_list)):
         # If we couldn't calculate the reflectivity, we won't have a workspace available
-        if reduction_list[i].cross_sections[xs]._reflectivity_wsg is None:
+        if reduction_list[i].cross_sections[xs]._reflectivity_workspacegroup is None:
             logging.info("  No workspace: %s", i)
             continue
 
-        ws_name = str(reduction_list[i].cross_sections[xs]._reflectivity_wsg)
+        ws_name = str(reduction_list[i].cross_sections[xs]._reflectivity_workspacegroup)
 
         # NOTE: It is possible that only one cross section is present in the run, therefore
         #       api.mtd[ws_name] could be a Workspace2D instead of a workspace group.

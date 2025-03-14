@@ -317,7 +317,7 @@ class NexusData(object):
             self.cross_sections[xs_id]._r = np.ma.masked_equal(xs.readY(0)[:].copy(), 0)
             self.cross_sections[xs_id]._dr = np.ma.masked_equal(xs.readE(0)[:].copy(), 0)
             self.cross_sections[xs_id]._reflectivity_workspace = str(xs)
-            self.cross_sections[xs_id]._reflectivity_wsg = str(ws)
+            self.cross_sections[xs_id]._reflectivity_workspacegroup = str(ws)
 
     def calculate_gisans(self, direct_beam, progress=None):
         """

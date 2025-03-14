@@ -231,7 +231,7 @@ class TestDataManipulation(object):
             mocker.MagicMock(
                 cross_sections={
                     "XS1": mocker.MagicMock(
-                        _reflectivity_wsg=wsg,
+                        _reflectivity_workspacegroup=wsg,
                         number=1,
                         configuration=mocker.MagicMock(cut_first_n_points=5, cut_last_n_points=10, scaling_factor=1.5),
                     )
@@ -243,7 +243,7 @@ class TestDataManipulation(object):
             mocker.MagicMock(
                 cross_sections={
                     "XS1": mocker.MagicMock(
-                        _reflectivity_wsg=ws2,
+                        _reflectivity_workspacegroup=ws2,
                         number=1,
                         configuration=mocker.MagicMock(cut_first_n_points=5, cut_last_n_points=10, scaling_factor=1.5),
                     )
