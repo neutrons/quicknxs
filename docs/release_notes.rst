@@ -5,21 +5,24 @@ Release Notes
 =============
 Notes for major and minor releases. Notes for Patch releases are deferred.
 
-
-<Next Major or Minor Release>
------------------------------
+v4.2.0
+------
 (date of release, format YYYY-MM-DD)
 
 **Of interest to the User**:
 
- - PR #140: Fix issue where python script output from reduction was the same for multiple samples
- - PR #139: Add ability to remove added sample tabs
- - PR #138: Add user documentation for how binning parameters are used
- - PR #137: Update final rebin and Q-Steps to be configurable per run or globally
-
 
 **Of interest to the Developer:**
 
+
+v4.1.0
+------
+2025-03-18
+
+Updates in this release include fixing an issue where the Python script output from reduction was the
+same for multiple samples (PR #140), adding the ability to remove added sample tabs (PR #139),
+providing user documentation for how binning parameters are used (PR #138), and updating the
+final rebin and Q-Steps to be configurable per run or globally (PR #137).
 
 v4.0.0
 ------
