@@ -23,7 +23,7 @@ class ReductionDialog(QtWidgets.QDialog):
 
         self.ui = load_ui("ui_reduce_dialog.ui", baseinstance=self)
 
-        self.settings = QtCore.QSettings(".refredm")
+        self.settings = QtCore.QSettings(".quicknxs")
 
         self.ui.directoryEntry.setText(self.settings.value("output_directory", os.path.expanduser("~")))
         self.ui.fileNameEntry.setText(self.settings.value("output_file_template", ReductionDialog.default_template))
@@ -83,8 +83,8 @@ class ReductionDialog(QtWidgets.QDialog):
             output_file_template=self.ui.fileNameEntry.text(),
             email_send=self.ui.emailSend.isChecked(),
             email_zip_data=self.ui.emailZIPData.isChecked(),
-            email_send_plots=self.ui.emailSendPlots.isChecked(),
-            email_send_data=self.ui.emailSendData.isChecked(),
+            email_send_plots=self.ui.emailSendPlots.isChecked() or self.ui.emailSendAll.isChecked(),
+            email_send_data=self.ui.emailSendData.isChecked() or self.ui.emailSendAll.isChecked(),
             email_to=self.ui.emailTo.text(),
             email_cc=self.ui.emailCc.text(),
             email_subject=self.ui.emailSubject.text(),
@@ -100,28 +100,8 @@ class ReductionDialog(QtWidgets.QDialog):
         if new_d is not None:
             self.ui.directoryEntry.setText(new_d)
 
-    def save_settings(self):
+    def save_settings(self) -> None:
         """
         Save reduction options in QSettings
         """
         self.settings.setValue("output_directory", self.ui.directoryEntry.text())
-        self.settings.setValue("output_file_template", self.ui.fileNameEntry.text())
-
-        self.settings.setValue("export_specular", self.ui.exportSpecular.isChecked())
-        self.settings.setValue("export_asym", self.ui.export_SA.isChecked())
-        self.settings.setValue("export_gisans", self.ui.exportGISANS.isChecked())
-        self.settings.setValue("export_offspec", self.ui.exportOffSpecular.isChecked())
-        self.settings.setValue("export_offspec_smooth", self.ui.exportOffSpecularSmoothed.isChecked())
-
-        self.settings.setValue("format_matlab", self.ui.matlab.isChecked())
-        self.settings.setValue("format_numpy", self.ui.numpy.isChecked())
-        self.settings.setValue("format_mantid", self.ui.mantid_script_checkbox.isChecked())
-        self.settings.setValue("format_5cols", self.ui.five_cols_checkbox.isChecked())
-
-        self.settings.setValue("email_send", self.ui.emailSend.isChecked())
-        self.settings.setValue("email_zip_data", self.ui.emailZIPData.isChecked())
-        self.settings.setValue("email_send_plots", self.ui.emailSendPlots.isChecked())
-        self.settings.setValue("email_send_data", self.ui.emailSendData.isChecked())
-        self.settings.setValue("email_to", self.ui.emailTo.text())
-        self.settings.setValue("email_cc", self.ui.emailCc.text())
-        self.settings.setValue("email_subject", self.ui.emailSubject.text())

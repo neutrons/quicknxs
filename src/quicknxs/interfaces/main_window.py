@@ -65,7 +65,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"QuickNXS Magnetic Reflectivity {version}")
 
         # Application settings
-        self.settings = QtCore.QSettings(".refredm")
+        self.settings = QtCore.QSettings(".quicknxs")
         # Object managers
         self.data_manager = DataManager(self.settings.value("current_directory", os.path.expanduser("~")))
         self.plot_manager = PlotManager(self)

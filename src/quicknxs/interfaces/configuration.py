@@ -45,7 +45,7 @@ class Configuration(object):
     # Direct beam uses the same low res roi as the data run
     lock_direct_beam_y = False
     # Number of events below which we throw away a workspace
-    # Note: not exposed in the UI, but can be modified in ~/.config/.refredm.conf
+    # Note: not exposed in the UI, but can be modified in ~/.config/.quicknxs.conf
     nbr_events_min = 100
 
     def __init__(self, settings=None):
@@ -188,101 +188,6 @@ class Configuration(object):
     def bck_roi(self, value):
         self.bck_position = (value[1] + value[0]) / 2.0
         self.bck_width = value[1] - value[0]
-
-    def to_q_settings(self, settings):
-        """
-        Save configuration to QSettings
-        :param settings QSettings: QSettings object
-        """
-        settings.setValue("use_roi", self.use_roi)
-        settings.setValue("tof_bins", self.tof_bins)
-        settings.setValue("tof_range", ",".join([str(x) for x in self.tof_range]))
-        settings.setValue("tof_bin_type", self.tof_bin_type)
-        settings.setValue("update_peak_range", self.update_peak_range)
-        settings.setValue("use_roi_bck", self.use_roi_bck)
-        settings.setValue("use_tight_bck", self.use_tight_bck)
-        settings.setValue("bck_offset", self.bck_offset)
-        settings.setValue("wl_bandwidth", self.wl_bandwidth)
-
-        settings.setValue("force_peak_roi", self.force_peak_roi)
-        settings.setValue("peak_roi", ",".join([str(x) for x in self.peak_roi]))
-        settings.setValue("force_low_res_roi", self.force_low_res_roi)
-        settings.setValue("low_res_roi", ",".join([str(x) for x in self.low_res_roi]))
-        settings.setValue("force_bck_roi", self.force_bck_roi)
-        settings.setValue("bck_roi", ",".join([str(x) for x in self.bck_roi]))
-
-        settings.setValue("subtract_background", self.subtract_background)
-        settings.setValue("scaling_factor", self.scaling_factor)
-        settings.setValue("scaling_error", self.scaling_error)
-        settings.setValue("cut_first_n_points", self.cut_first_n_points)
-        settings.setValue("cut_last_n_points", self.cut_last_n_points)
-
-        # Normalize to unity when stitching
-        settings.setValue("normalize_to_unity", self.normalize_to_unity)
-        settings.setValue("total_reflectivity_q_cutoff", self.total_reflectivity_q_cutoff)
-        settings.setValue("global_stitching", self.global_stitching)
-        settings.setValue("polynomial_stitching", self.polynomial_stitching)
-        settings.setValue("polynomial_stitching_degree", self.polynomial_stitching_degree)
-        settings.setValue("polynomial_stitching_points", self.polynomial_stitching_points)
-
-        settings.setValue("normalize_x_tof", self.normalize_x_tof)
-        settings.setValue("x_wl_map", self.x_wl_map)
-        settings.setValue("angle_map", self.angle_map)
-        settings.setValue("log_1d", self.log_1d)
-        settings.setValue("log_2d", self.log_2d)
-
-        settings.setValue("use_constant_q", self.use_constant_q)
-        settings.setValue("use_dangle", self.use_dangle)
-        settings.setValue("set_direct_pixel", self.set_direct_pixel)
-        settings.setValue("direct_pixel_overwrite", self.direct_pixel_overwrite)
-        settings.setValue("set_direct_angle_offset", self.set_direct_angle_offset)
-        settings.setValue("direct_angle_offset_overwrite", self.direct_angle_offset_overwrite)
-        settings.setValue("sample_size", self.sample_size)
-        settings.setValue("do_final_rebin", self.do_final_rebin_global)
-        settings.setValue("final_rebin_step", self.final_rebin_step_global)
-        settings.setValue("do_final_rebin_run", self.do_final_rebin_run)
-        settings.setValue("final_rebin_step_run", self.final_rebin_step_run)
-        settings.setValue("lock_direct_beam_y", self.lock_direct_beam_y)
-
-        # Dead time options
-        settings.setValue("apply_deadtime", self.apply_deadtime)
-        settings.setValue("paralyzable_deadtime", self.paralyzable_deadtime)
-        settings.setValue("deadtime_value", self.deadtime_value)
-        settings.setValue("deadtime_tof_step", self.deadtime_tof_step)
-
-        # Number of events below which we throw away a workspace
-        settings.setValue("nbr_events_min", self.nbr_events_min)
-
-        # Off-specular options
-        settings.setValue("off_spec_x_axis", self.off_spec_x_axis)
-        settings.setValue("off_spec_slice", self.off_spec_slice)
-        settings.setValue("off_spec_qz_list", ",".join([str(x) for x in self.off_spec_qz_list]))
-        settings.setValue("off_spec_err_weight", self.off_spec_err_weight)
-        settings.setValue("off_spec_nxbins", self.off_spec_nxbins)
-        settings.setValue("off_spec_nybins", self.off_spec_nybins)
-        settings.setValue("off_spec_slice_qz_min", self.off_spec_slice_qz_min)
-        settings.setValue("off_spec_slice_qz_max", self.off_spec_slice_qz_max)
-
-        # Off-specular smoothing
-        settings.setValue("apply_smoothing", self.apply_smoothing)
-        settings.setValue("off_spec_sigmas", self.off_spec_sigmas)
-        settings.setValue("off_spec_sigmax", self.off_spec_sigmax)
-        settings.setValue("off_spec_sigmay", self.off_spec_sigmay)
-        settings.setValue("off_spec_x_min", self.off_spec_x_min)
-        settings.setValue("off_spec_x_max", self.off_spec_x_max)
-        settings.setValue("off_spec_y_min", self.off_spec_y_min)
-        settings.setValue("off_spec_y_max", self.off_spec_y_max)
-
-        # GISANS options
-        settings.setValue("gisans_wl_min", self.gisans_wl_min)
-        settings.setValue("gisans_wl_max", self.gisans_wl_max)
-        settings.setValue("gisans_wl_npts", self.gisans_wl_npts)
-        settings.setValue("gisans_qy_npts", self.gisans_qy_npts)
-        settings.setValue("gisans_qz_npts", self.gisans_qz_npts)
-        settings.setValue("gisans_use_pf", self.gisans_use_pf)
-        settings.setValue("gisans_slice", self.gisans_slice)
-        settings.setValue("gisans_slice_qz_min", self.gisans_slice_qz_min)
-        settings.setValue("gisans_slice_qz_max", self.gisans_slice_qz_max)
 
     def from_q_settings(self, settings):
         """Retrieve configuration from QSettings"""

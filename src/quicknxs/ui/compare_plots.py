@@ -27,7 +27,7 @@ class CompareWidget(QtWidgets.QWidget):
         self.ui = load_ui("ui_compare_widget.ui", self)
         self.ui.compareList.verticalHeader().sectionMoved.connect(self.draw)
         self.file_paths = {}
-        self.settings = QtCore.QSettings(".refredm")
+        self.settings = QtCore.QSettings(".quicknxs")
         current_dir = self.settings.value("current_directory", os.path.expanduser("~"))
         self.active_folder = self.settings.value("compare_directory", current_dir)
         self.data_manager = None

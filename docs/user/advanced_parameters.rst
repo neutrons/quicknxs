@@ -4,7 +4,7 @@ Advanced parameters
 ===================
 
 Advanced parameters are only configurable in the local configuration file
-``~/.config/.refredm.conf``.
+``~/.config/.quicknxs.conf``.
 
 ``nbr_events_min``
 ------------------

@@ -22,7 +22,7 @@ class ResultViewer(QtWidgets.QDialog):
         super(ResultViewer, self).__init__(parent)
         self.ui = load_ui("ui_result_viewer.ui", baseinstance=self)
         self.ui.resize(1024, 1024)
-        self.settings = QtCore.QSettings(".refredm")
+        self.settings = QtCore.QSettings(".quicknxs")
         self.data_manager = data_manager
         self.ui.main_window = parent
         self.ui.specular_compare_widget.data_manager = self.data_manager

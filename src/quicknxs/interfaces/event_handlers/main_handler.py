@@ -12,6 +12,7 @@ import math
 import os
 import time
 import traceback
+from typing import Optional
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
@@ -118,8 +119,7 @@ class MainHandler(object):
         else:
             self.main_window.frame_2.hide()
 
-    def open_file(self, file_path, force=False, silent=False):
-        # type: (str, Optional[bool], Optional[bool]) -> None
+    def open_file(self, file_path: str, force: Optional[bool] = False, silent: Optional[bool] = False) -> None:
         r"""
         @brief Read one or more data files. If more than one, merge their data.
         @param file_path: absolute path to data files. If more than one file, paths are joined with
@@ -1304,19 +1304,13 @@ class MainHandler(object):
         configuration.use_roi_bck = self.ui.use_bck_roi_checkbox.isChecked()
 
         # Default ranges, using the current values
-        x_pos = self.ui.refXPos.value()
-        x_width = self.ui.refXWidth.value()
-        y_pos = self.ui.refYPos.value()
-        y_width = self.ui.refYWidth.value()
-        bck_pos = self.ui.bgCenter.value()
-        bck_width = self.ui.bgWidth.value()
 
-        configuration.peak_position = x_pos
-        configuration.peak_width = x_width
-        configuration.low_res_position = y_pos
-        configuration.low_res_width = y_width
-        configuration.bck_position = bck_pos
-        configuration.bck_width = bck_width
+        configuration.peak_position = self.ui.refXPos.value()
+        configuration.peak_width = self.ui.refXWidth.value()
+        configuration.low_res_position = self.ui.refYPos.value()
+        configuration.low_res_width = self.ui.refYWidth.value()
+        configuration.bck_position = self.ui.bgCenter.value()
+        configuration.bck_width = self.ui.bgWidth.value()
 
         configuration.force_peak_roi = not self.ui.actionAutomaticXPeak.isChecked()
         configuration.force_low_res_roi = not self.ui.actionAutoYLimits.isChecked()
@@ -1406,8 +1400,6 @@ class MainHandler(object):
         configuration.gisans_slice_qz_min = self.ui.gisans_qz_min_spinbox.value()
         configuration.gisans_slice_qz_max = self.ui.gisans_qz_max_spinbox.value()
 
-        # Make the changes persistent
-        configuration.to_q_settings(self.main_window.settings)
         return configuration
 
     def populate_from_configuration(self, configuration=None):
