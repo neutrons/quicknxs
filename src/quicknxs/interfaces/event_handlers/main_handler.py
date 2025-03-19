@@ -1286,8 +1286,7 @@ class MainHandler(object):
             return 0
         return -1
 
-    def get_configuration(self):
-        # type: () -> Configuration
+    def get_configuration(self) -> Configuration:
         r"""
         @brief Gather the reduction options.
         @details Retrieve the reduction options either from the active channel or from the current settings

@@ -66,6 +66,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Application settings
         self.settings = QtCore.QSettings(".quicknxs")
+        for key in self.settings.allKeys():
+            print(f"Setting: {key} = {self.settings.value(key)}")
+
         # Object managers
         self.data_manager = DataManager(self.settings.value("current_directory", os.path.expanduser("~")))
         self.plot_manager = PlotManager(self)
