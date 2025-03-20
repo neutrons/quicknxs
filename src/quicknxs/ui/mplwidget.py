@@ -519,7 +519,9 @@ class MPLWidget(QtWidgets.QWidget):
             self.cplot.set_extent(opts["extent"])
 
     def legend(self, *args, **opts):
-        return self.canvas.ax.legend(*args, **opts)
+        handles, labels = self.canvas.ax.get_legend_handles_labels()
+        if labels:
+            return self.canvas.ax.legend(*args, **opts)
 
     def adjust(self, **adjustment):
         return self.canvas.fig.subplots_adjust(**adjustment)

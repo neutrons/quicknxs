@@ -13,7 +13,7 @@ Check all that apply:
 - Links to related issues or pull requests:
 
 
-# Manual test for the reviewer
+# :warning: Manual test for the reviewer
 ([instructions to set up the environment](https://reflectivity-ui.readthedocs.io/en/latest/developer/environment.html))
 
 # Check list for the reviewer
