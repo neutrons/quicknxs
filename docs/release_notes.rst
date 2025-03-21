@@ -11,6 +11,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 .. **Of interest to the User**:
 
+.. - PR #142: Modify config file handling, write scaling error to reduced data files
 .. - PR #141: Update Mantid version to 6.12
 
 .. **Of interest to the Developer:**
