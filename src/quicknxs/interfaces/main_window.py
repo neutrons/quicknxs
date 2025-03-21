@@ -16,15 +16,14 @@ from PyQt5 import QtCore, QtWidgets
 import quicknxs
 from quicknxs.interfaces import load_ui
 from quicknxs.interfaces.data_handling.filepath import FilePath
+from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.event_handlers.configuration_handler import ConfigurationHandler
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.event_handlers.plot_handler import PlotHandler
+from quicknxs.interfaces.plotting import PlotManager
+from quicknxs.interfaces.reduction_dialog import ReductionDialog
+from quicknxs.interfaces.smooth_dialog import SmoothDialog
 from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
-
-from .data_manager import DataManager
-from .plotting import PlotManager
-from .reduction_dialog import ReductionDialog
-from .smooth_dialog import SmoothDialog
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -61,6 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Initialize the UI widgets
         self.reduction_table_menu = None
         self.ui = load_ui("ui_main_window.ui", baseinstance=self)
+        self.ui.scaling_error_label.setVisible(False)
         version = quicknxs.__version__ if quicknxs.__version__.lower() != "unknown" else ""
         self.setWindowTitle(f"QuickNXS Magnetic Reflectivity {version}")
 
@@ -446,6 +446,7 @@ class MainWindow(QtWidgets.QMainWindow):
         Stitch the reflectivity parts and normalize to 1.
         """
         self.file_handler.stitch_reflectivity()
+        self.ui.scaling_error_label.setVisible(False)
         self.update_specular_viewer.emit()
 
     def autoRef(self):
@@ -511,10 +512,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.file_handler.active_data_changed()
 
     def reduceDatasets(self):
-        r"""
-        Open a dialog to select reduction options for the current list of
-        reduction items.
-        """
+        """Open a dialog to select reduction options for the current list of reduction items."""
+
         if len(self.data_manager.reduction_list) == 0:
             self.file_handler.report_message("The data to be reduced must be added to the reduction table", pop_up=True)
             return

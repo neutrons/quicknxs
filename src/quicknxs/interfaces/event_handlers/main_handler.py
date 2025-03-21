@@ -602,6 +602,8 @@ class MainHandler(object):
                 self.update_file_list(self._data_manager.current_file)
             self.main_window.auto_change_active = False
 
+            self.ui.scaling_error_label.setVisible(True)
+
             logging.info("UI updated: %s", time.time() - t_0)
 
     def initialize_additional_reduction_table(self, tab_index: int):
@@ -1694,7 +1696,7 @@ class MainHandler(object):
         """
         Pop up the result viewer
         """
-        from ..result_viewer import ResultViewer
+        from quicknxs.interfaces.result_viewer import ResultViewer
 
         dialog = ResultViewer(self.main_window, self._data_manager)
         dialog.specular_compare_widget.ui.refl_preview_checkbox.setChecked(True)

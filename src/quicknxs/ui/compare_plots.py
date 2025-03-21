@@ -13,8 +13,7 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from quicknxs.interfaces import load_ui
-
-from ..interfaces.data_handling.processing_workflow import ProcessingWorkflow
+from quicknxs.interfaces.data_handling.processing_workflow import ProcessingWorkflow
 
 
 class CompareWidget(QtWidgets.QWidget):

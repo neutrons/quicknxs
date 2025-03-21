@@ -22,7 +22,7 @@ import mantid.simpleapi as api
 import numpy as np
 from mantid.dataobjects import Workspace2D
 
-from quicknxs.interfaces.configuration import get_direct_beam_low_res_roi
+from quicknxs.interfaces.configuration import Configuration, get_direct_beam_low_res_roi
 from quicknxs.interfaces.data_handling.data_info import DataInfo
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.gisans import GISANS
@@ -103,13 +103,15 @@ class NexusData(object):
     Read a nexus file with multiple cross-section data.
     """
 
-    def __init__(self, file_path, configuration):
-        # type: (unicode, Configuration) -> None
-        """
-        @brief Structure to read in one or more Nexus data files
-        @param file_path: absolute path to one or more files. If more than one, paths are concatenated with the
-        plus symbol '+'
-        @param configuration: reduction configurations
+    def __init__(self, file_path: str, configuration: Configuration) -> None:
+        """Structure to read in one or more Nexus data files
+
+        Parameters
+        ----------
+        file_path: str
+            absolute path to one or more files. If more than one, paths are concatenated with the plus symbol '+'
+        configuration: Configuration
+            Reduction configurations
         """
         self.file_path = FilePath(file_path).path  # sort the paths if more than one
         self.number = ""  # can be a singe number (e.g. '1234') or a composite (e.g '1234:1239+1245')

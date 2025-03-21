@@ -5,7 +5,7 @@ Application configuration, including reduction options
 
 import logging
 
-from .data_handling.instrument import Instrument
+from quicknxs.interfaces.data_handling.instrument import Instrument
 
 # TODO extract to file based parameter setting
 
@@ -219,8 +219,6 @@ class Configuration(object):
         self.bck_roi = [int(x) for x in settings.value("bck_roi", default).split(",")]
 
         self.subtract_background = _verify_true("subtract_background", self.subtract_background)
-        self.scaling_factor = float(settings.value("scaling_factor", self.scaling_factor))
-        self.scaling_error = float(settings.value("scaling_error", self.scaling_error))
         self.cut_first_n_points = int(settings.value("cut_first_n_points", self.cut_first_n_points))
         self.cut_last_n_points = int(settings.value("cut_last_n_points", self.cut_last_n_points))
 

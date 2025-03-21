@@ -12,8 +12,8 @@ import mantid
 import mantid.simpleapi as api
 import numpy as np
 
-from .data_set import NexusMetaData
-from .instrument import Instrument
+from quicknxs.interfaces.data_handling.data_set import NexusMetaData
+from quicknxs.interfaces.data_handling.instrument import Instrument
 
 
 class NormalizeToUnityQCutoffError(Exception):

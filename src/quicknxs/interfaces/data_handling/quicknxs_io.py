@@ -9,15 +9,17 @@ import math
 import os
 import sys
 import time
+from typing import Dict, List, Union
 
 import mantid
 import numpy as np
 
-from ... import __version__
-from ..configuration import Configuration
+from quicknxs import __version__
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 
 
-def _find_h5_data(filename):
+def _find_h5_data(filename: str):
     """
     Because we have legacy data and new data re-processed for QuickNXS, we have to
     ensure that we get the proper data file.
@@ -32,7 +34,13 @@ def _find_h5_data(filename):
     return filename
 
 
-def write_reflectivity_header(peak_reduction_lists, active_list_index, direct_beam_list, output_path, pol_state):
+def write_reflectivity_header(
+    peak_reduction_lists: Dict[int, List[NexusData]],
+    active_list_index: int,
+    direct_beam_list: List[NexusData],
+    output_path: str,
+    pol_state: str,
+):
     """
     Write out reflectivity header in a format readable by QuickNXS
 
@@ -72,6 +80,7 @@ def write_reflectivity_header(peak_reduction_lists, active_list_index, direct_be
     ]
     dataset_options = [
         "scale",
+        "scale_err",
         "P0",
         "PN",
         "x_pos",
@@ -160,6 +169,7 @@ def write_reflectivity_header(peak_reduction_lists, active_list_index, direct_be
     fd.write("#\n")
     fd.write("# [Data Runs]\n")
     toks = ["%8s" % item for item in dataset_options]
+    # fd.write(f"# {'  '.join(toks)}\n")
     fd.write("# %s\n" % "  ".join(toks))
     i_direct_beam = 0
     for data_set in reduction_list:
@@ -189,7 +199,7 @@ def write_reflectivity_header(peak_reduction_lists, active_list_index, direct_be
     fd.close()
 
 
-def _get_cross_section_config_values(cross_section_data, i_direct_beam):
+def _get_cross_section_config_values(cross_section_data: CrossSectionData, i_direct_beam: int):
     """
     Get dictionary of cross-section data configuration to write to QuickNXS file
 
@@ -212,6 +222,7 @@ def _get_cross_section_config_values(cross_section_data, i_direct_beam):
     constant_q_binning = run_object.getProperty("constant_q_binning").value
     scatt_pos = run_object.getProperty("specular_pixel").value
     scaling_factor = conf.scaling_factor
+    scaling_error = conf.scaling_error
     # For some reason, the tth value that QuickNXS expects is offset.
     # It seems to be because that same offset is applied later in the QuickNXS calculation.
     # Correct tth here so that it can load properly in QuickNXS and produce the same result.
@@ -232,6 +243,7 @@ def _get_cross_section_config_values(cross_section_data, i_direct_beam):
         db_id = i_direct_beam
     item = dict(
         scale=scaling_factor,
+        scale_err=scaling_error,
         DB_ID=db_id,
         P0=conf.cut_first_n_points,
         PN=conf.cut_last_n_points,
@@ -256,7 +268,9 @@ def _get_cross_section_config_values(cross_section_data, i_direct_beam):
     return parameter_values
 
 
-def write_reflectivity_data(output_path, data, col_names, as_5col=True):
+def write_reflectivity_data(
+    output_path: str, data: Union[list, np.ndarray], col_names: List[str], as_5col: bool = True
+):
     """
     Write out reflectivity header in a format readable by QuickNXS
     :param str output_path: output file path
@@ -300,6 +314,14 @@ def read_reduced_file(file_path, configuration=None):
     data_runs = []
     additional_peaks = []
 
+    def _get_tok(col_name: str, cols: List[str], toks: List) -> Union[int, None]:
+        """Get the item in a list of index matching the column name"""
+        try:
+            idx = cols.index(col_name)
+            return toks[idx]
+        except ValueError:
+            return None
+
     # reading is mocked. The file_path is the prefix of the path. File name is obtained from the mocked data
     with open(file_path, "r") as file_content:
         # Section identifier
@@ -333,24 +355,27 @@ def read_reduced_file(file_path, configuration=None):
             # Process direct beam runs
             if _in_section == 1:
                 toks = line.split()
-                if len(toks) < 14 or "DB_ID" in line:
+                if "DB_ID" in toks:
+                    cols = toks
+                    continue
+                if len(toks) < 14:
                     continue
                 try:
                     if configuration is not None:
                         conf = copy.deepcopy(configuration)
                     else:
                         conf = Configuration()
-                    conf.cut_first_n_points = int(toks[2])
-                    conf.cut_last_n_points = int(toks[3])
-                    conf.peak_position = float(toks[4])
-                    conf.peak_width = float(toks[5])
-                    conf.low_res_position = float(toks[6])
-                    conf.low_res_width = float(toks[7])
-                    conf.bck_position = float(toks[8])
-                    conf.bck_width = float(toks[9])
-                    conf.direct_pixel_overwrite = float(toks[10])
-                    run_number = int(toks[12])
-                    run_file = os.path.join(file_path, toks[-1])
+                    conf.cut_first_n_points = int(_get_tok("P0", cols, toks))
+                    conf.cut_last_n_points = int(_get_tok("PN", cols, toks))
+                    conf.peak_position = float(_get_tok("x_pos", cols, toks))
+                    conf.peak_width = float(_get_tok("x_width", cols, toks))
+                    conf.low_res_position = float(_get_tok("y_pos", cols, toks))
+                    conf.low_res_width = float(_get_tok("y_width", cols, toks))
+                    conf.bck_position = float(_get_tok("bg_pos", cols, toks))
+                    conf.bck_width = float(_get_tok("bg_width", cols, toks))
+                    conf.direct_pixel_overwrite = float(_get_tok("dpix", cols, toks))
+                    run_number = int(_get_tok("number", cols, toks))
+                    run_file = os.path.join(file_path, _get_tok("File", cols, toks))
                     # This application only deals with event data, to be able to load
                     # reduced files created with histo nexus files, we have to
                     # use the corresponding event file instead.
@@ -370,28 +395,35 @@ def read_reduced_file(file_path, configuration=None):
             # Process data runs and additional peaks
             if _in_section == 2 or _in_section == 3:
                 toks = line.split()
-                if len(toks) < 16 or "DB_ID" in line:
+                if "DB_ID" in toks:
+                    cols = toks
+                    continue
+                if len(toks) < 16:
                     continue
                 try:
                     if configuration is not None:
                         conf = copy.deepcopy(configuration)
                     else:
                         conf = Configuration()
-                    conf.scaling_factor = float(toks[1])
-                    conf.cut_first_n_points = int(toks[2])
-                    conf.cut_last_n_points = int(toks[3])
-                    conf.peak_position = float(toks[4])
-                    conf.peak_width = float(toks[5])
-                    conf.low_res_position = float(toks[6])
-                    conf.low_res_width = float(toks[7])
-                    conf.bck_position = float(toks[8])
-                    conf.bck_width = float(toks[9])
-                    Configuration.use_constant_q = toks[10].strip().lower() == "true"
-                    conf.direct_pixel_overwrite = float(toks[11])
-                    if int(toks[14]) > 0 and len(direct_beam_runs) > int(toks[14]) - 1:
-                        conf.normalization = direct_beam_runs[int(toks[14]) - 1][0]
-                    run_number = int(toks[13])
-                    run_file = os.path.join(file_path, toks[-1])
+
+                    conf.scaling_factor = float(_get_tok("scale", cols, toks))
+                    if (tok := _get_tok("scale_err", cols, toks)) is not None:
+                        conf.scaling_error = float(tok)
+                    conf.cut_first_n_points = int(_get_tok("P0", cols, toks))
+                    conf.cut_last_n_points = int(_get_tok("PN", cols, toks))
+                    conf.peak_position = float(_get_tok("x_pos", cols, toks))
+                    conf.peak_width = float(_get_tok("x_width", cols, toks))
+                    conf.low_res_position = float(_get_tok("y_pos", cols, toks))
+                    conf.low_res_width = float(_get_tok("y_width", cols, toks))
+                    conf.bck_position = float(_get_tok("bg_pos", cols, toks))
+                    conf.bck_width = float(_get_tok("bg_width", cols, toks))
+                    Configuration.use_constant_q = _get_tok("fan", cols, toks).strip().lower() == "true"
+                    conf.direct_pixel_overwrite = float(_get_tok("dpix", cols, toks))
+                    DB_ID = int(_get_tok("DB_ID", cols, toks))
+                    if DB_ID > 0 and len(direct_beam_runs) > DB_ID - 1:
+                        conf.normalization = direct_beam_runs[DB_ID - 1][0]
+                    run_number = int(_get_tok("number", cols, toks))
+                    run_file = os.path.join(file_path, _get_tok("File", cols, toks))
                     if run_file.endswith("histo.nxs"):
                         run_file = run_file.replace("histo.", "event.")
                         # conf.cut_first_n_points = 0
@@ -403,7 +435,9 @@ def read_reduced_file(file_path, configuration=None):
                     else:
                         additional_peaks.append([peak_index, run_number, run_file, conf])
                 except:
-                    logging.error("Could not parse reduced data file:\n %s", sys.exc_info()[1])
+                    logging.error(
+                        f"Could not parse reduced data file:\n {sys.exc_info()[1]} at line {sys.exc_info()[2].tb_lineno}"
+                    )
                     logging.error(line)
 
             # Options

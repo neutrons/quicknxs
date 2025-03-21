@@ -28,8 +28,6 @@ Available options are detailed in `quicknxs.interfaces.configuration.Configurati
 | bck_roi                       | string  | ???, comma-separated start and stop (ex. "11,67")                                                                   |
 | --                            | --      | --                                                                                                                  |
 | subtract_background           | boolean | ???                                                                                                                 |
-| scaling_factor                | float   | ???                                                                                                                 |
-| scaling_error                 | float   | ???                                                                                                                 |
 | cut_first_n_points            | int     | ???                                                                                                                 |
 | cut_last_n_points             | int     | ???                                                                                                                 |
 | --                            | --      | --                                                                                                                  |

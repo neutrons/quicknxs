@@ -14,7 +14,7 @@ import numpy as np
 import scipy.optimize as opt
 from scipy import ndimage
 
-from .peak_finding import find_peaks, peak_prominences, peak_widths
+from quicknxs.interfaces.data_handling.peak_finding import find_peaks, peak_prominences, peak_widths
 
 NX_PIXELS = 304
 NY_PIXELS = 256

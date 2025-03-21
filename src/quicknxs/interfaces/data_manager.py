@@ -13,10 +13,9 @@ import time
 
 import numpy as np
 
+from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknxs_io
 from quicknxs.interfaces.data_handling.data_set import NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
-
-from .data_handling import data_manipulation, gisans, quicknxs_io
 
 
 class DataManager(object):
