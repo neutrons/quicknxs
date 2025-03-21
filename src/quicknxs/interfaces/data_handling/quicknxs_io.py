@@ -417,7 +417,8 @@ def read_reduced_file(file_path, configuration=None):
                     conf.low_res_width = float(_get_tok("y_width", cols, toks))
                     conf.bck_position = float(_get_tok("bg_pos", cols, toks))
                     conf.bck_width = float(_get_tok("bg_width", cols, toks))
-                    Configuration.use_constant_q = _get_tok("fan", cols, toks).strip().lower() == "true"
+                    fan = _get_tok("fan", cols, toks) or _get_tok("extract_fan", cols, toks)
+                    Configuration.use_constant_q = fan.lower() == "true"
                     conf.direct_pixel_overwrite = float(_get_tok("dpix", cols, toks))
                     DB_ID = int(_get_tok("DB_ID", cols, toks))
                     if DB_ID > 0 and len(direct_beam_runs) > DB_ID - 1:
