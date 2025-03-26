@@ -1,20 +1,16 @@
-.. _advanced_parameters:
+.. _custom_config:
 
-Advanced Parameters
-===================
+Customizing QuickNXS Configuration
+==================================
 
-Advanced parameters are only configurable in the local configuration file
-``~/.config/.quicknxs.conf``.
-
-Q Parameters
-------------
-
-
+QuickNXS references a config file - ``~/.config/.quicknxs.conf`` - to store user-specific settings.
+This file is created the first time QuickNXS is run and can be edited to customize the default behavior of the program.
+To revert to the default values, simply remove or comment out the corresponding line from the configuration file.
 
 Reduction Parameters
 --------------------
 
-The following parameters are used in the reduction process:
+The following parameters are used in the reduction dialog and can be customized in the configuration file:
 
  ======================= ========= ================================================
   Name                    Type      Description
@@ -35,5 +31,5 @@ The following parameters are used in the reduction process:
   format_mantid           boolean   Export Mantid script
   format_matlab           boolean   Export Matlab file
   format_numpy            boolean   Export Numpy (.npz) file
-  output_file_template    string    Output file naming template
+  output_file_template    string    Template for output file names
  ======================= ========= ================================================

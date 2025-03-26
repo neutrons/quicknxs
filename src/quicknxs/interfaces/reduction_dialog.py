@@ -12,9 +12,7 @@ from quicknxs.interfaces import load_ui
 
 
 class ReductionDialog(QtWidgets.QDialog):
-    """
-    Reduction dialog
-    """
+    """Reduction dialog"""
 
     default_template = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
 
@@ -58,9 +56,7 @@ class ReductionDialog(QtWidgets.QDialog):
         return str(_value).lower() == "true"
 
     def accept(self):
-        """
-        Save the current options and close dialog
-        """
+        """Save the current options and close dialog"""
         self.save_settings()
         self.is_accepted = True
         self.close()
@@ -92,16 +88,16 @@ class ReductionDialog(QtWidgets.QDialog):
         )
 
     def change_directory(self):
-        """
-        Change the output directory
-        """
+        """Change the output directory"""
         old_d = self.ui.directoryEntry.text()
         new_d = QtWidgets.QFileDialog.getExistingDirectory(parent=self, caption="Select new directory", directory=old_d)
         if new_d is not None:
             self.ui.directoryEntry.setText(new_d)
 
+    def reset_filename_template(self):
+        """Reset the filename template to the default"""
+        self.ui.fileNameEntry.setText(ReductionDialog.default_template)
+
     def save_settings(self) -> None:
-        """
-        Save reduction options in QSettings
-        """
+        """Save reduction options in QSettings"""
         self.settings.setValue("output_directory", self.ui.directoryEntry.text())
