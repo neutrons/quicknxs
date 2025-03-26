@@ -169,7 +169,6 @@ def write_reflectivity_header(
     fd.write("#\n")
     fd.write("# [Data Runs]\n")
     toks = ["%8s" % item for item in dataset_options]
-    # fd.write(f"# {'  '.join(toks)}\n")
     fd.write("# %s\n" % "  ".join(toks))
     i_direct_beam = 0
     for data_set in reduction_list:
