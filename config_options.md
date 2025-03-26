@@ -19,31 +19,31 @@ Available options are detailed in `quicknxs.interfaces.configuration.Configurati
 | use_tight_bck                 | boolean | ???                                                                                                                 |
 | bck_offset                    | int     | ???                                                                                                                 |
 | wl_bandwidth                  | float   | ???                                                                                                                 |
-| --                            | --      | --                                                                                                                  |
+| --                            |         |                                                                                                                     |
 | force_peak_roi                | boolean | ???                                                                                                                 |
 | peak_roi                      | string  | ???, comma-separated start and stop (ex. "154,172")                                                                 |
 | force_low_res_roi             | boolean | ???                                                                                                                 |
 | low_res_roi                   | string  | ???, comma-separated start and stop (ex. "81,142")                                                                  |
 | force_bck_roi                 | boolean | ???                                                                                                                 |
 | bck_roi                       | string  | ???, comma-separated start and stop (ex. "11,67")                                                                   |
-| --                            | --      | --                                                                                                                  |
+| --                            |         |                                                                                                                     |
 | subtract_background           | boolean | ???                                                                                                                 |
 | cut_first_n_points            | int     | ???                                                                                                                 |
 | cut_last_n_points             | int     | ???                                                                                                                 |
-| --                            | --      | --                                                                                                                  |
+| --                            |         |                                                                                                                     |
 | normalize_to_unity            | boolean | Normalize to unity when stitching                                                                                   |
 | total_reflectivity_q_cutoff   | float   | ???                                                                                                                 |
 | global_stitching              | boolean | ???                                                                                                                 |
 | polynomial_stitching          | boolean | ???                                                                                                                 |
 | polynomial_stitching_degree   | int     | ???                                                                                                                 |
 | polynomial_stitching_points   | int     | ???                                                                                                                 |
-| --                            | --      | --                                                                                                                  |
+| --                            |         |                                                                                                                     |
 | normalize_x_tof               | boolean | ???                                                                                                                 |
 | x_wl_map                      | boolean | ???                                                                                                                 |
 | angle_map                     | boolean | ???                                                                                                                 |
 | log_1d                        | boolean | ???                                                                                                                 |
 | log_2d                        | boolean | ???                                                                                                                 |
-| --                            | --      | --                                                                                                                  |
+| --                            |         |                                                                                                                     |
 | use_constant_q                | boolean | ???                                                                                                                 |
 | use_dangle                    | boolean | ???                                                                                                                 |
 | set_direct_pixel              | boolean | ???                                                                                                                 |
@@ -56,14 +56,14 @@ Available options are detailed in `quicknxs.interfaces.configuration.Configurati
 | do_final_rebin_run            | boolean | ???                                                                                                                 |
 | final_rebin_step_run          | float   | ???                                                                                                                 |
 | lock_direct_beam_y            | boolean | ???                                                                                                                 |
-| Dead time options             | --      | --                                                                                                                  |
+| **Dead time options**         |         |                                                                                                                     |
 | apply_deadtime                | boolean | ???                                                                                                                 |
 | paralyzable_deadtime          | boolean | ???                                                                                                                 |
 | deadtime_value                | float   | ???                                                                                                                 |
 | deadtime_tof_step             | int     | ???                                                                                                                 |
-| --                            | --      | --                                                                                                                  |
+| --                            |         |                                                                                                                     |
 | nbr_events_min                | int     | Minimum number of events required to keep a workspace                                                               |
-| Off-specular options          | --      | --                                                                                                                  |
+| **Off-specular options**      |         |                                                                                                                     |
 | off_spec_x_axis               | int     | ???                                                                                                                 |
 | off_spec_slice                | boolean | ???                                                                                                                 |
 | off_spec_qz_list              | string  | ???, comma-separated list of floats                                                                                 |
@@ -72,7 +72,7 @@ Available options are detailed in `quicknxs.interfaces.configuration.Configurati
 | off_spec_nybins               | int     | ???                                                                                                                 |
 | off_spec_slice_qz_min         | float   | ???                                                                                                                 |
 | off_spec_slice_qz_max         | float   | ???                                                                                                                 |
-| Off-specular smoothing        | --      | --                                                                                                                  |
+| **Off-specular smoothing**    |         |                                                                                                                     |
 | apply_smoothing               | boolean | ???                                                                                                                 |
 | off_spec_sigmas               | int ??? | ???                                                                                                                 |
 | off_spec_sigmax               | float   | ???                                                                                                                 |

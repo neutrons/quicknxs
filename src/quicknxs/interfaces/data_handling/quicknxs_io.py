@@ -285,6 +285,7 @@ def write_reflectivity_data(
         else:
             four_cols = not as_5col and data.shape[1] > 4
 
+        # write header
         fd.write("# [Data]\n")
         if four_cols:
             toks = ["%12s" % item for item in col_names[:4]]
@@ -292,6 +293,7 @@ def write_reflectivity_data(
             toks = ["%12s" % item for item in col_names]
         fd.write("# %s\n" % "\t".join(toks))
 
+        # write numerical columns
         if isinstance(data, list):
             # [TOF][pixel][parameter]
             for tof_item in data:
