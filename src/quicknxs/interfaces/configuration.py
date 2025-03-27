@@ -52,7 +52,7 @@ class Configuration(object):
         self.instrument = Instrument()
         # Number of TOF bins
         self.tof_bins = 400
-        self.tof_range = [400, 16000]
+        self.tof_range = [20000, 45000]
         # Bin type:
         #    0 = Constant bin width
         #    1 = Constant Q bin width
