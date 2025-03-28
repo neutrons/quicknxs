@@ -3,8 +3,6 @@
 Application configuration, including reduction options
 """
 
-import logging
-
 from quicknxs.interfaces.data_handling.instrument import Instrument
 
 # TODO extract to file based parameter setting
@@ -149,12 +147,6 @@ class Configuration(object):
         # Reduction options
         self.match_direct_beam = False
         self.normalization = None
-
-        if settings is not None:
-            try:
-                self.from_q_settings(settings)
-            except:
-                logging.error("Could not process application settings")
 
     @property
     def peak_roi(self):
