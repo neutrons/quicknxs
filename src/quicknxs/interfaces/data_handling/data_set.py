@@ -14,7 +14,7 @@ import traceback
 
 # standard imports
 from collections import OrderedDict
-from typing import Optional, Union
+from typing import Union
 
 import mantid.simpleapi as api
 
@@ -22,7 +22,7 @@ import mantid.simpleapi as api
 import numpy as np
 from mantid.dataobjects import Workspace2D
 
-from quicknxs.interfaces.configuration import Configuration, get_direct_beam_low_res_roi
+from quicknxs.interfaces.configuration import get_direct_beam_low_res_roi
 from quicknxs.interfaces.data_handling.data_info import DataInfo
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.gisans import GISANS
@@ -96,6 +96,382 @@ def getIxyt(nxs_data):
             _y_error_axis[x, y, :] = nxs_data.readE(_index)[:]
 
     return _y_axis, _y_error_axis
+
+
+class NexusData(object):
+    """
+    Read a nexus file with multiple cross-section data.
+    """
+
+    def __init__(self, file_path, configuration):
+        # type: (unicode, Configuration) -> None
+        """
+        @brief Structure to read in one or more Nexus data files
+        @param file_path: absolute path to one or more files. If more than one, paths are concatenated with the
+        plus symbol '+'
+        @param configuration: reduction configurations
+        """
+        self.file_path = FilePath(file_path).path  # sort the paths if more than one
+        self.number = ""  # can be a singe number (e.g. '1234') or a composite (e.g '1234:1239+1245')
+        self.configuration = configuration
+        self.cross_sections = {}
+        self.main_cross_section = None
+
+    def get_highest_cross_section(self, n_points=10):
+        """
+        Get the cross-section with the largest signal at the
+        lower end of its Q range.
+        :param int n_points: number of points to average over
+        """
+        n_events = 0
+        large_xs = None
+        for xs in self.cross_sections:
+            if self.cross_sections[xs].raw_r is not None:
+                _r = self.cross_sections[xs].raw_r
+                _dr = self.cross_sections[xs].raw_dr
+                npts = min(len(_r), n_points)
+                _n_events = np.sum(_r[:npts] / _dr[:npts] ** 2) / np.sum(1 / _dr[:npts] ** 2)
+                if _n_events > n_events:
+                    n_events = _n_events
+                    large_xs = xs
+        return large_xs
+
+    def get_q_range(self):
+        """
+        Return the Q range for the cross-sections
+        """
+        q_min = None
+        q_max = None
+        for xs in self.cross_sections:
+            if self.cross_sections[xs].q is not None:
+                if q_min is None:
+                    q_min = self.cross_sections[xs].q.min()
+                    q_max = self.cross_sections[xs].q.max()
+                else:
+                    q_min = min(q_min, self.cross_sections[xs].q.min())
+                    q_max = max(q_max, self.cross_sections[xs].q.max())
+        return q_min, q_max
+
+    def get_reflectivity_workspace_group(self):
+        ws_list = [self.cross_sections[xs]._reflectivity_workspace for xs in self.cross_sections]
+        wsg = api.GroupWorkspaces(InputWorkspaces=ws_list)
+        return wsg
+
+    def set_parameter(self, param, value):
+        """
+        Loop through the cross-section data sets and update
+        a parameter.
+        """
+        has_changed = False
+        try:
+            for xs in self.cross_sections:
+                if hasattr(self.cross_sections[xs].configuration, param):
+                    if not getattr(self.cross_sections[xs].configuration, param) == value:
+                        setattr(self.cross_sections[xs].configuration, param, value)
+                        has_changed = True
+        except:
+            logging.error("Could not set parameter %s %s", param, value)
+        return has_changed
+
+    def calculate_reflectivity(self, direct_beam=None, configuration=None, ws_suffix: str = ""):
+        """
+        Loop through the cross-section data sets and update
+        the reflectivity.
+
+        Parameters
+        ----------
+        direct_beam: CrossSectionData | None
+            Direct beam data
+        configuration: Configuration | None
+            The configuration
+        ws_suffix: str
+            String to add to reflectivity workspace name
+
+        Example
+        -------
+        `ws_suffix` is used when reducing multiple ROIs for the same run and cross-section, to
+        differentiate the workspace names in the Mantid data service
+
+        peak_index = 2
+        # update the active reduction list
+        data_manager.set_active_reduction_list_index(peak_index)
+        # get the first data set of the active reduction list
+        nexus_data = data_manager.reduction_list[0]
+        # calculate the reflectivity for this data set
+        nexus_data.calculate_reflectivity(ws_suffix=str(peak_index))
+        """
+        if configuration is not None:
+            self.configuration = copy.deepcopy(configuration)
+
+        if self.configuration is None:
+            return
+
+        # If a direct beam object was passed, use it.
+        apply_norm = direct_beam is not None  # and not self.is_direct_beam
+        if not apply_norm:
+            direct_beam = CrossSectionData("none", self.configuration, "none")
+
+        logging.info(
+            "%s Reduction with DB: %s [config: %s]", self.number, direct_beam.number, self.configuration.normalization
+        )
+        angle_offset = 0  # Offset from dangle0, in radians
+
+        def _as_ints(a):
+            return [int(round(a[0])), int(round(a[1])) - 1]
+
+        output_ws = "r%s_%s" % (self.number, ws_suffix)
+
+        ws_norm = None
+        if apply_norm and direct_beam._event_workspace is not None:
+            ws_norm = direct_beam._event_workspace
+
+        ws_list = [self.cross_sections[xs]._event_workspace for xs in self.cross_sections]
+        conf = self.cross_sections[self.main_cross_section].configuration
+        wsg = api.GroupWorkspaces(InputWorkspaces=ws_list)
+
+        _dirpix = conf.direct_pixel_overwrite if conf.set_direct_pixel else None
+        _dangle0 = conf.direct_angle_offset_overwrite if conf.set_direct_angle_offset else None
+
+        direct_beam_low_res_roi = get_direct_beam_low_res_roi(conf, direct_beam.configuration)
+
+        final_rebin = False
+        q_step = 0.0
+        if conf.do_final_rebin_global:
+            final_rebin = True
+            q_step = conf.final_rebin_step_global
+        else:
+            final_rebin = conf.do_final_rebin_run
+            q_step = conf.final_rebin_step_run
+
+        # The reduced data workspace may be a group or a single
+        # workspace depending on the InputWorkspace parameter
+        ws = api.MagnetismReflectometryReduction(
+            InputWorkspace=wsg,
+            NormalizationWorkspace=ws_norm,
+            SignalPeakPixelRange=_as_ints(conf.peak_roi),
+            SubtractSignalBackground=conf.subtract_background,
+            SignalBackgroundPixelRange=_as_ints(conf.bck_roi),
+            ApplyNormalization=apply_norm,
+            NormPeakPixelRange=_as_ints(direct_beam.configuration.peak_roi),
+            SubtractNormBackground=conf.subtract_background,
+            NormBackgroundPixelRange=_as_ints(direct_beam.configuration.bck_roi),
+            CutLowResDataAxis=True,
+            LowResDataAxisPixelRange=_as_ints(conf.low_res_roi),
+            CutLowResNormAxis=True,
+            LowResNormAxisPixelRange=direct_beam_low_res_roi,
+            CutTimeAxis=True,
+            FinalRebin=final_rebin,
+            QMin=0.001,
+            QStep=q_step,
+            RoundUpPixel=False,
+            AngleOffset=angle_offset,
+            UseWLTimeAxis=False,
+            TimeAxisStep=conf.tof_bins,
+            UseSANGLE=not conf.use_dangle,
+            TimeAxisRange=conf.tof_range,
+            SpecularPixel=conf.peak_position,
+            ConstantQBinning=conf.use_constant_q,
+            ConstQTrim=0.1,
+            CropFirstAndLastPoints=False,
+            CleanupBadData=final_rebin,
+            AcceptNullReflectivity=True,  # return empty reflectivity curves (all intensities are zero)
+            ErrorWeightedBackground=False,
+            SampleLength=conf.sample_size,
+            DAngle0Overwrite=_dangle0,
+            DirectPixelOverwrite=_dirpix,
+            OutputWorkspace=output_ws,
+        )
+
+        # If there's an empty reflectivity curve, add a small value to it so that it can be plotted.
+        _xs_ws = [ws] if isinstance(ws, Workspace2D) else ws
+        for i in range(len(ws_list)):
+            if _is_empty_reflectivity_curve(_xs_ws[i]):
+                _shift_empty_reflectivity_curve(_xs_ws[i])
+
+        # FOR COMPATIBILITY WITH QUICKNXS #
+        _ws = ws[0] if len(ws_list) > 1 else ws
+        run_object = _ws.getRun()
+        peak_min = run_object.getProperty("scatt_peak_min").value
+        peak_max = run_object.getProperty("scatt_peak_max").value + 1.0
+        low_res_min = run_object.getProperty("scatt_low_res_min").value
+        low_res_max = run_object.getProperty("scatt_low_res_max").value + 1.0
+        norm_x_min = run_object.getProperty("norm_peak_min").value
+        norm_x_max = run_object.getProperty("norm_peak_max").value + 1.0
+        norm_y_min = run_object.getProperty("norm_low_res_min").value
+        norm_y_max = run_object.getProperty("norm_low_res_max").value + 1.0
+        tth = run_object.getProperty("two_theta").value * math.pi / 360.0
+        quicknxs_scale = (float(norm_x_max) - float(norm_x_min)) * (float(norm_y_max) - float(norm_y_min))
+        quicknxs_scale /= (float(peak_max) - float(peak_min)) * (float(low_res_max) - float(low_res_min))
+        logging.warning("Scale size = %s", str(quicknxs_scale))
+        logging.warning("Alpha_i = %s", str(tth))
+        _scale = 0.005 / math.sin(tth) if tth > 0.0002 else 1.0
+        quicknxs_scale *= _scale
+
+        ws = api.Scale(InputWorkspace=output_ws, OutputWorkspace=output_ws, factor=quicknxs_scale, Operation="Multiply")
+        _ws = ws if len(ws_list) > 1 else [ws]
+        for xs in _ws:
+            # add suffix to avoid overwriting ws in mantid data service, needed for multiple peaks
+            api.RenameWorkspace(str(xs), str(xs) + ws_suffix)
+            xs_id = xs.getRun().getProperty("cross_section_id").value
+            self.cross_sections[xs_id].q = xs.readX(0)[:].copy()
+            self.cross_sections[xs_id]._r = np.ma.masked_equal(xs.readY(0)[:].copy(), 0)
+            self.cross_sections[xs_id]._dr = np.ma.masked_equal(xs.readE(0)[:].copy(), 0)
+            self.cross_sections[xs_id]._reflectivity_workspace = str(xs)
+            self.cross_sections[xs_id]._reflectivity_workspacegroup = str(ws)
+
+    def calculate_gisans(self, direct_beam, progress=None):
+        """
+        Compute GISANS
+        """
+        has_errors = False
+        detailed_msg = ""
+        if progress is not None:
+            progress(1, "Computing GISANS", out_of=100.0)
+        for i, xs in enumerate(self.cross_sections):
+            try:
+                self.cross_sections[xs].gisans(direct_beam=direct_beam)
+            except:
+                has_errors = True
+                detailed_msg += "Could not calculate GISANS reflectivity for %s\n  %s\n\n" % (
+                    xs,
+                    traceback.format_exc(),
+                )
+                logging.error("Could not calculate GISANS reflectivity for %s", xs)
+            if progress:
+                progress(i, message="Computed GISANS %s" % xs, out_of=len(self.cross_sections))
+        if has_errors:
+            raise RuntimeError(detailed_msg)
+        if progress is not None:
+            progress(100, "Complete", out_of=100.0)
+
+    def is_offspec_available(self):
+        """
+        Verify whether we have off-specular data calculated for all cross-sections
+        """
+        for xs in self.cross_sections:
+            if self.cross_sections[xs].off_spec is None:
+                return False
+        return True
+
+    def is_gisans_available(self):
+        """
+        Verify whether we have GISANS data calculated for all cross-sections
+        """
+        for xs in self.cross_sections:
+            if self.cross_sections[xs].gisans_data is None:
+                return False
+        return True
+
+    def calculate_offspec(self, direct_beam=None):
+        """
+        Loop through the cross-section data sets and update
+        the reflectivity.
+        """
+        has_errors = False
+        detailed_msg = ""
+        for xs in self.cross_sections:
+            try:
+                self.cross_sections[xs].offspec(direct_beam=direct_beam)
+            except Exception:
+                has_errors = True
+                detailed_msg += "Could not calculate off-specular reflectivity for %s\n  %s\n\n" % (
+                    xs,
+                    traceback.format_exc(),
+                )
+                logging.error(detailed_msg)
+        if has_errors:
+            raise RuntimeError(detailed_msg)
+
+    def update_configuration(self, configuration):
+        """
+        Loop through the cross-section data sets and update
+        the reflectivity.
+        """
+        for xs in self.cross_sections:
+            try:
+                self.cross_sections[xs].update_configuration(configuration)
+            except:
+                logging.error("Could not update configuration for %s", xs)
+
+    def update_calculated_values(self):
+        """
+        Loop through the cross-section data sets and update.
+        """
+        for xs in self.cross_sections:
+            self.cross_sections[xs].update_calculated_values()
+
+    def load(self, update_parameters=True, progress=None):
+        """
+        Load cross-sections from a nexus file.
+        :param function progress: call-back function to track progress
+        :param bool update_parameters: if True, we will find peak ranges
+        """
+        # sanity check
+        if self.file_path is None:
+            raise RuntimeError("self.file_path is None")
+
+        self.cross_sections = OrderedDict()
+        if progress is not None:
+            progress(5, "Filtering data...", out_of=100.0)
+
+        try:
+            xs_list = self.configuration.instrument.load_data(self.file_path, self.configuration)
+            logging.info("%s loaded: %s xs", self.file_path, len(xs_list))
+        except RuntimeError as run_err:
+            logging.error(f"Could not load file(s) {str(self.file_path)}\n   {run_err}")
+            return self.cross_sections
+
+        progress_value = 0
+        # Keep track of cross-section with max counts so we can use it to
+        # select peak regions
+        _max_counts = 0
+        _max_xs = None
+        _loaded_with_getDI = False
+        for ws in xs_list:
+            # Get the unique name for the cross-section, determined by the filtering
+            channel = ws.getRun().getProperty("cross_section_id").value
+            if ws.getRun().hasProperty("loaded_with_getDI"):
+                _loaded_with_getDI = True
+            if progress is not None:
+                progress_value += int(100.0 / len(xs_list))
+                progress(progress_value, "Loading %s..." % str(channel), out_of=100.0)
+
+            # Get rid of empty workspaces
+            logging.info("Loading %s: %s events", str(channel), ws.getNumberEvents())
+            if ws.getNumberEvents() < self.configuration.nbr_events_min:
+                logging.warning("Too few events for %s: %s", channel, ws.getNumberEvents())
+                continue
+
+            name = ws.getRun().getProperty("cross_section_id").value
+            cross_section = CrossSectionData(name, self.configuration, entry_name=channel, workspace=ws)
+            self.cross_sections[name] = cross_section
+            self.number = cross_section.number  # e.g '1234:1238+1239' if more than one run made up this cross section
+            if cross_section.total_counts > _max_counts:
+                _max_counts = cross_section.total_counts
+                _max_xs = name
+
+        # Now that we know which cross section has the most data,
+        # use that one to get the reduction parameters
+        self.main_cross_section = _max_xs
+        self.cross_sections[_max_xs].get_reduction_parameters(update_parameters=update_parameters)
+
+        # Push the configuration (reduction options and peak regions) from the
+        # cross-section with the most data to all other cross-sections.
+        for xs in self.cross_sections:
+            if xs == _max_xs:
+                continue
+            self.cross_sections[xs].update_configuration(self.cross_sections[_max_xs].configuration)
+
+        if progress is not None:
+            progress(100, "Complete", out_of=100.0)
+            if _loaded_with_getDI:
+                progress(100, "WARNING: Analyzer/polarizer states not available - loaded with getDI", out_of=100.0)
+
+        return self.cross_sections
+
+    def is_direct_beam(self):
+        """Returns True if the main cross-section is a direct beam"""
+        return self.cross_sections[self.main_cross_section].is_direct_beam
 
 
 class CrossSectionData(object):
@@ -694,389 +1070,6 @@ class CrossSectionData(object):
         self.QzGrid = self.gisans_data.QzGrid
 
         return self.gisans_data
-
-
-class NexusData(object):
-    """
-    Read a nexus file with multiple cross-section data.
-    """
-
-    def __init__(self, file_path: str, configuration: Configuration) -> None:
-        """Structure to read in one or more Nexus data files
-
-        Parameters
-        ----------
-        file_path: str
-            absolute path to one or more files. If more than one, paths are concatenated with the plus symbol '+'
-        configuration: Configuration
-            Reduction configurations
-        """
-        self.file_path = FilePath(file_path).path  # sort the paths if more than one
-        self.number = ""  # can be a singe number (e.g. '1234') or a composite (e.g '1234:1239+1245')
-        self.configuration = configuration
-        self.cross_sections = {}
-        self.main_cross_section = None
-
-    def get_highest_cross_section(self, n_points=10):
-        """
-        Get the cross-section with the largest signal at the
-        lower end of its Q range.
-        :param int n_points: number of points to average over
-        """
-        n_events = 0
-        large_xs = None
-        for xs in self.cross_sections:
-            if self.cross_sections[xs].raw_r is not None:
-                _r = self.cross_sections[xs].raw_r
-                _dr = self.cross_sections[xs].raw_dr
-                npts = min(len(_r), n_points)
-                _n_events = np.sum(_r[:npts] / _dr[:npts] ** 2) / np.sum(1 / _dr[:npts] ** 2)
-                if _n_events > n_events:
-                    n_events = _n_events
-                    large_xs = xs
-        return large_xs
-
-    def get_q_range(self):
-        """
-        Return the Q range for the cross-sections
-        """
-        q_min = None
-        q_max = None
-        for xs in self.cross_sections:
-            if self.cross_sections[xs].q is not None:
-                if q_min is None:
-                    q_min = self.cross_sections[xs].q.min()
-                    q_max = self.cross_sections[xs].q.max()
-                else:
-                    q_min = min(q_min, self.cross_sections[xs].q.min())
-                    q_max = max(q_max, self.cross_sections[xs].q.max())
-        return q_min, q_max
-
-    def get_reflectivity_workspace_group(self):
-        ws_list = [self.cross_sections[xs]._reflectivity_workspace for xs in self.cross_sections]
-        wsg = api.GroupWorkspaces(InputWorkspaces=ws_list)
-        return wsg
-
-    def set_parameter(self, param, value):
-        """
-        Loop through the cross-section data sets and update
-        a parameter.
-        """
-        has_changed = False
-        try:
-            for xs in self.cross_sections:
-                if hasattr(self.cross_sections[xs].configuration, param):
-                    if not getattr(self.cross_sections[xs].configuration, param) == value:
-                        setattr(self.cross_sections[xs].configuration, param, value)
-                        has_changed = True
-        except:
-            logging.error("Could not set parameter %s %s", param, value)
-        return has_changed
-
-    def calculate_reflectivity(
-        self,
-        direct_beam: Optional[CrossSectionData] = None,
-        configuration: Optional[Configuration] = None,
-        ws_suffix: str = "",
-    ):
-        """
-        Loop through the cross-section data sets and update
-        the reflectivity.
-
-        Parameters
-        ----------
-        direct_beam: CrossSectionData | None
-            Direct beam data
-        configuration: Configuration | None
-            The configuration
-        ws_suffix: str
-            String to add to reflectivity workspace name
-
-        Example
-        -------
-        `ws_suffix` is used when reducing multiple ROIs for the same run and cross-section, to
-        differentiate the workspace names in the Mantid data service
-
-        peak_index = 2
-        # update the active reduction list
-        data_manager.set_active_reduction_list_index(peak_index)
-        # get the first data set of the active reduction list
-        nexus_data = data_manager.reduction_list[0]
-        # calculate the reflectivity for this data set
-        nexus_data.calculate_reflectivity(ws_suffix=str(peak_index))
-        """
-        if configuration is not None:
-            self.configuration = copy.deepcopy(configuration)
-
-        if self.configuration is None:
-            return
-
-        # If a direct beam object was passed, use it.
-        apply_norm = direct_beam is not None  # and not self.is_direct_beam
-        if not apply_norm:
-            direct_beam = CrossSectionData("none", self.configuration, "none")
-
-        logging.info(
-            "%s Reduction with DB: %s [config: %s]", self.number, direct_beam.number, self.configuration.normalization
-        )
-        angle_offset = 0  # Offset from dangle0, in radians
-
-        def _as_ints(a):
-            return [int(round(a[0])), int(round(a[1])) - 1]
-
-        output_ws = "r%s_%s" % (self.number, ws_suffix)
-
-        ws_norm = None
-        if apply_norm and direct_beam._event_workspace is not None:
-            ws_norm = direct_beam._event_workspace
-
-        ws_list = [self.cross_sections[xs]._event_workspace for xs in self.cross_sections]
-        conf = self.cross_sections[self.main_cross_section].configuration
-        wsg = api.GroupWorkspaces(InputWorkspaces=ws_list)
-
-        _dirpix = conf.direct_pixel_overwrite if conf.set_direct_pixel else None
-        _dangle0 = conf.direct_angle_offset_overwrite if conf.set_direct_angle_offset else None
-
-        direct_beam_low_res_roi = get_direct_beam_low_res_roi(conf, direct_beam.configuration)
-
-        final_rebin = False
-        q_step = 0.0
-        if conf.do_final_rebin_global:
-            final_rebin = True
-            q_step = conf.final_rebin_step_global
-        else:
-            final_rebin = conf.do_final_rebin_run
-            q_step = conf.final_rebin_step_run
-
-        # The reduced data workspace may be a group or a single
-        # workspace depending on the InputWorkspace parameter
-        ws = api.MagnetismReflectometryReduction(
-            InputWorkspace=wsg,
-            NormalizationWorkspace=ws_norm,
-            SignalPeakPixelRange=_as_ints(conf.peak_roi),
-            SubtractSignalBackground=conf.subtract_background,
-            SignalBackgroundPixelRange=_as_ints(conf.bck_roi),
-            ApplyNormalization=apply_norm,
-            NormPeakPixelRange=_as_ints(direct_beam.configuration.peak_roi),
-            SubtractNormBackground=conf.subtract_background,
-            NormBackgroundPixelRange=_as_ints(direct_beam.configuration.bck_roi),
-            CutLowResDataAxis=True,
-            LowResDataAxisPixelRange=_as_ints(conf.low_res_roi),
-            CutLowResNormAxis=True,
-            LowResNormAxisPixelRange=direct_beam_low_res_roi,
-            CutTimeAxis=True,
-            FinalRebin=final_rebin,
-            QMin=0.001,
-            QStep=q_step,
-            RoundUpPixel=False,
-            AngleOffset=angle_offset,
-            UseWLTimeAxis=False,
-            TimeAxisStep=conf.tof_bins,
-            UseSANGLE=not conf.use_dangle,
-            TimeAxisRange=conf.tof_range,
-            SpecularPixel=conf.peak_position,
-            ConstantQBinning=conf.use_constant_q,
-            ConstQTrim=0.1,
-            CropFirstAndLastPoints=False,
-            CleanupBadData=final_rebin,
-            AcceptNullReflectivity=True,  # return empty reflectivity curves (all intensities are zero)
-            ErrorWeightedBackground=False,
-            SampleLength=conf.sample_size,
-            DAngle0Overwrite=_dangle0,
-            DirectPixelOverwrite=_dirpix,
-            OutputWorkspace=output_ws,
-        )
-
-        # If there's an empty reflectivity curve, add a small value to it so that it can be plotted.
-        _xs_ws = [ws] if isinstance(ws, Workspace2D) else ws
-        for i in range(len(ws_list)):
-            if _is_empty_reflectivity_curve(_xs_ws[i]):
-                _shift_empty_reflectivity_curve(_xs_ws[i])
-
-        # FOR COMPATIBILITY WITH QUICKNXS #
-        _ws = ws[0] if len(ws_list) > 1 else ws
-        run_object = _ws.getRun()
-        peak_min = run_object.getProperty("scatt_peak_min").value
-        peak_max = run_object.getProperty("scatt_peak_max").value + 1.0
-        low_res_min = run_object.getProperty("scatt_low_res_min").value
-        low_res_max = run_object.getProperty("scatt_low_res_max").value + 1.0
-        norm_x_min = run_object.getProperty("norm_peak_min").value
-        norm_x_max = run_object.getProperty("norm_peak_max").value + 1.0
-        norm_y_min = run_object.getProperty("norm_low_res_min").value
-        norm_y_max = run_object.getProperty("norm_low_res_max").value + 1.0
-        tth = run_object.getProperty("two_theta").value * math.pi / 360.0
-        quicknxs_scale = (float(norm_x_max) - float(norm_x_min)) * (float(norm_y_max) - float(norm_y_min))
-        quicknxs_scale /= (float(peak_max) - float(peak_min)) * (float(low_res_max) - float(low_res_min))
-        logging.warning("Scale size = %s", str(quicknxs_scale))
-        logging.warning("Alpha_i = %s", str(tth))
-        _scale = 0.005 / math.sin(tth) if tth > 0.0002 else 1.0
-        quicknxs_scale *= _scale
-
-        ws = api.Scale(InputWorkspace=output_ws, OutputWorkspace=output_ws, factor=quicknxs_scale, Operation="Multiply")
-        _ws = ws if len(ws_list) > 1 else [ws]
-        for xs in _ws:
-            # add suffix to avoid overwriting ws in mantid data service, needed for multiple peaks
-            api.RenameWorkspace(str(xs), str(xs) + ws_suffix)
-            xs_id = xs.getRun().getProperty("cross_section_id").value
-            self.cross_sections[xs_id].q = xs.readX(0)[:].copy()
-            self.cross_sections[xs_id]._r = np.ma.masked_equal(xs.readY(0)[:].copy(), 0)
-            self.cross_sections[xs_id]._dr = np.ma.masked_equal(xs.readE(0)[:].copy(), 0)
-            self.cross_sections[xs_id]._reflectivity_workspace = str(xs)
-            self.cross_sections[xs_id]._reflectivity_workspacegroup = str(ws)
-
-    def calculate_gisans(self, direct_beam, progress=None):
-        """
-        Compute GISANS
-        """
-        has_errors = False
-        detailed_msg = ""
-        if progress is not None:
-            progress(1, "Computing GISANS", out_of=100.0)
-        for i, xs in enumerate(self.cross_sections):
-            try:
-                self.cross_sections[xs].gisans(direct_beam=direct_beam)
-            except:
-                has_errors = True
-                detailed_msg += "Could not calculate GISANS reflectivity for %s\n  %s\n\n" % (
-                    xs,
-                    traceback.format_exc(),
-                )
-                logging.error("Could not calculate GISANS reflectivity for %s", xs)
-            if progress:
-                progress(i, message="Computed GISANS %s" % xs, out_of=len(self.cross_sections))
-        if has_errors:
-            raise RuntimeError(detailed_msg)
-        if progress is not None:
-            progress(100, "Complete", out_of=100.0)
-
-    def is_offspec_available(self):
-        """
-        Verify whether we have off-specular data calculated for all cross-sections
-        """
-        for xs in self.cross_sections:
-            if self.cross_sections[xs].off_spec is None:
-                return False
-        return True
-
-    def is_gisans_available(self):
-        """
-        Verify whether we have GISANS data calculated for all cross-sections
-        """
-        for xs in self.cross_sections:
-            if self.cross_sections[xs].gisans_data is None:
-                return False
-        return True
-
-    def calculate_offspec(self, direct_beam=None):
-        """
-        Loop through the cross-section data sets and update
-        the reflectivity.
-        """
-        has_errors = False
-        detailed_msg = ""
-        for xs in self.cross_sections:
-            try:
-                self.cross_sections[xs].offspec(direct_beam=direct_beam)
-            except Exception:
-                has_errors = True
-                detailed_msg += "Could not calculate off-specular reflectivity for %s\n  %s\n\n" % (
-                    xs,
-                    traceback.format_exc(),
-                )
-                logging.error(detailed_msg)
-        if has_errors:
-            raise RuntimeError(detailed_msg)
-
-    def update_configuration(self, configuration):
-        """
-        Loop through the cross-section data sets and update
-        the reflectivity.
-        """
-        for xs in self.cross_sections:
-            try:
-                self.cross_sections[xs].update_configuration(configuration)
-            except:
-                logging.error("Could not update configuration for %s", xs)
-
-    def update_calculated_values(self):
-        """
-        Loop through the cross-section data sets and update.
-        """
-        for xs in self.cross_sections:
-            self.cross_sections[xs].update_calculated_values()
-
-    def load(self, update_parameters=True, progress=None):
-        """
-        Load cross-sections from a nexus file.
-        :param function progress: call-back function to track progress
-        :param bool update_parameters: if True, we will find peak ranges
-        """
-        # sanity check
-        if self.file_path is None:
-            raise RuntimeError("self.file_path is None")
-
-        self.cross_sections = OrderedDict()
-        if progress is not None:
-            progress(5, "Filtering data...", out_of=100.0)
-
-        try:
-            xs_list = self.configuration.instrument.load_data(self.file_path, self.configuration)
-            logging.info("%s loaded: %s xs", self.file_path, len(xs_list))
-        except RuntimeError as run_err:
-            logging.error(f"Could not load file(s) {str(self.file_path)}\n   {run_err}")
-            return self.cross_sections
-
-        progress_value = 0
-        # Keep track of cross-section with max counts so we can use it to
-        # select peak regions
-        _max_counts = 0
-        _max_xs = None
-        _loaded_with_getDI = False
-        for ws in xs_list:
-            # Get the unique name for the cross-section, determined by the filtering
-            channel = ws.getRun().getProperty("cross_section_id").value
-            if ws.getRun().hasProperty("loaded_with_getDI"):
-                _loaded_with_getDI = True
-            if progress is not None:
-                progress_value += int(100.0 / len(xs_list))
-                progress(progress_value, "Loading %s..." % str(channel), out_of=100.0)
-
-            # Get rid of empty workspaces
-            logging.info("Loading %s: %s events", str(channel), ws.getNumberEvents())
-            if ws.getNumberEvents() < self.configuration.nbr_events_min:
-                logging.warning("Too few events for %s: %s", channel, ws.getNumberEvents())
-                continue
-
-            name = ws.getRun().getProperty("cross_section_id").value
-            cross_section = CrossSectionData(name, self.configuration, entry_name=channel, workspace=ws)
-            self.cross_sections[name] = cross_section
-            self.number = cross_section.number  # e.g '1234:1238+1239' if more than one run made up this cross section
-            if cross_section.total_counts > _max_counts:
-                _max_counts = cross_section.total_counts
-                _max_xs = name
-
-        # Now that we know which cross section has the most data,
-        # use that one to get the reduction parameters
-        self.main_cross_section = _max_xs
-        self.cross_sections[_max_xs].get_reduction_parameters(update_parameters=update_parameters)
-
-        # Push the configuration (reduction options and peak regions) from the
-        # cross-section with the most data to all other cross-sections.
-        for xs in self.cross_sections:
-            if xs == _max_xs:
-                continue
-            self.cross_sections[xs].update_configuration(self.cross_sections[_max_xs].configuration)
-
-        if progress is not None:
-            progress(100, "Complete", out_of=100.0)
-            if _loaded_with_getDI:
-                progress(100, "WARNING: Analyzer/polarizer states not available - loaded with getDI", out_of=100.0)
-
-        return self.cross_sections
-
-    def is_direct_beam(self):
-        """Returns True if the main cross-section is a direct beam"""
-        return self.cross_sections[self.main_cross_section].is_direct_beam
 
 
 class NexusMetaData(object):
