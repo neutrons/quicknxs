@@ -5,16 +5,19 @@ Release Notes
 =============
 Notes for major and minor releases. Notes for Patch releases are deferred.
 
-.. v4.2.0
+.. v4.3.0
 .. ------
 .. (date of release, format YYYY-MM-DD)
 
 .. **Of interest to the User**:
 
-.. - PR #141: Update Mantid version to 6.12
-
 .. **Of interest to the Developer:**
 
+v4.2.0
+------
+2025-03-21
+
+This release updates the Mantid version to 6.12 to address a security vulnerability.
 
 v4.1.0
 ------
