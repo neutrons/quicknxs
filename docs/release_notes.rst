@@ -15,7 +15,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 v4.2.0
 ------
-2025-03-21
+2025-03-31
 
 This release updates the Mantid version to 6.12 to address a security vulnerability.
 
