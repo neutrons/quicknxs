@@ -5,24 +5,19 @@ Uses Mantid Framework
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, multiple-statements, bare-except, wrong-import-order, \
 # too-many-locals, too-few-public-methods, wrong-import-position, too-many-public-methods
 
-# local imports
 import copy
 import logging
 import math
 import time
 import traceback
-
-# standard imports
 from collections import OrderedDict
 from typing import Union
 
 import mantid.simpleapi as api
-
-# 3rd-party imports
 import numpy as np
 from mantid.dataobjects import Workspace2D
 
-from quicknxs.interfaces.configuration import get_direct_beam_low_res_roi
+from quicknxs.interfaces.configuration import Configuration, get_direct_beam_low_res_roi
 from quicknxs.interfaces.data_handling.data_info import DataInfo
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.gisans import GISANS
@@ -103,8 +98,7 @@ class NexusData(object):
     Read a nexus file with multiple cross-section data.
     """
 
-    def __init__(self, file_path, configuration):
-        # type: (unicode, Configuration) -> None
+    def __init__(self, file_path: str, configuration: Configuration) -> None:
         """
         @brief Structure to read in one or more Nexus data files
         @param file_path: absolute path to one or more files. If more than one, paths are concatenated with the
