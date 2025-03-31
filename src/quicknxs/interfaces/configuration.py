@@ -43,7 +43,7 @@ class Configuration(object):
     # Direct beam uses the same low res roi as the data run
     lock_direct_beam_y = False
     # Number of events below which we throw away a workspace
-    # Note: not exposed in the UI, but can be modified in ~/.config/.quicknxs.conf
+    # Note: not exposed in the UI
     nbr_events_min = 100
 
     def __init__(self, settings=None):
