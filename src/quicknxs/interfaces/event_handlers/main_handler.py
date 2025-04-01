@@ -147,11 +147,12 @@ class MainHandler(object):
         t_0 = time.time()
         self.main_window.auto_change_active = True
         try:
-            self.report_message("Loading file(s) %s" % file_path)
+            self.report_message(f"Loading file(s) {file_path}")
             prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
             configuration = self.get_configuration()
             self._data_manager.load(file_path, configuration, force=force, progress=prog)
-            self.report_message("Loaded file(s) %s" % self._data_manager.current_file_name)
+            self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
+            # self.report_message("NOTE: Initial error bars may be inaccurate - please run stitching to update scaling factor errors.")
         except RuntimeError as run_err:
             # FIXME - need to find out what kind of error it could have
             self.report_message(
@@ -187,7 +188,9 @@ class MainHandler(object):
         self.main_window.file_loaded_signal.emit()
         self.main_window.initiate_reflectivity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
-
+        self.status_bar_handler.show_message(
+            "NOTE: Initial error bars may be inaccurate - please run stitching to update scaling factor errors.", 0
+        )
         self.cache_indicator.setText("Files loaded: %s" % (self._data_manager.get_cachesize()))
 
     def active_channel_changed(self):
@@ -566,6 +569,7 @@ class MainHandler(object):
             configuration = self.get_configuration()
             prog = self.new_progress_reporter()
             self._data_manager.load_data_from_reduced_file(file_path, configuration=configuration, progress=prog)
+            # prog.set_value(100, "NOTE: Initial error bars may be inaccurate - please run stitching to update scaling factor errors.")
 
             # Update output directory
             file_dir, _ = os.path.split(str(file_path))
@@ -601,8 +605,6 @@ class MainHandler(object):
                 self.populate_from_configuration(self._data_manager.active_channel.configuration)
                 self.update_file_list(self._data_manager.current_file)
             self.main_window.auto_change_active = False
-
-            self.ui.scaling_error_label.setVisible(True)
 
             logging.info("UI updated: %s", time.time() - t_0)
 
@@ -1645,7 +1647,7 @@ class MainHandler(object):
 
     def report_message(self, message, informative_message=None, detailed_message=None, pop_up=False, is_error=False):
         r"""
-        Report an error.
+        Report a message or error to the status bar at the bottom of the window.
         :param str message: message string to be reported
         :param str informative_message: extra information
         :param str detailed_message: detailed message for the log

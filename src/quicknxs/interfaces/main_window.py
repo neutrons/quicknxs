@@ -60,7 +60,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # Initialize the UI widgets
         self.reduction_table_menu = None
         self.ui = load_ui("ui_main_window.ui", baseinstance=self)
-        self.ui.scaling_error_label.setVisible(False)
         version = quicknxs.__version__ if quicknxs.__version__.lower() != "unknown" else ""
         self.setWindowTitle(f"QuickNXS Magnetic Reflectivity {version}")
 
@@ -446,7 +445,6 @@ class MainWindow(QtWidgets.QMainWindow):
         Stitch the reflectivity parts and normalize to 1.
         """
         self.file_handler.stitch_reflectivity()
-        self.ui.scaling_error_label.setVisible(False)
         self.update_specular_viewer.emit()
 
     def autoRef(self):
