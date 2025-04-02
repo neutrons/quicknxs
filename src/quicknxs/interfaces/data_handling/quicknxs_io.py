@@ -409,7 +409,10 @@ def read_reduced_file(file_path, configuration=None):
 
                     conf.scaling_factor = float(_get_tok("scale", cols, toks))
                     if (tok := _get_tok("scale_err", cols, toks)) is not None:
+                        has_scaling_error = True
                         conf.scaling_error = float(tok)
+                    else:
+                        has_scaling_error = False
                     conf.cut_first_n_points = int(_get_tok("P0", cols, toks))
                     conf.cut_last_n_points = int(_get_tok("PN", cols, toks))
                     conf.peak_position = float(_get_tok("x_pos", cols, toks))
@@ -457,7 +460,7 @@ def read_reduced_file(file_path, configuration=None):
                     except:
                         logging.error("Could not extract direct beam y lock: %s" % line)
 
-    return direct_beam_runs, data_runs, additional_peaks
+    return direct_beam_runs, data_runs, additional_peaks, has_scaling_error
 
 
 def determine_which_files_to_sum(run_file, data_file_indicies):
