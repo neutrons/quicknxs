@@ -24,7 +24,7 @@ class TestDataLoader(object):
 
     def test_simple_load(self):
         file_path = self.file("REF_M_28613+28614+28615+28616+28617+28618+28619_Specular_++.dat")
-        db_list, data_list, _ = read_reduced_file(file_path)
+        db_list, data_list, _, _ = read_reduced_file(file_path)
         assert len(db_list) == 7
         assert len(data_list) == 7
         assert data_list[0][2].peak_position == 179.5
@@ -32,40 +32,40 @@ class TestDataLoader(object):
 
     def test_load_no_db(self):
         file_path = self.file("REF_M_29160_Specular_++.dat")
-        db_list, data_list, _ = read_reduced_file(file_path)
+        db_list, data_list, _, _ = read_reduced_file(file_path)
         assert len(db_list) == 0
         assert len(data_list) == 1
 
     def test_load_from_ar(self):
         file_path = self.file("REF_M_29526_Off_Off_combined_autoreduced.dat")
-        db_list, data_list, _ = read_reduced_file(file_path)
+        db_list, data_list, _, _ = read_reduced_file(file_path)
         assert len(db_list) == 4
         assert len(data_list) == 4
 
     def test_load_from_quicknxs(self):
         file_path = self.file("REF_M_29526_quicknxs.dat")
-        db_list, data_list, _ = read_reduced_file(file_path)
+        db_list, data_list, _, _ = read_reduced_file(file_path)
         assert len(db_list) == 4
         assert len(data_list) == 4
         assert Configuration.lock_direct_beam_y is False
 
     def test_load_from_mismatch(self):
         file_path = self.file("REF_M_29782_empty_db.dat")
-        db_list, data_list, _ = read_reduced_file(file_path)
+        db_list, data_list, _, _ = read_reduced_file(file_path)
         assert len(db_list) == 5
         assert len(data_list) == 6
         assert data_list[4][2].normalization is None
 
     def test_load_global_options(self):
         file_path = self.file("REF_M_29526_global_options.dat")
-        db_list, data_list, _ = read_reduced_file(file_path)
+        db_list, data_list, _, _ = read_reduced_file(file_path)
         assert len(db_list) == 4
         assert len(data_list) == 4
         assert Configuration.lock_direct_beam_y is True
 
     def test_load_multiple_peaks(self):
         file_path = self.file("REF_M_42536+42537_peak1_Specular_Off_Off.dat")
-        db_list, data_list, additional_peaks_list = read_reduced_file(file_path)
+        db_list, data_list, additional_peaks_list, _ = read_reduced_file(file_path)
         assert len(db_list) == 2
         assert len(data_list) == 2
         # test that there are two additional peaks, both with run numbers 42536 and 42537
@@ -143,10 +143,11 @@ class TestDataWriter(object):
         write_reflectivity_data(output_path, output_data, col_names)
 
         # test loading saved file
-        db_list, data_list, additional_peaks_list = read_reduced_file(output_path)
+        db_list, data_list, additional_peaks_list, has_scaling_error = read_reduced_file(output_path)
         assert len(db_list) == 2
         assert len(data_list) == 2
         assert len(additional_peaks_list) == 2
+        assert has_scaling_error is True
 
 
 if __name__ == "__main__":

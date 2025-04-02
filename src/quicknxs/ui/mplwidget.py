@@ -329,7 +329,7 @@ class NavigationToolbarReflectivity(NavigationToolbar):
             new_linestyle = "-"
         for i in range(0, len(ax.lines), 3):
             ax.lines[i].set_linestyle(new_linestyle)
-        settings = QtCore.QSettings(".refredm")
+        settings = QtCore.QSettings(".quicknxs")
         settings.setValue(self.calling_function + "/linestyle", new_linestyle)
         self.canvas.draw()
 
@@ -448,7 +448,7 @@ class MPLWidget(QtWidgets.QWidget):
 
         if set_linestyle:
             self.toolbar.calling_function = str(inspect.stack()[1][3])
-            setting = QtCore.QSettings(".refredm")
+            setting = QtCore.QSettings(".quicknxs")
             ls = setting.value(self.toolbar.calling_function + "/linestyle", "-")
             opts["ls"] = str(ls)
 

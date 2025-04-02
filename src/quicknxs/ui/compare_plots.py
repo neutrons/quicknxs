@@ -13,8 +13,7 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from quicknxs.interfaces import load_ui
-
-from ..interfaces.data_handling.processing_workflow import ProcessingWorkflow
+from quicknxs.interfaces.data_handling.processing_workflow import ProcessingWorkflow
 
 
 class CompareWidget(QtWidgets.QWidget):
@@ -27,7 +26,7 @@ class CompareWidget(QtWidgets.QWidget):
         self.ui = load_ui("ui_compare_widget.ui", self)
         self.ui.compareList.verticalHeader().sectionMoved.connect(self.draw)
         self.file_paths = {}
-        self.settings = QtCore.QSettings(".refredm")
+        self.settings = QtCore.QSettings(".quicknxs")
         current_dir = self.settings.value("current_directory", os.path.expanduser("~"))
         self.active_folder = self.settings.value("compare_directory", current_dir)
         self.data_manager = None

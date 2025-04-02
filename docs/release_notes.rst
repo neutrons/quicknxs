@@ -11,6 +11,8 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 .. **Of interest to the User**:
 
+.. - PR #142: Modify config file handling, write scaling error to reduced data files
+
 .. **Of interest to the Developer:**
 
 v4.2.0

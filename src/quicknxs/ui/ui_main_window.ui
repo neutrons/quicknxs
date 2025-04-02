@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>2096</width>
-    <height>1028</height>
+    <height>1159</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -394,15 +394,15 @@
            <number>0</number>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="reflectivity_extraction_global">
            <property name="geometry">
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>360</width>
-             <height>269</height>
+             <width>394</width>
+             <height>291</height>
             </rect>
            </property>
            <attribute name="label">
@@ -424,26 +424,33 @@
             <property name="verticalSpacing">
              <number>1</number>
             </property>
-            <item row="0" column="1">
-             <widget class="QCheckBox" name="final_rebin_checkbox_global">
+            <item row="2" column="1" colspan="2">
+             <widget class="QCheckBox" name="normalize_to_unity_checkbox">
               <property name="toolTip">
-               <string>Check for apply a final Q rebinning globally. This will be used instead of any per-run Q-Step values.</string>
+               <string>Normalize the total reflectivity plateau to unity when stitching</string>
               </property>
               <property name="text">
-               <string>Final rebin</string>
+               <string>Normalize to unity when stitching</string>
               </property>
               <property name="checked">
                <bool>true</bool>
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="label_45">
-              <property name="toolTip">
-               <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
+            <item row="11" column="1">
+             <widget class="DeadTimeEntryPoint" name="deadtime_entry">
+              <property name="title">
+               <string>Dead Time Correction</string>
               </property>
+             </widget>
+            </item>
+            <item row="7" column="1" colspan="2">
+             <widget class="QLabel" name="polynomial_stitching_points_label">
               <property name="text">
-               <string>Q steps</string>
+               <string>Points outside overlap</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -472,43 +479,29 @@
               </property>
              </widget>
             </item>
-            <item row="11" column="1">
-             <widget class="DeadTimeEntryPoint" name="deadtime_entry">
-              <property name="title">
-               <string>Dead Time Correction</string>
+            <item row="10" column="1">
+             <widget class="QLabel" name="bandwidth_label">
+              <property name="visible">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Bandwidth:</string>
               </property>
              </widget>
             </item>
-            <item row="12" column="1" colspan="3">
-             <widget class="QCheckBox" name="direct_beam_y_lock_checkbox">
-              <property name="toolTip">
-               <string>The direct beam y0 and yw are taken from the data run instead of from the direct beam table</string>
+            <item row="9" column="1">
+             <widget class="QLabel" name="final_rebin_label_global">
+              <property name="minimumSize">
+               <size>
+                <width>130</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
               </property>
               <property name="text">
-               <string>Lock direct beam y0 and yw to data run</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1" colspan="2">
-             <widget class="QCheckBox" name="normalize_to_unity_checkbox">
-              <property name="toolTip">
-               <string>Normalize the total reflectivity plateau to unity when stitching</string>
-              </property>
-              <property name="text">
-               <string>Normalize to unity when stitching</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1" colspan="2">
-             <widget class="QLabel" name="label_29">
-              <property name="text">
-               <string>Critical Q cutoff</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               <string>Sample size:</string>
               </property>
              </widget>
             </item>
@@ -528,83 +521,13 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="1" colspan="2">
-             <widget class="QCheckBox" name="global_fit_checkbox">
-              <property name="toolTip">
-               <string>Perform stitching fit using all cross-sections</string>
-              </property>
+            <item row="3" column="1" colspan="2">
+             <widget class="QLabel" name="normalization_q_cutoff_label">
               <property name="text">
-               <string>Global fit when stitching</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="3">
-             <widget class="QSpinBox" name="polynomial_stitching_degree_spinbox">
-              <property name="value">
-               <number>3</number>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1" colspan="2">
-             <widget class="QCheckBox" name="polynomial_stitching_checkbox">
-              <property name="toolTip">
-               <string>Use polynomial function to determine scaling factors</string>
-              </property>
-              <property name="text">
-               <string>Polynomial fit when stitching</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="1" colspan="2">
-             <widget class="QLabel" name="label_56">
-              <property name="text">
-               <string>Polynomial degree</string>
+               <string>Critical Q cutoff</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="1" colspan="2">
-             <widget class="QLabel" name="label_57">
-              <property name="text">
-               <string>Points outside overlap</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="3">
-             <widget class="QSpinBox" name="polynomial_stitching_points_spinbox">
-              <property name="value">
-               <number>3</number>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="1" colspan="2">
-             <widget class="QCheckBox" name="fanReflectivity">
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Evaluate Q for each X line of the reflectivity and combine these measurements.&lt;/p&gt;&lt;p&gt;Can be used with a large X-width of e.g. 15 for samples scattering to a large 2θ area.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="text">
-               <string>Constant-Q binning</string>
-              </property>
-             </widget>
-            </item>
-            <item row="9" column="1">
-             <widget class="QLabel" name="label_31">
-              <property name="minimumSize">
-               <size>
-                <width>130</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="visible">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Sample size:</string>
               </property>
              </widget>
             </item>
@@ -627,13 +550,30 @@
               </property>
              </widget>
             </item>
-            <item row="10" column="1">
-             <widget class="QLabel" name="label_53">
-              <property name="visible">
-               <bool>false</bool>
+            <item row="12" column="1" colspan="3">
+             <widget class="QCheckBox" name="direct_beam_y_lock_checkbox">
+              <property name="toolTip">
+               <string>The direct beam y0 and yw are taken from the data run instead of from the direct beam table</string>
               </property>
               <property name="text">
-               <string>Bandwidth:</string>
+               <string>Lock direct beam y0 and yw to data run</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="3">
+             <widget class="QSpinBox" name="polynomial_stitching_degree_spinbox">
+              <property name="value">
+               <number>3</number>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1" colspan="2">
+             <widget class="QCheckBox" name="fanReflectivity">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Evaluate Q for each X line of the reflectivity and combine these measurements.&lt;/p&gt;&lt;p&gt;Can be used with a large X-width of e.g. 15 for samples scattering to a large 2θ area.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Constant-Q binning</string>
               </property>
              </widget>
             </item>
@@ -659,6 +599,66 @@
               </property>
              </widget>
             </item>
+            <item row="0" column="2">
+             <widget class="QLabel" name="q_rebin_label_global">
+              <property name="toolTip">
+               <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
+              </property>
+              <property name="text">
+               <string>Q steps</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1" colspan="2">
+             <widget class="QCheckBox" name="polynomial_stitching_checkbox">
+              <property name="toolTip">
+               <string>Use polynomial function to determine scaling factors</string>
+              </property>
+              <property name="text">
+               <string>Polynomial fit when stitching</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="3">
+             <widget class="QSpinBox" name="polynomial_stitching_points_spinbox">
+              <property name="value">
+               <number>3</number>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1" colspan="2">
+             <widget class="QLabel" name="polynomial_stitching_degree_label">
+              <property name="text">
+               <string>Polynomial degree</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1" colspan="2">
+             <widget class="QCheckBox" name="global_fit_checkbox">
+              <property name="toolTip">
+               <string>Perform stitching fit using all cross-sections</string>
+              </property>
+              <property name="text">
+               <string>Global fit when stitching</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QCheckBox" name="final_rebin_checkbox_global">
+              <property name="toolTip">
+               <string>Check for apply a final Q rebinning globally. This will be used instead of any per-run Q-Step values.</string>
+              </property>
+              <property name="text">
+               <string>Final rebin</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
           <widget class="QWidget" name="reflectivity_extraction_per_run">
@@ -666,8 +666,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>395</width>
-             <height>253</height>
+             <width>394</width>
+             <height>272</height>
             </rect>
            </property>
            <attribute name="label">
@@ -744,7 +744,7 @@
              </widget>
             </item>
             <item row="4" column="2">
-             <widget class="QLabel" name="label_5">
+             <widget class="QLabel" name="refScale_label">
               <property name="toolTip">
                <string>Scaling factor for the reflectivity in powers of 10</string>
               </property>
@@ -789,7 +789,7 @@
              </widget>
             </item>
             <item row="9" column="1">
-             <widget class="QLabel" name="label_30">
+             <widget class="QLabel" name="trusted_angle_label">
               <property name="minimumSize">
                <size>
                 <width>82</width>
@@ -812,7 +812,7 @@
              </widget>
             </item>
             <item row="5" column="1">
-             <widget class="QLabel" name="label_20">
+             <widget class="QLabel" name="cut_points_label">
               <property name="styleSheet">
                <string notr="true">text-align: right;</string>
               </property>
@@ -923,7 +923,7 @@
              </widget>
             </item>
             <item row="0" column="3">
-             <widget class="QLabel" name="label_2">
+             <widget class="QLabel" name="width_column_label">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -952,7 +952,7 @@
              </widget>
             </item>
             <item row="2" column="1">
-             <widget class="QLabel" name="label_4">
+             <widget class="QLabel" name="refXPos_label">
               <property name="toolTip">
                <string>X Pixel Window</string>
               </property>
@@ -965,7 +965,7 @@
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QLabel" name="label_3">
+             <widget class="QLabel" name="refYPos_label">
               <property name="toolTip">
                <string>Y Pixel Window</string>
               </property>
@@ -1011,7 +1011,7 @@
              </widget>
             </item>
             <item row="11" column="2">
-             <widget class="QLabel" name="label_58">
+             <widget class="QLabel" name="q_rebin_label_run">
               <property name="toolTip">
                <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
               </property>
@@ -1072,7 +1072,7 @@
              </widget>
             </item>
             <item row="0" column="2">
-             <widget class="QLabel" name="label">
+             <widget class="QLabel" name="position_column_label">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -1089,30 +1089,30 @@
             </item>
            </layout>
            <zorder>refYPos</zorder>
-           <zorder>label_3</zorder>
-           <zorder>label_2</zorder>
+           <zorder>refYPos_label</zorder>
+           <zorder>width_column_label</zorder>
            <zorder>rangeEnd</zorder>
            <zorder>refXPos</zorder>
            <zorder>bgWidth</zorder>
            <zorder>bgCenter</zorder>
-           <zorder>label_4</zorder>
+           <zorder>refXPos_label</zorder>
            <zorder>refScale</zorder>
            <zorder>rangeStart</zorder>
            <zorder>refXWidth</zorder>
            <zorder>refYWidth</zorder>
-           <zorder>label_20</zorder>
-           <zorder>label</zorder>
-           <zorder>label_5</zorder>
+           <zorder>cut_points_label</zorder>
+           <zorder>position_column_label</zorder>
+           <zorder>refScale_label</zorder>
            <zorder>bgActive</zorder>
            <zorder>trustSANGLE</zorder>
            <zorder>trustDANGLE</zorder>
-           <zorder>label_30</zorder>
+           <zorder>trusted_angle_label</zorder>
            <zorder>directPixelOverwrite</zorder>
            <zorder>set_dirpix_checkbox</zorder>
            <zorder>set_dangle0_checkbox</zorder>
            <zorder>dangle0Overwrite</zorder>
            <zorder>final_rebin_checkbox_run</zorder>
-           <zorder>label_58</zorder>
+           <zorder>q_rebin_label_run</zorder>
            <zorder>q_rebin_spinbox_run</zorder>
           </widget>
           <widget class="QWidget" name="peak_finder">
@@ -1120,8 +1120,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>381</width>
-             <height>144</height>
+             <width>394</width>
+             <height>158</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1555,7 +1555,7 @@
                 <number>0</number>
                </property>
                <item>
-                <widget class="QLabel" name="label_54">
+                <widget class="QLabel" name="run_info_label">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -2404,6 +2404,7 @@
                     </property>
                     <property name="font">
                      <font>
+                      <weight>75</weight>
                       <bold>true</bold>
                      </font>
                     </property>
@@ -2729,7 +2730,7 @@
                        <bool>false</bool>
                       </attribute>
                       <attribute name="verticalHeaderDefaultSectionSize">
-                       <number>21</number>
+                       <number>23</number>
                       </attribute>
                       <column>
                        <property name="text">
@@ -2870,7 +2871,7 @@
                        <bool>false</bool>
                       </attribute>
                       <attribute name="verticalHeaderDefaultSectionSize">
-                       <number>21</number>
+                       <number>23</number>
                       </attribute>
                       <column>
                        <property name="text">
@@ -3056,7 +3057,7 @@
                        <bool>false</bool>
                       </attribute>
                       <attribute name="verticalHeaderDefaultSectionSize">
-                       <number>21</number>
+                       <number>23</number>
                       </attribute>
                       <column>
                        <property name="text">
@@ -3242,7 +3243,7 @@
                        <bool>false</bool>
                       </attribute>
                       <attribute name="verticalHeaderDefaultSectionSize">
-                       <number>21</number>
+                       <number>23</number>
                       </attribute>
                       <column>
                        <property name="text">
@@ -3428,7 +3429,7 @@
                        <bool>false</bool>
                       </attribute>
                       <attribute name="verticalHeaderDefaultSectionSize">
-                       <number>21</number>
+                       <number>23</number>
                       </attribute>
                       <column>
                        <property name="text">
@@ -3546,7 +3547,7 @@
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0">
+                 <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0">
                   <item>
                    <widget class="QPushButton" name="addTabButton">
                     <property name="sizePolicy">
@@ -3565,10 +3566,8 @@
                      <string>Add new data tab (for multiple peaks)</string>
                     </property>
                     <property name="icon">
-                      <iconset>
-                        <normaloff>../icons/plus.png</normaloff>
-                        ../icons/plus.png
-                      </iconset>
+                     <iconset>
+                      <normaloff>../icons/plus.png</normaloff>../icons/plus.png</iconset>
                     </property>
                    </widget>
                   </item>
@@ -3590,10 +3589,8 @@
                      <string>Remove last data tab (for multiple peaks)</string>
                     </property>
                     <property name="icon">
-                      <iconset>
-                        <normaloff>../icons/minus.png</normaloff>
-                        ../icons/minus.png
-                      </iconset>
+                     <iconset>
+                      <normaloff>../icons/minus.png</normaloff>../icons/minus.png</iconset>
                     </property>
                    </widget>
                   </item>
@@ -5272,7 +5269,7 @@
      <x>0</x>
      <y>0</y>
      <width>2096</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuReduction">

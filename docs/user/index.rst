@@ -9,5 +9,5 @@ TODO
    :maxdepth: 2
 
    dead_time_correction
-   advanced_parameters
+   custom_config
    binning

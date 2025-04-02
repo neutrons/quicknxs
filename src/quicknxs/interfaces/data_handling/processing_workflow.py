@@ -17,11 +17,14 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Dict
 
 import numpy as np
 
-from ..configuration import Configuration
-from . import data_manipulation, gisans, off_specular, quicknxs_io
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling import data_manipulation, gisans, off_specular, quicknxs_io
+from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 
 DEFAULT_OPTIONS = dict(
     export_specular=True,
@@ -48,11 +51,9 @@ DEFAULT_OPTIONS = dict(
 
 
 class ProcessingWorkflow(object):
-    """
-    Carry out the reduction process for a set of data runs and manages outputs
-    """
+    """Carry out the reduction process for a set of data runs and manages outputs"""
 
-    def __init__(self, data_manager, output_options=None):
+    def __init__(self, data_manager: DataManager, output_options: dict = None):
         """
         :param data_manager: all the reduced data shall come from data manager
         """
@@ -61,7 +62,7 @@ class ProcessingWorkflow(object):
         self.exported_data_files = []
         self.exported_data_plots = []
 
-    def execute(self, progress=None):
+    def execute(self, progress: ProgressReporter = None):
         """
         Process data and write output files
         :param ProgressReporter progress: reporter object
@@ -89,11 +90,15 @@ class ProcessingWorkflow(object):
                     raw=self.output_options["export_offspec"], binned=self.output_options["export_offspec_smooth"]
                 )
 
-            if progress is not None:
-                progress(60, "Computing GISANS")
             if self.output_options["export_gisans"]:
+                if progress is not None:
+                    progress(60, "Computing GISANS")
                 # FIXME 66 - could be an AttributeError from self.gisans().  Catch it!
-                self.gisans(progress=progress)
+                # -> Is this good enough?
+                try:
+                    self.gisans(progress=progress)
+                except AttributeError:
+                    logging.error("GISANS failed: %s", sys.exc_info()[1])
 
         # restore current peak shown in the UI
         self.data_manager.set_active_reduction_list_index(active_peak)
@@ -125,12 +130,12 @@ class ProcessingWorkflow(object):
         base_name = base_name.replace("{peak}", f"peak{self.data_manager.active_reduction_list_index}")
         return os.path.join(self.output_options["output_directory"], base_name)
 
-    def write_quicknxs(self, output_data, output_file_base, xs=None):
+    def write_quicknxs(self, output_data: Dict[str, np.ndarray], output_file_base: str, xs: list = None):
         """
         Write QuickNXS output reflectivity file.
         :param dict output_data: dictionary of numpy arrays
         :param str output_file_base: template for output file paths
-        :param list xs: list of cross sections available in the output_data
+        :param list xs: list of cross-sections available in the output_data
         """
         # Get the column names
         units = output_data["units"]

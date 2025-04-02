@@ -16,15 +16,14 @@ from PyQt5 import QtCore, QtWidgets
 import quicknxs
 from quicknxs.interfaces import load_ui
 from quicknxs.interfaces.data_handling.filepath import FilePath
+from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.event_handlers.configuration_handler import ConfigurationHandler
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.event_handlers.plot_handler import PlotHandler
+from quicknxs.interfaces.plotting import PlotManager
+from quicknxs.interfaces.reduction_dialog import ReductionDialog
+from quicknxs.interfaces.smooth_dialog import SmoothDialog
 from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
-
-from .data_manager import DataManager
-from .plotting import PlotManager
-from .reduction_dialog import ReductionDialog
-from .smooth_dialog import SmoothDialog
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -65,7 +64,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"QuickNXS Magnetic Reflectivity {version}")
 
         # Application settings
-        self.settings = QtCore.QSettings(".refredm")
+        self.settings = QtCore.QSettings(".quicknxs")
+
         # Object managers
         self.data_manager = DataManager(self.settings.value("current_directory", os.path.expanduser("~")))
         self.plot_manager = PlotManager(self)
@@ -508,10 +508,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.file_handler.active_data_changed()
 
     def reduceDatasets(self):
-        r"""
-        Open a dialog to select reduction options for the current list of
-        reduction items.
-        """
+        """Open a dialog to select reduction options for the current list of reduction items."""
+
         if len(self.data_manager.reduction_list) == 0:
             self.file_handler.report_message("The data to be reduced must be added to the reduction table", pop_up=True)
             return

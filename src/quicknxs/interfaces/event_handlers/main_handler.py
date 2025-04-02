@@ -12,6 +12,7 @@ import math
 import os
 import time
 import traceback
+from typing import Optional
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
@@ -118,8 +119,7 @@ class MainHandler(object):
         else:
             self.main_window.frame_2.hide()
 
-    def open_file(self, file_path, force=False, silent=False):
-        # type: (str, Optional[bool], Optional[bool]) -> None
+    def open_file(self, file_path: str, force: Optional[bool] = False, silent: Optional[bool] = False) -> None:
         r"""
         @brief Read one or more data files. If more than one, merge their data.
         @param file_path: absolute path to data files. If more than one file, paths are joined with
@@ -147,11 +147,11 @@ class MainHandler(object):
         t_0 = time.time()
         self.main_window.auto_change_active = True
         try:
-            self.report_message("Loading file(s) %s" % file_path)
+            self.report_message(f"Loading file(s) {file_path}")
             prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
             configuration = self.get_configuration()
             self._data_manager.load(file_path, configuration, force=force, progress=prog)
-            self.report_message("Loaded file(s) %s" % self._data_manager.current_file_name)
+            self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
         except RuntimeError as run_err:
             # FIXME - need to find out what kind of error it could have
             self.report_message(
@@ -187,7 +187,6 @@ class MainHandler(object):
         self.main_window.file_loaded_signal.emit()
         self.main_window.initiate_reflectivity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
-
         self.cache_indicator.setText("Files loaded: %s" % (self._data_manager.get_cachesize()))
 
     def active_channel_changed(self):
@@ -1286,8 +1285,7 @@ class MainHandler(object):
             return 0
         return -1
 
-    def get_configuration(self):
-        # type: () -> Configuration
+    def get_configuration(self) -> Configuration:
         r"""
         @brief Gather the reduction options.
         @details Retrieve the reduction options either from the active channel or from the current settings
@@ -1304,19 +1302,13 @@ class MainHandler(object):
         configuration.use_roi_bck = self.ui.use_bck_roi_checkbox.isChecked()
 
         # Default ranges, using the current values
-        x_pos = self.ui.refXPos.value()
-        x_width = self.ui.refXWidth.value()
-        y_pos = self.ui.refYPos.value()
-        y_width = self.ui.refYWidth.value()
-        bck_pos = self.ui.bgCenter.value()
-        bck_width = self.ui.bgWidth.value()
 
-        configuration.peak_position = x_pos
-        configuration.peak_width = x_width
-        configuration.low_res_position = y_pos
-        configuration.low_res_width = y_width
-        configuration.bck_position = bck_pos
-        configuration.bck_width = bck_width
+        configuration.peak_position = self.ui.refXPos.value()
+        configuration.peak_width = self.ui.refXWidth.value()
+        configuration.low_res_position = self.ui.refYPos.value()
+        configuration.low_res_width = self.ui.refYWidth.value()
+        configuration.bck_position = self.ui.bgCenter.value()
+        configuration.bck_width = self.ui.bgWidth.value()
 
         configuration.force_peak_roi = not self.ui.actionAutomaticXPeak.isChecked()
         configuration.force_low_res_roi = not self.ui.actionAutoYLimits.isChecked()
@@ -1406,8 +1398,6 @@ class MainHandler(object):
         configuration.gisans_slice_qz_min = self.ui.gisans_qz_min_spinbox.value()
         configuration.gisans_slice_qz_max = self.ui.gisans_qz_max_spinbox.value()
 
-        # Make the changes persistent
-        configuration.to_q_settings(self.main_window.settings)
         return configuration
 
     def populate_from_configuration(self, configuration=None):
@@ -1652,7 +1642,7 @@ class MainHandler(object):
 
     def report_message(self, message, informative_message=None, detailed_message=None, pop_up=False, is_error=False):
         r"""
-        Report an error.
+        Report a message or error to the status bar at the bottom of the window.
         :param str message: message string to be reported
         :param str informative_message: extra information
         :param str detailed_message: detailed message for the log
@@ -1703,7 +1693,7 @@ class MainHandler(object):
         """
         Pop up the result viewer
         """
-        from ..result_viewer import ResultViewer
+        from quicknxs.interfaces.result_viewer import ResultViewer
 
         dialog = ResultViewer(self.main_window, self._data_manager)
         dialog.specular_compare_widget.ui.refl_preview_checkbox.setChecked(True)

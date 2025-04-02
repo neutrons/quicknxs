@@ -10,8 +10,7 @@ from matplotlib.patches import Ellipse
 from PyQt5 import QtWidgets
 
 from quicknxs.interfaces import load_ui
-
-from .configuration import Configuration
+from quicknxs.interfaces.configuration import Configuration
 
 
 class SmoothDialog(QtWidgets.QDialog):
