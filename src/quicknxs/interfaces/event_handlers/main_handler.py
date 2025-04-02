@@ -187,7 +187,6 @@ class MainHandler(object):
         self.main_window.file_loaded_signal.emit()
         self.main_window.initiate_reflectivity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
-        # self.status_bar_handler.show_message("NOTE: Initial error bars may be inaccurate - please run stitching to update scaling factor errors.", 0)
         self.cache_indicator.setText("Files loaded: %s" % (self._data_manager.get_cachesize()))
 
     def active_channel_changed(self):
