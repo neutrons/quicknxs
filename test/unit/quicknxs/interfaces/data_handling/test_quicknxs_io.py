@@ -143,10 +143,11 @@ class TestDataWriter(object):
         write_reflectivity_data(output_path, output_data, col_names)
 
         # test loading saved file
-        db_list, data_list, additional_peaks_list = read_reduced_file(output_path)
+        db_list, data_list, additional_peaks_list, has_scaling_error = read_reduced_file(output_path)
         assert len(db_list) == 2
         assert len(data_list) == 2
         assert len(additional_peaks_list) == 2
+        assert has_scaling_error is True
 
 
 if __name__ == "__main__":
