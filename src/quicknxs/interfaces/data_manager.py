@@ -873,7 +873,7 @@ class DataManager(object):
         if progress and n_total > 0:
             progress.set_value(1, message="Loaded %s" % os.path.basename(file_path), out_of=n_total)
         self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, t_0)
-        if not has_scaling_error:
+        if progress and not has_scaling_error:
             progress.set_value(
                 1,
                 "NOTE: Initial error bars may be inaccurate - please run stitching to update scaling factor errors.",
