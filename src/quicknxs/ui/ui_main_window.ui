@@ -1127,7 +1127,7 @@
            <attribute name="label">
             <string>Peak Finder</string>
            </attribute>
-           <layout class="QGridLayout" name="gridLayout_17">
+           <layout class="QGridLayout" name="peak_finder_gridLayout">
             <property name="leftMargin">
              <number>2</number>
             </property>
@@ -1143,110 +1143,113 @@
             <property name="verticalSpacing">
              <number>0</number>
             </property>
-            <item row="17" column="0">
-             <widget class="QLabel" name="label_26">
-              <property name="text">
-               <string>Meta data background ROI</string>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="0" colspan="2">
-             <widget class="QCheckBox" name="fit_within_roi_checkbox">
-              <property name="toolTip">
-               <string>Once the reflected peak ROI is selected, you can try to fine tune this ROI by fitting for a peak within that region and updating the ROI according to the location found. Check this box if you want to find a peak within the ROI and redefine the ROI afterwards.</string>
-              </property>
-              <property name="text">
-               <string>Fit peak within ROI</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="11" column="1">
-             <widget class="QLabel" name="roi_used_label">
-              <property name="toolTip">
-               <string>Indicate whether the peak ROI was actually used when loading the data.</string>
-              </property>
-              <property name="text">
-               <string>Unknown</string>
-              </property>
-             </widget>
-            </item>
-            <item row="12" column="0">
-             <widget class="QLabel" name="label_25">
-              <property name="text">
-               <string>Meta data ROI peak</string>
-              </property>
-             </widget>
-            </item>
-            <item row="12" column="1">
-             <widget class="QLabel" name="roi_peak_label">
-              <property name="toolTip">
-               <string>ROI a in the meta-data</string>
-              </property>
-              <property name="text">
-               <string>0 - 0</string>
-              </property>
-             </widget>
-            </item>
-            <item row="16" column="1">
-             <widget class="QLabel" name="roi_bck_label">
-              <property name="toolTip">
-               <string>ROI a in the meta-data</string>
-              </property>
-              <property name="text">
-               <string>0 - 0</string>
-              </property>
-             </widget>
-            </item>
-            <item row="11" column="0">
-             <widget class="QLabel" name="label_7">
-              <property name="text">
-               <string>Was meta ROI used?</string>
-              </property>
-             </widget>
-            </item>
-            <item row="9" column="0">
-             <widget class="QCheckBox" name="use_side_bck_checkbox">
-              <property name="toolTip">
-               <string>As an alternative to using the 2nd ROI, you can use a region around the reflected peak to estimate the background. Check the following box if you want to use the region on each side of the peak to estimate your background.</string>
-              </property>
-              <property name="text">
-               <string>Use side background</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="0">
+            <item row="0" column="0">
              <widget class="QCheckBox" name="use_roi_checkbox">
-              <property name="toolTip">
-               <string>The ROI in the data file is used to determine the reflectivity peak position. If this ROI is invalid, the system will try to find an appropriate region to use.</string>
-              </property>
               <property name="text">
                <string>Use metadata ROI</string>
               </property>
+              <property name="toolTip">
+               <string>
+               Attempt to use the ROI in the data file to determine the reflected peak position. If this ROI is invalid, the system will try to find an appropriate region to use.
+               Note: selecting this option will disable the use of automatic peak and Y-limit finding.
+               </string>
+              </property>
               <property name="checked">
                <bool>false</bool>
               </property>
              </widget>
             </item>
-            <item row="9" column="1">
+            <item row="0" column="1">
+             <widget class="QCheckBox" name="use_bck_roi_checkbox">
+              <property name="text">
+               <string>Use alternate bkgd ROI</string>
+              </property>
+              <property name="toolTip">
+               <string>A second ROI is available in the data file and can be used to define the background. Check the following box if you want to use the 2nd ROI for your background, otherwise a default region will be used.</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0" colspan="2">
+             <widget class="QCheckBox" name="fit_within_roi_checkbox">
+              <property name="text">
+               <string>Fit peak within ROI</string>
+              </property>
+              <property name="toolTip">
+               <string>Once the reflected peak ROI is selected, you can try to fine tune this ROI by fitting for a peak within that region and updating the ROI according to the location found. Check this box if you want to find a peak within the ROI and redefine the ROI afterwards.</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QCheckBox" name="use_side_bck_checkbox">
+              <property name="text">
+               <string>Use side background</string>
+              </property>
+              <property name="toolTip">
+               <string>As an alternative to using the 2nd ROI, you can use a region around the reflected peak to estimate the background. Check the following box if you want to use the region on each side of the peak to estimate your background.</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
              <widget class="QSpinBox" name="side_bck_width">
               <property name="value">
                <number>5</number>
               </property>
              </widget>
             </item>
-            <item row="6" column="1">
-             <widget class="QCheckBox" name="use_bck_roi_checkbox">
+            <item row="3" column="0">
+             <widget class="QLabel" name="roi_used_label">
+              <property name="text">
+               <string>Was metadata ROI used?</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLabel" name="roi_used_value">
+              <property name="text">
+               <string>Unknown</string>
+              </property>
               <property name="toolTip">
-               <string>A second ROI is available in the data file and can be used to define the background. Check the following box if you want to use the 2nd ROI for your background, otherwise a default region will be used.</string>
+               <string>Indicate whether the peak ROI was actually used when loading the data.</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="roi_peak_label">
+              <property name="text">
+               <string>Metadata ROI peak</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLabel" name="roi_peak_value">
+              <property name="toolTip">
+               <string>Peak ROI in the metadata:</string>
               </property>
               <property name="text">
-               <string>Use alternate bkgd ROI?</string>
+               <string>0 - 0</string>
               </property>
-              <property name="checked">
-               <bool>false</bool>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="roi_bck_label">
+              <property name="text">
+               <string>Metadata bkgd ROI</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLabel" name="roi_bck_value">
+              <property name="toolTip">
+               <string>Bck ROI in the metadata</string>
+              </property>
+              <property name="text">
+               <string>0 - 0</string>
               </property>
              </widget>
             </item>
@@ -3064,7 +3067,7 @@
                         <string>Run No.</string>
                        </property>
                        <property name="toolTip">
-                        <string>File Number</string>
+                        <string>Run number to get file for</string>
                        </property>
                       </column>
                       <column>
@@ -5502,7 +5505,7 @@
     <string>Automatic Peak Finder (X-axis)</string>
    </property>
    <property name="toolTip">
-    <string>Find the reflected peak automatically when loading a new file</string>
+    <string>Find the reflected peak automatically when loading a new file (unavailable when "Use Metadata ROI" is selected)</string>
    </property>
   </action>
   <action name="actionAutoYROI">
@@ -5520,7 +5523,7 @@
     <string>Automatic Y Limits</string>
    </property>
    <property name="toolTip">
-    <string>Try to find the Y region of the beam automatically</string>
+    <string>Try to find the Y region of the beam automatically (unavailable when "Use Metadata ROI" is selected)</string>
    </property>
   </action>
   <action name="actionClear_Overwrite">

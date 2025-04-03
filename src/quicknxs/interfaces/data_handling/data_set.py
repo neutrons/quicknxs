@@ -106,7 +106,7 @@ class NexusData(object):
         @param configuration: reduction configurations
         """
         self.file_path = FilePath(file_path).path  # sort the paths if more than one
-        self.number = ""  # can be a singe number (e.g. '1234') or a composite (e.g '1234:1239+1245')
+        self.number: str = ""  # can be a singe number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.configuration = configuration
         self.cross_sections = {}
         self.main_cross_section = None

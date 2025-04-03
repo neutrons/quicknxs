@@ -5,7 +5,6 @@
 Manage file-related and UI events
 """
 
-# standard imports
 import glob
 import logging
 import math
@@ -16,17 +15,14 @@ from typing import Optional
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
-
-# 3rd-party imports
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from quicknxs.config import Settings
-
-# package imports
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
 from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
@@ -45,7 +41,7 @@ class MainHandler(object):
     def __init__(self, main_window):
         self.ui = main_window.ui
         self.main_window = main_window
-        self._data_manager = main_window.data_manager
+        self._data_manager: DataManager = main_window.data_manager
 
         # Update file list when changes are made
         self._path_watcher = QtCore.QFileSystemWatcher([self._data_manager.current_directory], self.main_window)
@@ -364,9 +360,9 @@ class MainHandler(object):
         # Update the calculated data
         self.update_calculated_data()
 
-        self.ui.roi_used_label.setText("%s" % d.use_roi_actual)
-        self.ui.roi_peak_label.setText("%s" % str(d.meta_data_roi_peak))
-        self.ui.roi_bck_label.setText("%s" % str(d.meta_data_roi_bck))
+        self.ui.roi_used_value.setText("%s" % d.use_roi_actual)
+        self.ui.roi_peak_value.setText("%s" % str(d.meta_data_roi_peak))
+        self.ui.roi_bck_value.setText("%s" % str(d.meta_data_roi_bck))
 
         # Update reduction tables
         self.update_tables()
@@ -1297,30 +1293,27 @@ class MainHandler(object):
             configuration = Configuration(self.main_window.settings)
         configuration.tof_bins = self.ui.eventTofBins.value()
         configuration.tof_bin_type = self.ui.eventBinMode.currentIndex()
-        configuration.use_roi = self.ui.use_roi_checkbox.isChecked()
-        configuration.update_peak_range = self.ui.fit_within_roi_checkbox.isChecked()
-        configuration.use_roi_bck = self.ui.use_bck_roi_checkbox.isChecked()
+
+        # Peak finder options
+        Configuration.use_roi = self.ui.use_roi_checkbox.isChecked()
+        Configuration.update_peak_range = self.ui.fit_within_roi_checkbox.isChecked()
+        Configuration.use_roi_bck = self.ui.use_bck_roi_checkbox.isChecked()
+        Configuration.force_peak_roi = not self.ui.actionAutoXROI.isChecked()
+        Configuration.force_low_res_roi = not self.ui.actionAutoYROI.isChecked()
+        Configuration.force_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
+        Configuration.use_tight_bck = self.ui.use_side_bck_checkbox.isChecked()
+        Configuration.bck_offset = self.ui.side_bck_width.value()
 
         # Default ranges, using the current values
-
         configuration.peak_position = self.ui.refXPos.value()
         configuration.peak_width = self.ui.refXWidth.value()
         configuration.low_res_position = self.ui.refYPos.value()
         configuration.low_res_width = self.ui.refYWidth.value()
         configuration.bck_position = self.ui.bgCenter.value()
         configuration.bck_width = self.ui.bgWidth.value()
-
-        configuration.force_peak_roi = not self.ui.actionAutoXROI.isChecked()
-        configuration.force_low_res_roi = not self.ui.actionAutoYROI.isChecked()
-        configuration.force_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
         configuration.match_direct_beam = self.ui.actionAutoNorm.isChecked()
-
         configuration.do_final_rebin_run = self.ui.final_rebin_checkbox_run.isChecked()
         configuration.final_rebin_step_run = self.ui.q_rebin_spinbox_run.value()
-
-        # Use background on each side of the peak
-        configuration.use_tight_bck = self.ui.use_side_bck_checkbox.isChecked()
-        configuration.bck_offset = self.ui.side_bck_width.value()
 
         # Other reduction options
         configuration.subtract_background = self.ui.bgActive.isChecked()
@@ -1408,9 +1401,6 @@ class MainHandler(object):
         self.ui.eventTofBins.setValue(configuration.tof_bins)
         self.ui.eventBinMode.setCurrentIndex(configuration.tof_bin_type)
         self.ui.use_roi_checkbox.setChecked(configuration.use_roi)
-        # if configuration.use_roi:
-        #     self.ui.actionAutoXROI.setEnabled(False)
-        #     self.ui.actionAutoYROI.setEnabled(False)
         self.ui.fit_within_roi_checkbox.setChecked(configuration.update_peak_range)
         self.ui.use_bck_roi_checkbox.setChecked(configuration.use_roi_bck)
 

@@ -128,9 +128,10 @@ class MainWindow(QtWidgets.QMainWindow):
         """Handle the ROI checkbox state change"""
         # Enable/disable the automatic x and y peak finding
         use_metadata_roi = state == QtCore.Qt.Checked
-        self.ui.actionAutoXROI.setChecked(not use_metadata_roi)
+        if use_metadata_roi:
+            self.ui.actionAutoXROI.setChecked(False)
+            self.ui.actionAutoYROI.setChecked(False)
         self.ui.actionAutoXROI.setEnabled(not use_metadata_roi)
-        self.ui.actionAutoYROI.setChecked(not use_metadata_roi)
         self.ui.actionAutoYROI.setEnabled(not use_metadata_roi)
 
     def hide_sidebar(self):
