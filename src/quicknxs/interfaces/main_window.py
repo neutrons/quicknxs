@@ -27,9 +27,7 @@ from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    """
-    Main application window
-    """
+    """Main application window"""
 
     # UI events
     file_loaded_signal = QtCore.pyqtSignal()
@@ -125,6 +123,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.selectedChannel0.setText("None")
 
         self.file_handler.populate_from_configuration()
+
+    def handle_roi_checkbox(self, state):
+        """Handle the ROI checkbox state change"""
+        # Enable/disable the automatic x and y peak finding
+        use_metadata_roi = state == QtCore.Qt.Checked
+        self.ui.actionAutoXROI.setChecked(not use_metadata_roi)
+        self.ui.actionAutoXROI.setEnabled(not use_metadata_roi)
+        self.ui.actionAutoYROI.setChecked(not use_metadata_roi)
+        self.ui.actionAutoYROI.setEnabled(not use_metadata_roi)
 
     def hide_sidebar(self):
         self.file_handler.hide_sidebar()
@@ -448,6 +455,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def autoRef(self):
         self.file_handler.automated_file_selection()
 
+    ### Data tab management
+
     def addDataTable(self):
         """Add data tab for additional peaks/ROI:s"""
         next_tab_idx = self.data_tab_count + 1
@@ -506,6 +515,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.data_manager.data_sets:
             self.file_loaded()
             self.file_handler.active_data_changed()
+
+    ### End of data tab management
 
     def reduceDatasets(self):
         """Open a dialog to select reduction options for the current list of reduction items."""

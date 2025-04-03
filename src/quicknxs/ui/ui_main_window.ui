@@ -1153,7 +1153,7 @@
             <item row="8" column="0" colspan="2">
              <widget class="QCheckBox" name="fit_within_roi_checkbox">
               <property name="toolTip">
-               <string>Once the reflected peak ROI is selected, you can try to fine tune this ROI by fitting for a peak within that region and updating the ROI according to the location found. Check the following box if you want to find a peak within the ROI and redefine the ROI afterwards.</string>
+               <string>Once the reflected peak ROI is selected, you can try to fine tune this ROI by fitting for a peak within that region and updating the ROI according to the location found. Check this box if you want to find a peak within the ROI and redefine the ROI afterwards.</string>
               </property>
               <property name="text">
                <string>Fit peak within ROI</string>
@@ -1223,7 +1223,7 @@
                <string>The ROI in the data file is used to determine the reflectivity peak position. If this ROI is invalid, the system will try to find an appropriate region to use.</string>
               </property>
               <property name="text">
-               <string>Use meta-data ROI</string>
+               <string>Use metadata ROI</string>
               </property>
               <property name="checked">
                <bool>false</bool>
@@ -5290,8 +5290,8 @@
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionAutomaticXPeak"/>
-    <addaction name="actionAutoYLimits"/>
+    <addaction name="actionAutoXROI"/>
+    <addaction name="actionAutoYROI"/>
     <addaction name="actionAutoNorm"/>
     <addaction name="separator"/>
     <addaction name="actionNormalizeScaling"/>
@@ -5358,8 +5358,8 @@
    <addaction name="actionReduce"/>
    <addaction name="separator"/>
    <addaction name="separator"/>
-   <addaction name="actionAutomaticXPeak"/>
-   <addaction name="actionAutoYLimits"/>
+   <addaction name="actionAutoXROI"/>
+   <addaction name="actionAutoYROI"/>
    <addaction name="actionAutoNorm"/>
    <addaction name="separator"/>
    <addaction name="actionNormalizeScaling"/>
@@ -5487,12 +5487,30 @@
     <string>Ctrl+R</string>
    </property>
   </action>
-  <action name="actionAutoYLimits">
+  <action name="actionAutoXROI">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/fitXPos.png</normaloff>../icons/fitXPos.png</iconset>
+   </property>
+   <property name="text">
+    <string>Automatic Peak Finder (X-axis)</string>
+   </property>
+   <property name="toolTip">
+    <string>Find the reflected peak automatically when loading a new file</string>
+   </property>
+  </action>
+  <action name="actionAutoYROI">
+   <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
    </property>
    <property name="icon">
     <iconset>
@@ -5503,24 +5521,6 @@
    </property>
    <property name="toolTip">
     <string>Try to find the Y region of the beam automatically</string>
-   </property>
-  </action>
-  <action name="actionAutomaticXPeak">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset>
-     <normaloff>../icons/fitXPos.png</normaloff>../icons/fitXPos.png</iconset>
-   </property>
-   <property name="text">
-    <string>Automatic Peak Finder</string>
-   </property>
-   <property name="toolTip">
-    <string>Find the reflected peak automatically when loading a new file</string>
    </property>
   </action>
   <action name="actionClear_Overwrite">
@@ -5932,6 +5932,12 @@
      <y>416</y>
     </hint>
    </hints>
+  </connection>
+  <connection>
+   <sender>use_roi_checkbox</sender>
+    <signal>stateChanged(int)</signal>
+    <receiver>MainWindow</receiver>
+    <slot>handle_roi_checkbox()</slot>
   </connection>
   <connection>
    <sender>actionNormalizeScaling</sender>
@@ -7359,57 +7365,58 @@
   </connection>
  </connections>
  <slots>
-  <slot>file_open_dialog()</slot>
-  <slot>plotActiveTab()</slot>
-  <slot>file_open_from_list()</slot>
-  <slot>toggleColorbars()</slot>
-  <slot>setNorm()</slot>
-  <slot>addRefList()</slot>
-  <slot>clearRefList()</slot>
-  <slot>plot_refl()</slot>
-  <slot>replotProjections()</slot>
-  <slot>nextFile()</slot>
-  <slot>prevFile()</slot>
   <slot>addDataTable()</slot>
-  <slot>reduceDatasets()</slot>
-  <slot>normalizeTotalReflection()</slot>
-  <slot>reductionTableChanged(QTableWidgetItem*)</slot>
-  <slot>change_active_channel()</slot>
-  <slot>removeRefList()</slot>
-  <slot>changeRegionValues()</slot>
-  <slot>refineXpos()</slot>
-  <slot>openByNumber()</slot>
-  <slot>loadExtraction()</slot>
+  <slot>addRefList()</slot>
+  <slot>apply_offspec_crop()</slot>
   <slot>automaticExtraction()</slot>
-  <slot>clearNormList()</slot>
-  <slot>change_offspec_colorscale()</slot>
-  <slot>change_gisans_colorscale()</slot>
-  <slot>open_advanced_background()</slot>
-  <slot>refresh_offspec()</slot>
-  <slot>file_open_sum_dialog()</slot>
-  <slot>reload_file()</slot>
-  <slot>cutPoints()</slot>
   <slot>autoRef()</slot>
-  <slot>stripOverlap()</slot>
+  <slot>change_active_channel()</slot>
+  <slot>change_gisans_colorscale()</slot>
+  <slot>change_offspec_colorscale()</slot>
+  <slot>changeRegionValues()</slot>
+  <slot>clearNormList()</slot>
+  <slot>clearRefList()</slot>
+  <slot>cutPoints()</slot>
+  <slot>direct_beam_cell_activated(int,int)</slot>
+  <slot>file_open_dialog()</slot>
+  <slot>file_open_from_list()</slot>
+  <slot>file_open_sum_dialog()</slot>
+  <slot>handle_roi_checkbox()</slot>
+  <slot>hide_data_table()</slot>
+  <slot>hide_run_data()</slot>
+  <slot>hide_sidebar()</slot>
+  <slot>loadExtraction()</slot>
+  <slot>match_direct_beam_clicked()</slot>
+  <slot>nextFile()</slot>
+  <slot>normalizeTotalReflection()</slot>
+  <slot>open_advanced_background()</slot>
+  <slot>open_logfile_viewer()</slot>
   <slot>open_polarization_window()</slot>
   <slot>open_rawdata_dialog()</slot>
+  <slot>openByNumber()</slot>
+  <slot>plot_refl()</slot>
+  <slot>plotActiveTab()</slot>
+  <slot>prevFile()</slot>
   <slot>raiseError()</slot>
-  <slot>set_debug()</slot>
-  <slot>refresh_file_list()</slot>
-  <slot>open_logfile_viewer()</slot>
-  <slot>match_direct_beam_clicked()</slot>
+  <slot>reduceDatasets()</slot>
   <slot>reduction_cell_activated(int,int)</slot>
-  <slot>direct_beam_cell_activated(int,int)</slot>
-  <slot>remove_normalization()</slot>
-  <slot>show_results()</slot>
-  <slot>apply_offspec_crop()</slot>
-  <slot>toggle_smoothing()</slot>
-  <slot>update_offspec_qz_bin_width()</slot>
-  <slot>hide_sidebar()</slot>
-  <slot>hide_run_data()</slot>
-  <slot>hide_data_table()</slot>
   <slot>reduction_table_right_click()</slot>
+  <slot>reductionTableChanged(QTableWidgetItem*)</slot>
+  <slot>refineXpos()</slot>
+  <slot>refresh_file_list()</slot>
+  <slot>refresh_offspec()</slot>
+  <slot>reload_file()</slot>
+  <slot>remove_normalization()</slot>
+  <slot>removeRefList()</slot>
+  <slot>replotProjections()</slot>
+  <slot>set_debug()</slot>
+  <slot>setNorm()</slot>
+  <slot>show_results()</slot>
+  <slot>stripOverlap()</slot>
+  <slot>toggle_smoothing()</slot>
+  <slot>toggleColorbars()</slot>
   <slot>toggleFinalRebinGlobal()</slot>
   <slot>toggleFinalRebinRun()</slot>
+  <slot>update_offspec_qz_bin_width()</slot>
  </slots>
 </ui>

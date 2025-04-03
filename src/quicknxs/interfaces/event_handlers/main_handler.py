@@ -1310,8 +1310,8 @@ class MainHandler(object):
         configuration.bck_position = self.ui.bgCenter.value()
         configuration.bck_width = self.ui.bgWidth.value()
 
-        configuration.force_peak_roi = not self.ui.actionAutomaticXPeak.isChecked()
-        configuration.force_low_res_roi = not self.ui.actionAutoYLimits.isChecked()
+        configuration.force_peak_roi = not self.ui.actionAutoXROI.isChecked()
+        configuration.force_low_res_roi = not self.ui.actionAutoYROI.isChecked()
         configuration.force_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
         configuration.match_direct_beam = self.ui.actionAutoNorm.isChecked()
 
@@ -1401,21 +1401,21 @@ class MainHandler(object):
         return configuration
 
     def populate_from_configuration(self, configuration=None):
-        """
-        Set reduction options in UI, usually after loading
-        a reduced data set.
-        """
+        """Set reduction options in UI, usually after loading a reduced data set."""
         if configuration is None:
             configuration = Configuration(self.main_window.settings)
 
         self.ui.eventTofBins.setValue(configuration.tof_bins)
         self.ui.eventBinMode.setCurrentIndex(configuration.tof_bin_type)
         self.ui.use_roi_checkbox.setChecked(configuration.use_roi)
+        # if configuration.use_roi:
+        #     self.ui.actionAutoXROI.setEnabled(False)
+        #     self.ui.actionAutoYROI.setEnabled(False)
         self.ui.fit_within_roi_checkbox.setChecked(configuration.update_peak_range)
         self.ui.use_bck_roi_checkbox.setChecked(configuration.use_roi_bck)
 
-        self.ui.actionAutomaticXPeak.setChecked(not configuration.force_peak_roi)
-        self.ui.actionAutoYLimits.setChecked(not configuration.force_low_res_roi)
+        self.ui.actionAutoXROI.setChecked(False)
+        self.ui.actionAutoYROI.setChecked(False)
 
         # Update reduction parameters
         self.ui.refXPos.setValue(configuration.peak_position)
