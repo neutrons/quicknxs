@@ -1165,7 +1165,7 @@
                <string>Use alternate bkgd ROI</string>
               </property>
               <property name="toolTip">
-               <string>A second ROI is available in the data file and can be used to define the background. Check the following box if you want to use the 2nd ROI for your background, otherwise a default region will be used.</string>
+               <string>A second ROI is available in the data file and can be used to define the background. Check this box if you want to use the 2nd ROI for your background, otherwise a default region will be used.</string>
               </property>
               <property name="checked">
                <bool>false</bool>
