@@ -574,7 +574,7 @@ class MainHandler(object):
                 self._data_manager.set_active_data_from_direct_beam_list(idx)
                 self.update_direct_beam_table(idx, self._data_manager.active_channel)
             # Update UI data table(s) with the loaded data
-            for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
+            for ipeak, _ in self._data_manager.peak_reduction_lists.items():
                 self._data_manager.set_active_reduction_list_index(ipeak)
                 self.main_window.add_data_tab_by_index(ipeak)
                 table_widget = self.get_reduction_table_by_index(ipeak)

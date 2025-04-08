@@ -44,7 +44,7 @@ class Configuration(object):
     nbr_events_min = 100
     # Peak finder options
     use_roi = True
-    update_peak_range = False  # Update the specular peak range after finding the peak within the ROI
+    update_peak_range = False
     force_peak_roi = False
     force_low_res_roi = False
     use_roi_bck = False

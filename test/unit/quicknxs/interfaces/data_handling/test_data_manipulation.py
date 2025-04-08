@@ -1,5 +1,3 @@
-# package imports
-# 3rd-party imports
 import copy
 
 import mantid.simpleapi as api
@@ -117,6 +115,7 @@ def stitching_reduction_list():
 class TestDataManipulation(object):
     @pytest.mark.datarepo
     def test_smart_stitch_reflectivity(self, data_server, mocker_file_open, stitching_config):
+        assert data_server.directory == stitching_config
         manager = DataManager(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
