@@ -42,6 +42,9 @@ class ConfigurationHandler:
                 value = qwidget.checkState()
                 bool_value = value == Qt.CheckState.Checked
                 setattr(Configuration, config_name, bool_value)
+            elif isinstance(qwidget, QAction):
+                value = qwidget.isChecked()
+                setattr(Configuration, config_name, value)
             else:
                 value = qwidget.value()
                 setattr(Configuration, config_name, value)
