@@ -1400,12 +1400,16 @@ class MainHandler(object):
 
         self.ui.eventTofBins.setValue(configuration.tof_bins)
         self.ui.eventBinMode.setCurrentIndex(configuration.tof_bin_type)
-        self.ui.use_roi_checkbox.setChecked(configuration.use_roi)
-        self.ui.fit_within_roi_checkbox.setChecked(configuration.update_peak_range)
-        self.ui.use_bck_roi_checkbox.setChecked(configuration.use_roi_bck)
 
-        self.ui.actionAutoXROI.setChecked(False)
-        self.ui.actionAutoYROI.setChecked(False)
+        # Peak finder settings
+        self.ui.use_roi_checkbox.setChecked(configuration.use_roi)
+        self.ui.use_bck_roi_checkbox.setChecked(configuration.use_roi_bck)
+        self.ui.fit_within_roi_checkbox.setChecked(configuration.update_peak_range)
+        self.ui.actionAutoXROI.setChecked(False if configuration.use_roi else not configuration.force_peak_roi)
+        self.ui.actionAutoYROI.setChecked(False if configuration.use_roi else not configuration.force_low_res_roi)
+        # Use background on each side of the peak
+        self.ui.use_side_bck_checkbox.setChecked(configuration.use_tight_bck)
+        self.ui.side_bck_width.setValue(configuration.bck_offset)
 
         # Update reduction parameters
         self.ui.refXPos.setValue(configuration.peak_position)
@@ -1416,10 +1420,6 @@ class MainHandler(object):
 
         self.ui.bgCenter.setValue(configuration.bck_position)
         self.ui.bgWidth.setValue(configuration.bck_width)
-
-        # Use background on each side of the peak
-        self.ui.use_side_bck_checkbox.setChecked(configuration.use_tight_bck)
-        self.ui.side_bck_width.setValue(configuration.bck_offset)
 
         # Subtract background
         self.ui.bgActive.setChecked(configuration.subtract_background)

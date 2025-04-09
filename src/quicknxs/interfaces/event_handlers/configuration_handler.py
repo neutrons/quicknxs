@@ -108,7 +108,7 @@ class ConfigurationHandler:
             elif isinstance(qwidget, QCheckBox):
                 signal_name = "stateChanged"
             elif isinstance(qwidget, QAction):
-                signal_name = "triggered"
+                signal_name = "toggled"
             else:
                 raise ValueError(f"{type(qwidget)} not supported by ConfigurationHandler")
             signal = getattr(qwidget, signal_name)
