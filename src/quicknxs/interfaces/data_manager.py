@@ -490,7 +490,7 @@ class DataManager(object):
             progress(100)
         return is_from_cache
 
-    def update_configuration(self, configuration, active_only=False, nexus_data=None):
+    def update_configuration(self, configuration, active_only: bool = False, nexus_data: NexusData = None):
         """
         Update configuration
         """
