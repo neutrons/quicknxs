@@ -793,14 +793,13 @@ class CrossSectionData(object):
             self.meta_data_roi_peak = data_info.roi_peak
             self.meta_data_roi_bck = data_info.roi_background
 
-            if not self.configuration.force_peak_roi:
-                self.configuration.peak_roi = data_info.peak_range
+            self.configuration.peak_roi = data_info.peak_range
+            # if not self.configuration.force_peak_roi:
+            #     self.configuration.peak_roi = data_info.peak_range
+            self.configuration.low_res_roi = data_info.low_res_range
+            # if not self.configuration.force_low_res_roi:
+            #     self.configuration.low_res_roi = data_info.low_res_range
 
-            if not self.configuration.force_low_res_roi:
-                self.configuration.low_res_roi = data_info.low_res_range
-
-            if self.configuration.force_bck_roi:
-                self.configuration.bck_roi = data_info.background
         self.configuration.bck_roi = data_info.background
         self.process_configuration()
 

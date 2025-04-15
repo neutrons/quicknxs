@@ -14,62 +14,22 @@ class Configuration(object):
 
     Attributes
     ----------
-    angle_map: False
-    apply_smoothing: False
-    bck_position: 30
-    bck_width: 20
-    count_threshold: 0.01
-    cut_first_n_points: 1
-    cut_last_n_points: 1
-    direct_angle_offset_overwrite: 0
-    direct_pixel_overwrite: 0
-    do_final_rebin_run: False
-    final_rebin_step_run: -0.01
-    gisans_qy_npts: 50
-    gisans_qz_npts: 50
-    gisans_slice: False
-    gisans_slice_qz_max: 0.035
-    gisans_slice_qz_min: 0.015
-    gisans_use_pf: False
-    gisans_wl_max: 8.0
-    gisans_wl_min: 2.0
-    gisans_wl_npts: 2
-    instrument: <quicknxs.interfaces.data_handling.instrument.Instrument object at 0x71e57da1d960>
-    log_1d: True
-    log_2d: True
-    low_res_position: 130
-    low_res_width: 20
-    match_direct_beam: False
-    normalization: None
-    normalize_x_tof: False
-    off_spec_err_weight: False
-    off_spec_nxbins: 450
-    off_spec_nybins: 200
-    off_spec_qz_list: []
-    off_spec_sigmas: 3
-    off_spec_sigmax: 0.0005
-    off_spec_sigmay: 0.0005
-    off_spec_slice: False
-    off_spec_slice_qz_max: 0.07
-    off_spec_slice_qz_min: 0.05
-    off_spec_x_axis: 3
-    off_spec_x_max: 0.015
-    off_spec_x_min: -0.015
-    off_spec_y_max: 0.15
-    off_spec_y_min: 0.0
-    peak_position: 130
-    peak_width: 20
-    scaling_error: 0.0
-    scaling_factor: 1.0
-    set_direct_angle_offset: False
-    set_direct_pixel: False
-    subtract_background: True
-    tof_bin_type: 0
-    tof_bins: 400
-    tof_overwrite: None
-    tof_range: None
-    use_dangle: False
-    x_wl_map: False
+    use_roi: bool
+        ???
+    update_peak_range: bool
+        ???
+    force_peak_roi: bool
+        ???
+    force_low_res_roi: bool
+        ???
+    use_roi_bck: bool
+        ???
+    use_tight_bck: bool
+        ???
+    bck_offset: int
+        ???
+    force_bck_roi: bool
+        ???
     """
 
     # Choice of axes for off-specular binning

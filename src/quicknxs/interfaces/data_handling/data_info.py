@@ -242,14 +242,13 @@ class DataInfo(object):
         # If we were asked to use the ROI but no peak is in it, use the peak we found
         # If we were asked to use the ROI and there's a peak in it, use the ROI
         if self.use_roi and not self.update_peak_range and not self.roi_peak == [0, 0]:
-            logging.info("Using ROI peak range: [%s %s]" % (self.roi_peak[0], self.roi_peak[1]))
+            logging.info(f"Using ROI peak range: {self.roi_peak}")
             self.use_roi_actual = True
             peak = copy.copy(self.roi_peak)
             if not self.roi_low_res == [0, 0]:
                 low_res = copy.copy(self.roi_low_res)
-
-        elif self.use_roi and self.update_peak_range and not self.roi_peak == [0, 0]:
-            logging.info("Using fit peak range: [%s %s]" % (peak[0], peak[1]))
+        else:
+            logging.info(f"Using fit peak range: {peak}")
 
         # Background
         if self.use_tight_bck:
@@ -257,6 +256,9 @@ class DataInfo(object):
 
         else:
             bck_range = self.background
+
+        logging.info(f"Using ROI low-res range: {low_res}")
+        logging.info(f"Using ROI background range: {bck_range}")
 
         # Store the information we found
         self.peak_position = (peak[1] + peak[0]) / 2.0

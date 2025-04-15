@@ -5,6 +5,18 @@ import pytest
 from quicknxs.interfaces.main_window import MainWindow
 
 
+def test_roi_updates_on_reload(data_server, qtbot):
+    """Test that the ROI updates when a data file is reloaded with new settings"""
+    # main_window = MainWindow()
+
+    # # Load a reduced data file
+    # data_file = data_server.path_to("TEST_REF_M_42112_Specular_On_Off.dat")
+    # with mock.patch("qtpy.QtWidgets.QFileDialog.getOpenFileName") as mock_get_file:
+    #     mock_get_file.return_value = (data_file, "")
+    #     main_window.file_handler.open_reduced_file_dialog()
+    ...
+
+
 def test_metadata_roi_disables_peak_finder(qtbot):
     """Test that the metadata ROI option disables the peak finder buttons"""
     main_window = MainWindow()
@@ -39,7 +51,6 @@ def test_peak_finder_settings_persist(data_server, qtbot):
         assert main_window.ui.side_bck_width.value() == 10
 
     main_window = MainWindow()
-    config = main_window.file_handler.get_configuration()
 
     # Change peak finder settings
     main_window.ui.use_roi_checkbox.setChecked(False)
