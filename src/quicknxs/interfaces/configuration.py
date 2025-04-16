@@ -45,8 +45,8 @@ class Configuration(object):
     # Peak finder options
     use_roi = True
     update_peak_range = False
-    force_peak_roi = False
-    force_low_res_roi = False
+    use_peak_finder = False
+    use_low_res_finder = False
     use_roi_bck = False
     use_tight_bck = False
     bck_offset = 5
@@ -200,8 +200,8 @@ class Configuration(object):
         cls.nbr_events_min = 100
         cls.use_roi = True
         cls.update_peak_range = False
-        cls.force_peak_roi = False
-        cls.force_low_res_roi = False
+        cls.use_peak_finder = False
+        cls.use_low_res_finder = False
         cls.use_roi_bck = False
         cls.use_tight_bck = False
         cls.bck_offset = 5

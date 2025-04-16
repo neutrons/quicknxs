@@ -45,12 +45,12 @@ class DataInfo(object):
         self.roi_background = [0, 0]
 
         # Options to override the ROI
-        self.force_peak_roi = configuration.force_peak_roi
         self.forced_peak_roi = configuration.peak_roi
-        self.force_low_res_roi = configuration.force_low_res_roi
         self.forced_low_res_roi = configuration.low_res_roi
         self.force_bck_roi = configuration.force_bck_roi
         self.forced_bck_roi = configuration.bck_roi
+        self.use_peak_finder = configuration.use_peak_finder
+        self.use_low_res_finder = configuration.use_low_res_finder
 
         # Peak found before fitting for the central position
         self.found_peak = [0, 0]
@@ -242,13 +242,13 @@ class DataInfo(object):
         # If we were asked to use the ROI but no peak is in it, use the peak we found
         # If we were asked to use the ROI and there's a peak in it, use the ROI
         if self.use_roi and not self.update_peak_range and not self.roi_peak == [0, 0]:
-            logging.info(f"Using ROI peak range: {self.roi_peak}")
+            logging.warning(f"Using ROI peak range: {self.roi_peak}")
             self.use_roi_actual = True
             peak = copy.copy(self.roi_peak)
             if not self.roi_low_res == [0, 0]:
                 low_res = copy.copy(self.roi_low_res)
         else:
-            logging.info(f"Using fit peak range: {peak}")
+            logging.warning(f"Using fit peak range: {peak}")
 
         # Background
         if self.use_tight_bck:
@@ -257,8 +257,8 @@ class DataInfo(object):
         else:
             bck_range = self.background
 
-        logging.info(f"Using ROI low-res range: {low_res}")
-        logging.info(f"Using ROI background range: {bck_range}")
+        logging.warning(f"Using ROI low-res range: {low_res}")
+        logging.warning(f"Using ROI background range: {bck_range}")
 
         # Store the information we found
         self.peak_position = (peak[1] + peak[0]) / 2.0
