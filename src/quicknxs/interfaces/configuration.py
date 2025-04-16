@@ -5,24 +5,22 @@ Application configuration, including reduction options
 
 from quicknxs.interfaces.data_handling.instrument import Instrument
 
-# TODO extract to file based parameter setting
+# TODO: extract to file based parameter setting
+# TODO: add docstring for Configuration attributes
 
 
 class Configuration(object):
-    """
-    Hold reduction options
-    """
+    """Hold reduction options"""
 
     # Choice of axes for off-specular binning
     QX_VS_QZ = 0
     KZI_VS_KZF = 1
     DELTA_KZ_VS_QZ = 3
 
-    # Global variables
-
-    wl_bandwidth = 3.2
-    use_constant_q = False
+    ### Global variables
     sample_size = 10
+    use_constant_q = False
+    wl_bandwidth = 3.2
     # Final Q rebin global options
     do_final_rebin_global = True
     final_rebin_step_global = -0.01
@@ -43,9 +41,18 @@ class Configuration(object):
     # Direct beam uses the same low res roi as the data run
     lock_direct_beam_y = False
     # Number of events below which we throw away a workspace
-    # Note: not exposed in the UI
     nbr_events_min = 100
+    # Peak finder options
+    use_roi = True
+    update_peak_range = False
+    use_peak_finder = False
+    use_low_res_finder = False
+    use_roi_bck = False
+    use_tight_bck = False
+    bck_offset = 5
+    force_bck_roi = True
 
+    # TODO: settings may not be needed anymore
     def __init__(self, settings=None):
         self.instrument = Instrument()
         # Number of TOF bins
@@ -63,32 +70,19 @@ class Configuration(object):
 
         # Reduction parameters
         # Use region of interest specified in meta data
-        self.use_roi = True
         self.set_direct_pixel = False
         self.direct_pixel_overwrite = 0
         self.set_direct_angle_offset = False
         self.direct_angle_offset_overwrite = 0
         self.use_dangle = False
 
-        # Update the specular peak range after finding the peak
-        # within the ROI
-        self.update_peak_range = False
-
-        # Use background specified in the meta data, if available
-        self.use_roi_bck = False
-        self.use_tight_bck = False
-        self.bck_offset = 5
-
         # Options to override the range
-        self.force_peak_roi = False
         self.peak_position = 130
         self.peak_width = 20
 
-        self.force_low_res_roi = False
         self.low_res_position = 130
         self.low_res_width = 20
 
-        self.force_bck_roi = True
         self.bck_position = 30
         self.bck_width = 20
 
@@ -183,12 +177,13 @@ class Configuration(object):
 
     @classmethod
     def setup_default_values(cls):
+        """Only used for testing purposes"""
         cls.QX_VS_QZ = 0
         cls.KZI_VS_KZF = 1
         cls.DELTA_KZ_VS_QZ = 3
-        cls.wl_bandwidth = 3.2
-        cls.use_constant_q = False
         cls.sample_size = 10
+        cls.use_constant_q = False
+        cls.wl_bandwidth = 3.2
         cls.do_final_rebin_global = True
         cls.final_rebin_step_global = -0.01
         cls.normalize_to_unity = True
@@ -203,6 +198,14 @@ class Configuration(object):
         cls.deadtime_tof_step = 100
         cls.lock_direct_beam_y = False
         cls.nbr_events_min = 100
+        cls.use_roi = True
+        cls.update_peak_range = False
+        cls.use_peak_finder = False
+        cls.use_low_res_finder = False
+        cls.use_roi_bck = False
+        cls.use_tight_bck = False
+        cls.bck_offset = 5
+        cls.force_bck_roi = True
 
 
 def get_direct_beam_low_res_roi(data_conf, direct_beam_conf):

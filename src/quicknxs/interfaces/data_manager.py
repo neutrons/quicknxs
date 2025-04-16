@@ -10,11 +10,12 @@ import logging
 import os
 import sys
 import time
+from typing import Dict, List, Optional
 
 import numpy as np
 
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknxs_io
-from quicknxs.interfaces.data_handling.data_set import NexusData
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
 
 
@@ -22,25 +23,25 @@ class DataManager(object):
     MAX_CACHE = 50  # maximum number of loaded datasets (either single-file or merged-files types)
     MAIN_REDUCTION_LIST_INDEX = 1
 
-    def __init__(self, current_directory):
+    def __init__(self, current_directory: str):
         self.current_directory = current_directory
         # current file name is used for file list table to set the current item
-        self.current_file_name = None
+        self.current_file_name: str = None
         # Current data set
-        self._nexus_data = None
-        self.active_channel = None  # type: Optional[CrossSectionData]
+        self._nexus_data: NexusData = None
+        self.active_channel: Optional[CrossSectionData] = None
         # Cache of loaded data: list of NexusData instances
-        self._cache = list()  # type: List[NexusData]
+        self._cache: List[NexusData] = list()
 
         # Current data tab (ROI)
-        self.active_reduction_list_index = 1
+        self.active_reduction_list_index: int = 1
         # Main data structure holding the reduction list for each ROI/peak
         #    key: reduction list index, corresponds to the reduction table tab in the UI
         #    value: list of NexusData
-        self.peak_reduction_lists = {self.active_reduction_list_index: []}  # type: dict[int, list[NexusData]]
-        self.direct_beam_list = []  # type: List[NexusData]
+        self.peak_reduction_lists: Dict[int, List[NexusData]] = {self.active_reduction_list_index: []}
+        self.direct_beam_list: List[NexusData] = []
         # List of cross-sections common to all reduced data sets
-        self.reduction_states = []  # type: List[str]  # List of cross-section states
+        self.reduction_states: List[str] = []
         self.final_merged_reflectivity = {}
 
         # Cached outputs
@@ -478,7 +479,7 @@ class DataManager(object):
                     try:
                         self.calculate_reflectivity()
                     except Exception as e:
-                        logging.error("Reflectivity calculation failed for %s exception %s", file_name, e)
+                        logging.error(f"Reflectivity calculation failed for {file_name}: {e}")
 
                 # if cached reduced data exceeds maximum cache size, remove the oldest reduced data
                 while len(self._cache) >= self.MAX_CACHE:
@@ -489,7 +490,7 @@ class DataManager(object):
             progress(100)
         return is_from_cache
 
-    def update_configuration(self, configuration, active_only=False, nexus_data=None):
+    def update_configuration(self, configuration, active_only: bool = False, nexus_data: NexusData = None):
         """
         Update configuration
         """

@@ -3,11 +3,12 @@
 User Guide
 ==========
 
-TODO
+
 
 .. toctree::
    :maxdepth: 2
 
-   dead_time_correction
    custom_config
    binning
+   dead_time_correction
+   peak_finder

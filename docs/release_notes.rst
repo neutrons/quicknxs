@@ -11,7 +11,11 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 .. **Of interest to the User**:
 
+.. - PR #143: Modify behavior of peak finder settings
+
 .. **Of interest to the Developer:**
+
+.. - PR #143: Settings from peak finder are now global attributes of Configuration class
 
 v4.3.0
 ------

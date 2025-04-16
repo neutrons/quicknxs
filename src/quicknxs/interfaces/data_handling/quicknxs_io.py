@@ -9,6 +9,7 @@ import math
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Dict, List, Union
 
 import mantid
@@ -338,7 +339,7 @@ def read_reduced_file(file_path, configuration=None):
                 raise RuntimeError("The selected file does not conform to the QuickNXS format")
             _file_start = False
             if "Input file indices" in line:
-                data_file_indicies = line
+                data_file_indices = line
             if "[Direct Beam Runs]" in line:
                 _in_section = 1
             elif "[Data Runs]" in line:
@@ -376,7 +377,9 @@ def read_reduced_file(file_path, configuration=None):
                     conf.bck_width = float(_get_tok("bg_width", cols, toks))
                     conf.direct_pixel_overwrite = float(_get_tok("dpix", cols, toks))
                     run_number = int(_get_tok("number", cols, toks))
-                    run_file = os.path.join(file_path, _get_tok("File", cols, toks))
+                    run_file = _get_tok("File", cols, toks)
+                    if not Path(run_file).is_absolute():
+                        run_file = str(Path(file_path).parent / run_file)
                     # This application only deals with event data, to be able to load
                     # reduced files created with histo nexus files, we have to
                     # use the corresponding event file instead.
@@ -428,13 +431,15 @@ def read_reduced_file(file_path, configuration=None):
                     if DB_ID > 0 and len(direct_beam_runs) > DB_ID - 1:
                         conf.normalization = direct_beam_runs[DB_ID - 1][0]
                     run_number = int(_get_tok("number", cols, toks))
-                    run_file = os.path.join(file_path, _get_tok("File", cols, toks))
+                    run_file = _get_tok("File", cols, toks)
+                    if not Path(run_file).is_absolute():
+                        run_file = str(Path(file_path).parent / run_file)
                     if run_file.endswith("histo.nxs"):
                         run_file = run_file.replace("histo.", "event.")
                         # conf.cut_first_n_points = 0
                         # conf.cut_last_n_points = 0
                     run_file = _find_h5_data(run_file)
-                    run_file = determine_which_files_to_sum(run_file, data_file_indicies)
+                    run_file = determine_which_files_to_sum(run_file, data_file_indices)
                     if _in_section == 2:
                         data_runs.append([run_number, run_file, conf])
                     else:
@@ -443,6 +448,8 @@ def read_reduced_file(file_path, configuration=None):
                     logging.error(
                         f"Could not parse reduced data file:\n {sys.exc_info()[1]} at line {sys.exc_info()[2].tb_lineno}"
                     )
+                    logging.error("data_file_indices: %s", data_file_indices)
+                    logging.error("run_file: %s", run_file)
                     logging.error(line)
 
             # Options
@@ -463,17 +470,17 @@ def read_reduced_file(file_path, configuration=None):
     return direct_beam_runs, data_runs, additional_peaks, has_scaling_error
 
 
-def determine_which_files_to_sum(run_file, data_file_indicies):
+def determine_which_files_to_sum(run_file, data_file_indices):
     # Determeine which files are summed when reading a saved reduction file
     # The saved file has the correct run numbers (numors) in the line
     # that begins # Input file indices, however the file does not contain the corect paths
     # the way the file is read ignores any files that were summed in the processing from which the
     # saved file was created.
 
-    if "+" in data_file_indicies:
-        runs = str.split(str.split(data_file_indicies)[-1], "+")
+    if "+" in data_file_indices:
+        runs = str.split(str.split(data_file_indices)[-1], "+")
     else:
-        runs = str.split(str.split(data_file_indicies)[-1], ",")
+        runs = str.split(str.split(data_file_indices)[-1], ",")
 
     for run in runs:
         numors = str.split(run, ":")

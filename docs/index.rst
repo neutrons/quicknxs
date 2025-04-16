@@ -6,6 +6,9 @@
 Welcome to QuickNXS's documentation!
 ====================================
 
+QuickNXS is a Python package for Magnetic Reflectometry, providing tools for
+data reduction, visualization, and analysis
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
