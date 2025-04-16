@@ -10,27 +10,7 @@ from quicknxs.interfaces.data_handling.instrument import Instrument
 
 
 class Configuration(object):
-    """Hold reduction options
-
-    Attributes
-    ----------
-    use_roi: bool
-        ???
-    update_peak_range: bool
-        ???
-    force_peak_roi: bool
-        ???
-    force_low_res_roi: bool
-        ???
-    use_roi_bck: bool
-        ???
-    use_tight_bck: bool
-        ???
-    bck_offset: int
-        ???
-    force_bck_roi: bool
-        ???
-    """
+    """Hold reduction options"""
 
     # Choice of axes for off-specular binning
     QX_VS_QZ = 0
