@@ -11,6 +11,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 .. **Of interest to the User**:
 
+.. - PR #147: Add ability to load v1 (pre-EPICS) Nexus data files
 .. - PR #143: Modify behavior of peak finder settings
 .. - PR #149: Fix error when loading unpolarized runs with both `Analyzer` and `Polarizer` = 0
 .. - PR #150: Updated font sizes of plot labels/ticks for off-specular plots
