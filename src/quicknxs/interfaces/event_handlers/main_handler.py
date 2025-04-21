@@ -11,7 +11,7 @@ import math
 import os
 import time
 import traceback
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
@@ -221,8 +221,8 @@ class MainHandler(object):
         assert len(file_paths) > 1, "We require more than one data file in order to compare their metadata"
         # Log names validation and collect tolerances
         tolerances = dict()  # store the tolerance value for each log name
-        all_tolerances = Settings()["OpenSum"]["Tolerances"]  # type: List[float]
-        all_log_names = Settings()["OpenSum"]["LogNames"]  # type: List[str]
+        all_tolerances: List[float] = Settings()["OpenSum"]["Tolerances"]
+        all_log_names: List[str] = Settings()["OpenSum"]["LogNames"]
         assert all_log_names  # failsafe if structure of settings.json changes
         if log_names is None:
             log_names = all_log_names
@@ -628,8 +628,7 @@ class MainHandler(object):
         )
         return file_path
 
-    def _file_open_sum_dialog(self, filter_=None):
-        # type: (Optional[str]) -> Optional[unicode]
+    def _file_open_sum_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
         r"""
         @brief Pop a File dialog Window for the user to select two or more files
         @details Congruency among the selected files is checked by comparing the values of selected metadata. User

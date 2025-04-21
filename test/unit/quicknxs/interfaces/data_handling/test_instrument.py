@@ -11,6 +11,17 @@ from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
 
 
 @pytest.mark.datarepo
+def test_load_data_pre_epics(data_server):
+    """Test load data with pre-epics cross-sections"""
+    conf = Configuration()
+    file_path = data_server.path_to("REF_M_24945_event.nxs")
+    ws_list = conf.instrument.load_data(file_path, conf)
+    assert len(ws_list) == 1
+    for ws in ws_list:
+        assert ws.getNumberEvents() == 7880217
+
+
+@pytest.mark.datarepo
 def test_load_data_deadtime(data_server):
     """Test load data with and without dead-time correction"""
     conf = Configuration()
