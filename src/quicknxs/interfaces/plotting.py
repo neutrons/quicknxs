@@ -547,19 +547,21 @@ class PlotManager(object):
             if self.main_window.ui.kizmkfzVSqz.isChecked():
                 plot.canvas.ax.set_xlim([k_diff_min, k_diff_max])
                 plot.canvas.ax.set_ylim([qz_min, qz_max])
-                plot.set_xlabel("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]")
-                plot.set_ylabel("Q$_z$ [Å$^{-1}$]")
+                plot.set_xlabel("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
+                plot.set_ylabel("Q$_z$ [Å$^{-1}$]", fontsize=14)
             elif self.main_window.ui.qxVSqz.isChecked():
                 plot.canvas.ax.set_xlim([qx_min, qx_max])
                 plot.canvas.ax.set_ylim([qz_min, qz_max])
-                plot.set_xlabel("Q$_x$ [Å$^{-1}$]")
-                plot.set_ylabel("Q$_z$ [Å$^{-1}$]")
+                plot.set_xlabel("Q$_x$ [Å$^{-1}$]", fontsize=14)
+                plot.set_ylabel("Q$_z$ [Å$^{-1}$]", fontsize=14)
             else:
                 plot.canvas.ax.set_xlim([ki_z_min, ki_z_max])
                 plot.canvas.ax.set_ylim([kf_z_min, kf_z_max])
-                plot.set_xlabel("k$_{i,z}$ [Å$^{-1}$]")
-                plot.set_ylabel("k$_{f,z}$ [Å$^{-1}$]")
-            plot.set_title(channel)
+                plot.set_xlabel("k$_{i,z}$ [Å$^{-1}$]", fontsize=14)
+                plot.set_ylabel("k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
+            plot.set_xticks_fontsize(8)
+            plot.set_yticks_fontsize(10)
+            plot.set_title(channel, fontsize=14)
             if plot.cplot is not None:
                 plot.cplot.set_clim([i_min, i_max])
                 if self.main_window.ui.show_colorbars.isChecked() and plots[i].cbar is None:
