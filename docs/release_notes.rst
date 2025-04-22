@@ -12,6 +12,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. **Of interest to the User**:
 
 .. - PR #143: Modify behavior of peak finder settings
+.. - PR #149: Fix error when loading unpolarized runs with both `Analyzer` and `Polarizer` = 0
 
 .. **Of interest to the Developer:**
 
