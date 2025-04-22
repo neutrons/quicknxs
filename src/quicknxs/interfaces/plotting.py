@@ -560,7 +560,7 @@ class PlotManager(object):
                 plot.set_xlabel("k$_{i,z}$ [Å$^{-1}$]", fontsize=14)
                 plot.set_ylabel("k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
             plot.set_xticks_fontsize(8)
-            plot.set_yticks_fontsize(10)
+            plot.set_yticks_fontsize(8)
             plot.set_title(channel, fontsize=14)
             if plot.cplot is not None:
                 plot.cplot.set_clim([i_min, i_max])
