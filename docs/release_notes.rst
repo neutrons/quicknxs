@@ -12,7 +12,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. **Of interest to the User**:
 
 .. - PR #143: Modify behavior of peak finder settings
-.. - PR #150: Updated font sizes of plot labels/ticks for off-specular plots 
+.. - PR #150: Updated font sizes of plot labels/ticks for off-specular plots
 
 .. **Of interest to the Developer:**
 

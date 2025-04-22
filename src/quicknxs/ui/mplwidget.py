@@ -488,7 +488,7 @@ class MPLWidget(QtWidgets.QWidget):
 
     def set_ylabel(self, label, fontsize=None):
         return self.canvas.ax.set_ylabel(label, fontsize=fontsize)
-    
+
     def set_xticks_fontsize(self, fontsize):
         for label in self.canvas.ax.get_xticklabels():
             label.set_fontsize(fontsize)
@@ -496,7 +496,6 @@ class MPLWidget(QtWidgets.QWidget):
     def set_yticks_fontsize(self, fontsize):
         for label in self.canvas.ax.get_yticklabels():
             label.set_fontsize(fontsize)
-
 
     def set_xscale(self, scale):
         try:
