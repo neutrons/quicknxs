@@ -27,6 +27,8 @@ from quicknxs.interfaces.data_handling.filepath import FilePath
 h = 6.626e-34  # m^2 kg s^-1
 m = 1.675e-27  # kg
 
+UNPOLARIZED_XS_LABEL = "Off_Off"
+
 
 def get_cross_section_label(ws, entry_name):
     """
@@ -259,10 +261,10 @@ class Instrument(object):
             if _use_slow_flipper_log:
                 _path_xs_list = self.dummy_filter_cross_sections(event_ws, name_prefix=temp_workspace_root_name)
             elif unpolarized:
+                _ws = api.CloneWorkspace(event_ws, OutputWorkspace=f"{temp_workspace_root_name}_entry")
                 # add the expected sample log
-                event_ws.getRun()["cross_section_id"] = "Off_Off"
-                api.RenameWorkspace(str(event_ws), "%s_entry" % temp_workspace_root_name)
-                _path_xs_list = [event_ws]
+                _ws.getRun()["cross_section_id"] = UNPOLARIZED_XS_LABEL
+                _path_xs_list = [_ws]
             else:
                 _path_xs_list = api.MRFilterCrossSections(
                     InputWorkspace=event_ws,
@@ -282,6 +284,11 @@ class Instrument(object):
                 # Split error events by cross-section for compatibility with normal events
                 if _use_slow_flipper_log:
                     _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_workspace_root_name + "_err")
+                elif unpolarized:
+                    _ws = api.CloneWorkspace(err_ws, OutputWorkspace=f"{temp_workspace_root_name}_err")
+                    # add the expected sample log
+                    _ws.getRun()["cross_section_id"] = UNPOLARIZED_XS_LABEL
+                    _err_list = [_ws]
                 else:
                     _err_list = api.MRFilterCrossSections(
                         InputWorkspace=err_ws,
