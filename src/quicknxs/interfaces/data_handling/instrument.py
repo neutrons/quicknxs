@@ -249,6 +249,8 @@ class Instrument(object):
             missing_keys = (polarizer > 0 and self.pol_state not in event_ws.getRun()) or (
                 analyzer > 0 and self.ana_state not in event_ws.getRun()
             )
+            # If running in unpolarized mode, no filtering is needed
+            unpolarized = polarizer == 0 and analyzer == 0
 
             if missing_keys:
                 _use_slow_flipper_log = True
@@ -256,6 +258,11 @@ class Instrument(object):
 
             if _use_slow_flipper_log:
                 _path_xs_list = self.dummy_filter_cross_sections(event_ws, name_prefix=temp_workspace_root_name)
+            elif unpolarized:
+                # add the expected sample log
+                event_ws.getRun()["cross_section_id"] = "Off_Off"
+                api.RenameWorkspace(str(event_ws), "%s_entry" % temp_workspace_root_name)
+                _path_xs_list = [event_ws]
             else:
                 _path_xs_list = api.MRFilterCrossSections(
                     InputWorkspace=event_ws,

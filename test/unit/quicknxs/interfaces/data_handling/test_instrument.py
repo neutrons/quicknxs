@@ -84,3 +84,14 @@ def test_load_data_nbr_events_min(data_server):
     conf.apply_deadtime = True
     ws_list = conf.instrument.load_data(file_path, conf)
     assert len(ws_list) == 2
+
+
+@pytest.mark.datarepo
+def test_load_unpolarized_data(data_server):
+    """Test load unpolarized data with Polarizer = 0 and Analyzer = 0"""
+    conf = Configuration()
+    file_path = data_server.path_to("REF_M_41889")
+    ws_list = conf.instrument.load_data(file_path, conf)
+    assert len(ws_list) == 1
+    run = ws_list[0].getRun()
+    assert "cross_section_id" in run
