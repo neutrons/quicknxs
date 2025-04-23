@@ -477,7 +477,7 @@ def get_scaled_workspaces(reduction_list, xs):
     return ws_list
 
 
-def extract_meta_data(file_path=None, cross_section_data=None, configuration=None):
+def extract_meta_data(file_path=None, cross_section_data=None):
     """
     Get mid Q-value from meta data
     :param str file_path: name of the file to read

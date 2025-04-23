@@ -9,6 +9,7 @@ from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
+    extract_meta_data,
     generate_short_script,
     smart_stitch_reflectivity,
 )
@@ -270,6 +271,22 @@ class TestDataManipulation(object):
 
         assert "# Mantid version 6.0.0" in result
         assert "Generated script" in result
+
+    @pytest.mark.datarepo
+    @pytest.mark.parametrize(
+        "data_file, expected",
+        [
+            ("REF_M_24945_event.nxs", {"mid_q": 6.26641549137356e-08, "is_direct_beam": False}),
+            ("REF_M_42112.nxs.h5", {"mid_q": 0.00013398646965655087, "is_direct_beam": False}),
+        ],
+    )
+    def test_extract_meta_data(self, data_server, data_file, expected):
+        """Test the extract_meta_data function"""
+        manager = DataManager(data_server.directory)
+        fp = f"{data_server.directory}/quicknxs-data/{data_file}"
+        metadata = extract_meta_data(fp)
+        assert metadata.mid_q == expected["mid_q"]
+        assert metadata.is_direct_beam == expected["is_direct_beam"]
 
 
 if __name__ == "__main__":
