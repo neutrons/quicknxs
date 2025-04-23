@@ -262,7 +262,7 @@ class Instrument(object):
             ):
                 _use_slow_flipper_log = True
                 print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
-            
+
             # If running in unpolarized mode, no filtering is needed
             unpolarized = polarizer == 0 and analyzer == 0
 
