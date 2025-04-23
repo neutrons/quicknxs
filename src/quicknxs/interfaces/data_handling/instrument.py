@@ -305,8 +305,9 @@ class Instrument(object):
         # initialize xs_list with the cross sections of the first data file
         if len(xs_list) == 0:
             xs_list = path_xs_list
+            # Pre-epics data workspaces are already named based on the run number, no need to rename them
             if not is_pre_epics:
-                for ws in xs_list:  # replace the temporary names with the run number(s)
+                for ws in xs_list:
                     name_new = str(ws).replace(temp_ws_root_name, ws_root_name)
                     api.RenameWorkspace(str(ws), name_new)
         else:
