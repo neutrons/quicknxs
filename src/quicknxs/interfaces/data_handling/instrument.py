@@ -260,13 +260,13 @@ class Instrument(object):
             if (polarizer > 0 and self.pol_state not in event_ws.getRun()) or (
                 analyzer > 0 and self.ana_state not in event_ws.getRun()
             ):
-                _use_slow_flipper_log = True
+                use_slow_flipper_log = True
                 print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
 
             # If running in unpolarized mode, no filtering is needed
             unpolarized = polarizer == 0 and analyzer == 0
 
-            if _use_slow_flipper_log:
+            if use_slow_flipper_log:
                 _path_xs_list = self.dummy_filter_cross_sections(event_ws, name_prefix=temp_ws_root_name)
             elif unpolarized:
                 _ws = api.CloneWorkspace(event_ws, OutputWorkspace=f"{temp_ws_root_name}_entry")
@@ -291,7 +291,7 @@ class Instrument(object):
             # Load error events from the bank_error_events entry
             err_ws = api.LoadErrorEventsNexus(file_path)
             # Split error events by cross-section for compatibility with normal events
-            if _use_slow_flipper_log:
+            if use_slow_flipper_log:
                 _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_ws_root_name + "_err")
             elif unpolarized:
                 _ws = api.CloneWorkspace(err_ws, OutputWorkspace=f"{temp_ws_root_name}_err")
