@@ -83,32 +83,40 @@ def mantid_algorithm_exec(algorithm_class, **kwargs):
         return algorithm_instance.getProperty("OutputWorkspace").value
 
 
-def apply_dead_time_correction(ws, configuration, error_ws=None) -> EventWorkspace:
-    """Apply dead time correction, and ensure that it is done only once per workspace.
-
-    Compute dead time correction to be applied to the reflectivity curve.
+def get_dead_time_correction(ws, configuration, error_ws=None):
+    """Compute dead time correction to be applied to the reflectivity curve.
     The method will also try to load the error events from each of the
     data files to ensure that we properly estimate the dead time correction.
+
+    :param ws: workspace with raw data to compute correction for
+    :param configuration: reduction parameters
+    :param error_ws: workspace with error events"""
+    tof_min = ws.getTofMin()
+    tof_max = ws.getTofMax()
+
+    corr_ws = mantid_algorithm_exec(
+        DeadTimeCorrection.SingleReadoutDeadTimeCorrection,
+        InputWorkspace=ws,
+        InputErrorEventsWorkspace=error_ws,
+        Paralyzable=configuration.paralyzable_deadtime,
+        DeadTime=configuration.deadtime_value,
+        TOFStep=configuration.deadtime_tof_step,
+        TOFRange=[tof_min, tof_max],
+        OutputWorkspace="corr",
+    )
+    corr_ws = api.Rebin(corr_ws, [tof_min, 10, tof_max])
+    return corr_ws
+
+
+def apply_dead_time_correction(ws, configuration, error_ws=None) -> EventWorkspace:
+    """Apply dead time correction, and ensure that it is done only once per workspace.
 
     :param ws: workspace with raw data to compute correction for
     :param configuration: reduction parameters
     :param error_ws: workspace with error events
     """
     if "dead_time_applied" not in ws.getRun():
-        tof_min = ws.getTofMin()
-        tof_max = ws.getTofMax()
-
-        corr_ws = mantid_algorithm_exec(
-            DeadTimeCorrection.SingleReadoutDeadTimeCorrection,
-            InputWorkspace=ws,
-            InputErrorEventsWorkspace=error_ws,
-            Paralyzable=configuration.paralyzable_deadtime,
-            DeadTime=configuration.deadtime_value,
-            TOFStep=configuration.deadtime_tof_step,
-            TOFRange=[tof_min, tof_max],
-            OutputWorkspace="corr",
-        )
-        corr_ws = api.Rebin(corr_ws, [tof_min, 10, tof_max])
+        corr_ws = get_dead_time_correction(ws, configuration, error_ws=error_ws)
         ws = api.Multiply(ws, corr_ws, OutputWorkspace=str(ws))
         api.AddSampleLog(Workspace=ws, LogName="dead_time_applied", LogText="1", LogType="Number")
     return ws
@@ -214,7 +222,22 @@ class Instrument(object):
         return cross_sections
 
     def _get_xs_list(self, file_path: str, ws_root_name: str, configuration) -> List[EventWorkspace]:
-        """Load the cross-sections from a data file. Handles both pre- and post-epics data."""
+        """Load the cross-sections from a data file. Handles both pre- and post-epics data.
+
+        Parameters
+        ----------
+        file_path: str
+            Path to the data file
+        ws_root_name: str
+            Root name of the workspace (used to rename the cross-sections after loading)
+        configuration: Configuration
+            Reduction configuration parameters
+
+        Returns
+        -------
+        list[EventWorkspace]
+            List of cross-section workspaces
+        """
         temp_ws_root_name = "".join(random.sample(string.ascii_letters, 12))  # random string of 12 characters
         use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG
         xs_list = []
