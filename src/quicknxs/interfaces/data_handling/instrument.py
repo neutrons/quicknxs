@@ -85,12 +85,14 @@ def mantid_algorithm_exec(algorithm_class, **kwargs):
 
 def get_dead_time_correction(ws, configuration, error_ws=None):
     """Compute dead time correction to be applied to the reflectivity curve.
+
     The method will also try to load the error events from each of the
     data files to ensure that we properly estimate the dead time correction.
 
     :param ws: workspace with raw data to compute correction for
     :param configuration: reduction parameters
-    :param error_ws: workspace with error events"""
+    :param error_ws: workspace with error events
+    """
     tof_min = ws.getTofMin()
     tof_max = ws.getTofMax()
 
