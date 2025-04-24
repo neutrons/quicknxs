@@ -14,8 +14,14 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+          fetch-tags: true
+          ref: ${{ github.ref }}
+      - name: Miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           channels: mantid/label/main,conda-forge,defaults
           python-version: '3.10'
