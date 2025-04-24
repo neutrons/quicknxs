@@ -26,15 +26,6 @@ jobs:
           environment-file: environment.yml
           lfs: true
           submodules: recursive
-      - name: Build Wheel
-        run: |
-          python -m build --wheel --no-isolation
-          check-wheel-contents dist/quicknxs-*.whl
-      - name: Build Conda package
-        run: |
-          cd conda.recipe
-          VERSION=$(versioningit ../) conda mambabuild --output-folder . . -c mantid
-          conda verify noarch/quicknxs-*.tar.bz2
       - name: Generate cache key for submodule
         id: generate-cache-key
         run: |
