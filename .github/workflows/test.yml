@@ -16,8 +16,14 @@ jobs:
         shell: bash -l {0}
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+          fetch-tags: true
+          ref: ${{ github.ref }}
+      - name: Miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           channels: mantid/label/main,conda-forge,defaults
           python-version: '3.10'
@@ -53,3 +59,12 @@ jobs:
         with:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }} # required
+      - name: Build Wheel
+        run: |
+          python -m build --wheel --no-isolation
+          check-wheel-contents dist/quicknxs-*.whl
+      - name: Build Conda package
+        run: |
+          cd conda.recipe
+          VERSION=$(versioningit ../) conda mambabuild --output-folder . . -c mantid
+          conda verify noarch/quicknxs-*.tar.bz2
