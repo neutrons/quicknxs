@@ -32,16 +32,11 @@ requirements:
 
   build:
     - mr_reduction
-    - matplotlib
     - setuptools
-    - qtpy
     - versioningit
 
   run:
     - mr_reduction=2.2.0
-    - matplotlib
-    - qtpy
-    - qt>=5.12,<6
 
 test:
   imports:
