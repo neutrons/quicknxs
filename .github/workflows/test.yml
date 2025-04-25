@@ -67,7 +67,7 @@ jobs:
       - name: Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          channels: mantid/label/main,conda-forge,defaults
+          channels: neutrons/label/main,mantid/label/main,oncat,conda-forge
           python-version: '3.10'
           miniconda-version: latest
           mamba-version: "*"
@@ -81,5 +81,6 @@ jobs:
       - name: Build Conda package
         run: |
           cd conda.recipe
-          VERSION=$(versioningit ../) conda mambabuild --output-folder . . -c mantid
+          CHANNELS="--channel neutrons/label/main --channel mantid/label/main --channel oncat --channel conda-forge"
+          VERSION=$(versioningit ../) conda mambabuild $CHANNELS --output-folder . .
           conda verify noarch/quicknxs-*.tar.bz2
