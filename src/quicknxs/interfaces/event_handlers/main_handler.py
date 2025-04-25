@@ -866,7 +866,7 @@ class MainHandler(object):
         # remove additional data tabs
         self.main_window.reset_data_tabs()
 
-        if not self.main_window.data_manager.active_channel.is_direct_beam:
+        if self.main_window.refl.isVisible():
             self.main_window.initiate_reflectivity_plot.emit(False)
 
     def clear_direct_beams(self):
