@@ -598,8 +598,18 @@ class PlotManager(object):
             return False
 
         # format and plot tof data
-        self.main_window.ui.intensity.plot(self.main_window.data_manager.active_channel.tofdata)
-        self.main_window.ui.intensity.set_xlabel("ToF [ms]")
+
+        if self.main_window.ui.xLamda.isChecked():
+            self.main_window.ui.intensity.plot(
+                self.main_window.data_manager.active_channel.wavelength,
+                self.main_window.data_manager.active_channel.tofdata,
+            )
+            self.main_window.ui.intensity.set_xlabel("$\\lambda{}$ [Å]")
+        else:
+            self.main_window.ui.intensity.plot(self.main_window.data_manager.active_channel.tofdata)
+            self.main_window.ui.intensity.set_xlabel("ToF [ms]")
+
+        # y-label is counts in either case
         self.main_window.ui.intensity.set_ylabel("Counts")
 
         # draw and show

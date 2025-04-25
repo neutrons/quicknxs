@@ -285,6 +285,9 @@ class MainWindow(QtWidgets.QMainWindow):
             plot.clear_fig()
         self.plotActiveTab()
 
+        if self.data_manager.active_channel.is_direct_beam:
+            self.initiate_intensity_plot.emit(False)
+
     def changeRegionValues(self):
         """
         Called when the reflectivity extraction region has been changed.
