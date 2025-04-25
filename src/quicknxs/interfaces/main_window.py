@@ -41,6 +41,9 @@ class MainWindow(QtWidgets.QMainWindow):
     initiate_reflectivity_plot = QtCore.pyqtSignal(bool)
     """Signal to initiate the reflectivity plot."""
 
+    initiate_intensity_plot = QtCore.pyqtSignal(bool)
+    """Signal to initiate the intensity plot."""
+
     update_specular_viewer = QtCore.pyqtSignal()
     """Signal to update the specular viewer."""
 
@@ -94,6 +97,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.initiate_projection_plot.connect(self.plot_manager.plot_projections)
 
         self.initiate_reflectivity_plot.connect(self.plot_manager.plot_refl)
+        self.initiate_intensity_plot.connect(self.plot_manager.plot_intensity)
 
         self.ui.deadtime_entry.settingsButton.clicked.connect(self.open_deadtime_settings)
         self.ui.deadtime_entry.reload_files_signal.connect(self.reload_all_files)
@@ -363,7 +367,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def replotProjections(self):
         """Signal handling"""
         self.initiate_projection_plot.emit(True)
-        self.initiate_reflectivity_plot.emit(True)
+        if self.data_manager.active_channel.is_direct_beam:
+            self.initiate_intensity_plot.emit(True)
+        else:
+            self.initiate_reflectivity_plot.emit(True)
 
     def addRefList(self):
         """Signal handling"""
@@ -403,7 +410,11 @@ class MainWindow(QtWidgets.QMainWindow):
             except Exception:
                 self.file_handler.report_message("There was a problem updating the reflectivity", pop_up=False)
                 logging.error("There was a problem updating the reflectivity")
-            self.initiate_reflectivity_plot.emit(True)
+
+            if self.data_manager.active_channel.is_direct_beam:
+                self.initiate_intensity_plot.emit(True)
+            else:
+                self.initiate_reflectivity_plot.emit(True)
 
     def openByNumber(self):
         """Signal handling"""
