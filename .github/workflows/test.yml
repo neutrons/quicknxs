@@ -24,8 +24,8 @@ jobs:
           miniconda-version: latest
           mamba-version: "*"
           environment-file: environment.yml
-          lfs: true
-          submodules: recursive
+      - name: Dependencies synced
+        run: python scripts/check_dependencies_sync.py
       - name: Generate cache key for submodule
         id: generate-cache-key
         run: |
@@ -72,8 +72,6 @@ jobs:
           miniconda-version: latest
           mamba-version: "*"
           environment-file: environment.yml
-          lfs: true
-          submodules: recursive
       - name: Build Wheel
         run: |
           python -m build --wheel --no-isolation
