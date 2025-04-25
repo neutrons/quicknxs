@@ -572,7 +572,6 @@ class PlotManager(object):
             plot.draw()
         progress(100, message=final_msg, out_of=100)
 
-
     def _plot_message(self, widget, message):
         widget.canvas.ax.text(
             0.5,
@@ -585,7 +584,6 @@ class PlotManager(object):
         )
         widget.draw()
 
-
     def plot_intensity(self, preserve_lim=False):
         """
         Calculate and display the direct beam intensity from the current dataset.
@@ -595,9 +593,7 @@ class PlotManager(object):
         self.main_window.ui.refl_widget.hide()
         self.main_window.ui.intensity.clear()
 
-        if (
-            self.main_window.data_manager.active_channel is None
-        ):
+        if self.main_window.data_manager.active_channel is None:
             self._plot_message(self.main_window.ui.intensity, "No data")
             return False
 
@@ -609,7 +605,6 @@ class PlotManager(object):
         # draw and show
         self.main_window.ui.intensity.draw()
         self.main_window.ui.intensity_widget.show()
-
 
     def plot_refl(self, preserve_lim=False):
         """
@@ -628,7 +623,6 @@ class PlotManager(object):
         ):
             self._plot_message(self.main_window.ui.refl, "No data")
             return False
-
 
         data = self.main_window.data_manager.active_channel
         if data.total_counts == 0:
