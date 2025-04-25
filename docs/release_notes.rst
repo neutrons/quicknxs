@@ -16,7 +16,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. - PR #143: Modify behavior of peak finder settings
 
 .. **Of interest to the Developer:**
-.. - PR #155: Github actions - versiongit information from tags in package
+.. - PR #154: Github actions - versiongit information from tags in package
 .. - PR #152: Github actions - versiongit information from tags
 .. - PR #143: Settings from peak finder are now global attributes of Configuration class
 
