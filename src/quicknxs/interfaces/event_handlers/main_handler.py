@@ -5,28 +5,24 @@
 Manage file-related and UI events
 """
 
-# standard imports
 import glob
 import logging
 import math
 import os
 import time
 import traceback
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
-
-# 3rd-party imports
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from quicknxs.config import Settings
-
-# package imports
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
 from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
@@ -45,7 +41,7 @@ class MainHandler(object):
     def __init__(self, main_window):
         self.ui = main_window.ui
         self.main_window = main_window
-        self._data_manager = main_window.data_manager
+        self._data_manager: DataManager = main_window.data_manager
 
         # Update file list when changes are made
         self._path_watcher = QtCore.QFileSystemWatcher([self._data_manager.current_directory], self.main_window)
@@ -231,8 +227,8 @@ class MainHandler(object):
         assert len(file_paths) > 1, "We require more than one data file in order to compare their metadata"
         # Log names validation and collect tolerances
         tolerances = dict()  # store the tolerance value for each log name
-        all_tolerances = Settings()["OpenSum"]["Tolerances"]  # type: List[float]
-        all_log_names = Settings()["OpenSum"]["LogNames"]  # type: List[str]
+        all_tolerances: List[float] = Settings()["OpenSum"]["Tolerances"]
+        all_log_names: List[str] = Settings()["OpenSum"]["LogNames"]
         assert all_log_names  # failsafe if structure of settings.json changes
         if log_names is None:
             log_names = all_log_names
@@ -370,9 +366,9 @@ class MainHandler(object):
         # Update the calculated data
         self.update_calculated_data()
 
-        self.ui.roi_used_label.setText("%s" % d.use_roi_actual)
-        self.ui.roi_peak_label.setText("%s" % str(d.meta_data_roi_peak))
-        self.ui.roi_bck_label.setText("%s" % str(d.meta_data_roi_bck))
+        self.ui.roi_used_value.setText("%s" % d.use_roi_actual)
+        self.ui.roi_peak_value.setText("%s" % str(d.meta_data_roi_peak))
+        self.ui.roi_bck_value.setText("%s" % str(d.meta_data_roi_bck))
 
         # Update reduction tables
         self.update_tables()
@@ -584,7 +580,7 @@ class MainHandler(object):
                 self._data_manager.set_active_data_from_direct_beam_list(idx)
                 self.update_direct_beam_table(idx, self._data_manager.active_channel)
             # Update UI data table(s) with the loaded data
-            for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
+            for ipeak, _ in self._data_manager.peak_reduction_lists.items():
                 self._data_manager.set_active_reduction_list_index(ipeak)
                 self.main_window.add_data_tab_by_index(ipeak)
                 table_widget = self.get_reduction_table_by_index(ipeak)
@@ -638,8 +634,7 @@ class MainHandler(object):
         )
         return file_path
 
-    def _file_open_sum_dialog(self, filter_=None):
-        # type: (Optional[str]) -> Optional[unicode]
+    def _file_open_sum_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
         r"""
         @brief Pop a File dialog Window for the user to select two or more files
         @details Congruency among the selected files is checked by comparing the values of selected metadata. User
@@ -1303,30 +1298,27 @@ class MainHandler(object):
             configuration = Configuration(self.main_window.settings)
         configuration.tof_bins = self.ui.eventTofBins.value()
         configuration.tof_bin_type = self.ui.eventBinMode.currentIndex()
-        configuration.use_roi = self.ui.use_roi_checkbox.isChecked()
-        configuration.update_peak_range = self.ui.fit_within_roi_checkbox.isChecked()
-        configuration.use_roi_bck = self.ui.use_bck_roi_checkbox.isChecked()
+
+        # Peak finder options
+        Configuration.use_roi = self.ui.use_roi_checkbox.isChecked()
+        Configuration.update_peak_range = self.ui.fit_within_roi_checkbox.isChecked()
+        Configuration.use_roi_bck = self.ui.use_bck_roi_checkbox.isChecked()
+        Configuration.use_peak_finder = self.ui.actionAutoXROI.isChecked()
+        Configuration.use_low_res_finder = self.ui.actionAutoYROI.isChecked()
+        Configuration.force_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
+        Configuration.use_tight_bck = self.ui.use_side_bck_checkbox.isChecked()
+        Configuration.bck_offset = self.ui.side_bck_width.value()
 
         # Default ranges, using the current values
-
         configuration.peak_position = self.ui.refXPos.value()
         configuration.peak_width = self.ui.refXWidth.value()
         configuration.low_res_position = self.ui.refYPos.value()
         configuration.low_res_width = self.ui.refYWidth.value()
         configuration.bck_position = self.ui.bgCenter.value()
         configuration.bck_width = self.ui.bgWidth.value()
-
-        configuration.force_peak_roi = not self.ui.actionAutomaticXPeak.isChecked()
-        configuration.force_low_res_roi = not self.ui.actionAutoYLimits.isChecked()
-        configuration.force_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
         configuration.match_direct_beam = self.ui.actionAutoNorm.isChecked()
-
         configuration.do_final_rebin_run = self.ui.final_rebin_checkbox_run.isChecked()
         configuration.final_rebin_step_run = self.ui.q_rebin_spinbox_run.value()
-
-        # Use background on each side of the peak
-        configuration.use_tight_bck = self.ui.use_side_bck_checkbox.isChecked()
-        configuration.bck_offset = self.ui.side_bck_width.value()
 
         # Other reduction options
         configuration.subtract_background = self.ui.bgActive.isChecked()
@@ -1407,21 +1399,22 @@ class MainHandler(object):
         return configuration
 
     def populate_from_configuration(self, configuration=None):
-        """
-        Set reduction options in UI, usually after loading
-        a reduced data set.
-        """
+        """Set reduction options in UI, usually after loading a reduced data set."""
         if configuration is None:
             configuration = Configuration(self.main_window.settings)
 
         self.ui.eventTofBins.setValue(configuration.tof_bins)
         self.ui.eventBinMode.setCurrentIndex(configuration.tof_bin_type)
-        self.ui.use_roi_checkbox.setChecked(configuration.use_roi)
-        self.ui.fit_within_roi_checkbox.setChecked(configuration.update_peak_range)
-        self.ui.use_bck_roi_checkbox.setChecked(configuration.use_roi_bck)
 
-        self.ui.actionAutomaticXPeak.setChecked(not configuration.force_peak_roi)
-        self.ui.actionAutoYLimits.setChecked(not configuration.force_low_res_roi)
+        # Peak finder settings
+        self.ui.use_roi_checkbox.setChecked(configuration.use_roi)
+        self.ui.use_bck_roi_checkbox.setChecked(configuration.use_roi_bck)
+        self.ui.fit_within_roi_checkbox.setChecked(configuration.update_peak_range)
+        self.ui.actionAutoXROI.setChecked(False if configuration.use_roi else configuration.use_peak_finder)
+        self.ui.actionAutoYROI.setChecked(False if configuration.use_roi else configuration.use_low_res_finder)
+        # Use background on each side of the peak
+        self.ui.use_side_bck_checkbox.setChecked(configuration.use_tight_bck)
+        self.ui.side_bck_width.setValue(configuration.bck_offset)
 
         # Update reduction parameters
         self.ui.refXPos.setValue(configuration.peak_position)
@@ -1432,10 +1425,6 @@ class MainHandler(object):
 
         self.ui.bgCenter.setValue(configuration.bck_position)
         self.ui.bgWidth.setValue(configuration.bck_width)
-
-        # Use background on each side of the peak
-        self.ui.use_side_bck_checkbox.setChecked(configuration.use_tight_bck)
-        self.ui.side_bck_width.setValue(configuration.bck_offset)
 
         # Subtract background
         self.ui.bgActive.setChecked(configuration.subtract_background)

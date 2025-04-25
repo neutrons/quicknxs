@@ -480,14 +480,22 @@ class MPLWidget(QtWidgets.QWidget):
             self.update(data, **opts)
         return self.cplot
 
-    def set_title(self, new_title):
-        return self.canvas.ax.title.set_text(new_title)
+    def set_title(self, new_title, fontsize=None):
+        return self.canvas.ax.set_title(new_title, fontsize=fontsize)
 
-    def set_xlabel(self, label):
-        return self.canvas.ax.set_xlabel(label)
+    def set_xlabel(self, label, fontsize=None):
+        return self.canvas.ax.set_xlabel(label, fontsize=fontsize)
 
-    def set_ylabel(self, label):
-        return self.canvas.ax.set_ylabel(label)
+    def set_ylabel(self, label, fontsize=None):
+        return self.canvas.ax.set_ylabel(label, fontsize=fontsize)
+
+    def set_xticks_fontsize(self, fontsize):
+        for label in self.canvas.ax.get_xticklabels():
+            label.set_fontsize(fontsize)
+
+    def set_yticks_fontsize(self, fontsize):
+        for label in self.canvas.ax.get_yticklabels():
+            label.set_fontsize(fontsize)
 
     def set_xscale(self, scale):
         try:

@@ -5,15 +5,27 @@ Release Notes
 =============
 Notes for major and minor releases. Notes for Patch releases are deferred.
 
-.. v4.3.0
+.. v4.4.0
 .. ------
 .. (date of release, format YYYY-MM-DD)
 
 .. **Of interest to the User**:
 
-.. - PR #142: Modify config file handling, write scaling error to reduced data files
+.. - PR #150: Updated font sizes of plot labels/ticks for off-specular plots
+.. - PR #149: Fix error when loading unpolarized runs with both `Analyzer` and `Polarizer` = 0
+.. - PR #147: Add ability to load v1 (pre-EPICS) Nexus data files
+.. - PR #143: Modify behavior of peak finder settings
 
 .. **Of interest to the Developer:**
+
+.. - PR #143: Settings from peak finder are now global attributes of Configuration class
+
+v4.3.0
+------
+2025-04-15
+
+Updates in this release include saving the scale factor error to the reduced data file and
+reducing the number of configuration parameters that are saved to the users's local environment.
 
 v4.2.0
 ------

@@ -89,8 +89,8 @@ class SmoothDialog(QtWidgets.QDialog):
             k_diff_max = max(k_diff_max, (ki_z - kf_z)[I > 0].max())
             plot.canvas.ax.set_xlim([k_diff_min, k_diff_max])
             plot.canvas.ax.set_ylim([qz_min, qz_max])
-            plot.set_xlabel("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]")
-            plot.set_ylabel("Q$_z$ [Å$^{-1}$]")
+            plot.set_xlabel("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
+            plot.set_ylabel("Q$_z$ [Å$^{-1}$]", fontsize=14)
 
             # draw the blue box 5% inside the plot area
             x1 = k_diff_min + (k_diff_max - k_diff_min) * grid_percentage
@@ -120,8 +120,8 @@ class SmoothDialog(QtWidgets.QDialog):
 
             plot.canvas.ax.set_xlim([qx_min, qx_max])
             plot.canvas.ax.set_ylim([qz_min, qz_max])
-            plot.set_xlabel("Q$_x$ [Å$^{-1}$]")
-            plot.set_ylabel("Q$_z$ [Å$^{-1}$]")
+            plot.set_xlabel("Q$_x$ [Å$^{-1}$]", fontsize=14)
+            plot.set_ylabel("Q$_z$ [Å$^{-1}$]", fontsize=14)
 
             # draw the blue box 5% inside the plot area
             x1 = qx_min + (qx_max - qx_min) * grid_percentage
@@ -150,8 +150,8 @@ class SmoothDialog(QtWidgets.QDialog):
 
             plot.canvas.ax.set_xlim([ki_z_min, ki_z_max])
             plot.canvas.ax.set_ylim([kf_z_min, kf_z_max])
-            plot.set_xlabel("k$_{i,z}$ [Å$^{-1}$]")
-            plot.set_ylabel("k$_{f,z}$ [Å$^{-1}$]")
+            plot.set_xlabel("k$_{i,z}$ [Å$^{-1}$]", fontsize=14)
+            plot.set_ylabel("k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
 
             # draw the blue box 5% inside the plot area
             x1 = ki_z_min + (ki_z_max - ki_z_min) * grid_percentage
@@ -171,6 +171,8 @@ class SmoothDialog(QtWidgets.QDialog):
             self.ui.sigmasCoupled.setChecked(True)
             self.ui.sigmaX.setValue(sigma_x)
             self.ui.sigmaY.setValue(sigma_y)
+        plot.set_xticks_fontsize(8)
+        plot.set_yticks_fontsize(8)
         if plot.cplot is not None:
             plot.cplot.set_clim([1e-6, 1.0])
         self.rect_region = Line2D([x1, x1, x2, x2, x1], [y1, y2, y2, y1, y1])

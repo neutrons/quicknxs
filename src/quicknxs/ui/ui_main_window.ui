@@ -1127,7 +1127,7 @@
            <attribute name="label">
             <string>Peak Finder</string>
            </attribute>
-           <layout class="QGridLayout" name="gridLayout_17">
+           <layout class="QGridLayout" name="peak_finder_gridLayout">
             <property name="leftMargin">
              <number>2</number>
             </property>
@@ -1143,110 +1143,113 @@
             <property name="verticalSpacing">
              <number>0</number>
             </property>
-            <item row="17" column="0">
-             <widget class="QLabel" name="label_26">
+            <item row="0" column="0">
+             <widget class="QCheckBox" name="use_roi_checkbox">
               <property name="text">
-               <string>Meta data background ROI</string>
+               <string>Use metadata ROI</string>
+              </property>
+              <property name="toolTip">
+               <string>
+               Attempt to use the ROI in the data file to determine the reflected peak position. If this ROI is invalid, the system will try to find an appropriate region to use.
+               Note: selecting this option will disable the use of automatic peak and Y-limit finding.
+               </string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
               </property>
              </widget>
             </item>
-            <item row="8" column="0" colspan="2">
-             <widget class="QCheckBox" name="fit_within_roi_checkbox">
-              <property name="toolTip">
-               <string>Once the reflected peak ROI is selected, you can try to fine tune this ROI by fitting for a peak within that region and updating the ROI according to the location found. Check the following box if you want to find a peak within the ROI and redefine the ROI afterwards.</string>
+            <item row="0" column="1">
+             <widget class="QCheckBox" name="use_bck_roi_checkbox">
+              <property name="text">
+               <string>Use alternate bkgd ROI</string>
               </property>
+              <property name="toolTip">
+               <string>A second ROI is available in the data file and can be used to define the background. Check this box if you want to use the 2nd ROI for your background, otherwise a default region will be used.</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0" colspan="2">
+             <widget class="QCheckBox" name="fit_within_roi_checkbox">
               <property name="text">
                <string>Fit peak within ROI</string>
               </property>
+              <property name="toolTip">
+               <string>Once the reflected peak ROI is selected, you can try to fine tune this ROI by fitting for a peak within that region and updating the ROI according to the location found. Check this box if you want to find a peak within the ROI and redefine the ROI afterwards.</string>
+              </property>
               <property name="checked">
                <bool>false</bool>
               </property>
              </widget>
             </item>
-            <item row="11" column="1">
-             <widget class="QLabel" name="roi_used_label">
-              <property name="toolTip">
-               <string>Indicate whether the peak ROI was actually used when loading the data.</string>
-              </property>
-              <property name="text">
-               <string>Unknown</string>
-              </property>
-             </widget>
-            </item>
-            <item row="12" column="0">
-             <widget class="QLabel" name="label_25">
-              <property name="text">
-               <string>Meta data ROI peak</string>
-              </property>
-             </widget>
-            </item>
-            <item row="12" column="1">
-             <widget class="QLabel" name="roi_peak_label">
-              <property name="toolTip">
-               <string>ROI a in the meta-data</string>
-              </property>
-              <property name="text">
-               <string>0 - 0</string>
-              </property>
-             </widget>
-            </item>
-            <item row="16" column="1">
-             <widget class="QLabel" name="roi_bck_label">
-              <property name="toolTip">
-               <string>ROI a in the meta-data</string>
-              </property>
-              <property name="text">
-               <string>0 - 0</string>
-              </property>
-             </widget>
-            </item>
-            <item row="11" column="0">
-             <widget class="QLabel" name="label_7">
-              <property name="text">
-               <string>Was meta ROI used?</string>
-              </property>
-             </widget>
-            </item>
-            <item row="9" column="0">
+            <item row="2" column="0">
              <widget class="QCheckBox" name="use_side_bck_checkbox">
-              <property name="toolTip">
-               <string>As an alternative to using the 2nd ROI, you can use a region around the reflected peak to estimate the background. Check the following box if you want to use the region on each side of the peak to estimate your background.</string>
-              </property>
               <property name="text">
                <string>Use side background</string>
               </property>
-             </widget>
-            </item>
-            <item row="6" column="0">
-             <widget class="QCheckBox" name="use_roi_checkbox">
               <property name="toolTip">
-               <string>The ROI in the data file is used to determine the reflectivity peak position. If this ROI is invalid, the system will try to find an appropriate region to use.</string>
-              </property>
-              <property name="text">
-               <string>Use meta-data ROI</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
+               <string>As an alternative to using the 2nd ROI, you can use a region around the reflected peak to estimate the background. Check the following box if you want to use the region on each side of the peak to estimate your background.</string>
               </property>
              </widget>
             </item>
-            <item row="9" column="1">
+            <item row="2" column="1">
              <widget class="QSpinBox" name="side_bck_width">
               <property name="value">
                <number>5</number>
               </property>
              </widget>
             </item>
-            <item row="6" column="1">
-             <widget class="QCheckBox" name="use_bck_roi_checkbox">
+            <item row="3" column="0">
+             <widget class="QLabel" name="roi_used_label">
+              <property name="text">
+               <string>Was metadata ROI used?</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLabel" name="roi_used_value">
+              <property name="text">
+               <string>Unknown</string>
+              </property>
               <property name="toolTip">
-               <string>A second ROI is available in the data file and can be used to define the background. Check the following box if you want to use the 2nd ROI for your background, otherwise a default region will be used.</string>
+               <string>Indicate whether the peak ROI was actually used when loading the data.</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="roi_peak_label">
+              <property name="text">
+               <string>Metadata ROI peak</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLabel" name="roi_peak_value">
+              <property name="toolTip">
+               <string>Peak ROI in the metadata:</string>
               </property>
               <property name="text">
-               <string>Use alternate bkgd ROI?</string>
+               <string>0 - 0</string>
               </property>
-              <property name="checked">
-               <bool>false</bool>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="roi_bck_label">
+              <property name="text">
+               <string>Metadata bkgd ROI</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLabel" name="roi_bck_value">
+              <property name="toolTip">
+               <string>Bck ROI in the metadata</string>
+              </property>
+              <property name="text">
+               <string>0 - 0</string>
               </property>
              </widget>
             </item>
@@ -3064,7 +3067,7 @@
                         <string>Run No.</string>
                        </property>
                        <property name="toolTip">
-                        <string>File Number</string>
+                        <string>Run number to get file for</string>
                        </property>
                       </column>
                       <column>
@@ -5335,8 +5338,8 @@
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionAutomaticXPeak"/>
-    <addaction name="actionAutoYLimits"/>
+    <addaction name="actionAutoXROI"/>
+    <addaction name="actionAutoYROI"/>
     <addaction name="actionAutoNorm"/>
     <addaction name="separator"/>
     <addaction name="actionNormalizeScaling"/>
@@ -5403,8 +5406,8 @@
    <addaction name="actionReduce"/>
    <addaction name="separator"/>
    <addaction name="separator"/>
-   <addaction name="actionAutomaticXPeak"/>
-   <addaction name="actionAutoYLimits"/>
+   <addaction name="actionAutoXROI"/>
+   <addaction name="actionAutoYROI"/>
    <addaction name="actionAutoNorm"/>
    <addaction name="separator"/>
    <addaction name="actionNormalizeScaling"/>
@@ -5532,12 +5535,30 @@
     <string>Ctrl+R</string>
    </property>
   </action>
-  <action name="actionAutoYLimits">
+  <action name="actionAutoXROI">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/fitXPos.png</normaloff>../icons/fitXPos.png</iconset>
+   </property>
+   <property name="text">
+    <string>Automatic Peak Finder (X-axis)</string>
+   </property>
+   <property name="toolTip">
+    <string>Find the reflected peak automatically when loading a new file (unavailable when "Use Metadata ROI" is selected)</string>
+   </property>
+  </action>
+  <action name="actionAutoYROI">
+   <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
    </property>
    <property name="icon">
     <iconset>
@@ -5547,25 +5568,7 @@
     <string>Automatic Y Limits</string>
    </property>
    <property name="toolTip">
-    <string>Try to find the Y region of the beam automatically</string>
-   </property>
-  </action>
-  <action name="actionAutomaticXPeak">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset>
-     <normaloff>../icons/fitXPos.png</normaloff>../icons/fitXPos.png</iconset>
-   </property>
-   <property name="text">
-    <string>Automatic Peak Finder</string>
-   </property>
-   <property name="toolTip">
-    <string>Find the reflected peak automatically when loading a new file</string>
+    <string>Try to find the Y region of the beam automatically (unavailable when "Use Metadata ROI" is selected)</string>
    </property>
   </action>
   <action name="actionClear_Overwrite">
@@ -5977,6 +5980,12 @@
      <y>416</y>
     </hint>
    </hints>
+  </connection>
+  <connection>
+   <sender>use_roi_checkbox</sender>
+    <signal>stateChanged(int)</signal>
+    <receiver>MainWindow</receiver>
+    <slot>handle_roi_checkbox()</slot>
   </connection>
   <connection>
    <sender>actionNormalizeScaling</sender>
@@ -7404,58 +7413,59 @@
   </connection>
  </connections>
  <slots>
-  <slot>file_open_dialog()</slot>
-  <slot>plotActiveTab()</slot>
-  <slot>file_open_from_list()</slot>
-  <slot>toggleColorbars()</slot>
-  <slot>setNorm()</slot>
-  <slot>addRefList()</slot>
-  <slot>clearRefList()</slot>
-  <slot>plot_refl()</slot>
-  <slot>plot_intensity()</slot>
-  <slot>replotProjections()</slot>
-  <slot>nextFile()</slot>
-  <slot>prevFile()</slot>
   <slot>addDataTable()</slot>
-  <slot>reduceDatasets()</slot>
-  <slot>normalizeTotalReflection()</slot>
-  <slot>reductionTableChanged(QTableWidgetItem*)</slot>
-  <slot>change_active_channel()</slot>
-  <slot>removeRefList()</slot>
-  <slot>changeRegionValues()</slot>
-  <slot>refineXpos()</slot>
-  <slot>openByNumber()</slot>
-  <slot>loadExtraction()</slot>
+  <slot>addRefList()</slot>
+  <slot>apply_offspec_crop()</slot>
   <slot>automaticExtraction()</slot>
-  <slot>clearNormList()</slot>
-  <slot>change_offspec_colorscale()</slot>
-  <slot>change_gisans_colorscale()</slot>
-  <slot>open_advanced_background()</slot>
-  <slot>refresh_offspec()</slot>
-  <slot>file_open_sum_dialog()</slot>
-  <slot>reload_file()</slot>
-  <slot>cutPoints()</slot>
   <slot>autoRef()</slot>
-  <slot>stripOverlap()</slot>
+  <slot>change_active_channel()</slot>
+  <slot>change_gisans_colorscale()</slot>
+  <slot>change_offspec_colorscale()</slot>
+  <slot>changeRegionValues()</slot>
+  <slot>clearNormList()</slot>
+  <slot>clearRefList()</slot>
+  <slot>cutPoints()</slot>
+  <slot>direct_beam_cell_activated(int,int)</slot>
+  <slot>file_open_dialog()</slot>
+  <slot>file_open_from_list()</slot>
+  <slot>file_open_sum_dialog()</slot>
+  <slot>handle_roi_checkbox()</slot>
+  <slot>hide_data_table()</slot>
+  <slot>hide_run_data()</slot>
+  <slot>hide_sidebar()</slot>
+  <slot>loadExtraction()</slot>
+  <slot>match_direct_beam_clicked()</slot>
+  <slot>nextFile()</slot>
+  <slot>normalizeTotalReflection()</slot>
+  <slot>open_advanced_background()</slot>
+  <slot>open_logfile_viewer()</slot>
   <slot>open_polarization_window()</slot>
   <slot>open_rawdata_dialog()</slot>
+  <slot>openByNumber()</slot>
+  <slot>plot_intensity()</slot>
+  <slot>plot_refl()</slot>
+  <slot>plotActiveTab()</slot>
+  <slot>prevFile()</slot>
   <slot>raiseError()</slot>
-  <slot>set_debug()</slot>
-  <slot>refresh_file_list()</slot>
-  <slot>open_logfile_viewer()</slot>
-  <slot>match_direct_beam_clicked()</slot>
+  <slot>reduceDatasets()</slot>
   <slot>reduction_cell_activated(int,int)</slot>
-  <slot>direct_beam_cell_activated(int,int)</slot>
-  <slot>remove_normalization()</slot>
-  <slot>show_results()</slot>
-  <slot>apply_offspec_crop()</slot>
-  <slot>toggle_smoothing()</slot>
-  <slot>update_offspec_qz_bin_width()</slot>
-  <slot>hide_sidebar()</slot>
-  <slot>hide_run_data()</slot>
-  <slot>hide_data_table()</slot>
   <slot>reduction_table_right_click()</slot>
+  <slot>reductionTableChanged(QTableWidgetItem*)</slot>
+  <slot>refineXpos()</slot>
+  <slot>refresh_file_list()</slot>
+  <slot>refresh_offspec()</slot>
+  <slot>reload_file()</slot>
+  <slot>remove_normalization()</slot>
+  <slot>removeRefList()</slot>
+  <slot>replotProjections()</slot>
+  <slot>set_debug()</slot>
+  <slot>setNorm()</slot>
+  <slot>show_results()</slot>
+  <slot>stripOverlap()</slot>
+  <slot>toggle_smoothing()</slot>
+  <slot>toggleColorbars()</slot>
   <slot>toggleFinalRebinGlobal()</slot>
   <slot>toggleFinalRebinRun()</slot>
+  <slot>update_offspec_qz_bin_width()</slot>
  </slots>
 </ui>

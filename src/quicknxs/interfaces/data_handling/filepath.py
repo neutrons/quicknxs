@@ -2,11 +2,11 @@ r"""
 Classes to handle string representations of sets of run numbers and absolute paths to data files
 """
 
-# standard imports
 import itertools
 import operator
 import os
 import re
+from typing import List, Optional, Union
 
 
 class RunNumbers(object):
@@ -18,8 +18,7 @@ class RunNumbers(object):
     merge_symbol = "+"
     range_symbol = ":"
 
-    def __init__(self, numbers):
-        # type: (Union[List[int], List[str], int, str]) -> None
+    def __init__(self, numbers: Union[List[int], List[str], int, str]) -> None:
         r"""
         @param numbers: a list of numbers or a string containing one or more numbers. For instance, '1:3+5' translates
           to [1, 2, 3, 5]
@@ -193,8 +192,7 @@ class FilePath(object):
     def split(self):
         return self.dirname, self.basename
 
-    def run_numbers(self, string_representation=None):
-        # type: (Optional[str]) -> Union[List[int], str]
+    def run_numbers(self, string_representation: Optional[str] = None) -> Union[List[int], str]:
         r"""
         @brief return the run number(s) associated to this file path
         @details This function assumes the basename of each single file path has the pattern "REF_M_XXXX.*" where
@@ -215,4 +213,4 @@ class FilePath(object):
         elif string_representation in ("long", "short", "statement"):
             return getattr(RunNumbers(numbers), string_representation)
         else:
-            raise ValueError('parameter string_representation must be one of [None, "long", "short"]')
+            raise ValueError('parameter string_representation must be one of [None, "long", "short", "statement"]')

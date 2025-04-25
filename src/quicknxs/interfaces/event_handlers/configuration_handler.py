@@ -1,10 +1,7 @@
-# local imports
-# standard imports
 from dataclasses import dataclass
 
-# third party imports
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QCheckBox, QDoubleSpinBox, QSpinBox, QWidget
+from PyQt5.QtWidgets import QAction, QCheckBox, QDoubleSpinBox, QSpinBox, QWidget
 
 from quicknxs.interfaces.configuration import Configuration
 
@@ -45,6 +42,9 @@ class ConfigurationHandler:
                 value = qwidget.checkState()
                 bool_value = value == Qt.CheckState.Checked
                 setattr(Configuration, config_name, bool_value)
+            elif isinstance(qwidget, QAction):
+                value = qwidget.isChecked()
+                setattr(Configuration, config_name, value)
             else:
                 value = qwidget.value()
                 setattr(Configuration, config_name, value)
@@ -90,6 +90,14 @@ class ConfigurationHandler:
             ConfigWidget("sample_size_spinbox", "sample_size"),
             ConfigWidget("bandwidth_spinbox", "wl_bandwidth"),
             ConfigWidget("direct_beam_y_lock_checkbox", "lock_direct_beam_y", recalc_reflectivity=True),
+            ConfigWidget("use_roi_checkbox", "use_roi"),
+            ConfigWidget("use_bck_roi_checkbox", "use_roi_bck"),
+            ConfigWidget("fit_within_roi_checkbox", "update_peak_range"),
+            ConfigWidget("actionAutoXROI", "use_peak_finder"),
+            ConfigWidget("actionAutoYROI", "use_low_res_finder"),
+            ConfigWidget("use_bck_roi_checkbox", "force_bck_roi"),
+            ConfigWidget("use_side_bck_checkbox", "use_tight_bck"),
+            ConfigWidget("side_bck_width", "bck_offset"),
         ]
 
         for config_widget in config_widgets:
@@ -99,6 +107,8 @@ class ConfigurationHandler:
                 signal_name = "editingFinished"
             elif isinstance(qwidget, QCheckBox):
                 signal_name = "stateChanged"
+            elif isinstance(qwidget, QAction):
+                signal_name = "toggled"
             else:
                 raise ValueError(f"{type(qwidget)} not supported by ConfigurationHandler")
             signal = getattr(qwidget, signal_name)

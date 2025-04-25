@@ -5,18 +5,15 @@ information from the data file
 """
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, bare-except
 
-# local
-# standard
 import logging
 import math
 import random
 import string
 import sys
+from typing import List
 
 import mantid.simpleapi as api
 import numpy as np
-
-# 3rd party
 from mantid.api import WorkspaceGroup
 from mantid.dataobjects import EventWorkspace
 
@@ -26,6 +23,8 @@ from quicknxs.interfaces.data_handling.filepath import FilePath
 # Constants
 h = 6.626e-34  # m^2 kg s^-1
 m = 1.675e-27  # kg
+
+UNPOLARIZED_XS_LABEL = "Off_Off"
 
 
 def get_cross_section_label(ws, entry_name):
@@ -85,10 +84,11 @@ def mantid_algorithm_exec(algorithm_class, **kwargs):
 
 
 def get_dead_time_correction(ws, configuration, error_ws=None):
-    """
-    Compute dead time correction to be applied to the reflectivity curve.
+    """Compute dead time correction to be applied to the reflectivity curve.
+
     The method will also try to load the error events from each of the
     data files to ensure that we properly estimate the dead time correction.
+
     :param ws: workspace with raw data to compute correction for
     :param configuration: reduction parameters
     :param error_ws: workspace with error events
@@ -110,12 +110,12 @@ def get_dead_time_correction(ws, configuration, error_ws=None):
     return corr_ws
 
 
-def apply_dead_time_correction(ws, configuration, error_ws=None):
-    """
-    Apply dead time correction, and ensure that it is done only once
-    per workspace.
+def apply_dead_time_correction(ws, configuration, error_ws=None) -> EventWorkspace:
+    """Apply dead time correction, and ensure that it is done only once per workspace.
+
     :param ws: workspace with raw data to compute correction for
-    :param template_data: reduction parameters
+    :param configuration: reduction parameters
+    :param error_ws: workspace with error events
     """
     if "dead_time_applied" not in ws.getRun():
         corr_ws = get_dead_time_correction(ws, configuration, error_ws=error_ws)
@@ -223,39 +223,56 @@ class Instrument(object):
 
         return cross_sections
 
-    def load_data(self, file_path, configuration=None):
-        r"""
-        # type: (unicode) -> WorkspaceGroup
-        @brief Load one or more data sets according to the needs ot the instrument.
-        @details This function assumes that when loading more than one data file, the files are congruent and their
-        events will be added together.
-        @param file_path: absolute path to one or more data files. If more than one, paths should be concatenated
-        with the plus symbol '+'.
-        @returns WorkspaceGroup with any number of cross-sections
+    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration) -> List[EventWorkspace]:
+        """Load the cross-sections from a data file. Handles both pre- and post-epics data.
+
+        Parameters
+        ----------
+        file_path: str
+            Path to the data file
+        ws_root_name: str
+            Root name of the workspace (used to rename the cross-sections after loading)
+        configuration: Configuration
+            Reduction configuration parameters
+
+        Returns
+        -------
+        list[EventWorkspace]
+            List of cross-section workspaces
         """
-        fp_instance = FilePath(file_path)
-        xs_list = list()
-        temp_workspace_root_name = "".join(random.sample(string.ascii_letters, 12))  # random string of 12 characters
-        workspace_root_name = fp_instance.run_numbers(string_representation="short")
-        _use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG
+        temp_ws_root_name = "".join(random.sample(string.ascii_letters, 12))  # random string of 12 characters
+        use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG
+        xs_list = []
 
-        for path in fp_instance.single_paths:
-            event_ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
-
-            # If the meta data is corrupted and we are missing analyzer/polarizer data, use the
-            # simple filtering.
+        is_pre_epics = True if file_path.endswith(".nxs") else False if file_path.endswith(".nxs.h5") else None
+        if is_pre_epics is None:
+            raise RuntimeError(f"Unknown file type: {file_path}")
+        if is_pre_epics:
+            _path_xs_list = api.MRFilterCrossSections(
+                Filename=file_path,
+                CrossSectionWorkspaces=f"{temp_ws_root_name}_entry",
+            )
+        else:
+            event_ws = api.LoadEventNexus(Filename=file_path, OutputWorkspace="raw_events")
+            # If the meta data is corrupted and we are missing analyzer/polarizer data, use the simple filtering.
             polarizer = event_ws.getRun().getProperty("Polarizer").value[0]
             analyzer = event_ws.getRun().getProperty("Analyzer").value[0]
-            missing_keys = (polarizer > 0 and self.pol_state not in event_ws.getRun()) or (
+            if (polarizer > 0 and self.pol_state not in event_ws.getRun()) or (
                 analyzer > 0 and self.ana_state not in event_ws.getRun()
-            )
-
-            if missing_keys:
-                _use_slow_flipper_log = True
+            ):
+                use_slow_flipper_log = True
                 print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
 
-            if _use_slow_flipper_log:
-                _path_xs_list = self.dummy_filter_cross_sections(event_ws, name_prefix=temp_workspace_root_name)
+            # If running in unpolarized mode, no filtering is needed
+            unpolarized = polarizer == 0 and analyzer == 0
+
+            if use_slow_flipper_log:
+                _path_xs_list = self.dummy_filter_cross_sections(event_ws, name_prefix=temp_ws_root_name)
+            elif unpolarized:
+                _ws = api.CloneWorkspace(event_ws, OutputWorkspace=f"{temp_ws_root_name}_entry")
+                # add the expected sample log
+                _ws.getRun()["cross_section_id"] = UNPOLARIZED_XS_LABEL
+                _path_xs_list = [_ws]
             else:
                 _path_xs_list = api.MRFilterCrossSections(
                     InputWorkspace=event_ws,
@@ -263,66 +280,97 @@ class Instrument(object):
                     AnaState=self.ana_state,
                     PolVeto=self.pol_veto,
                     AnaVeto=self.ana_veto,
-                    CrossSectionWorkspaces="%s_entry" % temp_workspace_root_name,
+                    CrossSectionWorkspaces=f"{temp_ws_root_name}_entry",
                 )
 
-            # Remove workspaces with too few events
-            _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
+        # Remove workspaces with too few events
+        _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
 
-            if configuration is not None and configuration.apply_deadtime:
-                # Load error events from the bank_error_events entry
-                err_ws = api.LoadErrorEventsNexus(path)
-                # Split error events by cross-section for compatibility with normal events
-                if _use_slow_flipper_log:
-                    _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_workspace_root_name + "_err")
-                else:
-                    _err_list = api.MRFilterCrossSections(
-                        InputWorkspace=err_ws,
-                        PolState=self.pol_state,
-                        AnaState=self.ana_state,
-                        PolVeto=self.pol_veto,
-                        AnaVeto=self.ana_veto,
-                        CrossSectionWorkspaces="%s_err_entry" % temp_workspace_root_name + "_err",
-                    )
+        # Dead-time correction only applies to post-epics data
+        if configuration is not None and configuration.apply_deadtime and not is_pre_epics:
+            # Load error events from the bank_error_events entry
+            err_ws = api.LoadErrorEventsNexus(file_path)
+            # Split error events by cross-section for compatibility with normal events
+            if use_slow_flipper_log:
+                _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_ws_root_name + "_err")
+            elif unpolarized:
+                _ws = api.CloneWorkspace(err_ws, OutputWorkspace=f"{temp_ws_root_name}_err")
+                # add the expected sample log
+                _ws.getRun()["cross_section_id"] = UNPOLARIZED_XS_LABEL
+                _err_list = [_ws]
+            else:
+                _err_list = api.MRFilterCrossSections(
+                    InputWorkspace=err_ws,
+                    PolState=self.pol_state,
+                    AnaState=self.ana_state,
+                    PolVeto=self.pol_veto,
+                    AnaVeto=self.ana_veto,
+                    CrossSectionWorkspaces="%s_err_entry" % temp_ws_root_name + "_err",
+                )
 
-                path_xs_list = []
-                # Apply dead-time correction for each cross-section workspace
-                for ws in _path_xs_list:
-                    xs_name = ws.getRun()["cross_section_id"].value
-                    if not xs_name == "unfiltered":
-                        # Find the related workspace in with error events
-                        is_found = False
-                        for err_ws in _err_list:
-                            if err_ws.getRun()["cross_section_id"].value == xs_name:
-                                is_found = True
-                                _ws = apply_dead_time_correction(ws, configuration, error_ws=err_ws)
-                                path_xs_list.append(_ws)
-                        if not is_found:
-                            print("Could not find error events for [%s]" % xs_name)
-                            _ws = apply_dead_time_correction(ws, configuration, error_ws=None)
+            # Apply dead-time correction for each cross-section workspace
+            path_xs_list = []
+            for ws in _path_xs_list:
+                xs_name = ws.getRun()["cross_section_id"].value
+                if not xs_name == "unfiltered":
+                    # Find the related workspace in with error events
+                    is_found = False
+                    for err_ws in _err_list:
+                        if err_ws.getRun()["cross_section_id"].value == xs_name:
+                            is_found = True
+                            _ws = apply_dead_time_correction(ws, configuration, error_ws=err_ws)
                             path_xs_list.append(_ws)
-            else:
-                path_xs_list = [ws for ws in _path_xs_list if not ws.getRun()["cross_section_id"].value == "unfiltered"]
+                    if not is_found:
+                        print("Could not find error events for [%s]" % xs_name)
+                        _ws = apply_dead_time_correction(ws, configuration, error_ws=None)
+                        path_xs_list.append(_ws)
+        else:
+            path_xs_list = [ws for ws in _path_xs_list if not ws.getRun()["cross_section_id"].value == "unfiltered"]
 
-            if len(xs_list) == 0:  # initialize xs_list with the cross sections of the first data file
-                xs_list = path_xs_list
-                for ws in xs_list:  # replace the temporary names with the run number(s)
-                    name_new = str(ws).replace(temp_workspace_root_name, workspace_root_name)
+        # initialize xs_list with the cross sections of the first data file
+        if len(xs_list) == 0:
+            xs_list = path_xs_list
+            # Pre-epics data workspaces are already named based on the run number, no need to rename them
+            if not is_pre_epics:
+                for ws in xs_list:
+                    name_new = str(ws).replace(temp_ws_root_name, ws_root_name)
                     api.RenameWorkspace(str(ws), name_new)
-            else:
-                for i, ws in enumerate(xs_list):
-                    api.Plus(
-                        LHSWorkspace=str(ws),
-                        RHSWorkspace=str(path_xs_list[i]),
-                        OutputWorkspace=str(ws),
-                    )
+        else:
+            # Merge the cross sections from the new data file with the existing ones
+            for i, ws in enumerate(xs_list):
+                api.Plus(
+                    LHSWorkspace=str(ws),
+                    RHSWorkspace=str(path_xs_list[i]),
+                    OutputWorkspace=str(ws),
+                )
+        return xs_list
+
+    def load_data(self, file_path: str, configuration=None) -> List[EventWorkspace]:
+        r"""Load one or more data sets according to the needs of the instrument.
+
+        This function assumes that when loading more than one data file, the files are congruent and their
+        events will be added together.
+
+        Args:
+            file_path (str): absolute path to one or more data files. If more than one, paths should be concatenated with the plus symbol '+'.
+            configuration (Configuration): reduction configuration parameters
+
+        Returns:
+            A list of EventWorkspaces, one for each cross-section
+        """
+        fp_instance = FilePath(file_path)
+        ws_root_name = fp_instance.run_numbers(string_representation="short")
+        xs_list = list()
+
+        for path in fp_instance.single_paths:
+            xs_list += self._get_xs_list(path, ws_root_name, configuration)
 
         # Insert a log indicating which run numbers contributed to this cross-section
         for ws in xs_list:
             api.AddSampleLog(
                 Workspace=str(ws),
                 LogName="run_numbers",
-                LogText=fp_instance.run_numbers(string_representation="short"),
+                LogText=ws_root_name,
                 LogType="String",
             )
 
