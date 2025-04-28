@@ -31,17 +31,12 @@ requirements:
     - versioningit
 
   build:
-    - mantid
-    - matplotlib
+    - mr_reduction
     - setuptools
-    - qtpy
     - versioningit
 
   run:
-    - mantid=6.12.0
-    - matplotlib
-    - qtpy
-    - qt>=5.12,<6
+    - mr_reduction=2.2.0
 
 test:
   imports:

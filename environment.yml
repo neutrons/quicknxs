@@ -1,9 +1,11 @@
 name: quicknxs
 channels:
+    - neutrons/label/main
     - mantid/label/main
+    - oncat
     - conda-forge
 dependencies:
-- mantidworkbench=6.12.0
+- mr_reduction=2.2.0
 - anaconda-client
 - boa
 - codecov

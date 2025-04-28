@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 import mantid
+import mr_reduction
 import numpy as np
 
 from quicknxs import __version__
@@ -100,6 +101,7 @@ def write_reflectivity_header(
 
     fd = open(output_path, "w")
     fd.write("# Datafile created by QuickNXS %s\n" % __version__)
+    fd.write("# Datafile created using mr_reduction %s\n" % mr_reduction.__version__)
     fd.write("# Datafile created using Mantid %s\n" % mantid.__version__)
     fd.write("# Date: %s\n" % time.strftime("%Y-%m-%d %H:%M:%S"))
     fd.write("# Type: Specular\n")
