@@ -317,7 +317,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     except Exception:
                         self.file_handler.report_message("There was a problem updating the reflectivity", pop_up=False)
                         logging.error("There was a problem updating the reflectivity")
-                self.plot_manager.plot_refl()
+                if self.data_manager.active_channel.is_direct_beam:
+                    self.plot_manager.plot_intensity()
+                else:
+                    self.plot_manager.plot_refl()
                 self.update_specular_viewer.emit()
 
     def global_reflectivity_config_changed(self):
