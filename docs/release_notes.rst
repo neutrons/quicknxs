@@ -18,8 +18,11 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. - PR #143: Modify behavior of peak finder settings
 
 .. **Of interest to the Developer:**
-
+.. - PR #154: Github actions - versiongit information from tags in package
+.. - PR #152: Github actions - versiongit information from tags
 .. - PR #143: Settings from peak finder are now global attributes of Configuration class
+.. - PR #151: `mr_reduction` is added as a dependency and, as a consequence, `mantid` is removed as
+     an explicit dependency
 
 v4.3.0
 ------

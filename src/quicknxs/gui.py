@@ -37,11 +37,13 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 
 import mantid
+import mr_reduction
 
 import quicknxs
 
 print("##################################################")
 print("# QuickNXS %s " % quicknxs.__version__)
+print("#    with mr_reduction: %s " % mr_reduction.__version__)
 print("#    with Mantid: %s " % mantid.__version__)
 print("##################################################")
 
