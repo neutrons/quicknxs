@@ -5,8 +5,10 @@ Start script for reduction application
 
 # Set Qt5Agg now so matplotlib doesn't complain later
 import os
+
 os.environ["QT_API"] = "pyqt5"
 import matplotlib
+
 matplotlib.use("Qt5Agg")
 
 import logging
