@@ -572,25 +572,57 @@ class PlotManager(object):
             plot.draw()
         progress(100, message=final_msg, out_of=100)
 
+    def _plot_message(self, widget, message):
+        widget.canvas.ax.text(
+            0.5,
+            0.5,
+            message,
+            horizontalalignment="center",
+            verticalalignment="center",
+            fontsize=14,
+            transform=widget.canvas.ax.transAxes,
+        )
+        widget.draw()
+
+    def plot_intensity(self, preserve_lim=False):
+        """
+        Calculate and display the direct beam intensity from the current dataset.
+        """
+
+        # hide the reflectivity plot or clear existing intensity plot
+        self.main_window.ui.refl_widget.hide()
+        self.main_window.ui.intensity.clear()
+
+        if self.main_window.data_manager.active_channel is None:
+            self._plot_message(self.main_window.ui.intensity, "No data")
+            return False
+
+        # format and plot tof data
+
+        if self.main_window.ui.xLamda.isChecked():
+            self.main_window.ui.intensity.plot(
+                self.main_window.data_manager.active_channel.wavelength,
+                self.main_window.data_manager.active_channel.tofdata,
+            )
+            self.main_window.ui.intensity.set_xlabel("$\\lambda{}$ [Å]")
+        else:
+            self.main_window.ui.intensity.plot(self.main_window.data_manager.active_channel.tofdata)
+            self.main_window.ui.intensity.set_xlabel("ToF [ms]")
+
+        # y-label is counts in either case
+        self.main_window.ui.intensity.set_ylabel("Counts")
+
+        # draw and show
+        self.main_window.ui.intensity.draw()
+        self.main_window.ui.intensity_widget.show()
+
     def plot_refl(self, preserve_lim=False):
         """
         Calculate and display the reflectivity from the current dataset
         and any dataset stored. Intensities from direct beam
         measurements can be used for normalization.
         """
-
-        def _plot_message(message):
-            self.main_window.ui.refl.canvas.ax.text(
-                0.5,
-                0.5,
-                message,
-                horizontalalignment="center",
-                verticalalignment="center",
-                fontsize=14,
-                transform=self.main_window.ui.refl.canvas.ax.transAxes,
-            )
-            self.main_window.ui.refl.draw()
-
+        self.main_window.ui.intensity_widget.hide()
         self.main_window.ui.refl.clear()
 
         if (
@@ -599,19 +631,12 @@ class PlotManager(object):
             or self.main_window.data_manager.active_channel.q is None
             or self.main_window.data_manager.active_channel.dr is None
         ):
-            _plot_message("No data")
-            return False
-
-        if (
-            self.main_window.data_manager.active_channel.is_direct_beam
-            and not self.main_window.data_manager.reduction_list
-        ):
-            _plot_message("No reflectivity for the\nselected direct-beam data!")
+            self._plot_message(self.main_window.ui.refl, "No data")
             return False
 
         data = self.main_window.data_manager.active_channel
         if data.total_counts == 0:
-            _plot_message("No points to show\nin active dataset!")
+            self._plot_message(self.main_window.ui.refl, "No points to show\nin active dataset!")
             return False
 
         def _set_ymax(ymax, ynormed):
@@ -627,21 +652,20 @@ class PlotManager(object):
         PN = len(self.main_window.data_manager.active_channel.q) - self.main_window.ui.rangeEnd.value()
         ynormed = self.main_window.data_manager.active_channel.r[P0:PN]
         if len(ynormed[ynormed > 0]) < 2:
-            _plot_message("No points to show\nin active dataset!")
+            self._plot_message(self.main_window.ui.refl, "No points to show\nin active dataset!")
             return False
 
-        if not self.main_window.data_manager.active_channel.is_direct_beam:
-            ymin = min(ymin, ynormed[ynormed > 0].min())
-            ymax = _set_ymax(ymax, ynormed)
-            self.main_window.ui.refl.errorbar(
-                self.main_window.data_manager.active_channel.q[P0:PN],
-                ynormed,
-                yerr=self.main_window.data_manager.active_channel.dr[P0:PN],
-                label="Active",
-                lw=2,
-                capsize=1,
-                color="black",
-            )
+        ymin = min(ymin, ynormed[ynormed > 0].min())
+        ymax = _set_ymax(ymax, ynormed)
+        self.main_window.ui.refl.errorbar(
+            self.main_window.data_manager.active_channel.q[P0:PN],
+            ynormed,
+            yerr=self.main_window.data_manager.active_channel.dr[P0:PN],
+            label="Active",
+            lw=2,
+            capsize=1,
+            color="black",
+        )
 
         channel_name = self.main_window.data_manager.active_channel.name
         for i, refli in enumerate(self.main_window.data_manager.reduction_list):
@@ -679,6 +703,8 @@ class PlotManager(object):
         self.main_window.ui.refl.legend()
         self.main_window.ui.refl.toolbar.set_history_buttons()
         self.main_window.ui.refl.draw()
+
+        self.main_window.ui.refl_widget.show()
 
         self.main_window.ui.compare_widget.update_preview()
 
