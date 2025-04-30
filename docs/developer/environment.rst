@@ -31,6 +31,23 @@ To setup a local development environment, the developers should follow the steps
 The ``environment.yml`` contains all of the dependencies for both the developer and the build servers.
 Update file ``environment.yml`` if dependencies are added to the package.
 
+
+
+
+.. _developing_with_pycharm:
+
+Developing with PyCharm
+-----------------------
+Currently, QuickNXS contains PyQt5 and PiSide6 which are not compatible with each other
+and therefore one must be selected as the default bindings to Qt.
+Open the PyCharm settings and select `PyQt5` as the default bindings to Qt in the `python debugger`.
+
+.. figure:: ./media/debugging_pycharmm_1.png
+   :align: center
+   :width: 800
+
+
+
 .. _test-data:
 
 Test Data

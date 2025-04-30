@@ -3,9 +3,14 @@
 Start script for reduction application
 """
 
+# Set Qt5Agg now so matplotlib doesn't complain later
+import os
+os.environ["QT_API"] = "pyqt5"
+import matplotlib
+matplotlib.use("Qt5Agg")
+
 import logging
 import logging.handlers
-import os
 import sys
 
 # Set log level
@@ -31,10 +36,6 @@ def no_abort_excepthook(exc_type, value, tback):
 
 sys.excepthook = no_abort_excepthook
 
-# Set Qt5Agg now so matplotlib doesn't complain later
-import matplotlib
-
-matplotlib.use("Qt5Agg")
 
 import mantid
 import mr_reduction
