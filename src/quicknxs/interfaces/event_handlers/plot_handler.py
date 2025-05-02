@@ -5,6 +5,7 @@
 Event handlers for the main application window.
 Most of those come straight from QuickNXS.
 """
+
 # standard imports
 import time
 from typing import List

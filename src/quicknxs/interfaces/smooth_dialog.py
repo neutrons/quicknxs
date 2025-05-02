@@ -13,9 +13,8 @@ from PyQt5 import QtWidgets
 
 # quicknxs imports
 from quicknxs.interfaces import load_ui
-from quicknxs.ui.mplwidget import MPLWidget
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import NexusData
+from quicknxs.ui.mplwidget import MPLWidget
 
 
 class SmoothDialog(QtWidgets.QDialog):

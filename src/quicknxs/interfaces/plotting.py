@@ -3,8 +3,8 @@
 
 # standard imports
 import logging
-from typing import List
 import sys
+from typing import List
 
 # third-party imports
 import numpy as np

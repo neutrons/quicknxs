@@ -63,7 +63,12 @@ class ResultViewer(QtWidgets.QDialog):
         if len(data_set_keys) > 4:
             logging.error("Too many cross-sections for plotting: %s", str(len(data_set_keys)))
 
-        plots: List[mpl.MPLWidget] = [self.ui.offspec_pp_plot, self.ui.offspec_mm_plot, self.ui.offspec_pm_plot, self.ui.offspec_mp_plot]
+        plots: List[mpl.MPLWidget] = [
+            self.ui.offspec_pp_plot,
+            self.ui.offspec_mm_plot,
+            self.ui.offspec_pm_plot,
+            self.ui.offspec_mp_plot,
+        ]
         for plot in plots:
             plot.clear()
 
