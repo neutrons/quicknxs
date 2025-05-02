@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 # pylint: bare-except
 
-# local imports
 # standard imports
 import logging
+from typing import List
 import sys
 
 # third-party imports
 import numpy as np
 
+# quicknxs imports
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData
+from quicknxs.ui.mplwidget import MPLWidget
 
 
 class PlotManager(object):
@@ -437,7 +439,7 @@ class PlotManager(object):
         """
         Create an offspecular plot for all channels of the datasets in the
         reduction list. The user can define upper and lower bounds for the
-        plotted intensity and select the coordinates to be ither kiz-kfz vs. Qz,
+        plotted intensity and select the coordinates to be either kiz-kfz vs. Qz,
         Qx vs. Qz or kiz vs. kfz.
         """
         if self.main_window.data_manager.active_channel is None:
@@ -449,7 +451,7 @@ class PlotManager(object):
             xlim = self.main_window.ui.offspec_pp.canvas.ax.get_xlim()
             ylim = self.main_window.ui.offspec_pp.canvas.ax.get_ylim()
 
-        plots = [
+        plots: List[MPLWidget] = [
             self.main_window.ui.offspec_pp,
             self.main_window.ui.offspec_mm,
             self.main_window.ui.offspec_pm,

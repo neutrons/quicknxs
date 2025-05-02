@@ -3,10 +3,14 @@ Dialog to show final reduced data.
 """
 # pylint: disable=bare-except
 
+# standard imports
 import logging
+from typing import List
 
+# third-party imports
 from PyQt5 import QtCore, QtWidgets
 
+# quicknxs imports
 import quicknxs.ui.mplwidget as mpl
 from quicknxs.interfaces import load_ui
 
@@ -59,7 +63,7 @@ class ResultViewer(QtWidgets.QDialog):
         if len(data_set_keys) > 4:
             logging.error("Too many cross-sections for plotting: %s", str(len(data_set_keys)))
 
-        plots = [self.ui.offspec_pp_plot, self.ui.offspec_mm_plot, self.ui.offspec_pm_plot, self.ui.offspec_mp_plot]
+        plots: List[mpl.MPLWidget] = [self.ui.offspec_pp_plot, self.ui.offspec_mm_plot, self.ui.offspec_pm_plot, self.ui.offspec_mp_plot]
         for plot in plots:
             plot.clear()
 
