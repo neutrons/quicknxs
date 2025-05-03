@@ -181,7 +181,10 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
 
         self.main_window.file_loaded_signal.emit()
-        self.main_window.initiate_reflectivity_plot.emit(False)
+        if self.main_window.data_manager.active_channel.is_direct_beam:
+            self.main_window.initiate_intensity_plot.emit(False)
+        else:
+            self.main_window.initiate_reflectivity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
         self.cache_indicator.setText("Files loaded: %s" % (self._data_manager.get_cachesize()))
 
@@ -192,7 +195,10 @@ class MainHandler(object):
         self._set_data_manager_active_channel()
         self.update_channel_info()
         self.main_window.plotActiveTab()
-        self.main_window.initiate_reflectivity_plot.emit(False)
+        if self.main_window.data_manager.active_channel.is_direct_beam:
+            self.main_window.initiate_intensity_plot.emit(False)
+        else:
+            self.main_window.initiate_reflectivity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
 
     def _set_data_manager_active_channel(self):
@@ -859,7 +865,9 @@ class MainHandler(object):
             tab_widget.setRowCount(0)
         # remove additional data tabs
         self.main_window.reset_data_tabs()
-        self.main_window.initiate_reflectivity_plot.emit(False)
+
+        if self.main_window.refl.isVisible():
+            self.main_window.initiate_reflectivity_plot.emit(False)
 
     def clear_direct_beams(self):
         """
@@ -868,7 +876,7 @@ class MainHandler(object):
         self._data_manager.clear_direct_beam_list()
         self.ui.normalizeTable.setRowCount(0)
         self.ui.normalization_list_label.setText("None")
-        self.main_window.initiate_reflectivity_plot.emit(False)
+        self.main_window.initiate_intensity_plot.emit(False)
 
     def remove_reflectivity(self):
         """
@@ -890,7 +898,7 @@ class MainHandler(object):
             return
         self._data_manager.direct_beam_list.pop(index)
         self.ui.normalizeTable.removeRow(index)
-        self.main_window.initiate_reflectivity_plot.emit(False)
+        self.main_window.initiate_intensity_plot.emit(False)
 
     def reduction_table_changed(self, item):
         """
@@ -996,7 +1004,7 @@ class MainHandler(object):
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
         self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))
 
-        self.main_window.initiate_reflectivity_plot.emit(False)
+        self.main_window.initiate_intensity_plot.emit(False)
         return True
 
     def update_direct_beam_table(self, idx, d):
