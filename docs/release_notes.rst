@@ -5,24 +5,23 @@ Release Notes
 =============
 Notes for major and minor releases. Notes for Patch releases are deferred.
 
-.. v4.4.0
+.. v4.5.0
 .. ------
 .. (date of release, format YYYY-MM-DD)
 
 .. **Of interest to the User**:
-.. - PR #153: Plots Intensity (Counts vs. ToF) when a direct beam run is selected.
-.. - PR #152: Github actions - versiongit information from tags
-.. - PR #150: Updated font sizes of plot labels/ticks for off-specular plots
-.. - PR #149: Fix error when loading unpolarized runs with both `Analyzer` and `Polarizer` = 0
-.. - PR #147: Add ability to load v1 (pre-EPICS) Nexus data files
-.. - PR #143: Modify behavior of peak finder settings
 
 .. **Of interest to the Developer:**
-.. - PR #154: Github actions - versiongit information from tags in package
-.. - PR #152: Github actions - versiongit information from tags
-.. - PR #143: Settings from peak finder are now global attributes of Configuration class
-.. - PR #151: `mr_reduction` is added as a dependency and, as a consequence, `mantid` is removed as
-     an explicit dependency
+
+
+v4.4.0
+------
+2025-05-13
+
+New features in this release include the ability to load v1 (pre-EPICS) NeXus data files and
+plotting the intensity vs ToF for direct beam runs. The behavior of the
+:ref:`peak finder settings<peak_finder>` are changed to make it more clear whether the peak
+region of interest is found from the metadata or using automatic peak finding.
 
 v4.3.0
 ------
@@ -50,7 +49,7 @@ v4.0.0
 ------
 2025-01-17
 
-In this new major version, the name of the application was changed to `quixknxs`. New improvements include
+In this new major version, the name of the application was changed to `quicknxs`. New improvements include
 skipping the reflectivity calculation for direct beam runs and the dead-time correction to account for
 detector saturation.
 
