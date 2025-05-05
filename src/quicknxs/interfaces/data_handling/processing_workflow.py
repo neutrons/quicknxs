@@ -20,8 +20,10 @@ from email.mime.text import MIMEText
 from typing import Dict
 
 import numpy as np
+from mantid.simpleapi import CopyLogs, CreateWorkspace
 from mr_reduction import io_orso
 from mr_reduction.runpeak import RunPeakNumber
+from mr_reduction.types import MantidWorkspace
 
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, off_specular, quicknxs_io
@@ -179,12 +181,27 @@ class ProcessingWorkflow(object):
             quicknxs_io.write_reflectivity_data(state_output_path, output_data[pol_state], col_names, as_5col=five_cols)
             self.exported_data_files.append(state_output_path)
 
-    def write_orso(self):
+    def write_orso(self, output_data: Dict[str, np.ndarray]):
         """
         Save individual and combined reflectivity curves to ORSO format
         """
         peak_number = self.data_manager.active_reduction_list_index
+        run_list = [str(item.number) for item in self.data_manager.reduction_list]
         output_dir = self.output_options["output_directory"]
+
+        def _create_combined_reflectivity_workspace(_ws: MantidWorkspace, _xs: str):
+            """Create a new workspace with metadata copied from the given workspace and
+            output data for the given cross-section"""
+            output_xs = output_data[_xs]
+            _ws_combined = CreateWorkspace(
+                DataX=output_xs[:, 0],
+                DataY=output_xs[:, 1],
+                DataE=output_xs[:, 2],
+                Dx=output_xs[:, 3],
+                OutputWorkspace=str(ws_first) + "-combined",
+            )
+            CopyLogs(_ws, _ws_combined, MergeStrategy="WipeExisting")
+            return _ws_combined
 
         # Save the individual runs to ORSO
         individual_paths = {}
@@ -196,26 +213,20 @@ class ProcessingWorkflow(object):
             io_orso.save_cross_sections(reflectivity_workspaces, filepath)
             individual_paths[run] = filepath
 
-        # Assemble the list of runs and scaling factors
-        orso_sequence = {}
-        scalings = {}
-        xs = self.data_manager.active_channel.name
-        for nexus_data in self.data_manager.reduction_list:
-            run = str(nexus_data.number)
-            filepath = individual_paths[run]
-            if os.path.isfile(filepath):
-                orso_sequence[run] = filepath
-                # the scaling factor is the same for all cross-sections of a run
-                scalings[run] = nexus_data.cross_sections[xs].configuration.scaling_factor
+        # Assemble the combined reflectivity workspaces
+        combined_reflectivity_workspaces = []
+        cross_sections = self.data_manager.reduction_states
+        for xs in cross_sections:
+            # clone first reflectivity workspace to include metadata
+            ws_first = self.data_manager.reduction_list[0].cross_sections[xs].reflectivity_workspace
+            # replace data with combined reflectivity data
+            ws_combined = _create_combined_reflectivity_workspace(ws_first, xs)
+            combined_reflectivity_workspaces.append(ws_combined)
 
         # Save the combined reflectivity to ORSO
-        combined_filename = f"REF_M_{'+'.join(orso_sequence.keys())}_{peak_number}_combined.ort"
+        combined_filename = f"REF_M_{'+'.join(run_list)}_{peak_number}_combined.ort"
         combined_path = os.path.join(output_dir, combined_filename)
-        io_orso.concatenate_runs(
-            filepath_sequence=orso_sequence,
-            concatenated_filepath=os.path.join(output_dir, combined_path),
-            scaling_factors=scalings,
-        )
+        io_orso.save_cross_sections(combined_reflectivity_workspaces, combined_path)
 
     def specular_reflectivity(self):
         """
@@ -236,7 +247,7 @@ class ProcessingWorkflow(object):
         self.write_quicknxs(output_data, output_file_base)
 
         # ORSO format
-        self.write_orso()
+        self.write_orso(output_data)
 
         # Numpy arrays
         if self.output_options["format_numpy"]:
