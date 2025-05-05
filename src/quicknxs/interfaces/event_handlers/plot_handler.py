@@ -6,9 +6,15 @@ Event handlers for the main application window.
 Most of those come straight from QuickNXS.
 """
 
+# standard imports
 import time
+from typing import List
 
+# third-party imports
 from PyQt5 import QtWidgets
+
+# quicknxs imports
+from quicknxs.ui.mplwidget import MPLWidget
 
 
 def slow_down_events(fn):
@@ -378,7 +384,7 @@ class PlotHandler(object):
 
     def change_offspec_colorscale(self):
         """Modify color scale"""
-        plots = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
+        plots: List[MPLWidget] = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
         Imin = 10 ** self.ui.offspecImin.value()
         Imax = 10 ** self.ui.offspecImax.value()
         if Imin >= Imax:

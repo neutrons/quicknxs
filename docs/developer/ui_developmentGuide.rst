@@ -1,3 +1,5 @@
+.. _graphic_user_interface_development_guide:
+
 Graphic User Interface Development Guide
 ========================================
 
@@ -29,4 +31,10 @@ Points dicussed in the video:
 Useful resources for GUI development
 ------------------------------------
 
-- ``Qt Designer`` is the Qt tool for designing and building graphical user interfaces (GUIs) with ``Qt Widgets`` (https://doc.qt.io/qt-6/qtdesigner-manual.html)
+- ``Qt Designer`` is the Qt tool for designing and building graphical user interfaces (GUIs)
+  with ``Qt Widgets`` (https://doc.qt.io/qt-6/qtdesigner-manual.html)
+
+
+Developing with PyCharm
+-----------------------
+Please refer to section :ref:`developing_with_pycharm` in the Development Environment page..

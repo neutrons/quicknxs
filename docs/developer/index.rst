@@ -12,3 +12,4 @@ Development Guide
    ui_test
    release
    documentation
+   troubleshooting
