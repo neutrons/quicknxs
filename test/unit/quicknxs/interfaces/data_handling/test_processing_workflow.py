@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 
 import pytest
+from orsopy.fileio import load_orso
 
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.processing_workflow import DEFAULT_OPTIONS, ProcessingWorkflow
@@ -12,6 +13,8 @@ from quicknxs.interfaces.data_manager import DataManager
 def test_orso_output(data_server, tmpdir):
     """Test saving reflectivity curves to ORSO"""
     conf = Configuration()
+    conf.cut_first_n_points = 0
+    conf.cut_last_n_points = 0
     manager = DataManager(data_server.directory)
     output_options = deepcopy(DEFAULT_OPTIONS)
     output_options["output_directory"] = str(tmpdir)
@@ -30,29 +33,25 @@ def test_orso_output(data_server, tmpdir):
     # add a second peak
     manager.add_additional_reduction_list(2)
 
+    # make the two peaks different by cutting data points from the first run of the first peak
+    first_state = manager.reduction_states[0]
+    manager.reduction_list[0].cross_sections[first_state].configuration.cut_last_n_points = 8
+
     # write output files for the two peaks
     for peak_index in manager.peak_reduction_lists.keys():
         manager.set_active_reduction_list_index(peak_index)
         manager.set_active_data_from_reduction_list(0)
         pw.specular_reflectivity()
 
-    # check the output files
-    for file in [
-        "REF_M_42112_1.ort",
-        "REF_M_42112_2.ort",
-        "REF_M_42113_1.ort",
-        "REF_M_42113_2.ort",
-        "REF_M_42112+42113_1_combined.ort",
-        "REF_M_42112+42113_2_combined.ort",
-        "REF_M_42112+42113_peak1_Specular_all.py",
-        "REF_M_42112+42113_peak2_Specular_all.py",
-        "REF_M_42112+42113_peak1_Specular_Off_Off.dat",
-        "REF_M_42112+42113_peak1_Specular_Off_On.dat",
-        "REF_M_42112+42113_peak1_Specular_On_Off.dat",
-        "REF_M_42112+42113_peak1_Specular_On_On.dat",
-        "REF_M_42112+42113_peak2_Specular_Off_Off.dat",
-        "REF_M_42112+42113_peak2_Specular_Off_On.dat",
-        "REF_M_42112+42113_peak2_Specular_On_Off.dat",
-        "REF_M_42112+42113_peak2_Specular_On_On.dat",
+    # load ORSO files and check the reflectivity data
+    for file, reflectivity_data_lengths in [
+        ("REF_M_42112_1.ort", [140, 139, 140, 139]),
+        ("REF_M_42112_2.ort", [140, 139, 140, 139]),
+        ("REF_M_42113_1.ort", [136, 139, 123, 140]),
+        ("REF_M_42113_2.ort", [136, 139, 123, 140]),
+        ("REF_M_42112+42113_1_combined.ort", [268, 270, 255, 271]),  # peak 1 - 8 data points removed
+        ("REF_M_42112+42113_2_combined.ort", [276, 278, 263, 279]),  # peak 2 - no data points removed
     ]:
-        assert os.path.isfile(os.path.join(tmpdir, file))
+        datasets = load_orso(os.path.join(tmpdir, file))
+        for i, dataset in enumerate(datasets):
+            assert len(dataset.data) == reflectivity_data_lengths[i]
