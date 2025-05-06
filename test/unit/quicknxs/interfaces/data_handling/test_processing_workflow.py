@@ -45,12 +45,12 @@ def test_orso_output(data_server, tmpdir):
 
     # load ORSO files and check the reflectivity data
     for file, reflectivity_data_lengths in [
-        ("REF_M_42112_1.ort", [140, 139, 140, 139]),
-        ("REF_M_42112_2.ort", [140, 139, 140, 139]),
-        ("REF_M_42113_1.ort", [136, 139, 123, 140]),
-        ("REF_M_42113_2.ort", [136, 139, 123, 140]),
-        ("REF_M_42112+42113_1_combined.ort", [268, 270, 255, 271]),  # peak 1 - 8 data points removed
-        ("REF_M_42112+42113_2_combined.ort", [276, 278, 263, 279]),  # peak 2 - no data points removed
+        ("REF_M_42112_peak1_Specular_all.ort", [140, 139, 140, 139]),
+        ("REF_M_42112_peak2_Specular_all.ort", [140, 139, 140, 139]),
+        ("REF_M_42113_peak1_Specular_all.ort", [136, 139, 123, 140]),
+        ("REF_M_42113_peak2_Specular_all.ort", [136, 139, 123, 140]),
+        ("REF_M_42112+42113_peak1_Specular_all.ort", [268, 270, 255, 271]),  # peak 1 - 8 data points removed
+        ("REF_M_42112+42113_peak2_Specular_all.ort", [276, 278, 263, 279]),  # peak 2 - no data points removed
     ]:
         datasets = load_orso(os.path.join(tmpdir, file))
         for i, dataset in enumerate(datasets):

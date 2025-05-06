@@ -22,7 +22,6 @@ from typing import Dict
 import numpy as np
 from mantid.simpleapi import CopyLogs, CreateWorkspace
 from mr_reduction import io_orso
-from mr_reduction.runpeak import RunPeakNumber
 from mr_reduction.types import MantidWorkspace
 
 from quicknxs.interfaces.configuration import Configuration
@@ -185,9 +184,14 @@ class ProcessingWorkflow(object):
         """
         Save individual and combined reflectivity curves to ORSO format
         """
-        peak_number = self.data_manager.active_reduction_list_index
-        run_list = [str(item.number) for item in self.data_manager.reduction_list]
-        output_dir = self.output_options["output_directory"]
+        # Save the individual runs to ORSO
+        individual_paths = {}
+        for nexus_data in self.data_manager.reduction_list:
+            run = str(nexus_data.number)
+            reflectivity_workspaces = nexus_data.get_reflectivity_workspace_group()
+            filepath = self.get_file_name([run], "all", "ort")
+            io_orso.save_cross_sections(reflectivity_workspaces, filepath)
+            individual_paths[run] = filepath
 
         def _create_combined_reflectivity_workspace(_ws: MantidWorkspace, _xs: str):
             """Create a new workspace with metadata copied from the given workspace and
@@ -203,16 +207,6 @@ class ProcessingWorkflow(object):
             CopyLogs(_ws, _ws_combined, MergeStrategy="WipeExisting")
             return _ws_combined
 
-        # Save the individual runs to ORSO
-        individual_paths = {}
-        for nexus_data in self.data_manager.reduction_list:
-            run = str(nexus_data.number)
-            runpeak = RunPeakNumber(run, peak_number)
-            reflectivity_workspaces = nexus_data.get_reflectivity_workspace_group()
-            filepath = os.path.join(output_dir, f"REF_M_{runpeak}.ort")
-            io_orso.save_cross_sections(reflectivity_workspaces, filepath)
-            individual_paths[run] = filepath
-
         # Assemble the combined reflectivity workspaces
         combined_reflectivity_workspaces = []
         cross_sections = self.data_manager.reduction_states
@@ -224,8 +218,8 @@ class ProcessingWorkflow(object):
             combined_reflectivity_workspaces.append(ws_combined)
 
         # Save the combined reflectivity to ORSO
-        combined_filename = f"REF_M_{'+'.join(run_list)}_{peak_number}_combined.ort"
-        combined_path = os.path.join(output_dir, combined_filename)
+        run_list = [str(item.number) for item in self.data_manager.reduction_list]
+        combined_path = self.get_file_name(run_list, "all", "ort")
         io_orso.save_cross_sections(combined_reflectivity_workspaces, combined_path)
 
     def specular_reflectivity(self):
