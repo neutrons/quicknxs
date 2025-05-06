@@ -182,7 +182,22 @@ class ProcessingWorkflow(object):
 
     def write_orso(self, output_data: Dict[str, np.ndarray]):
         """
-        Save individual and combined reflectivity curves to ORSO format
+        Save individual and combined reflectivity curves to ORSO format.
+
+        This function collects reflectivity data and metadata and saves one individual ORSO ASCII
+        file per run and peak and one combined (stitched) ORSO ASCII file per peak.
+
+        Parameters
+        ----------
+        output_data: Dict[str, np.ndarray]
+            Dictionary of scaled and stitched data where the key is the cross-section name and the
+            value is an array of reflectivity data with shape (number of Q points, 5), where the 5
+            columns are:
+            - Qz: normal momentum transfer
+            - R: reflectivity
+            - dR: reflectivity error
+            - dQz: normal momentum transfer error
+            - theta: scattering angle
         """
         # Save the individual runs to ORSO
         individual_paths = {}
@@ -211,9 +226,9 @@ class ProcessingWorkflow(object):
         combined_reflectivity_workspaces = []
         cross_sections = self.data_manager.reduction_states
         for xs in cross_sections:
-            # clone first reflectivity workspace to include metadata
+            # use the first reflectivity workspace to copy metadata from
             ws_first = self.data_manager.reduction_list[0].cross_sections[xs].reflectivity_workspace
-            # replace data with combined reflectivity data
+            # create a workspace from the stitched reflectivity data and add metadata
             ws_combined = _create_combined_reflectivity_workspace(ws_first, xs)
             combined_reflectivity_workspaces.append(ws_combined)
 

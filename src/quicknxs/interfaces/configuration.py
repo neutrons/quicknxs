@@ -52,6 +52,38 @@ class Configuration(object):
     bck_offset = 5
     force_bck_roi = True
 
+    @classmethod
+    def setup_default_values(cls):
+        """Initialize class variables - only used for testing purposes"""
+        cls.QX_VS_QZ = 0
+        cls.KZI_VS_KZF = 1
+        cls.DELTA_KZ_VS_QZ = 3
+        cls.sample_size = 10
+        cls.use_constant_q = False
+        cls.wl_bandwidth = 3.2
+        cls.do_final_rebin_global = True
+        cls.final_rebin_step_global = -0.01
+        cls.normalize_to_unity = True
+        cls.total_reflectivity_q_cutoff = 0.01
+        cls.global_stitching = False
+        cls.polynomial_stitching = False
+        cls.polynomial_stitching_degree = 3
+        cls.polynomial_stitching_points = 3
+        cls.apply_deadtime = False
+        cls.paralyzable_deadtime = True
+        cls.deadtime_value = 4.2
+        cls.deadtime_tof_step = 100
+        cls.lock_direct_beam_y = False
+        cls.nbr_events_min = 100
+        cls.use_roi = True
+        cls.update_peak_range = False
+        cls.use_peak_finder = False
+        cls.use_low_res_finder = False
+        cls.use_roi_bck = False
+        cls.use_tight_bck = False
+        cls.bck_offset = 5
+        cls.force_bck_roi = True
+
     # TODO: settings may not be needed anymore
     def __init__(self, settings=None):
         self.instrument = Instrument()
@@ -174,38 +206,6 @@ class Configuration(object):
     def bck_roi(self, value):
         self.bck_position = (value[1] + value[0]) / 2.0
         self.bck_width = value[1] - value[0]
-
-    @classmethod
-    def setup_default_values(cls):
-        """Only used for testing purposes"""
-        cls.QX_VS_QZ = 0
-        cls.KZI_VS_KZF = 1
-        cls.DELTA_KZ_VS_QZ = 3
-        cls.sample_size = 10
-        cls.use_constant_q = False
-        cls.wl_bandwidth = 3.2
-        cls.do_final_rebin_global = True
-        cls.final_rebin_step_global = -0.01
-        cls.normalize_to_unity = True
-        cls.total_reflectivity_q_cutoff = 0.01
-        cls.global_stitching = False
-        cls.polynomial_stitching = False
-        cls.polynomial_stitching_degree = 3
-        cls.polynomial_stitching_points = 3
-        cls.apply_deadtime = False
-        cls.paralyzable_deadtime = True
-        cls.deadtime_value = 4.2
-        cls.deadtime_tof_step = 100
-        cls.lock_direct_beam_y = False
-        cls.nbr_events_min = 100
-        cls.use_roi = True
-        cls.update_peak_range = False
-        cls.use_peak_finder = False
-        cls.use_low_res_finder = False
-        cls.use_roi_bck = False
-        cls.use_tight_bck = False
-        cls.bck_offset = 5
-        cls.force_bck_roi = True
 
 
 def get_direct_beam_low_res_roi(data_conf, direct_beam_conf):

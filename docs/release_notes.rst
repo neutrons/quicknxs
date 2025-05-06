@@ -11,6 +11,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 .. **Of interest to the User**:
 .. - PR #158: output the specular data also in ORSO format
+.. - PR #156: binned off-specular preview plot shows data for all runs
 
 .. **Of interest to the Developer:**
 
