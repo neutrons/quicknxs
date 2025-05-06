@@ -198,7 +198,7 @@ class ProcessingWorkflow(object):
                 DataY=output_xs[:, 1],
                 DataE=output_xs[:, 2],
                 Dx=output_xs[:, 3],
-                OutputWorkspace=str(ws_first) + "-combined",
+                OutputWorkspace=str(_ws) + "-combined",
             )
             CopyLogs(_ws, _ws_combined, MergeStrategy="WipeExisting")
             return _ws_combined
