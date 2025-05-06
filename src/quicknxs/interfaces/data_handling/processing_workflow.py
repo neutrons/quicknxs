@@ -20,6 +20,9 @@ from email.mime.text import MIMEText
 from typing import Dict
 
 import numpy as np
+from mantid.simpleapi import CopyLogs, CreateWorkspace
+from mr_reduction import io_orso
+from mr_reduction.types import MantidWorkspace
 
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, off_specular, quicknxs_io
@@ -177,6 +180,63 @@ class ProcessingWorkflow(object):
             quicknxs_io.write_reflectivity_data(state_output_path, output_data[pol_state], col_names, as_5col=five_cols)
             self.exported_data_files.append(state_output_path)
 
+    def write_orso(self, output_data: Dict[str, np.ndarray]):
+        """
+        Save individual and combined reflectivity curves to ORSO format.
+
+        This function collects reflectivity data and metadata and saves one individual ORSO ASCII
+        file per run and peak and one combined (stitched) ORSO ASCII file per peak.
+
+        Parameters
+        ----------
+        output_data: Dict[str, np.ndarray]
+            Dictionary of scaled and stitched data where the key is the cross-section name and the
+            value is an array of reflectivity data with shape (number of Q points, 5), where the 5
+            columns are:
+            - Qz: normal momentum transfer
+            - R: reflectivity
+            - dR: reflectivity error
+            - dQz: normal momentum transfer error
+            - theta: scattering angle
+        """
+        # Save the individual runs to ORSO
+        individual_paths = {}
+        for nexus_data in self.data_manager.reduction_list:
+            run = str(nexus_data.number)
+            reflectivity_workspaces = nexus_data.get_reflectivity_workspace_group()
+            filepath = self.get_file_name([run], "all", "ort")
+            io_orso.save_cross_sections(reflectivity_workspaces, filepath)
+            individual_paths[run] = filepath
+
+        def _create_combined_reflectivity_workspace(_ws: MantidWorkspace, _xs: str):
+            """Create a new workspace with metadata copied from the given workspace and
+            output data for the given cross-section"""
+            output_xs = output_data[_xs]
+            _ws_combined = CreateWorkspace(
+                DataX=output_xs[:, 0],
+                DataY=output_xs[:, 1],
+                DataE=output_xs[:, 2],
+                Dx=output_xs[:, 3],
+                OutputWorkspace=str(_ws) + "-combined",
+            )
+            CopyLogs(_ws, _ws_combined, MergeStrategy="WipeExisting")
+            return _ws_combined
+
+        # Assemble the combined reflectivity workspaces
+        combined_reflectivity_workspaces = []
+        cross_sections = self.data_manager.reduction_states
+        for xs in cross_sections:
+            # use the first reflectivity workspace to copy metadata from
+            ws_first = self.data_manager.reduction_list[0].cross_sections[xs].reflectivity_workspace
+            # create a workspace from the stitched reflectivity data and add metadata
+            ws_combined = _create_combined_reflectivity_workspace(ws_first, xs)
+            combined_reflectivity_workspaces.append(ws_combined)
+
+        # Save the combined reflectivity to ORSO
+        run_list = [str(item.number) for item in self.data_manager.reduction_list]
+        combined_path = self.get_file_name(run_list, "all", "ort")
+        io_orso.save_cross_sections(combined_reflectivity_workspaces, combined_path)
+
     def specular_reflectivity(self):
         """
         Retrieve the computed reflectivity and save it to file
@@ -194,6 +254,9 @@ class ProcessingWorkflow(object):
         # QuickNXS format
         output_file_base = self.get_file_name(run_list)
         self.write_quicknxs(output_data, output_file_base)
+
+        # ORSO format
+        self.write_orso(output_data)
 
         # Numpy arrays
         if self.output_options["format_numpy"]:

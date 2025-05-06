@@ -12,3 +12,4 @@ User Guide
    binning
    dead_time_correction
    peak_finder
+   reduction
