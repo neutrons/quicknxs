@@ -10,6 +10,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. (date of release, format YYYY-MM-DD)
 
 .. **Of interest to the User**:
+.. - PR #160: Fix home button doesn't reset proper bounds
 .. - PR #158: output the specular data also in ORSO format
 .. - PR #156: binned off-specular preview plot shows data for all runs
 
