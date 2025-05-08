@@ -10,7 +10,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from quicknxs.interfaces import load_ui
 from quicknxs.interfaces.data_handling.processing_workflow import ProcessingWorkflow

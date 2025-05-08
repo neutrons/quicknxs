@@ -56,11 +56,10 @@ class NavigationToolbar(NavigationToolbar2QT):
 
     _auto_toggle = False
 
-    def __init__(self, canvas, parent, coordinates=False, main_window=None):
+    def __init__(self, canvas, parent, coordinates=False):
         NavigationToolbar2QT.__init__(self, canvas, parent, coordinates)
         self.setIconSize(QtCore.QSize(20, 20))
         self.calling_function = None
-        self.main_window = main_window
         self._init_toolbar()
         self._add_buttons()
 
@@ -222,9 +221,9 @@ class NavigationToolbarReflectivity(NavigationToolbar):
     A navigation toolbar for reflectivity plots created using matplotlib's errorbar function.
     """
 
-    def __init__(self, canvas, parent, coordinates=False, main_window=None):
+    def __init__(self, canvas, parent, coordinates=False):
         self.q_pow_4_button = None
-        super().__init__(canvas, parent, coordinates, main_window=main_window)
+        super().__init__(canvas, parent, coordinates)
 
     def _add_buttons(self):
         """Add buttons specific to the reflectivity navigation toolbar."""
@@ -371,16 +370,7 @@ class MPLWidget(QtWidgets.QWidget):
     cbar = None
 
     def __init__(self, parent=None, with_toolbar=True, coordinates=False):
-        def _get_main_window(parent_widget):
-            if parent_widget is None:
-                return None
-            if isinstance(parent_widget, QtWidgets.QMainWindow):
-                return parent_widget
-            else:
-                return _get_main_window(parent_widget.parentWidget())
-
         QtWidgets.QWidget.__init__(self, parent)
-        self.main_window = _get_main_window(parent)
         self.canvas = MplCanvas()
         self.canvas.ax2 = None
         self.vbox = QtWidgets.QVBoxLayout()
@@ -388,9 +378,9 @@ class MPLWidget(QtWidgets.QWidget):
         if with_toolbar:
             self.stacked_toolbars = QtWidgets.QStackedWidget(self.canvas)
             self.stacked_toolbars.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
-            toolbar_generic = NavigationToolbarGeneric(self.canvas, self, main_window=self.main_window)
+            toolbar_generic = NavigationToolbarGeneric(self.canvas, self)
             toolbar_generic.coordinates = coordinates
-            toolbar_refl = NavigationToolbarReflectivity(self.canvas, self, main_window=self.main_window)
+            toolbar_refl = NavigationToolbarReflectivity(self.canvas, self)
             toolbar_refl.coordinates = coordinates
             self.stacked_toolbars.addWidget(toolbar_generic)
             self.stacked_toolbars.addWidget(toolbar_refl)

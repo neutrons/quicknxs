@@ -558,8 +558,9 @@ class MainHandler(object):
             self.main_window, "Open reduced file...", directory=output_dir, filter=filter_
         )
 
-        t_0 = time.time()
         if file_path:
+            t_0 = time.time()
+
             # Clear the reduction lists first so that we don't create problems later
             self.main_window.reset_data_tabs()
             self.clear_direct_beams()

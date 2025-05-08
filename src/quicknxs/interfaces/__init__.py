@@ -1,11 +1,15 @@
 import os
+from typing import TypeVar
 
-from PyQt5.uic import loadUi
+from qtpy.QtWidgets import QDialog, QMainWindow
+from qtpy.uic import loadUi
 
 from quicknxs import ui
 
+Q = TypeVar("Q", QMainWindow, QDialog)
 
-def load_ui(ui_filename, baseinstance):
+
+def load_ui(ui_filename: str, baseinstance: Q) -> Q:
     ui_filename = os.path.split(ui_filename)[-1]
     ui_path = os.path.dirname(ui.__file__)
 
