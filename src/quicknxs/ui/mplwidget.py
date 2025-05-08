@@ -67,9 +67,7 @@ class NavigationToolbar(NavigationToolbar2QT):
     def _init_toolbar(self):
         # add the extra default toolbar functions for quicknxs print, & lines
         if not hasattr(self, "_actions"):
-            self._actions = {
-                ("Home", "Reset original view", "home", "home"),
-            }
+            self._actions = {}
 
         icon = getIcon("document-print.png")
         a = self.addAction(icon, "Print", self.print_figure)
@@ -102,16 +100,6 @@ class NavigationToolbar(NavigationToolbar2QT):
         Function for derived classes to add buttons to the toolbar.
         """
         pass
-
-    def home(self):
-        """Reset the view to the original.
-
-        This is a copy of the original home function, but it emits a signal to the main window
-        to reset the view of the reflectivity plot.
-        """
-        if self.main_window is not None:
-            print("Emitting signal to main window to reset view")
-            self.main_window.initiate_reflectivity_plot.emit(False)
 
     def print_figure(self):
         """
@@ -412,6 +400,17 @@ class MPLWidget(QtWidgets.QWidget):
             self.toolbar = None
         self.setLayout(self.vbox)
 
+    def sync_toolbar_view(self, clear_history=False):
+        """Ensure navigation toolbar state matches the current plot."""
+        if not self.toolbar:
+            return
+        if clear_history:
+            self.toolbar._views.clear()
+            self.toolbar._positions.clear()
+        self.toolbar.push_current()
+        self.canvas.draw()
+        self.toolbar.update()
+
     def leaveEvent(self, event):
         """
         Make sure the cursor is reset to it's default when leaving the widget.
@@ -441,13 +440,17 @@ class MPLWidget(QtWidgets.QWidget):
         """
         Convenience wrapper for self.canvas.ax.plot
         """
-        return self.canvas.ax.plot(*args, **opts)
+        result = self.canvas.ax.plot(*args, **opts)
+        self.sync_toolbar_view()
+        return result
 
     def semilogy(self, *args, **opts):
         """
         Convenience wrapper for self.canvas.ax.semilogy
         """
-        return self.canvas.ax.semilogy(*args, **opts)
+        result = self.canvas.ax.semilogy(*args, **opts)
+        self.sync_toolbar_view()
+        return result
 
     def errorbar(self, *args, **opts):
         """
@@ -473,7 +476,9 @@ class MPLWidget(QtWidgets.QWidget):
             ls = setting.value(self.toolbar.calling_function + "/linestyle", "-")
             opts["ls"] = str(ls)
 
-        return self.canvas.ax.errorbar(*args, **opts)
+        result = self.canvas.ax.errorbar(*args, **opts)
+        self.sync_toolbar_view()
+        return result
 
     def pcolormesh(self, datax, datay, dataz, log=False, imin=None, imax=None, update=False, **opts):
         """
@@ -486,6 +491,7 @@ class MPLWidget(QtWidgets.QWidget):
                 self.cplot = self.canvas.ax.pcolormesh(datax, datay, dataz, **opts)
         else:
             self.update(datax, datay, dataz)
+        self.sync_toolbar_view()
         return self.cplot
 
     def imshow(self, data, log=False, imin=None, imax=None, update=True, **opts):
@@ -499,6 +505,7 @@ class MPLWidget(QtWidgets.QWidget):
                 self.cplot = self.canvas.ax.imshow(data, **opts)
         else:
             self.update(data, **opts)
+        self.sync_toolbar_view()
         return self.cplot
 
     def set_title(self, new_title, fontsize=None):
@@ -553,4 +560,6 @@ class MPLWidget(QtWidgets.QWidget):
             return self.canvas.ax.legend(*args, **opts)
 
     def adjust(self, **adjustment):
-        return self.canvas.fig.subplots_adjust(**adjustment)
+        result = self.canvas.fig.subplots_adjust(**adjustment)
+        self.sync_toolbar_view()
+        return result
