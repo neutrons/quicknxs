@@ -9,7 +9,7 @@ This code was taken as-is from QuickNXS v1
 from mantid.simpleapi import logger
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
-from qtpy import QtWidgets
+from PyQt5 import QtWidgets
 
 # quicknxs imports
 from quicknxs.interfaces import load_ui

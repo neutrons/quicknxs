@@ -8,7 +8,7 @@ import logging
 from typing import List
 
 # third-party imports
-from qtpy import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 # quicknxs imports
 import quicknxs.ui.mplwidget as mpl

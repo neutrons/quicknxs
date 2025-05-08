@@ -44,14 +44,13 @@ import mr_reduction
 
 import quicknxs
 
-print(f"""##################################################
-# QuickNXS {quicknxs.__version__}
-#    with mr_reduction: {mr_reduction.__version__}
-#    with Mantid:       {mantid.__version__}
-##################################################
-""")
+print("##################################################")
+print("# QuickNXS %s " % quicknxs.__version__)
+print("#    with mr_reduction: %s " % mr_reduction.__version__)
+print("#    with Mantid: %s " % mantid.__version__)
+print("##################################################")
 
-from qtpy.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication
 
 from quicknxs.interfaces.main_window import MainWindow
 

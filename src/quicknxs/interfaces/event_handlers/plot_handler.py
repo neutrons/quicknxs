@@ -11,7 +11,7 @@ import time
 from typing import List
 
 # third-party imports
-from qtpy import QtWidgets
+from PyQt5 import QtWidgets
 
 # quicknxs imports
 from quicknxs.ui.mplwidget import MPLWidget
