@@ -558,8 +558,9 @@ class MainHandler(object):
             self.main_window, "Open reduced file...", directory=output_dir, filter=filter_
         )
 
-        t_0 = time.time()
         if file_path:
+            t_0 = time.time()
+
             # Clear the reduction lists first so that we don't create problems later
             self.main_window.reset_data_tabs()
             self.clear_direct_beams()
@@ -718,6 +719,9 @@ class MainHandler(object):
             if not matches:  # Look for old-style nexus file name
                 search_string = configuration.instrument.legacy_search_template % run_number
                 matches = glob.glob(search_string + "_event.nxs")
+            if not matches:
+                self.report_message("Could not locate run number %s" % run_number, pop_up=True)
+                return
             file_list.append(matches[0])  # there should be only one match, since we query with one run number
 
         self.ui.numberSearchEntry.setText("")  # empty the contents of in the LineEdit widget
