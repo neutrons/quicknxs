@@ -624,6 +624,7 @@ class PlotManager(object):
         and any dataset stored. Intensities from direct beam
         measurements can be used for normalization.
         """
+        print("plot_refl")
         self.main_window.ui.intensity_widget.hide()
         self.main_window.ui.refl.clear()
 
