@@ -14,7 +14,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. - PR #156: binned off-specular preview plot shows data for all runs
 
 .. **Of interest to the Developer:**
-
+.. - PR #161: update imports and add type hinting to improve intellisense
 
 v4.4.0
 ------
