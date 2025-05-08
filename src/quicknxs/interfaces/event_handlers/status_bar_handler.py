@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QStatusBar
+from qtpy.QtWidgets import QStatusBar
 
 
 class StatusBarHandler(object):

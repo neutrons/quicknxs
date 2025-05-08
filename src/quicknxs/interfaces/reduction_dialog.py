@@ -6,7 +6,7 @@ and in which formats to write them.
 
 import os
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from quicknxs.interfaces import load_ui
 

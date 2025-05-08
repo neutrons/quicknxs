@@ -26,9 +26,9 @@ class DataManager(object):
     def __init__(self, current_directory: str):
         self.current_directory = current_directory
         # current file name is used for file list table to set the current item
-        self.current_file_name: str = None
+        self.current_file_name: Optional[str] = None
         # Current data set
-        self._nexus_data: NexusData = None
+        self._nexus_data: Optional[NexusData] = None
         self.active_channel: Optional[CrossSectionData] = None
         # Cache of loaded data: list of NexusData instances
         self._cache: List[NexusData] = list()
@@ -402,7 +402,7 @@ class DataManager(object):
         call_back(_value, message)
 
     def load(self, file_path, configuration, force=False, update_parameters=True, progress=None):
-        # type: (str, Configuration, Optional[bool], Optional[bool], Optional[ProgressReporter]) -> bool
+        # type: (str, Configuration, Optional[bool], bool, Optional[ProgressReporter]) -> bool
         r"""
         @brief Load one ore more Nexus data files
         @param file_path: absolute path to one or more files. If more than one, files are concatenated with the
@@ -421,7 +421,7 @@ class DataManager(object):
         #    then assign the new data to the proper indexes in lists reduction_list and direct_beam_list
         # 5. Compute reflectivity if data is loaded from file
 
-        nexus_data = None  # type: NexusData
+        nexus_data = None  # type: Optional[NexusData]
         is_from_cache = False  # if True, the file has been loaded before
         reduction_list_id = None
         direct_beam_list_id = None
@@ -490,7 +490,7 @@ class DataManager(object):
             progress(100)
         return is_from_cache
 
-    def update_configuration(self, configuration, active_only: bool = False, nexus_data: NexusData = None):
+    def update_configuration(self, configuration, active_only: bool = False, nexus_data: Optional[NexusData] = None):
         """
         Update configuration
         """
