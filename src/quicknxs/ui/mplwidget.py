@@ -10,19 +10,18 @@ import inspect
 import os
 import tempfile
 
-import matplotlib.cm
 import matplotlib.colors
 import numpy as np
-from matplotlib.backends.backend_qt5 import NavigationToolbar2QT
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt import NavigationToolbar2QT
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.colors import LogNorm, Normalize
 from matplotlib.figure import Figure
-from PyQt5 import QtCore, QtGui, QtPrintSupport, QtWidgets
+from qtpy import QtCore, QtGui, QtPrintSupport, QtWidgets
 
 from quicknxs.config import plotting
 
 try:
-    import matplotlib.backends.qt5_editor.figureoptions as figureoptions
+    import matplotlib.backends.qt_editor.figureoptions as figureoptions
 except ImportError:
     figureoptions = None
 
@@ -391,6 +390,17 @@ class MPLWidget(QtWidgets.QWidget):
             self.toolbar = None
         self.setLayout(self.vbox)
 
+    def sync_toolbar_view(self, clear_history=False):
+        """Ensure navigation toolbar state matches the current plot."""
+        if not self.toolbar:
+            return
+        if clear_history:
+            self.toolbar._views.clear()
+            self.toolbar._positions.clear()
+        self.toolbar.push_current()
+        self.canvas.draw()
+        self.toolbar.update()
+
     def leaveEvent(self, event):
         """
         Make sure the cursor is reset to it's default when leaving the widget.
@@ -420,13 +430,17 @@ class MPLWidget(QtWidgets.QWidget):
         """
         Convenience wrapper for self.canvas.ax.plot
         """
-        return self.canvas.ax.plot(*args, **opts)
+        result = self.canvas.ax.plot(*args, **opts)
+        self.sync_toolbar_view()
+        return result
 
     def semilogy(self, *args, **opts):
         """
         Convenience wrapper for self.canvas.ax.semilogy
         """
-        return self.canvas.ax.semilogy(*args, **opts)
+        result = self.canvas.ax.semilogy(*args, **opts)
+        self.sync_toolbar_view()
+        return result
 
     def errorbar(self, *args, **opts):
         """
@@ -452,7 +466,9 @@ class MPLWidget(QtWidgets.QWidget):
             ls = setting.value(self.toolbar.calling_function + "/linestyle", "-")
             opts["ls"] = str(ls)
 
-        return self.canvas.ax.errorbar(*args, **opts)
+        result = self.canvas.ax.errorbar(*args, **opts)
+        self.sync_toolbar_view()
+        return result
 
     def pcolormesh(self, datax, datay, dataz, log=False, imin=None, imax=None, update=False, **opts):
         """
@@ -465,6 +481,7 @@ class MPLWidget(QtWidgets.QWidget):
                 self.cplot = self.canvas.ax.pcolormesh(datax, datay, dataz, **opts)
         else:
             self.update(datax, datay, dataz)
+        self.sync_toolbar_view()
         return self.cplot
 
     def imshow(self, data, log=False, imin=None, imax=None, update=True, **opts):
@@ -478,6 +495,7 @@ class MPLWidget(QtWidgets.QWidget):
                 self.cplot = self.canvas.ax.imshow(data, **opts)
         else:
             self.update(data, **opts)
+        self.sync_toolbar_view()
         return self.cplot
 
     def set_title(self, new_title, fontsize=None):
@@ -532,4 +550,6 @@ class MPLWidget(QtWidgets.QWidget):
             return self.canvas.ax.legend(*args, **opts)
 
     def adjust(self, **adjustment):
-        return self.canvas.fig.subplots_adjust(**adjustment)
+        result = self.canvas.fig.subplots_adjust(**adjustment)
+        self.sync_toolbar_view()
+        return result
