@@ -602,17 +602,22 @@ class PlotManager(object):
         # format and plot tof data
 
         if self.main_window.ui.xLamda.isChecked():
-            self.main_window.ui.intensity.plot(
+            self.main_window.ui.intensity.errorbar(
                 self.main_window.data_manager.active_channel.wavelength,
-                self.main_window.data_manager.active_channel.tofdata,
+                self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 2],
+                yerr=self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 3],
             )
             self.main_window.ui.intensity.set_xlabel("$\\lambda{}$ [Å]")
         else:
-            self.main_window.ui.intensity.plot(self.main_window.data_manager.active_channel.tofdata)
+            self.main_window.ui.intensity.errorbar(
+                self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 0] / 1000,
+                self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 2],
+                yerr=self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 3],
+            )
             self.main_window.ui.intensity.set_xlabel("ToF [ms]")
 
         # y-label is counts in either case
-        self.main_window.ui.intensity.set_ylabel("Counts")
+        self.main_window.ui.intensity.set_ylabel("Normalized ROI Counts")
 
         # draw and show
         self.main_window.ui.intensity.draw()
