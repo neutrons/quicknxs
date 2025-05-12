@@ -10,22 +10,20 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. (date of release, format YYYY-MM-DD)
 
 .. **Of interest to the User**:
-.. - PR #162: Direct beam intensity plot now uses normalized ROI counts, and adds error bars
-.. - PR #160: Fix home button doesn't reset proper bounds
-.. - PR #158: output the specular data also in ORSO format
-.. - PR #156: binned off-specular preview plot shows data for all runs
 
 .. **Of interest to the Developer:**
-.. - PR #161: update imports and add type hinting to improve intellisense
 
 v4.4.0
 ------
-2025-05-13
+2025-05-20
 
-New features in this release include the ability to load v1 (pre-EPICS) NeXus data files and
-plotting the intensity vs ToF for direct beam runs. The behavior of the
-:ref:`peak finder settings<peak_finder>` are changed to make it more clear whether the peak
-region of interest is found from the metadata or using automatic peak finding.
+New features in this release include :ref:`reduction output<reduction>` in
+`ORSO format <https://www.reflectometry.org/file_format/specification>`_ (PR #158),
+the ability to load v1 (pre-EPICS) NeXus data files (PR #147) and plotting the intensity vs ToF for
+direct beam runs (PR #153). The behavior of the :ref:`peak finder settings<peak_finder>` are changed
+to make it more clear whether the peak region of interest is found from the metadata or using
+automatic peak finding (PR #143). The release also includes bug fixes to the off-specular preview
+plot (PR #156) and the plot home button (PR #160).
 
 v4.3.0
 ------
