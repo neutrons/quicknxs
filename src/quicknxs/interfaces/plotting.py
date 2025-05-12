@@ -601,18 +601,24 @@ class PlotManager(object):
 
         # format and plot tof data
 
+        counts_normalized = self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 2]
+        counts_normalized_error = self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 3]
+
         if self.main_window.ui.xLamda.isChecked():
             self.main_window.ui.intensity.errorbar(
                 self.main_window.data_manager.active_channel.wavelength,
-                self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 2],
-                yerr=self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 3],
+                counts_normalized,
+                yerr=counts_normalized_error,
             )
             self.main_window.ui.intensity.set_xlabel("$\\lambda{}$ [Å]")
         else:
+            # convert raw microsecond units to milliseconds to match xtof plot
+            tof_ms = tof_ms = self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 0] / 1000
+
             self.main_window.ui.intensity.errorbar(
-                self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 0] / 1000,
-                self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 2],
-                yerr=self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 3],
+                tof_ms,
+                counts_normalized,
+                yerr=counts_normalized_error,
             )
             self.main_window.ui.intensity.set_xlabel("ToF [ms]")
 
