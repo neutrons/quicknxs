@@ -30,7 +30,7 @@ class SmoothDialog(QtWidgets.QDialog):
 
     def __init__(self, parent, data_manager):
         QtWidgets.QDialog.__init__(self, parent)
-        self.ui = load_ui("ui_smooth_dialog.ui", baseinstance=self)
+        self.ui = load_ui("ui_smooth_dialog.ui", base_instance=self)
         self.data_manager = data_manager
         self.ui.plot.canvas.mpl_connect("motion_notify_event", self.plotSelect)
         self.ui.plot.canvas.mpl_connect("button_press_event", self.plotSelect)

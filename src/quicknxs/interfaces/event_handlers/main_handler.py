@@ -15,7 +15,7 @@ from typing import List, Optional
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from quicknxs.config import Settings
 from quicknxs.config.gui import QColors
@@ -116,7 +116,9 @@ class MainHandler(object):
         else:
             self.main_window.frame_2.hide()
 
-    def open_file(self, file_path: str, force: Optional[bool] = False, silent: Optional[bool] = False) -> None:
+    def open_file(
+        self, file_path: Optional[str], force: Optional[bool] = False, silent: Optional[bool] = False
+    ) -> None:
         r"""
         @brief Read one or more data files. If more than one, merge their data.
         @param file_path: absolute path to data files. If more than one file, paths are joined with
@@ -128,6 +130,10 @@ class MainHandler(object):
         # 1. check the file exists
         # 2. Invoke DataManager.load()
         # 3. if silent==False, invoke DataManager.file_loaded()
+
+        if file_path is None:
+            self.report_message("No file selected", pop_up=True)
+            return
 
         for single_file_path in file_path.split(
             FilePath.merge_symbol
@@ -804,16 +810,15 @@ class MainHandler(object):
         return True
 
     def update_reduction_table(self, table_widget: QtWidgets.QTableWidget, idx: int, d: CrossSectionData):
-        """
-        Update the reduction table
+        """Update the reduction table
 
         Parameters
         ----------
         table_widget: QtWidgets.QTableWidget
             Table widget of the table to update
-        idx: int
+        idx:
             Row to update
-        d: CrossSectionData
+        d:
             Cross-section data
         """
         self.main_window.auto_change_active = True
@@ -905,7 +910,7 @@ class MainHandler(object):
         self.ui.normalizeTable.removeRow(index)
         self.main_window.initiate_intensity_plot.emit(False)
 
-    def reduction_table_changed(self, item):
+    def reduction_table_changed(self, item: QtWidgets.QTableWidgetItem):
         """
         Perform action upon change in data reduction list.
         """
@@ -1012,7 +1017,22 @@ class MainHandler(object):
         self.main_window.initiate_intensity_plot.emit(False)
         return True
 
-    def update_direct_beam_table(self, idx, d):
+    def normalize_table_changed(self, item: QtWidgets.QTableWidgetItem):
+        """Update the active cross-section data when the normalization table is changed."""
+
+        if self.main_window.auto_change_active:
+            return
+
+        row = item.row()
+        col = item.column()
+        xs_dict = self._data_manager.direct_beam_list[row].cross_sections
+        active_xs = self._data_manager.active_channel.name
+        xs = xs_dict[active_xs]
+        keys = [
+            "number",
+        ]
+
+    def update_direct_beam_table(self, idx: int, d: CrossSectionData) -> None:
         """
         Update a direct beam table entry
         :param int idx: row index
@@ -1020,15 +1040,13 @@ class MainHandler(object):
         """
         self.main_window.auto_change_active = True
         item = QtWidgets.QTableWidgetItem(str(d.number))
-        item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         if d == self._data_manager.active_channel:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
 
         self.ui.normalizeTable.setItem(idx, 0, QtWidgets.QTableWidgetItem(item))
-        wl = "%s - %s" % (d.wavelength[0], d.wavelength[-1])
-        self.ui.normalizeTable.setItem(idx, 7, QtWidgets.QTableWidgetItem(wl))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.peak_position))
         item.setBackground(QColors.dark_grey)
         self.ui.normalizeTable.setItem(idx, 1, QtWidgets.QTableWidgetItem(item))
@@ -1041,6 +1059,8 @@ class MainHandler(object):
         item.setBackground(QColors.dark_grey)
         self.ui.normalizeTable.setItem(idx, 5, QtWidgets.QTableWidgetItem(item))
         self.ui.normalizeTable.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
+        wl = "%s - %s" % (d.wavelength[0], d.wavelength[-1])
+        self.ui.normalizeTable.setItem(idx, 7, QtWidgets.QTableWidgetItem(wl))
         self.main_window.auto_change_active = False
 
     def active_data_changed(self):
