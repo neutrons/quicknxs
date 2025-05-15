@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name, line-too-long, too-many-public-methods, too-many-instance-attributes,
 # pylint; disable=wrong-import-order, bare-except
-r"""
-Main application window
-"""
-
-# package imports
-# standard imports
 import logging
 import os
 
-# 3rd-party
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
+from qtpy.QtWidgets import QTableWidgetItem
 
 import quicknxs
 from quicknxs.interfaces import load_ui
@@ -30,25 +24,25 @@ class MainWindow(QtWidgets.QMainWindow):
     """Main application window"""
 
     # UI events
-    file_loaded_signal = QtCore.pyqtSignal()
+    file_loaded_signal = QtCore.Signal()
     """Signal emitted when a file is loaded."""
 
-    initiate_projection_plot = QtCore.pyqtSignal(bool)
+    initiate_projection_plot = QtCore.Signal(bool)
     """Signal to initiate the projection plot."""
 
-    initiate_reflectivity_plot = QtCore.pyqtSignal(bool)
+    initiate_reflectivity_plot = QtCore.Signal(bool)
     """Signal to initiate the reflectivity plot."""
 
-    initiate_intensity_plot = QtCore.pyqtSignal(bool)
+    initiate_intensity_plot = QtCore.Signal(bool)
     """Signal to initiate the intensity plot."""
 
-    update_specular_viewer = QtCore.pyqtSignal()
+    update_specular_viewer = QtCore.Signal()
     """Signal to update the specular viewer."""
 
-    update_off_specular_viewer = QtCore.pyqtSignal()
+    update_off_specular_viewer = QtCore.Signal()
     """Signal to update the off-specular viewer."""
 
-    update_gisans_viewer = QtCore.pyqtSignal()
+    update_gisans_viewer = QtCore.Signal()
     """Signal to update the GISANS viewer."""
 
     def __init__(self):
@@ -60,7 +54,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Initialize the UI widgets
         self.reduction_table_menu = None
-        self.ui = load_ui("ui_main_window.ui", baseinstance=self)
+        self.ui = load_ui("ui_main_window.ui", base_instance=self)
         version = quicknxs.__version__ if quicknxs.__version__.lower() != "unknown" else ""
         self.setWindowTitle(f"QuickNXS Magnetic Reflectivity {version}")
 
@@ -74,7 +68,9 @@ class MainWindow(QtWidgets.QMainWindow):
         r"""Setting `auto_change_active = True` bypasses execution of:
         - MainWindow.file_open_from_list()
         - MainWindow.changeRegionValues()
-        - MainHandler.reduction_table_changed()"""
+        - MainHandler.reduction_table_changed()
+        - MainHandler.normalize_table_changed()
+        """
         self.auto_change_active = False
 
         # Event handlers
@@ -397,6 +393,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def clearRefList(self):
         """Signal handling"""
         self.file_handler.clear_reflectivity()
+
+    def normalize_table_changed(self, item: QTableWidgetItem):
+        self.file_handler.normalize_table_changed(item)
 
     def setNorm(self):
         """Signal handling"""

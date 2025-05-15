@@ -24,7 +24,7 @@ class ResultViewer(QtWidgets.QDialog):
 
     def __init__(self, parent, data_manager):
         super(ResultViewer, self).__init__(parent)
-        self.ui = load_ui("ui_result_viewer.ui", baseinstance=self)
+        self.ui = load_ui("ui_result_viewer.ui", base_instance=self)
         self.ui.resize(1024, 1024)
         self.settings = QtCore.QSettings(".quicknxs")
         self.data_manager = data_manager

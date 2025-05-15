@@ -42,6 +42,37 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
 ]
+
+autodoc_mock_imports = [
+    ### Qt imports
+    "qtpy",
+    # "qtpy.uic",
+    "qtpy.QtWidgets",
+    "qtpy.QtWidgets.QMainWindow",
+    "PyQt5.QtWidgets.QMainWindow",
+    ### Mantid imports
+    "mantid",
+    "mantid.dataobjects",
+    # "mantid.kernel",
+    # "mantid.utils",
+    # "mantid.utils.logging",
+    "mantid.simpleapi",
+    # "mantid.geometry",
+    # "mantidqt.widgets",
+    # "mantidqt.widgets.algorithmprogress",
+    # "mantidqt",
+    # "mantid.plots",
+    # "mantid.plots.plotfunctions",
+    # "mantid.plots.datafunctions",
+    # "mantid.plots.utility",
+]
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
+}
+intersphinx_disabled_domains = ["std"]
+
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
@@ -67,7 +98,7 @@ html_theme = "sphinx_rtd_theme"  # "alabaster"
 autosummary_generate = True
 
 # Napoleon settings
-napoleon_google_docstring = False
+napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 
 # Add any paths that contain custom static files (such as style sheets) here,

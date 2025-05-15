@@ -21,7 +21,7 @@ class DeadTimeSettingsView(QDialog):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         filepath = os.path.join(os.path.dirname(__file__), "deadtime_settings.ui")
-        self.ui = loadUi(filepath, baseinstance=self)
+        self.ui = loadUi(filepath, base_instance=self)
         self.set_state_from_global_config()
 
     def set_state_from_global_config(self):

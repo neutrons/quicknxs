@@ -20,43 +20,46 @@ from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
 
 
 class DataManager(object):
+    """Holds information about the current data location and manages the data cache.
+
+    Attributes:
+        current_directory (str): Current directory
+        current_file_name (str): Current file name, used for file list table to set the current item
+        _nexus_data (NexusData): Current data set
+        active_channel (CrossSectionData): Currently active CrossSectionData
+        _cache (List[NexusData]): Cache of loaded data
+        active_reduction_list_index (int): Index of current data (ROI) tab
+        peak_reduction_lists (Dict[int, List[NexusData]]): Dictionary of reduction lists
+            key: reduction list index, corresponds to the reduction table tab in the UI
+        direct_beam_list (List[NexusData]): List of direct beam data sets
+        reduction_states (List[str]): List of cross-sections common to all reduced data sets
+        final_merged_reflectivity (dict): Merged reflectivity data
+        cached_offspec (Optional): Cached off-specular data
+        cached_gisans (Optional): Cached GISANS data
+    """
+
     MAX_CACHE = 50  # maximum number of loaded datasets (either single-file or merged-files types)
     MAIN_REDUCTION_LIST_INDEX = 1
 
     def __init__(self, current_directory: str):
         self.current_directory = current_directory
-        # current file name is used for file list table to set the current item
         self.current_file_name: Optional[str] = None
-        # Current data set
         self._nexus_data: Optional[NexusData] = None
-        self.active_channel: Optional[CrossSectionData] = None
-        # Cache of loaded data: list of NexusData instances
-        self._cache: List[NexusData] = list()
 
-        # Current data tab (ROI)
+        self.active_channel: Optional[CrossSectionData] = None
         self.active_reduction_list_index: int = 1
-        # Main data structure holding the reduction list for each ROI/peak
-        #    key: reduction list index, corresponds to the reduction table tab in the UI
-        #    value: list of NexusData
         self.peak_reduction_lists: Dict[int, List[NexusData]] = {self.active_reduction_list_index: []}
         self.direct_beam_list: List[NexusData] = []
-        # List of cross-sections common to all reduced data sets
         self.reduction_states: List[str] = []
         self.final_merged_reflectivity = {}
 
-        # Cached outputs
+        self._cache: List[NexusData] = list()
         self.cached_offspec = None
         self.cached_gisans = None
 
     @property
     def data_sets(self):
-        """Reduced cross sections
-
-        Returns
-        -------
-        dict
-            dictionary of cross sections
-        """
+        """dict: Dict of reduced cross sections"""
         if self._nexus_data is None:
             return None
         return self._nexus_data.cross_sections
@@ -68,39 +71,17 @@ class DataManager(object):
         return self._nexus_data.file_path
 
     @property
-    def reduction_list(self):
-        """
-        Returns the reduction list for the active data tab
-
-        Returns
-        -------
-        list[NexusData]
-            The reduction list
-        """
+    def reduction_list(self) -> list[NexusData]:
+        """list[NexusData]: Reduction list for the active data tab"""
         return self.peak_reduction_lists[self.active_reduction_list_index]
 
     @reduction_list.setter
     def reduction_list(self, value):
-        """
-        Sets the reduction list for the active data tab
-
-        Parameters
-        ----------
-        value: list[NexusData]
-            The reduction list
-        """
         self.peak_reduction_lists[self.active_reduction_list_index] = value
 
     @property
-    def main_reduction_list(self):
-        """
-        Returns the reduction list for the first (mandatory) data tab
-
-        Returns
-        -------
-        list[NexusData]
-            The reduction list
-        """
+    def main_reduction_list(self) -> list[NexusData]:
+        """Reduction list for the first (mandatory) data tab"""
         return self.peak_reduction_lists[self.MAIN_REDUCTION_LIST_INDEX]
 
     def get_cachesize(self):
@@ -110,9 +91,7 @@ class DataManager(object):
         self._cache = []
 
     def clear_cached_unused_data(self):
-        """
-        Delete cached files that are not in the reduction list or direct beam list
-        """
+        """Delete cached files that are not in the reduction list or direct beam list"""
 
         def is_used_in_reduction(f: NexusData):
             return (self.find_data_in_reduction_list(f) is not None) or (
@@ -122,38 +101,33 @@ class DataManager(object):
         self._cache[:] = [file for file in self._cache if is_used_in_reduction(file)]
 
     def set_active_data_from_reduction_list(self, index):
-        """
-        Set a data set in the reduction list as the active
-        data set according to its index.
-        :param int index: index in the reduction list
+        """Set a data set in the reduction list as the active data set according to its index.
+
+        Args:
+            index (int): index in the reduction list
         """
         if index < len(self.reduction_list):
             self._nexus_data = self.reduction_list[index]
             self.set_channel(0)
 
     def set_active_data_from_direct_beam_list(self, index):
-        """
-        Set a data set in the direct beam list as the active
-        data set according to its index.
-        :param int index: index in the direct beam list
+        """Set a data set in the direct beam list as the active data set according to its index.
+
+        Args:
+            index (int): index in the direct beam list
         """
         if index < len(self.direct_beam_list):
             self._nexus_data = self.direct_beam_list[index]
             self.set_channel(0)
 
     def set_channel(self, index):
-        """Set the current channel to the specified index, or zero
-        if it doesn't exist.
+        """Set the current channel to the specified index, or zero if it doesn't exist.
 
-        Parameters
-        ----------
-        index: int
-            channel index
+        Args:
+            index (int): channel index
 
-        Returns
-        -------
-        bool
-
+        Returns:
+            bool: True if successfully set, otherwise False
         """
         if self.data_sets is None:
             return False
@@ -172,9 +146,13 @@ class DataManager(object):
         return False
 
     def is_active(self, data_set):
-        """
-        Returns True of the given data set is the active data set.
-        :param NexusData: data set object
+        """Check if the given data set is the active data set.
+
+        Args:
+            data_set (NexusData): data set object
+
+        Returns:
+            bool: True if the data set is active, otherwise False
         """
         return data_set == self._nexus_data
 
