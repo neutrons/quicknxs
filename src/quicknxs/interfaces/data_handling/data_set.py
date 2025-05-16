@@ -37,7 +37,7 @@ N_EVENTS_CUTOFF = 100
 REFLECTIVITY_THRESHOLD_VALUE = 1e-6
 
 
-def _is_empty_reflectivity_curve(input_workspace: Union[str, Workspace2D]) -> np.bool:
+def _is_empty_reflectivity_curve(input_workspace: Union[str, Workspace2D]) -> bool:
     r"""
     Check that the reflectivity values are not all zero.
 

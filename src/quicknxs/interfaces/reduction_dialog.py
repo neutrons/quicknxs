@@ -19,7 +19,7 @@ class ReductionDialog(QtWidgets.QDialog):
     def __init__(self, parent):
         super(ReductionDialog, self).__init__(parent)
 
-        self.ui = load_ui("ui_reduce_dialog.ui", base_instance=self)
+        self.ui = load_ui("ui_reduce_dialog.ui", baseinstance=self)
 
         self.settings = QtCore.QSettings(".quicknxs")
 
