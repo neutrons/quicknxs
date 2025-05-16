@@ -55,7 +55,7 @@ class DataManager(object):
     MAIN_REDUCTION_LIST_INDEX = 1
 
     def __init__(self, current_directory: str):
-        self.current_directory : str = current_directory
+        self.current_directory: str = current_directory
         self.current_file_name: Optional[str] = None
         self._nexus_data: Optional[NexusData] = None
 
@@ -136,10 +136,12 @@ class DataManager(object):
     def set_channel(self, index):
         """Set the current channel to the specified index, or zero if it doesn't exist.
 
-        Args:
+        Args
+        ----
             index (int): channel index
 
-        Returns:
+        Returns
+        -------
             bool: True if successfully set, otherwise False
         """
         if self.data_sets is None:
@@ -158,15 +160,8 @@ class DataManager(object):
 
         return False
 
-    def is_active(self, data_set):
-        """Check if the given data set is the active data set.
-
-        Args:
-            data_set (NexusData): data set object
-
-        Returns:
-            bool: True if the data set is active, otherwise False
-        """
+    def is_active(self, data_set: NexusData):
+        """Check if the given data set is the active data set."""
         return data_set == self._nexus_data
 
     def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: list):
@@ -178,9 +173,9 @@ class DataManager(object):
 
         Parameters
         ----------
-        nexus_data: NexusData
+        nexus_data : NexusData
             The data set to check if compatible with reduction list
-        reduction_list: list[NexusData]
+        reduction_list : list[NexusData]
             The reduction list
 
         Returns

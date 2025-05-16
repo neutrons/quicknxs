@@ -5,7 +5,6 @@ import logging
 import os
 
 from qtpy import QtCore, QtWidgets
-from qtpy.QtWidgets import QTableWidgetItem
 
 import quicknxs
 from quicknxs.interfaces import load_ui
@@ -335,30 +334,19 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         self.file_handler.reduction_table_changed(item)
 
-    def reduction_cell_activated(self, row, col):
-        """
-        Select a data set when the user double-clicks on a run number (col 0).
-        in the reduction table.
-        :param int row: row index
-        :param int col: column index
-        """
+    def reduction_cell_activated(self, row: int, col: int):
+        """Select a data set when the user double-clicks on a run number (col 0) in the reduction table."""
         if col == 0:
             self.data_manager.set_active_data_from_reduction_list(row)
             self.file_loaded()
             self.file_handler.active_data_changed()
 
-    def reduction_table_right_click(self, pos):
-        """
-        Handle right-click on the reduction table.
-        :param QPoint pos: mouse position
-        """
+    def reduction_table_right_click(self, pos: QtCore.QPoint):
+        """Handle right-click on the reduction table."""
         self.file_handler.reduction_table_right_click(pos, True)
 
     def direct_beam_table_right_click(self, pos: QtCore.QPoint):
-        """Handle right-click on the direct beam table.
-
-        pos mouse position
-        """
+        """Handle right-click on the direct beam table."""
         self.file_handler.reduction_table_right_click(pos, False)
 
     def direct_beam_cell_activated(self, row: int, col: int):
@@ -485,9 +473,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.addTabButton.setEnabled(False)
 
     def reset_data_tabs(self):
-        """
-        Reset UI to one visible data tab
-        """
+        """Reset UI to one visible data tab."""
         self.min_data_tab_count = 1
         self.max_data_tab_count = 4
         self.data_tab_count = 1
@@ -502,7 +488,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tabWidget.setTabVisible(4, False)
 
     def setCurrentReductionTable(self, tab_index: int):
-        """Update the state for active data set and the UI"""
+        """Update the state for active data set and the UI."""
         if tab_index == 0:  # direct beam tab
             return
         # must first update the active reduction list index, then the UI from the active data
@@ -515,7 +501,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def reduceDatasets(self):
         """Open a dialog to select reduction options for the current list of reduction items."""
-
         if len(self.data_manager.reduction_list) == 0:
             self.file_handler.report_message("The data to be reduced must be added to the reduction table", pop_up=True)
             return
@@ -582,23 +567,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.offspec_qz_bin_width_label.setText("%8.6f 1/A" % width)
 
     def open_deadtime_settings(self):
-        r"""Show the dialog for dead-time options. Update global configuration parameters upon
-        closing the dialog."""
+        """Show the dialog for dead-time options.
+
+        Update global configuration parameters upon closing the dialog.
+        """
         view = DeadTimeSettingsView(parent=self)
         view.reload_files_signal.connect(self.reload_all_files)
         view.exec_()
 
     def reload_all_files(self):
-        r"""Reload all previously loaded files upon change in loading configuration"""
+        """Reload all previously loaded files upon change in loading configuration."""
         self.file_handler.reload_all_files()
 
     def toggleFinalRebinRun(self, state):
-        """Signal handling"""
+        """Signal handling."""
         self.file_handler.toggle_final_rebin_run(state)
         self.changeRegionValues()
 
     def toggleFinalRebinGlobal(self, state):
-        """Signal handling"""
+        """Signal handling."""
         self.file_handler.toggle_final_rebin_global(state)
         self.file_handler.get_configuration()
 

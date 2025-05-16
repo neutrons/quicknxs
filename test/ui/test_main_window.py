@@ -87,7 +87,6 @@ class TestMainGui:
 
     def test_global_vs_per_run(self, qtbot, mocker):
         """Test the global vs per run reduction variables"""
-
         # mock updating the plots
         mocker.patch("quicknxs.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
         mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)

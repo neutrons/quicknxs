@@ -178,7 +178,8 @@ class Instrument(object):
     def dummy_filter_cross_sections(ws: EventWorkspace, name_prefix: str = None) -> WorkspaceGroup:
         r"""Filter events according to an aggregated state log.
 
-        Examples:
+        Examples
+        --------
         BL4A:SF:ICP:getDI
         015 (0000 1111): SF1=OFF, SF2=OFF, SF1Veto=OFF, SF2Veto=OFF
         047 (0010 1111): SF1=ON, SF2=OFF, SF1Veto=OFF, SF2Veto=OFF
@@ -355,7 +356,8 @@ class Instrument(object):
             file_path (str): absolute path to one or more data files. If more than one, paths should be concatenated with the plus symbol '+'.
             configuration (Configuration): reduction configuration parameters
 
-        Returns:
+        Returns
+        -------
             A list of EventWorkspaces, one for each cross-section
         """
         fp_instance = FilePath(file_path)

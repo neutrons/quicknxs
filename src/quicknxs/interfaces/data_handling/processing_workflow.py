@@ -210,7 +210,8 @@ class ProcessingWorkflow(object):
 
         def _create_combined_reflectivity_workspace(_ws: MantidWorkspace, _xs: str):
             """Create a new workspace with metadata copied from the given workspace and
-            output data for the given cross-section"""
+            output data for the given cross-section
+            """
             output_xs = output_data[_xs]
             _ws_combined = CreateWorkspace(
                 DataX=output_xs[:, 0],

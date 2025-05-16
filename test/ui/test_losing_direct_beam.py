@@ -15,6 +15,7 @@ def test_losing_direct_beam(qtbot):
 
     def _get_reduction_list_run_direct_beam(reduction_list_index, xs):
         r"""Get the direct beam for the given reduction list run and cross-section
+
         Returns
         -------
         int

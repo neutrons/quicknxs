@@ -12,7 +12,6 @@ def plot1d(data_list, data_names=None, x_title="", y_title="", x_log=False, y_lo
     @param data_list: list of traces [ [x1, y1], [x2, y2], ...]
     @param data_names: name for each trace, for the legend
     """
-
     # Create traces
     if not isinstance(data_list, list):
         raise RuntimeError("plot1d: data_list parameter is expected to be a list")
@@ -87,7 +86,6 @@ def plot_heatmap(x, y, z, x_title="", y_title="", surface=False, x_log=False, y_
     """
     Produce a 2D plot
     """
-
     x_layout = dict(
         title=x_title,
         zeroline=False,

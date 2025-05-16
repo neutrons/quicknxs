@@ -415,7 +415,8 @@ class MainHandler(object):
 
         def _split_composites():
             r"""Split the list of files in widget self.ui.file_list into a list of single files and
-            a list of composite files"""
+            a list of composite files
+            """
             singles, composites = list(), list()
             for i in range(self.ui.file_list.count()):
                 file_base_name = self.ui.file_list.item(i).text()
@@ -431,7 +432,7 @@ class MainHandler(object):
             return sorted(self._data_manager.current_event_files + composites)
 
         def _reset_ui_file_list(fresh_list):
-            r"""reset widget self.ui.file_list and highlight the current file_name"""
+            r"""Reset widget self.ui.file_list and highlight the current file_name"""
             self.ui.file_list.clear()  # Reset ui.file_list, a QtWidgets.QListWidget object
             assert isinstance(fresh_list, list), f"fresh_list must be list but not {type(fresh_list)}"
             for item in fresh_list:
@@ -1092,14 +1093,14 @@ class MainHandler(object):
             data_table = self._data_manager.direct_beam_list
 
         def _export_data(_pos):
-            """callback function to right-click action: Export data"""
+            """Callback function to right-click action: Export data"""
             row = table_widget.rowAt(pos.y())
             if 0 <= row < len(data_table):
                 nexus_data = data_table[row]
                 self.save_run_data(nexus_data)
 
         def _propagate_run(_pos):
-            """callback function to right-click action: Propagate run to all tabs"""
+            """Callback function to right-click action: Propagate run to all tabs"""
             row = table_widget.rowAt(pos.y())
             if 0 <= row < len(data_table):
                 nexus_data = data_table[row]
@@ -1117,7 +1118,7 @@ class MainHandler(object):
                         self.update_reduction_table(target_widget, idx, active_channel)
 
         def _remove_run(_pos):
-            """callback function to right-click action: Remove run from this tab"""
+            """Callback function to right-click action: Remove run from this tab"""
             self.remove_reflectivity()
 
         reduction_table_menu = QtWidgets.QMenu(table_widget)
@@ -1715,7 +1716,8 @@ class MainHandler(object):
 
     def toggle_final_rebin_global(self, state):
         r"""When the global rebin checkbox is toggled, update the run rebin checkbox
-        so that only one of them can be checked at a time."""
+        so that only one of them can be checked at a time.
+        """
         # **Ensure mutual exclusivity of the checkboxes**
         if state == QtCore.Qt.Checked:
             self.ui.final_rebin_checkbox_run.blockSignals(True)
@@ -1744,7 +1746,8 @@ class MainHandler(object):
 
     def toggle_final_rebin_run(self, state):
         """When the run rebin checkbox is toggled, update the global rebin checkbox
-        so that only one of them can be checked at a time."""
+        so that only one of them can be checked at a time.
+        """
         # **Ensure mutual exclusivity of the checkboxes**
         if state == QtCore.Qt.Checked:
             self.ui.final_rebin_checkbox_global.setChecked(False)

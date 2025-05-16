@@ -27,7 +27,6 @@ def peak_prominences(x, peaks, wlen=None):
 
     References
     ----------
-
     Wikipedia Article for Topographic Prominence:
     https://en.wikipedia.org/wiki/Topographic_prominence
     """
@@ -308,7 +307,6 @@ def _peak_widths(x, peaks, rel_height, prominences, left_bases, right_bases):
     """
     Calculate the width of each each peak in a signal.
     """
-
     if rel_height < 0:
         raise ValueError("`rel_height` must be greater or equal to 0.0")
     if not (peaks.shape[0] == prominences.shape[0] == left_bases.shape[0] == right_bases.shape[0]):

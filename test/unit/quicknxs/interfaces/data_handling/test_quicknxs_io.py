@@ -19,7 +19,7 @@ from quicknxs.interfaces.data_handling.quicknxs_io import (
 class TestDataLoader(object):
     @pytest.fixture(autouse=True)
     def _data_dir(self, data_server):
-        r"""pass the data_file fixture"""
+        r"""Pass the data_file fixture"""
         self.file = data_server.path_to
 
     def test_simple_load(self):
@@ -113,7 +113,7 @@ def mock_nexus_data(tmp_path, temp_workspace_name):
 
 class TestDataWriter(object):
     def test_save_multiple_peaks(self, tmp_path, mock_nexus_data):
-        """test saving session with multiple peaks"""
+        """Test saving session with multiple peaks"""
         output_path = tmp_path / "test_REF_M_save_data_output.dat"
         pol_state = "On_Off"
         col_names = ["Qz [1/A]", "R [a.u.]", "dR [a.u.]", "dQz [1/A]", "theta [rad]"]

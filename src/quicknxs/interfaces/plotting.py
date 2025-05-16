@@ -590,7 +590,6 @@ class PlotManager(object):
         """
         Calculate and display the direct beam intensity from the current dataset.
         """
-
         # hide the reflectivity plot or clear existing intensity plot
         self.main_window.ui.refl_widget.hide()
         self.main_window.ui.intensity.clear()
