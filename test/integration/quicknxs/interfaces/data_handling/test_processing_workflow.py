@@ -22,7 +22,7 @@ def test_orso_output(data_server, tmpdir):
     pw = ProcessingWorkflow(manager, output_options)
 
     def _load_to_reduction_list(filename):
-        """Loads a Nexus file and adds it to the reduction list"""
+        """Load a Nexus file and add it to the reduction list."""
         file_path = data_server.path_to(filename)
         manager.load(file_path, conf)
         manager.add_active_to_reduction()

@@ -69,7 +69,6 @@ class MainWindow(QtWidgets.QMainWindow):
         - MainWindow.file_open_from_list()
         - MainWindow.changeRegionValues()
         - MainHandler.reduction_table_changed()
-        - MainHandler.normalize_table_changed()
         """
         self.auto_change_active = False
 
@@ -355,27 +354,22 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         self.file_handler.reduction_table_right_click(pos, True)
 
-    def direct_beam_table_right_click(self, pos):
-        """
-        Handle right-click on the direct beam table.
-        :param QPoint pos: mouse position
+    def direct_beam_table_right_click(self, pos: QtCore.QPoint):
+        """Handle right-click on the direct beam table.
+
+        pos mouse position
         """
         self.file_handler.reduction_table_right_click(pos, False)
 
-    def direct_beam_cell_activated(self, row, col):
-        """
-        Select a data set when the user double-clicks on a run number (col 0).
-        in the direct beam table.
-        :param int row: row index
-        :param int col: column index
-        """
+    def direct_beam_cell_activated(self, row: int, col: int):
+        """Select a data set when the user double-clicks on a run number (col 0) in the direct beam table."""
         if col == 0:
             self.data_manager.set_active_data_from_direct_beam_list(row)
             self.file_loaded()
             # self.file_handler.active_data_changed()
 
     def replotProjections(self):
-        """Signal handling"""
+        """Signal handling to replot the projections."""
         self.initiate_projection_plot.emit(True)
         if self.data_manager.active_channel.is_direct_beam:
             self.initiate_intensity_plot.emit(True)
@@ -383,37 +377,31 @@ class MainWindow(QtWidgets.QMainWindow):
             self.initiate_reflectivity_plot.emit(True)
 
     def addRefList(self):
-        """Signal handling"""
+        """Signal handling to add a new reflectivity data set."""
         self.file_handler.add_reflectivity()
 
     def removeRefList(self):
-        """Signal handling"""
+        """Signal handling to remove a reflectivity data set."""
         self.file_handler.remove_reflectivity()
 
     def clearRefList(self):
-        """Signal handling"""
+        """Signal handling to clear the reflectivity data set list."""
         self.file_handler.clear_reflectivity()
 
-    def normalize_table_changed(self, item: QTableWidgetItem):
-        self.file_handler.normalize_table_changed(item)
-
     def setNorm(self):
-        """Signal handling"""
+        """Signal handling to add a new direct beam data set."""
         self.file_handler.add_direct_beam()
 
     def remove_normalization(self):
-        """Signal handling"""
+        """Signal handling to remove a direct beam data set."""
         self.file_handler.remove_direct_beam()
 
     def clearNormList(self):
-        """Signal handling"""
+        """Signal handling to clear the direct beam data set list."""
         self.file_handler.clear_direct_beams()
 
     def match_direct_beam_clicked(self):
-        """
-        Find the best direct beam run for the activate data set
-        and compute the reflectivity as needed.
-        """
+        """Find the best direct beam run for the activate data set and compute the reflectivity as needed."""
         if self.data_manager.find_best_direct_beam():
             self.file_handler.update_tables()
             self.file_handler.update_calculated_data()
@@ -430,52 +418,44 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.initiate_reflectivity_plot.emit(True)
 
     def openByNumber(self):
-        """Signal handling"""
+        """Signal handling to open a file by run number."""
         self.file_handler.open_run_number()
 
     def refresh_offspec(self):
-        """
-        Refresh / recalculate the off-specular plots
-        """
+        """Refresh / recalculate the off-specular plots."""
         self.file_handler.compute_offspec_on_change(force=True)
         self.plot_manager.plot_offspec()
 
     def change_offspec_colorscale(self):
-        """
-        Change the intensity limits for the color scale of the off-specular plots
-        """
+        """Change the intensity limits for the color scale of the off-specular plots."""
         self.plot_handler.change_offspec_colorscale()
 
     def cutPoints(self):
-        """
-        Cut the start and end of the active data set to 5% of its
-        maximum intensity.
-        """
+        """Cut the start and end of the active data set to 5% of its maximum intensity."""
         self.file_handler.trim_data_to_normalization()
         self.update_specular_viewer.emit()
 
     def stripOverlap(self):
-        """
-        Remove overlapping points in the reflecitviy, cutting always from the lower Qz
-        measurements.
+        """Remove overlapping points in the reflectivity.
+
+        Cutting is done from the lower Qz measurements.
         """
         self.file_handler.strip_overlap()
         self.update_specular_viewer.emit()
 
     def normalizeTotalReflection(self):
-        """
-        Stitch the reflectivity parts and normalize to 1.
-        """
+        """Stitch the reflectivity parts and normalize to 1."""
         self.file_handler.stitch_reflectivity()
         self.update_specular_viewer.emit()
 
     def autoRef(self):
+        """Signal handling to run automated file selection."""
         self.file_handler.automated_file_selection()
 
     ### Data tab management
 
     def addDataTable(self):
-        """Add data tab for additional peaks/ROI:s"""
+        """Add data tab for additional peaks/ROIs."""
         next_tab_idx = self.data_tab_count + 1
         self.ui.tabWidget.setTabVisible(next_tab_idx, True)
         self.data_manager.add_additional_reduction_list(next_tab_idx)
@@ -486,7 +466,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.addTabButton.setEnabled(False)
 
     def removeDataTable(self):
-        """Remove last data tab for additional peaks/ROI:s"""
+        """Remove last data tab for additional peaks/ROIs."""
         self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
         self.data_manager.remove_additional_reduction_list(self.data_tab_count)
         self.data_tab_count -= 1
@@ -495,9 +475,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.removeTabButton.setEnabled(False)
 
     def add_data_tab_by_index(self, tab_index: int):
-        """
-        Add/update a specific data tab
-        """
+        """Add/update a specific data tab."""
         if self.data_tab_count < tab_index <= self.max_data_tab_count:
             self.ui.tabWidget.setTabVisible(tab_index, True)
             self.data_tab_count = tab_index

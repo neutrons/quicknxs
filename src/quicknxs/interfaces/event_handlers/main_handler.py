@@ -814,7 +814,7 @@ class MainHandler(object):
 
         Parameters
         ----------
-        table_widget: QtWidgets.QTableWidget
+        table_widget:
             Table widget of the table to update
         idx:
             Row to update
@@ -1017,26 +1017,15 @@ class MainHandler(object):
         self.main_window.initiate_intensity_plot.emit(False)
         return True
 
-    def normalize_table_changed(self, item: QtWidgets.QTableWidgetItem):
-        """Update the active cross-section data when the normalization table is changed."""
-
-        if self.main_window.auto_change_active:
-            return
-
-        row = item.row()
-        col = item.column()
-        xs_dict = self._data_manager.direct_beam_list[row].cross_sections
-        active_xs = self._data_manager.active_channel.name
-        xs = xs_dict[active_xs]
-        keys = [
-            "number",
-        ]
-
     def update_direct_beam_table(self, idx: int, d: CrossSectionData) -> None:
-        """
-        Update a direct beam table entry
-        :param int idx: row index
-        :param CrossSectionData d: data object
+        """Update a direct beam table entry.
+
+        Parameters
+        ----------
+        idx
+            Row index to update
+        d
+            Cross-section data object
         """
         self.main_window.auto_change_active = True
         item = QtWidgets.QTableWidgetItem(str(d.number))

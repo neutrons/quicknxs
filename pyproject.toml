@@ -46,7 +46,14 @@ quicknxs-gui = "quicknxs.gui:main"
 pythonpath = [".", "src", "scripts"]
 testpaths = ["test/"]
 python_files = ["test*.py"]
-norecursedirs = [".git", "tmp*", "_tmp*", "__pycache__", "*dataset*", "*data_set*"]
+norecursedirs = [
+    ".git",
+    "tmp*",
+    "_tmp*",
+    "__pycache__",
+    "*dataset*",
+    "*data_set*",
+]
 markers = ["datarepo: mark a test as using reflection_ui-data repository"]
 qt_log_format = "{rec.when} {rec.type_name}: {rec.message}"
 
@@ -54,9 +61,47 @@ qt_log_format = "{rec.when} {rec.type_name}: {rec.message}"
 line-length = 120
 exclude = ["notebooks/*", "icons/*", "test/notebooks/*"]
 
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
 [tool.ruff.lint]
-select = ["A", "ARG", "ASYNC", "BLE", "C90", "E", "F", "I", "N", "UP032", "W"]
-ignore = ["A001", "ARG001", "ARG002", "BLE001", "C901", "E402", "E501", "E712", "E721", "E722", "E741", "F811", "F821", "F841", "N802", "N803", "N806", "N815", "N816", "N999", "W293"]
+select = [
+    "A",
+    "ARG",
+    "ASYNC",
+    "BLE",
+    "C90",
+    "D",     # Docstrings
+    "E",
+    "F",
+    "I",
+    "N",
+    "UP032",
+    "W",
+]
+ignore = [
+    "A001",
+    "ARG001",
+    "ARG002",
+    "BLE001",
+    "C901",
+    "E402",
+    "E501",
+    "E712",
+    "E721",
+    "E722",
+    "E741",
+    "F811",
+    "F821",
+    "F841",
+    "N802",
+    "N803",
+    "N806",
+    "N815",
+    "N816",
+    "N999",
+    "W293",
+]
 
 [tool.coverage.run]
 source = ["src/quicknxs"]

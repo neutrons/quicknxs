@@ -2724,7 +2724,7 @@
                        <enum>Qt::CustomContextMenu</enum>
                       </property>
                       <property name="editTriggers">
-                       <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+                       <set>QAbstractItemView::NoEditTriggers</set>
                       </property>
                       <attribute name="horizontalHeaderCascadingSectionResizes">
                        <bool>true</bool>
@@ -7044,6 +7044,22 @@
    </hints>
   </connection>
   <connection>
+   <sender>normalizeTable</sender>
+   <signal>cellActivated(int,int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>direct_beam_cell_activated(int,int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>456</x>
+     <y>785</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>786</x>
+     <y>430</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>actionRemove_Normalization</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
@@ -7333,38 +7349,6 @@
   </connection>
   <connection>
    <sender>normalizeTable</sender>
-   <signal>itemChanged(QTableWidgetItem*)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>normalize_table_changed(QTableWidgetItem*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>901</x>
-     <y>886</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>888</x>
-     <y>843</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>normalizeTable</sender>
-   <signal>cellActivated(int,int)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>direct_beam_cell_activated(int,int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>456</x>
-     <y>785</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>786</x>
-     <y>430</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>normalizeTable</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>direct_beam_table_right_click(QPoint)</slot>
@@ -7452,7 +7436,6 @@
   <slot>loadExtraction()</slot>
   <slot>match_direct_beam_clicked()</slot>
   <slot>nextFile()</slot>
-  <slot>normalize_table_changed(QTableWidgetItem*)</slot>
   <slot>normalizeTotalReflection()</slot>
   <slot>open_advanced_background()</slot>
   <slot>open_logfile_viewer()</slot>
