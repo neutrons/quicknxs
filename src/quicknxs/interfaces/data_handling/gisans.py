@@ -1,6 +1,4 @@
-"""
-Computations for GISANS
-"""
+"""Computations for GISANS"""
 
 import logging
 from multiprocessing import Pool
@@ -13,9 +11,7 @@ H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
 
 class GISANS(object):
-    """
-    Compute grazing-incident SANS
-    """
+    """Compute grazing-incident SANS"""
 
     def __init__(self, cross_section_data):
         """
@@ -204,9 +200,7 @@ def _rebin_proc(data):
 
 
 def rebin_parallel(reduction_list, pol_state, wl_min, wl_max, wl_npts=2, qy_npts=50, qz_npts=50, use_pf=False):
-    """
-    Process the wavelength bands in parallel.
-    """
+    """Process the wavelength bands in parallel."""
     # First, merge all the data
     binning = (qy_npts + 1, qz_npts + 1)
     qy, qz, pf, intensity, d_intensity, wl_array = merge(reduction_list, pol_state, wl_min=0, wl_max=100.0)

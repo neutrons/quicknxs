@@ -1,6 +1,4 @@
-r"""
-Classes to handle string representations of sets of run numbers and absolute paths to data files
-"""
+r"""Classes to handle string representations of sets of run numbers and absolute paths to data files"""
 
 import itertools
 import operator
@@ -54,9 +52,7 @@ class RunNumbers(object):
     @property
     def numbers(self):
         # type: () -> List[int]
-        r"""
-        @brief List of run numbers as a list of integers
-        """
+        r"""@brief List of run numbers as a list of integers"""
         return self._numbers
 
     @property

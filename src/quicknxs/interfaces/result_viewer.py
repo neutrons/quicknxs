@@ -1,6 +1,4 @@
-"""
-Dialog to show final reduced data.
-"""
+"""Dialog to show final reduced data."""
 # pylint: disable=bare-except
 
 # standard imports
@@ -16,9 +14,7 @@ from quicknxs.interfaces import load_ui
 
 
 class ResultViewer(QtWidgets.QDialog):
-    """
-    Reduction dialog
-    """
+    """Reduction dialog"""
 
     default_template = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
 

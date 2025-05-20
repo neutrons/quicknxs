@@ -52,9 +52,7 @@ class ConfigurationHandler:
         return config_setter
 
     def global_reflectivity_updater(self):
-        """
-        Recalculate and replot reflectivity upon change in global reflectivity configuration
-        """
+        """Recalculate and replot reflectivity upon change in global reflectivity configuration"""
         self.main_window.global_reflectivity_config_changed()
 
     def connect_config_events(self):

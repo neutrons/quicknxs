@@ -12,9 +12,7 @@ from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
 
 
 class DeadTimeSettingsView(QDialog):
-    """
-    Dialog to choose the dead time correction options.
-    """
+    """Dialog to choose the dead time correction options."""
 
     reload_files_signal = Signal()
 
@@ -25,9 +23,7 @@ class DeadTimeSettingsView(QDialog):
         self.set_state_from_global_config()
 
     def set_state_from_global_config(self):
-        """
-        Populate the form with the current global configuration
-        """
+        """Populate the form with the current global configuration"""
         self.ui.use_paralyzable.setChecked(Configuration.paralyzable_deadtime)
         self.ui.dead_time_value.setValue(Configuration.deadtime_value)
         self.ui.dead_time_tof.setValue(Configuration.deadtime_tof_step)

@@ -94,9 +94,7 @@ def getIxyt(nxs_data):
 
 
 class CrossSectionData(object):
-    """
-    Data object to hold loaded reflectivity data
-    """
+    """Data object to hold loaded reflectivity data"""
 
     # Instrument specific attributes filled out by the instrument object
     dist_sam_det = 0
@@ -105,7 +103,6 @@ class CrossSectionData(object):
     dist_mod_mon = 0
     dist_mod_mon = 0
     dangle = 0
-    dangle0 = 0
     det_size_x = 0.0007
     det_size_y = 0.0007
     lambda_center = 0
@@ -262,9 +259,7 @@ class CrossSectionData(object):
 
     @property
     def wavelength_range(self):
-        """
-        Returns the wavelength range
-        """
+        """Returns the wavelength range"""
         # TODO: use the skipped points to trim the wl band.
         # The following would work, but not if we perform a final rebin.
         # We should use the final Q binning to determine the wl range.
@@ -382,9 +377,7 @@ class CrossSectionData(object):
         self.tof_edges = tof_edges
 
     def prepare_plot_data(self):
-        """
-        Bin events to be used for plotting and in-app calculations
-        """
+        """Bin events to be used for plotting and in-app calculations"""
         workspace = api.mtd[self._event_workspace]
         if self.xtofdata is None:
             t_0 = time.time()
@@ -428,9 +421,7 @@ class CrossSectionData(object):
         self.process_configuration()
 
     def get_counts_vs_TOF(self):
-        """
-        Used for normalization, returns ROI counts vs TOF.
-        """
+        """Used for normalization, returns ROI counts vs TOF."""
         self.prepare_plot_data()
         # Calculate ROI intensities and normalize by number of points
         raw_data = self.data[
@@ -503,9 +494,7 @@ class CrossSectionData(object):
         return data_table, header
 
     def get_background_vs_TOF(self):
-        """
-        Returns the background counts vs TOF
-        """
+        """Returns the background counts vs TOF"""
         # Find the background pixels to use, excluding the peak if there's an overlap.
         dims = self.data.shape
         indices = [
@@ -522,15 +511,11 @@ class CrossSectionData(object):
         return summed_bck / math.fabs(size_bck)
 
     def update_calculated_values(self):
-        """
-        Update parameters that are calculated from the configuration
-        """
+        """Update parameters that are calculated from the configuration"""
         self.scattering_angle = self.configuration.instrument.scattering_angle_from_data(self)
 
     def update_configuration(self, configuration):
-        """
-        Update configuration
-        """
+        """Update configuration"""
         if configuration is not None:
             self.configuration = copy.deepcopy(configuration)
             self.update_calculated_values()
@@ -544,9 +529,7 @@ class CrossSectionData(object):
             self.gisans_data = None
 
     def reflectivity(self, direct_beam=None, configuration=None):
-        """
-        Compute reflectivity
-        """
+        """Compute reflectivity"""
         self.q = None
         self._r = None
         self._dr = None
@@ -730,9 +713,7 @@ class NexusData(object):
         return large_xs
 
     def get_q_range(self):
-        """
-        Return the Q range for the cross-sections
-        """
+        """Return the Q range for the cross-sections"""
         q_min = None
         q_max = None
         for xs in self.cross_sections:
@@ -912,9 +893,7 @@ class NexusData(object):
             self.cross_sections[xs_id]._reflectivity_workspacegroup = str(ws)
 
     def calculate_gisans(self, direct_beam, progress=None):
-        """
-        Compute GISANS
-        """
+        """Compute GISANS"""
         has_errors = False
         detailed_msg = ""
         if progress is not None:
@@ -937,18 +916,14 @@ class NexusData(object):
             progress(100, "Complete", out_of=100.0)
 
     def is_offspec_available(self):
-        """
-        Verify whether we have off-specular data calculated for all cross-sections
-        """
+        """Verify whether we have off-specular data calculated for all cross-sections"""
         for xs in self.cross_sections:
             if self.cross_sections[xs].off_spec is None:
                 return False
         return True
 
     def is_gisans_available(self):
-        """
-        Verify whether we have GISANS data calculated for all cross-sections
-        """
+        """Verify whether we have GISANS data calculated for all cross-sections"""
         for xs in self.cross_sections:
             if self.cross_sections[xs].gisans_data is None:
                 return False
@@ -986,9 +961,7 @@ class NexusData(object):
                 logging.error(f"Could not update configuration for {xs}: {err}")
 
     def update_calculated_values(self):
-        """
-        Loop through the cross-section data sets and update.
-        """
+        """Loop through the cross-section data sets and update."""
         for xs in self.cross_sections:
             self.cross_sections[xs].update_calculated_values()
 
@@ -1067,9 +1040,7 @@ class NexusData(object):
 
 
 class NexusMetaData(object):
-    """
-    Class used to hold meta-data read before loading the neutron events
-    """
+    """Class used to hold meta-data read before loading the neutron events"""
 
     mid_q = 0
     is_direct_beam = False

@@ -1,6 +1,4 @@
-r"""
-General settings
-"""
+r"""General settings"""
 
 # standard imports
 import json
@@ -34,8 +32,6 @@ class Settings(object):
 
     def update(self, file_json):
         # type: (str) -> dict
-        r"""
-        @brief Update the configuration with a JSON file containing settings of interest
-        """
+        r"""@brief Update the configuration with a JSON file containing settings of interest"""
         with open(file_json) as file_handle:
             self._settings.update(json.load(file_handle))

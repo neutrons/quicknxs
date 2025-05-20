@@ -13,6 +13,9 @@ homepage = "https://github.com/neutrons/quicknxs"
 repository = "https://github.com/neutrons/quicknxs"
 issues = "https://github.com/neutrons/quicknxs/issues"
 
+[project.gui-scripts]
+quicknxs-gui = "quicknxs.gui:main"
+
 [build-system]
 requires = ["setuptools >= 47", "wheel", "toml", "versioningit"]
 build-backend = "setuptools.build_meta"
@@ -39,8 +42,9 @@ exclude = ["tests*", "scripts*", "docs*", "notebooks"]
 [tool.setuptools.package-data]
 "*" = ["*.yml", "*.yaml", "*.ini", "*.gx", "*.json", "*.ui"]
 
-[project.gui-scripts]
-quicknxs-gui = "quicknxs.gui:main"
+[tool.coverage.run]
+source = ["src/quicknxs"]
+omit = ["test/*"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src", "scripts"]
@@ -80,29 +84,26 @@ select = [
     "W",
 ]
 ignore = [
-    "A001",
-    "ARG001",
-    "ARG002",
-    "BLE001",
-    "C901",
-    "E402",
-    "E501",
-    "E712",
-    "E721",
-    "E722",
-    "E741",
-    "F811",
-    "F821",
-    "F841",
-    "N802",
-    "N803",
-    "N806",
-    "N815",
-    "N816",
-    "N999",
-    "W293",
+    "A001",   # Variable is shadowing a Python builtin
+    "ARG001", # Unused function argument
+    "ARG002", # Unused method argument
+    "BLE001", # Do not catch blind exception
+    "C901",   # Function is too complex
+    "D105",   # Missing docstring in magic method
+    "D400",   # First line should end with a period
+    "D401",   # First line should be in imperative mood
+    "D404",   # Docstring stars with "this"
+    "E402",   # Module level import not at top of file
+    "E501",   # Line too long
+    "E712",   # Avoid equality comparison to True
+    "E721",   # Do not compare types, use 'isinstance()'
+    "E722",   # Do not use bare 'except'
+    "E741",   # Ambiguous variable name
+    "F821",   # Undefined name
+    "F841",   # Local variable 'x' is assigned to but never used
+    "N802",   # Function name should be lowercase
+    "N803",   # Argument name should be lowercase
+    "N806",   # Variable in function should be lowercase
+    "N815",   # Variable in class should not be mixedCase
+    "N816",   # Variable in global scope should not be mixedCase
 ]
-
-[tool.coverage.run]
-source = ["src/quicknxs"]
-omit = ["test/*"]

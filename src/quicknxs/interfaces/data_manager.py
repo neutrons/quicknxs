@@ -345,18 +345,14 @@ class DataManager(object):
         return False
 
     def add_active_to_normalization(self):
-        """
-        Add active data set to the direct beam list
-        """
+        """Add active data set to the direct beam list"""
         if self._nexus_data not in self.direct_beam_list:
             self.direct_beam_list.append(self._nexus_data)
             return True
         return False
 
     def remove_active_from_normalization(self):
-        """
-        Remove the active data set from the direct beam list
-        """
+        """Remove the active data set from the direct beam list"""
         for i in range(len(self.direct_beam_list)):
             if self.direct_beam_list[i] == self._nexus_data:
                 self.direct_beam_list.pop(i)
@@ -477,9 +473,7 @@ class DataManager(object):
         return is_from_cache
 
     def update_configuration(self, configuration, active_only: bool = False, nexus_data: Optional[NexusData] = None):
-        """
-        Update configuration
-        """
+        """Update configuration"""
         if active_only:
             self.active_channel.update_configuration(configuration)
         elif nexus_data is not None:
@@ -488,9 +482,7 @@ class DataManager(object):
             self._nexus_data.update_configuration(configuration)
 
     def get_active_direct_beam(self):
-        """
-        Return the direct beam data object for the active data
-        """
+        """Return the direct beam data object for the active data"""
         return self._find_direct_beam(self._nexus_data)
 
     def _find_direct_beam(self, nexus_data):
@@ -558,9 +550,7 @@ class DataManager(object):
             progress(100)
 
     def calculate_gisans(self, nexus_data=None, progress=None):
-        """
-        Compute GISANS for a single data set
-        """
+        """Compute GISANS for a single data set"""
         t_0 = time.time()
         # Select the data to work on
         if nexus_data is None:
@@ -599,9 +589,7 @@ class DataManager(object):
         return True
 
     def reduce_spec(self):
-        """
-        Calculate reflectivity for all runs in all reduction lists
-        """
+        """Calculate reflectivity for all runs in all reduction lists"""
         for reduct_list in self.peak_reduction_lists.values():
             for nexus_data in reduct_list:
                 try:
@@ -624,9 +612,7 @@ class DataManager(object):
                 logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.number, sys.exc_info()[1])
 
     def rebin_gisans(self, pol_state, wl_min=0, wl_max=100, qy_npts=50, qz_npts=50, use_pf=False):
-        """
-        Merge all the off-specular reflectivity data and rebin.
-        """
+        """Merge all the off-specular reflectivity data and rebin."""
         return gisans.rebin_extract(
             self.reduction_list,
             pol_state=pol_state,
@@ -639,9 +625,7 @@ class DataManager(object):
 
     # TODO 67 FInd out whether it can work with merged data
     def calculate_reflectivity(self, configuration=None, active_only=False, nexus_data=None, specular=True):
-        """
-        Calculate reflectivity using the current configuration
-        """
+        """Calculate reflectivity using the current configuration"""
         # Select the data to work on
         if nexus_data is None:
             nexus_data = self._nexus_data
@@ -775,9 +759,7 @@ class DataManager(object):
             self.asymmetry()
 
     def determine_asymmetry_states(self):
-        """
-        Determine which cross-section to use to compute asymmetry.
-        """
+        """Determine which cross-section to use to compute asymmetry."""
         # Inspect cross-section
         # - For two states, just calculate the asymmetry using those two
         p_state = None
@@ -819,9 +801,7 @@ class DataManager(object):
         return p_state, m_state
 
     def asymmetry(self):
-        """
-        Determine which cross-section to use to compute asymmetry, and compute it.
-        """
+        """Determine which cross-section to use to compute asymmetry, and compute it."""
         p_state, m_state = self.determine_asymmetry_states()
 
         # Get the list of workspaces
@@ -965,9 +945,7 @@ class DataManager(object):
         return sorted([os.path.basename(name) for name in event_file_list])
 
     def reload_files(self, configuration=None, progress=None):
-        """
-        Force reload of files in the reduction lists and direct beam list
-        """
+        """Force reload of files in the reduction lists and direct beam list"""
 
         def _get_nexus_conf(nexus_data):
             """Returns the configuration for the main cross-section of the run"""
@@ -1043,8 +1021,6 @@ class DataManager(object):
             self.set_active_data_from_reduction_list(0)
 
     def clear_reduction_lists(self):
-        """
-        Resets to one empty reduction list
-        """
+        """Resets to one empty reduction list"""
         self.active_reduction_list_index = 1
         self.peak_reduction_lists = {self.active_reduction_list_index: []}

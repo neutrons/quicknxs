@@ -24,9 +24,7 @@ def slow_down_events(fn):
     """
 
     def function_wrapper(self, *args, **kws):
-        """
-        Wrap a function to slow it down
-        """
+        """Wrap a function to slow it down"""
         if self.last_event is not None and time.time() - self.last_event < 0.3:
             return None
         self.last_event = time.time()
@@ -36,9 +34,7 @@ def slow_down_events(fn):
 
 
 class PlotHandler(object):
-    """
-    Class to handle plotting events
-    """
+    """Class to handle plotting events"""
 
     _picked_line = None
     control_down = False
@@ -53,9 +49,7 @@ class PlotHandler(object):
         self.connect_plot_events()
 
     def connect_plot_events(self):
-        """
-        Connect matplotlib mouse events.
-        """
+        """Connect matplotlib mouse events."""
         for plot in [
             self.ui.xy_pp,
             self.ui.xy_mp,
@@ -167,9 +161,7 @@ class PlotHandler(object):
             canv.draw()
 
     def plot_release(self, event):
-        """
-        :param event: event object
-        """
+        """:param event: event object"""
         self._picked_line = None
         self.main_window.changeRegionValues()
 
@@ -269,9 +261,7 @@ class PlotHandler(object):
         self.change_region_values()
 
     def plot_pick_xtof(self, event):
-        """
-        :param event: event object
-        """
+        """:param event: event object"""
         self.main_window.auto_change_active = True
         if event.button == 1 and event.ydata is not None:
             xcen = self.ui.refXPos.value()
@@ -309,9 +299,7 @@ class PlotHandler(object):
 
     @slow_down_events
     def scale_on_plot(self, event):
-        """
-        :param event: event object
-        """
+        """:param event: event object"""
         steps = event.step
         xpos = event.xdata
         if xpos is None:

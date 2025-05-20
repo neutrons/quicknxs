@@ -1,6 +1,4 @@
-"""
-Data processing workflow, taking results and writing them to files.
-"""
+"""Data processing workflow, taking results and writing them to files."""
 # pylint: disable=bare-except, too-many-locals
 
 import copy
@@ -57,9 +55,7 @@ class ProcessingWorkflow(object):
     """Carry out the reduction process for a set of data runs and manages outputs"""
 
     def __init__(self, data_manager: DataManager, output_options: dict = None):
-        """
-        :param data_manager: all the reduced data shall come from data manager
-        """
+        """:param data_manager: all the reduced data shall come from data manager"""
         self.data_manager = data_manager
         self.output_options = output_options if output_options else DEFAULT_OPTIONS
         self.exported_data_files = []
@@ -239,9 +235,7 @@ class ProcessingWorkflow(object):
         io_orso.save_cross_sections(combined_reflectivity_workspaces, combined_path)
 
     def specular_reflectivity(self):
-        """
-        Retrieve the computed reflectivity and save it to file
-        """
+        """Retrieve the computed reflectivity and save it to file"""
         # The reflectivity should always be up to date, so we don't need to recalculate it.
         # The following would be used to recalculate it:
         #    self.data_manager.calculate_reflectivity(specular=True)
@@ -284,9 +278,7 @@ class ProcessingWorkflow(object):
             self.exported_data_files.append(output_file)
 
     def gisans(self, progress=None):
-        """
-        Export GISANS.
-        """
+        """Export GISANS."""
         run_list = [str(item.number) for item in self.data_manager.reduction_list]
 
         # Refresh the reflectivity calculation
@@ -365,9 +357,7 @@ class ProcessingWorkflow(object):
                 self.data_manager.cached_offspec = binned_data
 
     def get_rebinned_offspec_data(self):
-        """
-        Get a data dictionary ready for saving
-        """
+        """Get a data dictionary ready for saving"""
         data_dict = None
         slice_data_dict = {}
 
@@ -487,9 +477,7 @@ class ProcessingWorkflow(object):
         return data_dict, slice_data_dict
 
     def get_offspec_data(self):
-        """
-        Get a data dictionary ready for saving
-        """
+        """Get a data dictionary ready for saving"""
         data_dict = dict(
             units=["1/A", "1/A", "1/A", "1/A", "1/A", "a.u.", "a.u."],
             columns=["Qx", "Qz", "ki_z", "kf_z", "ki_z-kf_z", "I", "dI"],
@@ -623,9 +611,7 @@ class ProcessingWorkflow(object):
         return output_data, slice_data_dict
 
     def get_slice_output_data(self, qx, qz, r, dr, pol_state, label, **slice_data_dict):
-        """
-        Produce a data dictionary with a slice of the data.
-        """
+        """Produce a data dictionary with a slice of the data."""
         if slice_data_dict == {}:
             slice_data_dict = dict(units=["1/A", "a.u.", "a.u."], columns=[label, "I", "dI"], cross_sections={})
 
@@ -643,9 +629,7 @@ class ProcessingWorkflow(object):
         return slice_data_dict
 
     def get_gisans_slice_output_data(self, qy, qz, r, dr, pol_state, label, **slice_data_dict):
-        """
-        Produce a data dictionary with a slice of the data.
-        """
+        """Produce a data dictionary with a slice of the data."""
         if slice_data_dict == {}:
             slice_data_dict = dict(units=["1/A", "a.u.", "a.u."], columns=[label, "I", "dI"], cross_sections={})
 
@@ -756,9 +740,7 @@ class ProcessingWorkflow(object):
         return data_dict
 
     def _email_replace(self, text):
-        """
-        Replace token templates in text
-        """
+        """Replace token templates in text"""
         run_list = [str(item.number) for item in self.data_manager.reduction_list]
         return (
             text.replace("{ipts}", "")

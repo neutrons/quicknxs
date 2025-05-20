@@ -1,6 +1,4 @@
-"""
-Meta-data information for MR reduction
-"""
+"""Meta-data information for MR reduction"""
 # pylint: disable=too-few-public-methods, wrong-import-position, too-many-instance-attributes, wrong-import-order
 
 import copy
@@ -21,9 +19,7 @@ NY_PIXELS = 256
 
 
 class DataInfo(object):
-    """
-    Class to hold the relevant information from a run (scattering or direct beam).
-    """
+    """Class to hold the relevant information from a run (scattering or direct beam)."""
 
     peak_range_offset = 0
     tolerance = 0.02
@@ -295,9 +291,7 @@ class Fitter2(object):
         self._prepare_data()
 
     def _prepare_data(self):
-        """
-        Read in the data and create arrays for fitting
-        """
+        """Read in the data and create arrays for fitting"""
         # Prepare data to fit
         self.n_x = int(self.workspace.getInstrument().getNumberParameter("number-of-x-pixels")[0])
         self.n_y = int(self.workspace.getInstrument().getNumberParameter("number-of-y-pixels")[0])
@@ -366,9 +360,7 @@ class Fitter2(object):
         return [x_min, x_max]
 
     def gaussian_1d(self, value, *p):
-        """
-        1D Gaussian
-        """
+        """1D Gaussian"""
         A, center_x, width_x, background = p
         A = np.abs(A)
         values = A * np.exp(-((value - center_x) ** 2) / (2.0 * width_x**2))
@@ -376,9 +368,7 @@ class Fitter2(object):
         return values
 
     def peak_derivative(self, value, *p):
-        """
-        Double Gaussian to fit the first derivative of a plateau/peak.
-        """
+        """Double Gaussian to fit the first derivative of a plateau/peak."""
         A, center_x, width_x, edge_width, background = p
         mu_right = center_x + width_x / 2.0
         mu_left = center_x - width_x / 2.0
@@ -404,9 +394,7 @@ class Fitter2(object):
         return _coef
 
     def fit_beam_width(self):
-        """
-        Fit the data distribution in y and get its range.
-        """
+        """Fit the data distribution in y and get its range."""
         peak_min = 0
         peak_max = self.n_x
         try:

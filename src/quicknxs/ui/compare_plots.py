@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=bare-except
-"""
-Widget to compare different reflectivities.
-"""
+"""Widget to compare different reflectivities."""
 
 import logging
 import os
@@ -35,27 +33,21 @@ class CompareWidget(QtWidgets.QWidget):
         self.show_preview = False
 
     def refl_preview(self, checked=True):
-        """
-        Call-back method for when the user toggles the preview check box
-        """
+        """Call-back method for when the user toggles the preview check box"""
         self.show_preview = checked
         if checked:
             self.update_preview()
         self.draw()
 
     def update_preview(self):
-        """
-        Update the preview data
-        """
+        """Update the preview data"""
         if self.data_manager:
             workflow = ProcessingWorkflow(self.data_manager)
             self.refl_data = workflow.get_output_data()
             self.draw()
 
     def open_file(self):
-        """
-        Show Open-File dialog
-        """
+        """Show Open-File dialog"""
         filter_ = "Reflectivity (*.dat *.txt);;All (*.*)"
         names, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self, "Open reflectivity file...", directory=self.active_folder, filter=filter_
@@ -112,16 +104,12 @@ class CompareWidget(QtWidgets.QWidget):
         self.changing_table = False
 
     def clear_plot(self):
-        """
-        Remove all current plotted data
-        """
+        """Remove all current plotted data"""
         self.ui.compareList.setRowCount(0)
         self.draw()
 
     def clear_item(self):
-        """
-        Remove all current plotted data
-        """
+        """Remove all current plotted data"""
         logging.error(self.ui.compareList.currentRow())
         item_id = self.ui.compareList.currentRow()
         if item_id >= 0:
@@ -129,9 +117,7 @@ class CompareWidget(QtWidgets.QWidget):
             self.draw()
 
     def draw(self):
-        """
-        Draw data
-        """
+        """Draw data"""
         if self.changing_table:
             return
         try:
@@ -163,9 +149,7 @@ class CompareWidget(QtWidgets.QWidget):
             logging.error("CompareDialog: %s", sys.exc_info()[1])
 
     def edit_cell(self, row, column):
-        """
-        Cell editing call-back. Deal with color picking.
-        """
+        """Cell editing call-back. Deal with color picking."""
         if column == 1:
             color_item = self.ui.compareList.item(row, column)
             color = QtGui.QColor(color_item.text())
@@ -176,9 +160,7 @@ class CompareWidget(QtWidgets.QWidget):
 
 
 class CompareDialog(QtWidgets.QDialog):
-    """
-    A simple dialog window with a CompareWidget.
-    """
+    """A simple dialog window with a CompareWidget."""
 
     def __init__(self, *args, **kwargs):
         QtWidgets.QDialog.__init__(self, *args, **kwargs)

@@ -1,7 +1,5 @@
 # pylint: disable=bare-except, too-many-locals, too-many-statements, too-many-branches, wrong-import-order, too-many-arguments
-"""
-Read and write quicknxs reduced files
-"""
+"""Read and write quicknxs reduced files"""
 
 import copy
 import logging

@@ -1,7 +1,5 @@
 # pylint: disable=too-many-locals, too-many-arguments
-"""
-Class to execute and hold the off-specular reflectivity calculation.
-"""
+"""Class to execute and hold the off-specular reflectivity calculation."""
 
 import logging
 from functools import reduce
@@ -16,9 +14,7 @@ H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
 
 class OffSpecular(object):
-    """
-    Compute off-specular reflectivity
-    """
+    """Compute off-specular reflectivity"""
 
     d_wavelength = 0
     Qx = None
@@ -29,9 +25,7 @@ class OffSpecular(object):
     dS = None
 
     def __init__(self, cross_section_data):
-        """
-        :param CrossSectionData cross_section_data: processed data object
-        """
+        """:param CrossSectionData cross_section_data: processed data object"""
         self.data_set = cross_section_data
 
     def __call__(self, direct_beam=None):
@@ -355,9 +349,7 @@ def _smooth_data(
 
 
 def proc(data):
-    """
-    Serializable function to be called by each thread
-    """
+    """Serializable function to be called by each thread"""
     return _smooth_data(
         x=data["x"],
         y=data["y"],

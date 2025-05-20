@@ -1,6 +1,4 @@
-r"""
-Fixtures for pytest
-"""
+r"""Fixtures for pytest"""
 
 # standard imports
 # 3rd-party imports

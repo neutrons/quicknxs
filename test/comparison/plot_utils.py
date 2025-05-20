@@ -83,9 +83,7 @@ def plot1d(data_list, data_names=None, x_title="", y_title="", x_log=False, y_lo
 
 
 def plot_heatmap(x, y, z, x_title="", y_title="", surface=False, x_log=False, y_log=False):
-    """
-    Produce a 2D plot
-    """
+    """Produce a 2D plot"""
     x_layout = dict(
         title=x_title,
         zeroline=False,

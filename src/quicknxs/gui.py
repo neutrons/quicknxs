@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-Start script for reduction application
-"""
+"""Start script for reduction application"""
 
 # Set Qt5Agg now so matplotlib doesn't complain later
 import os

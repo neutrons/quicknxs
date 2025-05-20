@@ -18,9 +18,7 @@ from quicknxs.ui.mplwidget import MPLWidget
 
 
 class SmoothDialog(QtWidgets.QDialog):
-    """
-    Dialog to define smoothing parameters.
-    """
+    """Dialog to define smoothing parameters."""
 
     INTENSITY_MIN = 1e-6  # starting value for the color scale
     INTENSITY_MAX = 1.0  # ending value for the color scale
@@ -85,9 +83,7 @@ class SmoothDialog(QtWidgets.QDialog):
         plot.pcolormesh(x, y, I, **common_args)
 
     def drawPlot(self):
-        """
-        Plot the unsmoothed data.
-        """
+        """Plot the unsmoothed data."""
         self.drawing = True
 
         # initialize the plot widget
@@ -248,9 +244,7 @@ class SmoothDialog(QtWidgets.QDialog):
             self.ui.gridSizeY.setValue(int((y2 - y1) / sy * 1.41))
 
     def plotSelect(self, event):
-        """
-        Plot for y-projection has been clicked.
-        """
+        """Plot for y-projection has been clicked."""
         # if event.button == 1 and self.ui.plot.toolbar._active is None and event.xdata is not None:
         if event.button == 1 and event.xdata is not None:
             x = event.xdata

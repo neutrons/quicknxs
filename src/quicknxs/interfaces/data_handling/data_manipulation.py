@@ -1,6 +1,4 @@
-"""
-Methods used to process data, usually calling Mantid
-"""
+"""Methods used to process data, usually calling Mantid"""
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, multiple-statements, bare-except, protected-access, wrong-import-position
 
 import logging
@@ -23,9 +21,7 @@ class NormalizeToUnityQCutoffError(Exception):
 
 
 def generate_short_script(reduction_list):
-    """
-    Generate a simple reduction script for Mantid
-    """
+    """Generate a simple reduction script for Mantid"""
     if len(reduction_list) == 0:
         return "# No data in reduction list\n"
 

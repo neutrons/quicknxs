@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name
-"""
-GUI configuration settings
-"""
+"""GUI configuration settings"""
 
 from qtpy.QtGui import QColor
 

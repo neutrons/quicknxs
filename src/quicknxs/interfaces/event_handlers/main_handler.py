@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name, line-too-long, too-many-public-methods, too-many-instance-attributes, wrong-import-order, \
 # bare-except, protected-access, too-many-arguments, too-many-statements
-"""
-Manage file-related and UI events
-"""
+"""Manage file-related and UI events"""
 
 import glob
 import logging
@@ -30,9 +28,7 @@ from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
 
 
 class MainHandler(object):
-    """
-    Event handler for the main application window.
-    """
+    """Event handler for the main application window."""
 
     # Index of the direct beam tab in the reduction table tab widget
     DIRECT_BEAM_TAB_INDEX = 0
@@ -92,9 +88,7 @@ class MainHandler(object):
         return ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
 
     def empty_cache(self):
-        """
-        Empty the data cache
-        """
+        """Empty the data cache"""
         self._data_manager.clear_cache()
         self.cache_indicator.setText("Files loaded: 0")
 
@@ -170,9 +164,7 @@ class MainHandler(object):
         logging.info("DONE: %s sec", time.time() - t_0)
 
     def file_loaded(self):
-        """
-        Update UI after a file is loaded
-        """
+        """Update UI after a file is loaded"""
         self.main_window.auto_change_active = True
         self._set_data_manager_active_channel()
 
@@ -196,9 +188,7 @@ class MainHandler(object):
         self.cache_indicator.setText("Files loaded: %s" % (self._data_manager.get_cachesize()))
 
     def active_channel_changed(self):
-        """
-        Update UI metadata and plots after the active channel is changed
-        """
+        """Update UI metadata and plots after the active channel is changed"""
         self._set_data_manager_active_channel()
         self.update_channel_info()
         self.main_window.plotActiveTab()
@@ -209,9 +199,7 @@ class MainHandler(object):
         self.main_window.initiate_projection_plot.emit(False)
 
     def _set_data_manager_active_channel(self):
-        """
-        Set the data manager's active channel from the active channel in the UI
-        """
+        """Set the data manager's active channel from the active channel in the UI"""
         self.main_window.auto_change_active = True
         current_channel = 0
         for i in range(12):
@@ -327,9 +315,7 @@ class MainHandler(object):
             self.ui.matched_direct_beam_label.setText("None")
 
     def update_info(self):
-        """
-        Update metadata shown in the overview tab.
-        """
+        """Update metadata shown in the overview tab."""
         self.main_window.auto_change_active = True
         d = self._data_manager.active_channel
         self.populate_from_configuration(d.configuration)
@@ -385,9 +371,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
 
     def update_channel_info(self):
-        """
-        Update channel metadata shown in the overview tab.
-        """
+        """Update channel metadata shown in the overview tab."""
         # Update cross-section specific information in the overview tab
         d = self._data_manager.active_channel
         self.ui.datasetPCharge.setText("%.3e" % d.proton_charge)
@@ -556,9 +540,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
 
     def open_reduced_file_dialog(self):
-        """
-        Open a reduced file and all the data files needed to reproduce it.
-        """
+        """Open a reduced file and all the data files needed to reproduce it."""
         # Open file dialog
         filter_ = "QuickNXS files (*.dat);;All (*.*)"
         output_dir = self.main_window.settings.value("output_directory", os.path.expanduser("~"))
@@ -863,9 +845,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
 
     def clear_reflectivity(self):
-        """
-        Remove all items from the reduction lists.
-        """
+        """Remove all items from the reduction lists."""
         # clear the reduction lists in the data manager
         self._data_manager.clear_reduction_lists()
         # clear the reflectivity UI table widgets
@@ -881,18 +861,14 @@ class MainHandler(object):
             self.main_window.initiate_reflectivity_plot.emit(False)
 
     def clear_direct_beams(self):
-        """
-        Remove all items from the direct beam list.
-        """
+        """Remove all items from the direct beam list."""
         self._data_manager.clear_direct_beam_list()
         self.ui.normalizeTable.setRowCount(0)
         self.ui.normalization_list_label.setText("None")
         self.main_window.initiate_intensity_plot.emit(False)
 
     def remove_reflectivity(self):
-        """
-        Remove one item from the reduction list.
-        """
+        """Remove one item from the reduction list."""
         index = self.reduction_table.currentRow()
         if index < 0:
             return
@@ -901,9 +877,7 @@ class MainHandler(object):
         self.main_window.initiate_reflectivity_plot.emit(False)
 
     def remove_direct_beam(self):
-        """
-        Remove one item from the direct beam list.
-        """
+        """Remove one item from the direct beam list."""
         index = self.ui.normalizeTable.currentRow()
         if index < 0:
             return
@@ -912,9 +886,7 @@ class MainHandler(object):
         self.main_window.initiate_intensity_plot.emit(False)
 
     def reduction_table_changed(self, item: QtWidgets.QTableWidgetItem):
-        """
-        Perform action upon change in data reduction list.
-        """
+        """Perform action upon change in data reduction list."""
         if self.main_window.auto_change_active:
             return
 
@@ -995,9 +967,7 @@ class MainHandler(object):
         self.main_window.update_specular_viewer.emit()
 
     def add_direct_beam(self, silent=False):
-        """
-        Add / remove dataset to the available normalizations or clear the normalization list.
-        """
+        """Add / remove dataset to the available normalizations or clear the normalization list."""
         # Update all cross-section parameters as needed.
         if self.ui.action_use_common_ranges.isChecked():
             config = self.get_configuration()
@@ -1054,9 +1024,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
 
     def active_data_changed(self):
-        """
-        Actions to be taken once the active data set has changed
-        """
+        """Actions to be taken once the active data set has changed"""
         # If we update an entry, it's because that data is currently active.
         # Highlight it and un-highlight the other ones.
         self.main_window.auto_change_active = True
@@ -1174,9 +1142,7 @@ class MainHandler(object):
             np.savetxt(filepath, data_to_save, header=header)
 
     def compute_offspec_on_change(self, force=False):
-        """
-        Compute off-specular as needed
-        """
+        """Compute off-specular as needed"""
         prog = self.new_progress_reporter()
         has_changed_values = self.check_region_values_changed()
         offspec_data_exists = self._data_manager.is_offspec_available()
@@ -1188,9 +1154,7 @@ class MainHandler(object):
             self._data_manager.reduce_offspec(progress=prog)
 
     def compute_gisans_on_change(self, force=False, active_only=True):
-        """
-        Compute GISANS as needed
-        """
+        """Compute GISANS as needed"""
         prog = self.new_progress_reporter()
         has_changed_values = self.check_region_values_changed()
         gisans_data_exists = self._data_manager.is_gisans_available(active_only=active_only)
@@ -1521,9 +1485,7 @@ class MainHandler(object):
         self.ui.gisans_qz_max_spinbox.setValue(configuration.gisans_slice_qz_max)
 
     def stitch_reflectivity(self):
-        """
-        Stitch the reflectivity parts and normalize to 1.
-        """
+        """Stitch the reflectivity parts and normalize to 1."""
         # Update the configuration so we can remember the cutoff value
         # later if it was changed
         self.get_configuration()
@@ -1702,9 +1664,7 @@ class MainHandler(object):
         return True
 
     def show_results(self):
-        """
-        Pop up the result viewer
-        """
+        """Pop up the result viewer"""
         from quicknxs.interfaces.result_viewer import ResultViewer
 
         dialog = ResultViewer(self.main_window, self._data_manager)

@@ -17,7 +17,7 @@ import numpy as np
 from mantid.api import WorkspaceGroup
 from mantid.dataobjects import EventWorkspace
 
-from quicknxs.interfaces.data_handling import DeadTimeCorrection
+from quicknxs.interfaces.data_handling import dead_time_correction
 from quicknxs.interfaces.data_handling.filepath import FilePath
 
 # Constants
@@ -28,9 +28,7 @@ UNPOLARIZED_XS_LABEL = "Off_Off"
 
 
 def get_cross_section_label(ws, entry_name):
-    """
-    Return the proper cross-section label.
-    """
+    """Return the proper cross-section label."""
     entry_name = str(entry_name)
     pol_is_on = entry_name.lower().startswith("on")
     ana_is_on = entry_name.lower().endswith("on")
@@ -97,7 +95,7 @@ def get_dead_time_correction(ws, configuration, error_ws=None):
     tof_max = ws.getTofMax()
 
     corr_ws = mantid_algorithm_exec(
-        DeadTimeCorrection.SingleReadoutDeadTimeCorrection,
+        dead_time_correction.SingleReadoutDeadTimeCorrection,
         InputWorkspace=ws,
         InputErrorEventsWorkspace=error_ws,
         Paralyzable=configuration.paralyzable_deadtime,
@@ -150,9 +148,7 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
 
 
 class Instrument(object):
-    """
-    Instrument class. Holds the data handling that is unique to a specific instrument.
-    """
+    """Instrument class. Holds the data handling that is unique to a specific instrument."""
 
     n_x_pixel = 304
     n_y_pixel = 256
@@ -417,18 +413,14 @@ class Instrument(object):
 
     @classmethod
     def check_direct_beam(cls, ws):
-        """
-        Determine whether this data is a direct beam
-        """
+        """Determine whether this data is a direct beam"""
         try:
             return ws.getRun().getProperty("data_type").value[0] == 1
         except:
             return False
 
     def direct_beam_match(self, scattering, direct_beam, skip_slits=False):
-        """
-        Verify whether two data sets are compatible.
-        """
+        """Verify whether two data sets are compatible."""
         if math.fabs(scattering.lambda_center - direct_beam.lambda_center) < self.tolerance and (
             skip_slits
             or (

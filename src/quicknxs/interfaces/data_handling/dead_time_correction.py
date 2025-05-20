@@ -1,6 +1,4 @@
-"""
-Dead time correction algorithm for single-readout detectors.
-"""
+"""Dead time correction algorithm for single-readout detectors."""
 
 import numpy as np
 import scipy

@@ -38,9 +38,7 @@ class PlotManager(object):
         self.xtof_bck2 = None
 
     def plot_overview(self):
-        """
-        X vs. Y and X vs. Tof for main channel.
-        """
+        """X vs. Y and X vs. Tof for main channel."""
         self.xy_x1 = None
         self.xy_x2 = None
         self.xy_y1 = None
@@ -178,9 +176,7 @@ class PlotManager(object):
         main_window.ui.xtof_overview.draw()
 
     def plot_xy(self):
-        """
-        X vs. Y plots for all channels.
-        """
+        """X vs. Y plots for all channels."""
         main_window = self.main_window
         data_set_keys = list(main_window.data_manager.data_sets.keys())
         plots = [main_window.ui.xy_pp, main_window.ui.xy_mm, main_window.ui.xy_pm, main_window.ui.xy_mp]
@@ -262,9 +258,7 @@ class PlotManager(object):
         progress(100, message="Ready", out_of=100)
 
     def plot_xtof(self):
-        """
-        X vs. ToF plots for all channels.
-        """
+        """X vs. ToF plots for all channels."""
         main_window = self.main_window
         data_set_keys = list(main_window.data_manager.data_sets.keys())
         imin = 1e20
@@ -587,9 +581,7 @@ class PlotManager(object):
         widget.draw()
 
     def plot_intensity(self, preserve_lim=False):
-        """
-        Calculate and display the direct beam intensity from the current dataset.
-        """
+        """Calculate and display the direct beam intensity from the current dataset."""
         # hide the reflectivity plot or clear existing intensity plot
         self.main_window.ui.refl_widget.hide()
         self.main_window.ui.intensity.clear()
@@ -721,9 +713,7 @@ class PlotManager(object):
         self.main_window.ui.compare_widget.update_preview()
 
     def plot_gisans(self):
-        """
-        Create GISANS plots of the current dataset with Qy-Qz maps.
-        """
+        """Create GISANS plots of the current dataset with Qy-Qz maps."""
         if self.main_window.data_manager.active_channel is None:
             return
 

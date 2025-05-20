@@ -1,6 +1,4 @@
-"""
-Zoo for customized simple widgets
-"""
+"""Zoo for customized simple widgets"""
 
 from qtpy.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout
 

@@ -1,7 +1,5 @@
 # pylint: disable=invalid-name, line-too-long, too-few-public-methods, too-many-instance-attributes, wrong-import-order, bare-except
-"""
-Application configuration, including reduction options
-"""
+"""Application configuration, including reduction options"""
 
 from quicknxs.interfaces.data_handling.instrument import Instrument
 

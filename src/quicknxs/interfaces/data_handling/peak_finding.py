@@ -253,9 +253,7 @@ def _argmaxima1d(x):
 
 
 def _peak_prominences(x, peaks, wlen):
-    """
-    Calculate the prominence of each peak in a signal.
-    """
+    """Calculate the prominence of each peak in a signal."""
     show_warning = False
     prominences = np.empty(peaks.shape[0], dtype=np.float64)
     left_bases = np.empty(peaks.shape[0], dtype=np.intp)
@@ -304,9 +302,7 @@ def _peak_prominences(x, peaks, wlen):
 
 
 def _peak_widths(x, peaks, rel_height, prominences, left_bases, right_bases):
-    """
-    Calculate the width of each each peak in a signal.
-    """
+    """Calculate the width of each each peak in a signal."""
     if rel_height < 0:
         raise ValueError("`rel_height` must be greater or equal to 0.0")
     if not (peaks.shape[0] == prominences.shape[0] == left_bases.shape[0] == right_bases.shape[0]):

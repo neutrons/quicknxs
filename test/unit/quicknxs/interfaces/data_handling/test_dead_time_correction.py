@@ -1,10 +1,8 @@
-# package imports
-# 3rd-party imports
 import mantid.simpleapi as api
 import pytest
 from mantid.kernel import amend_config
 
-from quicknxs.interfaces.data_handling.DeadTimeCorrection import SingleReadoutDeadTimeCorrection
+from quicknxs.interfaces.data_handling.dead_time_correction import SingleReadoutDeadTimeCorrection
 from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
 
 # standard imports

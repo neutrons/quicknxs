@@ -45,9 +45,7 @@ class MainWindow(QtWidgets.QMainWindow):
     """Signal to update the GISANS viewer."""
 
     def __init__(self):
-        """
-        Initialization
-        """
+        """Initialization"""
         # Base class
         QtWidgets.QMainWindow.__init__(self)
 
@@ -142,9 +140,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.hide_data_table()
 
     def hide_unsupported(self):
-        """
-        Hide what we don't support
-        """
+        """Hide what we don't support"""
         # Hide event filtering (which is not really event filtering)
         for i in range(self.ui.event_filtering_layout.rowCount() * self.ui.event_filtering_layout.columnCount()):
             if self.ui.event_filtering_layout.itemAt(i):
@@ -160,9 +156,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # Actions defined in Qt Designer
     def file_open_dialog(self):
-        """
-        Show a dialog to open a new file.
-        """
+        """Show a dialog to open a new file."""
         self.file_handler.file_open_dialog()
 
     # Actions defined in Qt Designer
@@ -174,9 +168,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.file_open_sum_dialog()
 
     def file_loaded(self):
-        """
-        Update UI after a file is loaded
-        """
+        """Update UI after a file is loaded"""
         self.file_handler.file_loaded()
 
     def file_open_from_list(self):
@@ -190,9 +182,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.open_file(filepath)
 
     def reload_file(self):
-        """
-        Reload the file that is currently selected form the list.
-        """
+        """Reload the file that is currently selected form the list."""
         self.file_handler.open_file(self.data_manager.current_file, force=True)
 
     def change_active_channel(self, is_checked):
@@ -218,9 +208,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return self.data_manager.get_active_direct_beam()
 
     def plotActiveTab(self):
-        """
-        Select the appropriate function to plot all visible images.
-        """
+        """Select the appropriate function to plot all visible images."""
         if self.data_manager.active_channel is None:
             return
         color = str(self.ui.color_selector.currentText())
@@ -318,9 +306,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.update_specular_viewer.emit()
 
     def global_reflectivity_config_changed(self):
-        """
-        Perform action upon change in global reflectivity configuration.
-        """
+        """Perform action upon change in global reflectivity configuration."""
         if self.auto_change_active:
             return
 
@@ -329,9 +315,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_specular_viewer.emit()
 
     def reductionTableChanged(self, item):
-        """
-        Perform action upon change in data reduction list.
-        """
+        """Perform action upon change in data reduction list."""
         self.file_handler.reduction_table_changed(item)
 
     def reduction_cell_activated(self, row: int, col: int):
