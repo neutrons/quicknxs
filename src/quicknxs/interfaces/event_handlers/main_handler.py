@@ -15,9 +15,10 @@ from typing import List, Optional
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 from quicknxs.config import Settings
+from quicknxs.config.gui import QColors
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
@@ -818,24 +819,24 @@ class MainHandler(object):
         self.main_window.auto_change_active = True
         item = QtWidgets.QTableWidgetItem(str(d.number))
         if d == self._data_manager.active_channel:
-            item.setBackground(QtGui.QColor(246, 213, 16))
+            item.setBackground(QColors.yellow)
         else:
-            item.setBackground(QtGui.QColor(255, 255, 255))
+            item.setBackground(QColors.white)
         item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
         table_widget.setItem(idx, 0, item)
         table_widget.setItem(idx, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)))
         table_widget.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.cut_first_n_points)))
         table_widget.setItem(idx, 3, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points)))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.peak_position))
-        item.setBackground(QtGui.QColor(200, 200, 200))
+        item.setBackground(QColors.dark_grey)
         table_widget.setItem(idx, 4, item)
         table_widget.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width)))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.low_res_position))
-        item.setBackground(QtGui.QColor(200, 200, 200))
+        item.setBackground(QColors.dark_grey)
         table_widget.setItem(idx, 6, item)
         table_widget.setItem(idx, 7, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width)))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.bck_position))
-        item.setBackground(QtGui.QColor(200, 200, 200))
+        item.setBackground(QColors.dark_grey)
         table_widget.setItem(idx, 8, item)
         table_widget.setItem(idx, 9, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
         table_widget.setItem(idx, 10, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
@@ -850,7 +851,7 @@ class MainHandler(object):
             item = QtWidgets.QTableWidgetItem("")
         if d.configuration.do_final_rebin_global:
             item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
-            item.setBackground(QtGui.QColor(220, 220, 220))
+            item.setBackground(QColors.light_grey)
         table_widget.setItem(idx, 13, item)
 
         self.main_window.auto_change_active = False
@@ -1021,23 +1022,23 @@ class MainHandler(object):
         item = QtWidgets.QTableWidgetItem(str(d.number))
         item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
         if d == self._data_manager.active_channel:
-            item.setBackground(QtGui.QColor(246, 213, 16))
+            item.setBackground(QColors.yellow)
         else:
-            item.setBackground(QtGui.QColor(255, 255, 255))
+            item.setBackground(QColors.white)
 
         self.ui.normalizeTable.setItem(idx, 0, QtWidgets.QTableWidgetItem(item))
         wl = "%s - %s" % (d.wavelength[0], d.wavelength[-1])
         self.ui.normalizeTable.setItem(idx, 7, QtWidgets.QTableWidgetItem(wl))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.peak_position))
-        item.setBackground(QtGui.QColor(200, 200, 200))
+        item.setBackground(QColors.dark_grey)
         self.ui.normalizeTable.setItem(idx, 1, QtWidgets.QTableWidgetItem(item))
         self.ui.normalizeTable.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width)))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.low_res_position))
-        item.setBackground(QtGui.QColor(200, 200, 200))
+        item.setBackground(QColors.dark_grey)
         self.ui.normalizeTable.setItem(idx, 3, QtWidgets.QTableWidgetItem(item))
         self.ui.normalizeTable.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width)))
         item = QtWidgets.QTableWidgetItem(str(d.configuration.bck_position))
-        item.setBackground(QtGui.QColor(200, 200, 200))
+        item.setBackground(QColors.dark_grey)
         self.ui.normalizeTable.setItem(idx, 5, QtWidgets.QTableWidgetItem(item))
         self.ui.normalizeTable.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
         self.main_window.auto_change_active = False
@@ -1054,18 +1055,18 @@ class MainHandler(object):
             item = self.reduction_table.item(i, 0)
             if item is not None:
                 if i == idx:
-                    item.setBackground(QtGui.QColor(246, 213, 16))
+                    item.setBackground(QColors.yellow)
                 else:
-                    item.setBackground(QtGui.QColor(255, 255, 255))
+                    item.setBackground(QColors.white)
 
         idx = self._data_manager.find_active_direct_beam_id()
         for i in range(self.ui.normalizeTable.rowCount()):
             item = self.ui.normalizeTable.item(i, 0)
             if item is not None:
                 if i == idx:
-                    item.setBackground(QtGui.QColor(246, 213, 16))
+                    item.setBackground(QColors.yellow)
                 else:
-                    item.setBackground(QtGui.QColor(255, 255, 255))
+                    item.setBackground(QColors.white)
         self.main_window.auto_change_active = False
 
     def reduction_table_right_click(self, pos, is_reduction_table=True):
@@ -1723,12 +1724,12 @@ class MainHandler(object):
                 if state == QtCore.Qt.Checked:
                     _item = QtWidgets.QTableWidgetItem(item.text())
                     _item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
-                    _item.setBackground(QtGui.QColor(220, 220, 220))
+                    _item.setBackground(QColors.light_grey)
                     self.ui.reductionTable.setItem(row, col_index, _item)
                 else:
                     _item = QtWidgets.QTableWidgetItem(item.text())
                     _item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-                    _item.setBackground(QtGui.QColor(255, 255, 255))
+                    _item.setBackground(QColors.white)
                     self.ui.reductionTable.setItem(row, col_index, _item)
         self.ui.reductionTable.blockSignals(False)
 

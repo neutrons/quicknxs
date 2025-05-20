@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets
 
+from quicknxs.config.gui import QColors
 from quicknxs.interfaces import load_ui
 from quicknxs.interfaces.data_handling.processing_workflow import ProcessingWorkflow
 
@@ -103,7 +104,7 @@ class CompareWidget(QtWidgets.QWidget):
         self.ui.compareList.setItem(idx, 0, item)
         item = QtWidgets.QTableWidgetItem(color)
         item.setBackground(QtGui.QColor(color))
-        item.setForeground(QtGui.QColor("#ffffff"))
+        item.setForeground(QColors.white)
         item.setFlags(QtCore.Qt.ItemIsEnabled)
         self.ui.compareList.setItem(idx, 1, item)
         self.ui.compareList.setItem(idx, 2, QtWidgets.QTableWidgetItem(plotlabel))

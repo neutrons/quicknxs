@@ -4,6 +4,8 @@
 GUI configuration settings
 """
 
+from qtpy import QtGui
+
 config_file = "gui"
 
 # UI geometry
@@ -24,3 +26,12 @@ figure_params = [
     {"top": 0.95, "right": 0.95, "bottom": 0.1, "left": 0.15},  # x_project
     {"top": 0.95, "right": 0.95, "bottom": 0.1, "left": 0.15},  # y_project
 ]
+
+
+# QColors
+class QColors:
+    black = QtGui.QColor(0, 0, 0)
+    dark_grey = QtGui.QColor(200, 200, 200)
+    light_grey = QtGui.QColor(220, 220, 220)
+    white = QtGui.QColor(255, 255, 255)
+    yellow = QtGui.QColor(246, 213, 16)
