@@ -4,7 +4,7 @@
 GUI configuration settings
 """
 
-from qtpy import QtGui
+from qtpy.QtGui import QColor
 
 config_file = "gui"
 
@@ -30,8 +30,8 @@ figure_params = [
 
 # QColors
 class QColors:
-    black = QtGui.QColor(0, 0, 0)
-    dark_grey = QtGui.QColor(200, 200, 200)
-    light_grey = QtGui.QColor(220, 220, 220)
-    white = QtGui.QColor(255, 255, 255)
-    yellow = QtGui.QColor(246, 213, 16)
+    black = QColor(0, 0, 0)
+    dark_grey = QColor(200, 200, 200)
+    light_grey = QColor(220, 220, 220)
+    white = QColor(255, 255, 255)
+    yellow = QColor(246, 213, 16)
