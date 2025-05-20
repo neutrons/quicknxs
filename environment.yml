@@ -13,6 +13,7 @@ dependencies:
 - conda-verify
 - libarchive
 - libmamba
+- muparser=2.3.4 # Pin until mantid releases 6.12.0.2
 - pre-commit
 - pylint
 - pytest
