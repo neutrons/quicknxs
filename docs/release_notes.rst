@@ -13,6 +13,8 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 .. **Of interest to the Developer:**
 
+.. PR #167 Adds a utility class for reusing QColors
+
 v4.4.0
 ------
 2025-05-20
