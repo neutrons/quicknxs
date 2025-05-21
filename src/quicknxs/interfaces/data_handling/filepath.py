@@ -1,4 +1,4 @@
-r"""Classes to handle string representations of sets of run numbers and absolute paths to data files"""
+"""Classes to handle string representations of sets of run numbers and absolute paths to data files"""
 
 import itertools
 import operator
@@ -8,20 +8,24 @@ from typing import List, Optional, Union
 
 
 class RunNumbers(object):
-    r"""
-    A helper class to handle string representations of one or more run numbers. It translates from a
-    string representation to a list of run numbers, and viceversa
+    """A helper class to handle string representations of one or more run numbers.
+
+    Translates from a string representation to a list of run numbers, and viceversa
     """
 
     merge_symbol = "+"
     range_symbol = ":"
 
     def __init__(self, numbers: Union[List[int], List[str], int, str]) -> None:
-        r"""
-        @param numbers: a list of numbers or a string containing one or more numbers. For instance, '1:3+5' translates
-          to [1, 2, 3, 5]
+        """Initialize the RunNumbers object
+
+        Parameters
+        ----------
+        numbers:
+            a list of numbers or a string containing one or more numbers.
+            For instance, '1:3+5' translates to [1, 2, 3, 5]
         """
-        self._numbers = None  # type: Optional[int]
+        self._numbers: List[int]
         if isinstance(numbers, int):
             self._numbers = [numbers]  # just one run number
         elif isinstance(numbers, list):
@@ -36,9 +40,9 @@ class RunNumbers(object):
 
     def _uncompress(self, numbers):
         # type: (str) ->  List[int]
-        r"""
-        @brief Split a string representation of a set of run numbers into a list
-        @details Example: '1:3+6' becomes [1, 2, 3, 6]
+        """Split a string representation of a set of run numbers into a list
+
+        Example: '1:3+6' becomes [1, 2, 3, 6]
         """
         run_numbers = list()
         for run_range in numbers.split(self.merge_symbol):  # e.g. 1:3+6' becomes ['1:3', '6']

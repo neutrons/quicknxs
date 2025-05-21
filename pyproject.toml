@@ -72,23 +72,21 @@ convention = "numpy"
 select = [
     "A",
     "ARG",
-    "ASYNC",
-    "BLE",
-    "C90",
     "D",     # Docstrings
     "E",
     "F",
     "I",
     "N",
-    "UP032",
+    "UP032", # Use f-strings instead of format call
     "W",
 ]
 ignore = [
     "A001",   # Variable is shadowing a Python builtin
     "ARG001", # Unused function argument
     "ARG002", # Unused method argument
-    "BLE001", # Do not catch blind exception
-    "C901",   # Function is too complex
+    "D100",   # Missing docstring in public module
+    "D102",   # Missing docstring in public method
+    "D104",   # Missing docstring in public package
     "D105",   # Missing docstring in magic method
     "D400",   # First line should end with a period
     "D401",   # First line should be in imperative mood

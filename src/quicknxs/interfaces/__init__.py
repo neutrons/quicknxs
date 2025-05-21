@@ -1,3 +1,5 @@
+"""Python interface for the Qt UI files."""
+
 import os
 from typing import TypeVar
 

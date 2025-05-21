@@ -1,5 +1,3 @@
-# package imports
-# third party imports
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QCheckBox, QGroupBox, QHBoxLayout, QPushButton
 
