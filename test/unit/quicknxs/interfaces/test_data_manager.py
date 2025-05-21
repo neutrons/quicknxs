@@ -29,8 +29,8 @@ class TestDataManagerTest(object):
 
         q_range = manager._nexus_data.get_q_range()
         assert q_range[0:2] == pytest.approx([0.034, 0.068], abs=0.05)
-        assert manager.add_active_to_normalization()
-        assert manager.remove_active_from_normalization() == 0
+        assert manager.add_active_to_normalization() == False
+        assert manager.remove_active_from_normalization() == -1
 
         manager.set_active_data_from_reduction_list(0)
         manager.set_active_data_from_direct_beam_list(0)
