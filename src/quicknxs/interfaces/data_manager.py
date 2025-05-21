@@ -10,7 +10,7 @@ import logging
 import os
 import sys
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 
@@ -141,20 +141,8 @@ class DataManager(object):
             self._nexus_data = self.direct_beam_list[index]
             self.set_channel(0)
 
-    def set_channel(self, index):
-        """Set the current channel to the specified index, or zero
-        if it doesn't exist.
-
-        Parameters
-        ----------
-        index: int
-            channel index
-
-        Returns
-        -------
-        bool
-
-        """
+    def set_channel(self, index: int) -> bool:
+        """Set the current channel to the specified index, or zero if it doesn't exist."""
         if self.data_sets is None:
             return False
         channels = list(self.data_sets.keys())
@@ -362,7 +350,7 @@ class DataManager(object):
         """
         Add active data set to the direct beam list
         """
-        if self._nexus_data not in self.direct_beam_list:
+        if self._nexus_data not in self.direct_beam_list and self._nexus_data.is_direct_beam():
             self.direct_beam_list.append(self._nexus_data)
             return True
         return False
@@ -507,7 +495,7 @@ class DataManager(object):
         """
         return self._find_direct_beam(self._nexus_data)
 
-    def _find_direct_beam(self, nexus_data):
+    def _find_direct_beam(self, nexus_data: Union[NexusData, CrossSectionData]):
         """
         Determine whether we have a direct beam data set available
         for a given reflectivity data set.
@@ -525,8 +513,10 @@ class DataManager(object):
                 logging.error("DataManager._find_direct_beam: no data available in NexusData object")
                 return
             data_xs = nexus_data.cross_sections[data_keys[0]]
-        else:
+        elif isinstance(nexus_data, CrossSectionData):
             data_xs = nexus_data
+        else:
+            raise TypeError("nexus_data must be a NexusData or CrossSectionData object")
 
         if data_xs.configuration is not None and data_xs.configuration.normalization is not None:
             for item in self.direct_beam_list:
@@ -583,11 +573,11 @@ class DataManager(object):
         # We must have a direct beam data set to normalize with
         direct_beam = self._find_direct_beam(nexus_data)
         if direct_beam is None:
-            # TODO 67 Handle this error with GUI prompt GUI
-            raise RuntimeError("Please select a direct beam data set for your data.")
+            return False
 
         nexus_data.calculate_gisans(direct_beam=direct_beam, progress=progress)
         logging.info("Calculate GISANS: %s %s sec", nexus_data.number, (time.time() - t_0))
+        return True
 
     def is_offspec_available(self):
         """

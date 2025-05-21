@@ -73,7 +73,7 @@ class PlotManager(object):
             logging.error("No positive data found")
             return
 
-        ref_norm = main_window.getNorm()
+        ref_norm = main_window.get_direct_beam()
         if main_window.ui.normalizeXTof.isChecked() and ref_norm is not None:
             ref_norm = ref_norm.get_counts_vs_TOF()
             # normalize ToF dataset for wavelength distribution
@@ -270,7 +270,7 @@ class PlotManager(object):
         imin = 1e20
         imax = 1e-20
         xtofnormed = []
-        ref_norm = main_window.getNorm()
+        ref_norm = main_window.get_direct_beam()
         if ref_norm is not None:
             ref_norm = ref_norm.get_counts_vs_TOF()
             ref_norm = np.where(ref_norm > 0, ref_norm, 1.0)

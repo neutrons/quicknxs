@@ -1,31 +1,31 @@
 name: quicknxs
 channels:
-    - neutrons/label/main
-    - mantid/label/main
-    - oncat
-    - conda-forge
+  - neutrons/label/main
+  - mantid/label/main
+  - oncat
+  - conda-forge
 dependencies:
-- mr_reduction=2.2.0
-- anaconda-client
-- boa
-- codecov
-- conda-build
-- conda-verify
-- libarchive
-- libmamba
-- muparser=2.3.4 # Pin until mantid releases 6.12.0.2
-- pre-commit
-- pylint
-- pytest
-- pytest-qt
-- pytest-cov
-- pytest-mock
-- pytest-xvfb
-- python-build
-- sphinx
-- sphinx_rtd_theme
-- toml
-- versioningit
-- pip
-- pip:
-    - check-wheel-contents
+  - mr_reduction=2.2.0
+  - anaconda-client
+  - boa
+  - codecov
+  - conda-build
+  - conda-verify
+  - libarchive
+  - libmamba
+  - muparser=2.3.4 # Pin until mantid releases 6.12.0.2
+  - pre-commit
+  - pylint
+  - pytest
+  - pytest-qt
+  - pytest-cov
+  - pytest-mock
+  - pytest-xvfb
+  - python-build
+  - sphinx
+  - sphinx_rtd_theme
+  - toml
+  - versioningit
+  - pip
+  - pip:
+      - check-wheel-contents

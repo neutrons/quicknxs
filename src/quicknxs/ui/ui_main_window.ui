@@ -2713,7 +2713,7 @@
                      <number>0</number>
                     </property>
                     <item>
-                     <widget class="QTableWidget" name="normalizeTable">
+                     <widget class="QTableWidget" name="directBeamTable">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -5892,7 +5892,7 @@
   <tabstop>tabWidget</tabstop>
   <tabstop>reductionTable</tabstop>
   <tabstop>reduceButton</tabstop>
-  <tabstop>normalizeTable</tabstop>
+  <tabstop>directBeamTable</tabstop>
   <tabstop>offspecImin</tabstop>
   <tabstop>offspecImax</tabstop>
   <tabstop>daslogTableBox</tabstop>
@@ -5937,7 +5937,7 @@
    <sender>actionNorm</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>setNorm()</slot>
+   <slot>add_direct_beam()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -6215,7 +6215,7 @@
    <sender>actionClear_Normalizations</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>clearNormList()</slot>
+   <slot>clear_direct_beam_list()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -7047,7 +7047,7 @@
    <sender>actionRemove_Normalization</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>remove_normalization()</slot>
+   <slot>remove_direct_beam()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -7332,10 +7332,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>normalizeTable</sender>
+   <sender>directBeamTable</sender>
    <signal>itemChanged(QTableWidgetItem*)</signal>
    <receiver>MainWindow</receiver>
-   <slot>normalize_table_changed(QTableWidgetItem*)</slot>
+   <slot>direct_beam_table_changed(QTableWidgetItem*)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>901</x>
@@ -7348,7 +7348,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>normalizeTable</sender>
+   <sender>directBeamTable</sender>
    <signal>cellActivated(int,int)</signal>
    <receiver>MainWindow</receiver>
    <slot>direct_beam_cell_activated(int,int)</slot>
@@ -7364,7 +7364,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>normalizeTable</sender>
+   <sender>directBeamTable</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>direct_beam_table_right_click(QPoint)</slot>
@@ -7383,7 +7383,7 @@
    <sender>tabWidget</sender>
    <signal>currentChanged(int)</signal>
    <receiver>MainWindow</receiver>
-   <slot>setCurrentReductionTable()</slot>
+   <slot>current_table_changed()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1198</x>
@@ -7438,7 +7438,7 @@
   <slot>change_gisans_colorscale()</slot>
   <slot>change_offspec_colorscale()</slot>
   <slot>changeRegionValues()</slot>
-  <slot>clearNormList()</slot>
+  <slot>clear_direct_beam_list()</slot>
   <slot>clearRefList()</slot>
   <slot>cutPoints()</slot>
   <slot>direct_beam_cell_activated(int,int)</slot>
@@ -7452,7 +7452,7 @@
   <slot>loadExtraction()</slot>
   <slot>match_direct_beam_clicked()</slot>
   <slot>nextFile()</slot>
-  <slot>normalize_table_changed(QTableWidgetItem*)</slot>
+  <slot>direct_beam_table_changed(QTableWidgetItem*)</slot>
   <slot>normalizeTotalReflection()</slot>
   <slot>open_advanced_background()</slot>
   <slot>open_logfile_viewer()</slot>
@@ -7472,11 +7472,11 @@
   <slot>refresh_file_list()</slot>
   <slot>refresh_offspec()</slot>
   <slot>reload_file()</slot>
-  <slot>remove_normalization()</slot>
+  <slot>remove_direct_beam()</slot>
   <slot>removeRefList()</slot>
   <slot>replotProjections()</slot>
   <slot>set_debug()</slot>
-  <slot>setNorm()</slot>
+  <slot>add_direct_beam()</slot>
   <slot>show_results()</slot>
   <slot>stripOverlap()</slot>
   <slot>toggle_smoothing()</slot>
