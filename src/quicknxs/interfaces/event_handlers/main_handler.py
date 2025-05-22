@@ -1058,8 +1058,7 @@ class MainHandler(object):
         if self.main_window.auto_change_active:
             return
 
-        entry = item.row()
-        column = item.column()
+        data = self._data_manager.direct_beam_list[item.row()]
 
         # col 0 and 7 are not editable
         col_mapping = {
@@ -1071,12 +1070,29 @@ class MainHandler(object):
             6: "bck_width",
         }
 
-        dataset = self._data_manager.direct_beam_list[entry]
-        # xs = dataset.cross_sections[self._data_manager.active_channel.name]
-        config = dataset.configuration
-        if column in col_mapping:
-            setattr(config, col_mapping[column], float(item.text()))
-        dataset.update_configuration(configuration=config)
+        col = item.column()
+        if col in col_mapping:
+            data.set_parameter(col_mapping[col], float(item.text()))
+
+        # Update calculated data
+        data.update_calculated_values()
+
+        # Update UI if this data set is the active one
+        if self._data_manager.is_active(data):
+            self.main_window.auto_change_active = True
+            self.update_info()
+            self.main_window.auto_change_active = False
+
+        # Recalculate reflectivity
+        try:
+            self._data_manager.calculate_reflectivity(nexus_data=data)
+        except:
+            self.report_message(
+                "Could not compute reflectivity for %s" % self._data_manager.current_file_name,
+                detailed_message=str(traceback.format_exc()),
+                pop_up=False,
+                is_error=False,
+            )
 
         self.main_window.plotActiveTab()
         self.main_window.initiate_intensity_plot.emit(True)

@@ -52,7 +52,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Initialize the UI widgets
         self.reduction_table_menu = None
-        self.ui = load_ui("ui_main_window.ui", base_instance=self)
+        self.ui = load_ui("ui_main_window.ui", baseinstance=self)
         version = quicknxs.__version__ if quicknxs.__version__.lower() != "unknown" else ""
         self.setWindowTitle(f"QuickNXS Magnetic Reflectivity {version}")
 
@@ -214,6 +214,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         if self.data_manager.active_channel is None:
             return
+
         color = str(self.ui.color_selector.currentText())
         if color != self.plot_manager.color and self.plot_manager.color is not None:
             self.plot_manager.color = color
