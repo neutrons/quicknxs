@@ -1124,18 +1124,12 @@ class MainHandler(object):
                     item.setBackground(QColors.white)
         self.main_window.auto_change_active = False
 
-    def reduction_table_right_click(self, pos, is_reduction_table=True):
+    def reduction_table_right_click(self, pos: QtCore.QPoint, is_reduction_table: bool = True):
         """
         Handle right-click on the reduction table.
         :param QPoint pos: mouse position
         :param bool is_reduction_table: True if the reduction table is active, False if the direct beam table is active
         """
-        if is_reduction_table:
-            table_widget = self.reduction_table
-            data_table = self._data_manager.reduction_list
-        else:
-            table_widget = self.ui.directBeamTable
-            data_table = self._data_manager.direct_beam_list
 
         def _export_data(_pos):
             """callback function to right-click action: Export data"""
@@ -1164,7 +1158,18 @@ class MainHandler(object):
 
         def _remove_run(_pos):
             """callback function to right-click action: Remove run from this tab"""
-            self.remove_reflectivity()
+            if is_reduction_table:
+                self.remove_reflectivity()
+            else:
+                self.remove_direct_beam()
+
+        # Get the table widget and data table
+        if is_reduction_table:
+            table_widget = self.reduction_table
+            data_table = self._data_manager.reduction_list
+        else:
+            table_widget = self.ui.directBeamTable
+            data_table = self._data_manager.direct_beam_list
 
         reduction_table_menu = QtWidgets.QMenu(table_widget)
 
@@ -1172,13 +1177,17 @@ class MainHandler(object):
         export_data_action.triggered.connect(lambda: _export_data(pos))
         reduction_table_menu.addAction(export_data_action)
 
+        remove_run_action = QtWidgets.QAction("Remove run from this tab")
+        remove_run_action.triggered.connect(lambda: _remove_run(pos))
+        reduction_table_menu.addAction(remove_run_action)
+
         propagate_run_action = QtWidgets.QAction("Propagate run to all tabs")
         propagate_run_action.triggered.connect(lambda: _propagate_run(pos))
         reduction_table_menu.addAction(propagate_run_action)
 
-        remove_run_action = QtWidgets.QAction("Remove run from this tab")
-        remove_run_action.triggered.connect(lambda: _remove_run(pos))
-        reduction_table_menu.addAction(remove_run_action)
+        # Disable propagate run action if not in reduction table
+        if not is_reduction_table:
+            propagate_run_action.setEnabled(False)
 
         reduction_table_menu.exec_(table_widget.mapToGlobal(pos))
 
