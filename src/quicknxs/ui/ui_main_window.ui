@@ -5324,13 +5324,13 @@
     <property name="title">
      <string>Reduction</string>
     </property>
-    <addaction name="actionNorm"/>
-    <addaction name="actionRemove_Normalization"/>
-    <addaction name="actionClear_Normalizations"/>
+    <addaction name="actionAddDirectBeam"/>
+    <addaction name="actionRemoveDirectBeam"/>
+    <addaction name="actionClearDirectBeams"/>
     <addaction name="separator"/>
-    <addaction name="actionAddPlot"/>
-    <addaction name="actionRemove"/>
-    <addaction name="actionClear"/>
+    <addaction name="actionAddRefl"/>
+    <addaction name="actionRemoveRefl"/>
+    <addaction name="actionClearRefls"/>
     <addaction name="separator"/>
     <addaction name="actionReduce"/>
    </widget>
@@ -5395,13 +5395,13 @@
    <addaction name="actionLoad_Extraction"/>
    <addaction name="separator"/>
    <addaction name="separator"/>
-   <addaction name="actionNorm"/>
-   <addaction name="actionRemove_Normalization"/>
-   <addaction name="actionClear_Normalizations"/>
+   <addaction name="actionAddDirectBeam"/>
+   <addaction name="actionRemoveDirectBeam"/>
+   <addaction name="actionClearDirectBeams"/>
    <addaction name="separator"/>
-   <addaction name="actionAddPlot"/>
-   <addaction name="actionRemove"/>
-   <addaction name="actionClear"/>
+   <addaction name="actionAddRefl"/>
+   <addaction name="actionRemoveRefl"/>
+   <addaction name="actionClearRefls"/>
    <addaction name="separator"/>
    <addaction name="actionReduce"/>
    <addaction name="separator"/>
@@ -5433,7 +5433,7 @@
     <string>Ctrl+O</string>
    </property>
   </action>
-  <action name="actionNorm">
+  <action name="actionAddDirectBeam">
    <property name="icon">
     <iconset>
      <normaloff>../icons/extractNormalization.png</normaloff>../icons/extractNormalization.png</iconset>
@@ -5448,7 +5448,7 @@
     <string>Ctrl+W</string>
    </property>
   </action>
-  <action name="actionAddPlot">
+  <action name="actionAddRefl">
    <property name="icon">
     <iconset>
      <normaloff>../icons/addRef.png</normaloff>../icons/addRef.png</iconset>
@@ -5463,7 +5463,7 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionClear">
+  <action name="actionClearRefls">
    <property name="icon">
     <iconset>
      <normaloff>../icons/clearRef.png</normaloff>../icons/clearRef.png</iconset>
@@ -5508,7 +5508,7 @@
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="actionRemove">
+  <action name="actionRemoveRefl">
    <property name="icon">
     <iconset>
      <normaloff>../icons/delRef.png</normaloff>../icons/delRef.png</iconset>
@@ -5594,7 +5594,7 @@
     <string>Ctrl+Alt+O</string>
    </property>
   </action>
-  <action name="actionClear_Normalizations">
+  <action name="actionClearDirectBeams">
    <property name="icon">
     <iconset>
      <normaloff>../icons/clearNorm.png</normaloff>../icons/clearNorm.png</iconset>
@@ -5793,7 +5793,7 @@
     <string>Apply identical ranges to all cross-sections</string>
    </property>
   </action>
-  <action name="actionRemove_Normalization">
+  <action name="actionRemoveDirectBeam">
    <property name="icon">
     <iconset>
      <normaloff>../icons/delNormalization.png</normaloff>../icons/delNormalization.png</iconset>
@@ -5934,7 +5934,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionNorm</sender>
+   <sender>actionAddDirectBeam</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>add_direct_beam()</slot>
@@ -5950,10 +5950,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionAddPlot</sender>
+   <sender>actionAddRefl</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>addRefList()</slot>
+   <slot>addRefl()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -5966,7 +5966,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionClear</sender>
+   <sender>actionClearRefls</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>clearRefList()</slot>
@@ -6004,10 +6004,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionRemove</sender>
+   <sender>actionRemoveRefl</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>removeRefList()</slot>
+   <slot>removeRefl()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -6212,7 +6212,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionClear_Normalizations</sender>
+   <sender>actionClearDirectBeams</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>clear_direct_beam_list()</slot>
@@ -7044,7 +7044,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionRemove_Normalization</sender>
+   <sender>actionRemoveDirectBeam</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>remove_direct_beam()</slot>
@@ -7430,7 +7430,7 @@
  </connections>
  <slots>
   <slot>addDataTable()</slot>
-  <slot>addRefList()</slot>
+  <slot>addRefl()</slot>
   <slot>apply_offspec_crop()</slot>
   <slot>automaticExtraction()</slot>
   <slot>autoRef()</slot>
@@ -7473,7 +7473,7 @@
   <slot>refresh_offspec()</slot>
   <slot>reload_file()</slot>
   <slot>remove_direct_beam()</slot>
-  <slot>removeRefList()</slot>
+  <slot>removeRefl()</slot>
   <slot>replotProjections()</slot>
   <slot>set_debug()</slot>
   <slot>add_direct_beam()</slot>

@@ -1140,6 +1140,13 @@ class MainHandler(object):
 
         def _propagate_run(_pos):
             """callback function to right-click action: Propagate run to all tabs"""
+
+            # If direct beam, make sure the user
+            if not is_reduction_table and not self.ask_question(
+                "Run is labeled as direct beam. Do you still want to add it to the list of reflectivity runs?"
+            ):
+                return
+
             row = table_widget.rowAt(pos.y())
             if 0 <= row < len(data_table):
                 nexus_data = data_table[row]
@@ -1177,17 +1184,13 @@ class MainHandler(object):
         export_data_action.triggered.connect(lambda: _export_data(pos))
         reduction_table_menu.addAction(export_data_action)
 
-        remove_run_action = QtWidgets.QAction("Remove run from this tab")
-        remove_run_action.triggered.connect(lambda: _remove_run(pos))
-        reduction_table_menu.addAction(remove_run_action)
-
         propagate_run_action = QtWidgets.QAction("Propagate run to all tabs")
         propagate_run_action.triggered.connect(lambda: _propagate_run(pos))
         reduction_table_menu.addAction(propagate_run_action)
 
-        # Disable propagate run action if not in reduction table
-        if not is_reduction_table:
-            propagate_run_action.setEnabled(False)
+        remove_run_action = QtWidgets.QAction("Remove run from this tab")
+        remove_run_action.triggered.connect(lambda: _remove_run(pos))
+        reduction_table_menu.addAction(remove_run_action)
 
         reduction_table_menu.exec_(table_widget.mapToGlobal(pos))
 

@@ -64,7 +64,7 @@ def test_checkbox_change_reload_files(mocker, qtbot):
     # Add run to the reduction table
     ui_utilities.setText(main_window.numberSearchEntry, str(40785), press_enter=True)
     ui_utilities.set_current_file_by_run_number(main_window, 40785)
-    main_window.actionAddPlot.triggered.emit()
+    main_window.actionAddRefl.triggered.emit()
     # Simulate checking the deadtime settings checkbox
     qtbot.mouseClick(main_window.ui.deadtime_entry.applyCheckBox, Qt.LeftButton)
     # Test if file reload was triggered

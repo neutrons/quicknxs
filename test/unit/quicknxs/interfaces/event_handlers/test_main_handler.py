@@ -153,11 +153,11 @@ def test_reload_all_files(qtbot):
     # Add one direct beam run and two data runs
     ui_utilities.setText(main_window.numberSearchEntry, str(40786), press_enter=True)
     ui_utilities.set_current_file_by_run_number(main_window, 40786)
-    main_window.actionNorm.triggered.emit()
+    main_window.actionAddDirectBeam.triggered.emit()
     ui_utilities.set_current_file_by_run_number(main_window, 40785)
-    main_window.actionAddPlot.triggered.emit()
+    main_window.actionAddRefl.triggered.emit()
     ui_utilities.set_current_file_by_run_number(main_window, 40782)
-    main_window.actionAddPlot.triggered.emit()
+    main_window.actionAddRefl.triggered.emit()
 
     # Select/plot the first data run
     main_window.reduction_cell_activated(selected_row, 0)
@@ -184,11 +184,11 @@ def test_reload_all_files_two_data_tabs(qtbot):
     # Add one direct beam run and two data runs
     ui_utilities.setText(main_window.numberSearchEntry, str(40786), press_enter=True)
     ui_utilities.set_current_file_by_run_number(main_window, 40786)
-    main_window.actionNorm.triggered.emit()
+    main_window.actionAddDirectBeam.triggered.emit()
     ui_utilities.set_current_file_by_run_number(main_window, 40785)
-    main_window.actionAddPlot.triggered.emit()
+    main_window.actionAddRefl.triggered.emit()
     ui_utilities.set_current_file_by_run_number(main_window, 40782)
-    main_window.actionAddPlot.triggered.emit()
+    main_window.actionAddRefl.triggered.emit()
 
     # Add second peak data tab
     main_window.addDataTable()

@@ -372,11 +372,11 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.initiate_reflectivity_plot.emit(True)
 
-    def addRefList(self):
+    def addRefl(self):
         """Signal handling"""
         self.file_handler.add_reflectivity()
 
-    def removeRefList(self):
+    def removeRefl(self):
         """Signal handling"""
         self.file_handler.remove_reflectivity()
 
