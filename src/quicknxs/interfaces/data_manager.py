@@ -347,9 +347,7 @@ class DataManager(object):
         return False
 
     def add_active_to_normalization(self):
-        """
-        Add active data set to the direct beam list
-        """
+        """Add active data set to the direct beam list if it is direct beam data."""
         if self._nexus_data not in self.direct_beam_list and self._nexus_data.is_direct_beam():
             self.direct_beam_list.append(self._nexus_data)
             return True
