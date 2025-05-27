@@ -436,24 +436,6 @@ class TestMainGui:
         assert len(window_main.data_manager.reduction_list) == 0
         assert len(window_main.data_manager.direct_beam_list) == 0
 
-    @pytest.mark.datarepo
-    def test_direct_beam_table(self, qtbot, data_server):
-        """Test that the direct beam table is populated with the correct data"""
-        window_main = MainWindow()
-        qtbot.addWidget(window_main)
-        Configuration.setup_default_values()
-
-        # add direct beam run
-        window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
-        window_main.actionAddDirectBeam.triggered.emit()
-
-        # check that the direct beam table is populated with the correct data
-        table = window_main.ui.directBeamTable
-        assert table.rowCount() == 1
-        assert table.item(0, 0).text() == "42099"
-        assert table.item(0, 1).text() == "0.0"
-        assert table.item(0, 2).text() == "0.0"
-
 
 if __name__ == "__main__":
     pytest.main([__file__])

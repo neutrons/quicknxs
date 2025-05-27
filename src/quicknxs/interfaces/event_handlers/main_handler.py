@@ -1034,18 +1034,18 @@ class MainHandler(object):
         else:
             item.setBackground(QColors.white)
 
-        self.ui.directBeamTable.setItem(idx, 0, QtWidgets.QTableWidgetItem(item))
+        self.ui.directBeamTable.setItem(idx, 0, item)
         item = QtWidgets.QTableWidgetItem(str(data.configuration.peak_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.directBeamTable.setItem(idx, 1, QtWidgets.QTableWidgetItem(item))
+        self.ui.directBeamTable.setItem(idx, 1, item)
         self.ui.directBeamTable.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(data.configuration.peak_width)))
         item = QtWidgets.QTableWidgetItem(str(data.configuration.low_res_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.directBeamTable.setItem(idx, 3, QtWidgets.QTableWidgetItem(item))
+        self.ui.directBeamTable.setItem(idx, 3, item)
         self.ui.directBeamTable.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(data.configuration.low_res_width)))
         item = QtWidgets.QTableWidgetItem(str(data.configuration.bck_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.directBeamTable.setItem(idx, 5, QtWidgets.QTableWidgetItem(item))
+        self.ui.directBeamTable.setItem(idx, 5, item)
         self.ui.directBeamTable.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(data.configuration.bck_width)))
         wl = "%s - %s" % (data.wavelength[0], data.wavelength[-1])
         item = QtWidgets.QTableWidgetItem(wl)
@@ -1072,7 +1072,18 @@ class MainHandler(object):
 
         col = item.column()
         if col in col_mapping:
-            data.set_parameter(col_mapping[col], float(item.text()))
+            try:
+                data.set_parameter(col_mapping[col], float(item.text()))
+            except ValueError:
+                self.report_message(
+                    f"Invalid value for {col_mapping[col]}:\n\t{item.text()}\nPlease enter a valid number.",
+                    pop_up=True,
+                    is_error=True,
+                )
+                # Reset to old value if conversion fails
+                old_value = getattr(self._data_manager.active_channel.configuration, col_mapping[col])
+                item.setText(str(old_value))
+                return
 
         # Update calculated data
         data.update_calculated_values()
