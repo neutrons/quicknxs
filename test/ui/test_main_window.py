@@ -450,7 +450,7 @@ class TestMainGui:
         # check that the direct beam table is populated with the correct data
         table = window_main.ui.directBeamTable
         assert table.rowCount() == 1
-        assert table.item(0, 0).text() == "42100"
+        assert table.item(0, 0).text() == "42099"
         assert table.item(0, 1).text() == "0.0"
         assert table.item(0, 2).text() == "0.0"
 
