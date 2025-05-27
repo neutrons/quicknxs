@@ -39,6 +39,7 @@ def test_direct_beam_table(qtbot, data_server):
     # Change the reference position and width in the main window
     main_window.ui.refXPos.setValue(200)
     main_window.ui.refXWidth.setValue(100)
+    main_window.file_handler.update_info()
     assert main_window.ui.refXPos.value() == float(table.item(0, 1).text())
     assert main_window.ui.refXWidth.value() == float(table.item(0, 2).text())
 
