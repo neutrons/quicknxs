@@ -15,7 +15,7 @@ from typing import List, Optional
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from quicknxs.config import Settings
 from quicknxs.config.gui import QColors
@@ -116,7 +116,9 @@ class MainHandler(object):
         else:
             self.main_window.frame_2.hide()
 
-    def open_file(self, file_path: str, force: Optional[bool] = False, silent: Optional[bool] = False) -> None:
+    def open_file(
+        self, file_path: Optional[str], force: Optional[bool] = False, silent: Optional[bool] = False
+    ) -> None:
         r"""
         @brief Read one or more data files. If more than one, merge their data.
         @param file_path: absolute path to data files. If more than one file, paths are joined with
@@ -128,6 +130,10 @@ class MainHandler(object):
         # 1. check the file exists
         # 2. Invoke DataManager.load()
         # 3. if silent==False, invoke DataManager.file_loaded()
+
+        if file_path is None:
+            self.report_message("No file selected", pop_up=True)
+            return
 
         for single_file_path in file_path.split(
             FilePath.merge_symbol
@@ -577,7 +583,7 @@ class MainHandler(object):
             self.main_window.auto_change_active = True
 
             # Update UI direct beam table
-            self.ui.normalizeTable.setRowCount(len(self._data_manager.direct_beam_list))
+            self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
             for idx, _ in enumerate(self._data_manager.direct_beam_list):
                 self._data_manager.set_active_data_from_direct_beam_list(idx)
                 self.update_direct_beam_table(idx, self._data_manager.active_channel)
@@ -804,16 +810,15 @@ class MainHandler(object):
         return True
 
     def update_reduction_table(self, table_widget: QtWidgets.QTableWidget, idx: int, d: CrossSectionData):
-        """
-        Update the reduction table
+        """Update the reduction table
 
         Parameters
         ----------
         table_widget: QtWidgets.QTableWidget
             Table widget of the table to update
-        idx: int
+        idx:
             Row to update
-        d: CrossSectionData
+        d:
             Cross-section data
         """
         self.main_window.auto_change_active = True
@@ -822,7 +827,8 @@ class MainHandler(object):
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
-        item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+        # Set the item to be non-editable (bitwise AND with the negation of the editable flag)
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         table_widget.setItem(idx, 0, item)
         table_widget.setItem(idx, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)))
         table_widget.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.cut_first_n_points)))
@@ -874,15 +880,6 @@ class MainHandler(object):
         if self.main_window.refl.isVisible():
             self.main_window.initiate_reflectivity_plot.emit(False)
 
-    def clear_direct_beams(self):
-        """
-        Remove all items from the direct beam list.
-        """
-        self._data_manager.clear_direct_beam_list()
-        self.ui.normalizeTable.setRowCount(0)
-        self.ui.normalization_list_label.setText("None")
-        self.main_window.initiate_intensity_plot.emit(False)
-
     def remove_reflectivity(self):
         """
         Remove one item from the reduction list.
@@ -894,18 +891,7 @@ class MainHandler(object):
         self.reduction_table.removeRow(index)
         self.main_window.initiate_reflectivity_plot.emit(False)
 
-    def remove_direct_beam(self):
-        """
-        Remove one item from the direct beam list.
-        """
-        index = self.ui.normalizeTable.currentRow()
-        if index < 0:
-            return
-        self._data_manager.direct_beam_list.pop(index)
-        self.ui.normalizeTable.removeRow(index)
-        self.main_window.initiate_intensity_plot.emit(False)
-
-    def reduction_table_changed(self, item):
+    def reduction_table_changed(self, item: QtWidgets.QTableWidgetItem):
         """
         Perform action upon change in data reduction list.
         """
@@ -985,13 +971,12 @@ class MainHandler(object):
                     is_error=False,
                 )
 
+        self.main_window.plotActiveTab()
         self.main_window.initiate_reflectivity_plot.emit(True)
         self.main_window.update_specular_viewer.emit()
 
     def add_direct_beam(self, silent=False):
-        """
-        Add / remove dataset to the available normalizations or clear the normalization list.
-        """
+        """Add dataset to the direct beam table."""
         # Update all cross-section parameters as needed.
         if self.ui.action_use_common_ranges.isChecked():
             config = self.get_configuration()
@@ -1003,7 +988,7 @@ class MainHandler(object):
                 self.report_message("(Add direct beam) Data incompatible or already in the list.", pop_up=True)
             return False
 
-        self.ui.normalizeTable.setRowCount(len(self._data_manager.direct_beam_list))
+        self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
         self.update_tables()
 
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
@@ -1012,36 +997,117 @@ class MainHandler(object):
         self.main_window.initiate_intensity_plot.emit(False)
         return True
 
-    def update_direct_beam_table(self, idx, d):
-        """
-        Update a direct beam table entry
-        :param int idx: row index
-        :param CrossSectionData d: data object
+    def remove_direct_beam(self):
+        """Remove one item from the direct beam list."""
+        index = self.ui.directBeamTable.currentRow()
+        if index < 0:
+            return
+        self._data_manager.direct_beam_list.pop(index)
+        self.ui.directBeamTable.removeRow(index)
+        self.main_window.initiate_intensity_plot.emit(False)
+
+    def clear_direct_beams(self):
+        """Remove all items from the direct beam list."""
+        self._data_manager.clear_direct_beam_list()
+        self.ui.directBeamTable.setRowCount(0)
+        self.ui.normalization_list_label.setText("None")
+        self.main_window.initiate_intensity_plot.emit(False)
+
+    def update_direct_beam_table(self, idx: int, data: CrossSectionData) -> None:
+        """Update a direct beam table entry with cross-section data.
+
+        Table colums:
+            0: Run number - d.number
+            1: x0         - d.configuration.peak_position
+            2: xw         - d.configuration.peak_width
+            3: y0         - d.configuration.low_res_position
+            4: yw         - d.configuration.low_res_width
+            5: bg0        - d.configuration.bck_position
+            6: bgw        - d.configuration.bck_width
+            7: lambda     - d.wavelength
         """
         self.main_window.auto_change_active = True
-        item = QtWidgets.QTableWidgetItem(str(d.number))
-        item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
-        if d == self._data_manager.active_channel:
+        item = QtWidgets.QTableWidgetItem(str(data.number))
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
+        if data == self._data_manager.active_channel:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
 
-        self.ui.normalizeTable.setItem(idx, 0, QtWidgets.QTableWidgetItem(item))
-        wl = "%s - %s" % (d.wavelength[0], d.wavelength[-1])
-        self.ui.normalizeTable.setItem(idx, 7, QtWidgets.QTableWidgetItem(wl))
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.peak_position))
+        self.ui.directBeamTable.setItem(idx, 0, item)
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.peak_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.normalizeTable.setItem(idx, 1, QtWidgets.QTableWidgetItem(item))
-        self.ui.normalizeTable.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width)))
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.low_res_position))
+        self.ui.directBeamTable.setItem(idx, 1, item)
+        self.ui.directBeamTable.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(data.configuration.peak_width)))
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.low_res_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.normalizeTable.setItem(idx, 3, QtWidgets.QTableWidgetItem(item))
-        self.ui.normalizeTable.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width)))
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.bck_position))
+        self.ui.directBeamTable.setItem(idx, 3, item)
+        self.ui.directBeamTable.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(data.configuration.low_res_width)))
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.bck_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.normalizeTable.setItem(idx, 5, QtWidgets.QTableWidgetItem(item))
-        self.ui.normalizeTable.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
+        self.ui.directBeamTable.setItem(idx, 5, item)
+        self.ui.directBeamTable.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(data.configuration.bck_width)))
+        wl = "%s - %s" % (data.wavelength[0], data.wavelength[-1])
+        item = QtWidgets.QTableWidgetItem(wl)
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
+        self.ui.directBeamTable.setItem(idx, 7, item)
         self.main_window.auto_change_active = False
+
+    def direct_beam_table_changed(self, item: QtWidgets.QTableWidgetItem):
+        """Perform action upon change in direct beam list."""
+        if self.main_window.auto_change_active:
+            return
+
+        data = self._data_manager.direct_beam_list[item.row()]
+
+        # col 0 and 7 are not editable
+        col_mapping = {
+            1: "peak_position",
+            2: "peak_width",
+            3: "low_res_position",
+            4: "low_res_width",
+            5: "bck_position",
+            6: "bck_width",
+        }
+
+        col = item.column()
+        if col in col_mapping:
+            try:
+                data.set_parameter(col_mapping[col], float(item.text()))
+            except ValueError:
+                self.report_message(
+                    f"Invalid value for {col_mapping[col]}:\n\t{item.text()}\nPlease enter a valid number.",
+                    pop_up=True,
+                    is_error=True,
+                )
+                # Reset to old value if conversion fails
+                old_value = getattr(self._data_manager.active_channel.configuration, col_mapping[col])
+                item.setText(str(old_value))
+                return
+
+        # Update calculated data
+        data.update_calculated_values()
+
+        # Update UI if this data set is the active one
+        if self._data_manager.is_active(data):
+            self.main_window.auto_change_active = True
+            self.update_info()
+            self.main_window.auto_change_active = False
+
+        # Recalculate reflectivity
+        try:
+            self._data_manager.calculate_reflectivity(nexus_data=data)
+        except:
+            self.report_message(
+                "Could not compute reflectivity for %s" % self._data_manager.current_file_name,
+                detailed_message=str(traceback.format_exc()),
+                pop_up=False,
+                is_error=False,
+            )
+
+        self.main_window.plotActiveTab()
+        self.main_window.initiate_intensity_plot.emit(True)
+        self.main_window.initiate_projection_plot.emit(True)
 
     def active_data_changed(self):
         """
@@ -1060,8 +1126,8 @@ class MainHandler(object):
                     item.setBackground(QColors.white)
 
         idx = self._data_manager.find_active_direct_beam_id()
-        for i in range(self.ui.normalizeTable.rowCount()):
-            item = self.ui.normalizeTable.item(i, 0)
+        for i in range(self.ui.directBeamTable.rowCount()):
+            item = self.ui.directBeamTable.item(i, 0)
             if item is not None:
                 if i == idx:
                     item.setBackground(QColors.yellow)
@@ -1069,18 +1135,12 @@ class MainHandler(object):
                     item.setBackground(QColors.white)
         self.main_window.auto_change_active = False
 
-    def reduction_table_right_click(self, pos, is_reduction_table=True):
+    def reduction_table_right_click(self, pos: QtCore.QPoint, is_reduction_table: bool = True):
         """
         Handle right-click on the reduction table.
         :param QPoint pos: mouse position
         :param bool is_reduction_table: True if the reduction table is active, False if the direct beam table is active
         """
-        if is_reduction_table:
-            table_widget = self.reduction_table
-            data_table = self._data_manager.reduction_list
-        else:
-            table_widget = self.ui.normalizeTable
-            data_table = self._data_manager.direct_beam_list
 
         def _export_data(_pos):
             """callback function to right-click action: Export data"""
@@ -1091,6 +1151,13 @@ class MainHandler(object):
 
         def _propagate_run(_pos):
             """callback function to right-click action: Propagate run to all tabs"""
+
+            # If direct beam, make sure the user
+            if not is_reduction_table and not self.ask_question(
+                "Run is labeled as direct beam. Do you still want to add it to the list of reflectivity runs?"
+            ):
+                return
+
             row = table_widget.rowAt(pos.y())
             if 0 <= row < len(data_table):
                 nexus_data = data_table[row]
@@ -1109,7 +1176,18 @@ class MainHandler(object):
 
         def _remove_run(_pos):
             """callback function to right-click action: Remove run from this tab"""
-            self.remove_reflectivity()
+            if is_reduction_table:
+                self.remove_reflectivity()
+            else:
+                self.remove_direct_beam()
+
+        # Get the table widget and data table
+        if is_reduction_table:
+            table_widget = self.reduction_table
+            data_table = self._data_manager.reduction_list
+        else:
+            table_widget = self.ui.directBeamTable
+            data_table = self._data_manager.direct_beam_list
 
         reduction_table_menu = QtWidgets.QMenu(table_widget)
 
@@ -1190,9 +1268,16 @@ class MainHandler(object):
             config = self.get_configuration()
             self._data_manager.update_configuration(configuration=config, active_only=False)
             if active_only:
-                self._data_manager.calculate_gisans(progress=prog)
+                result = self._data_manager.calculate_gisans(progress=prog)
+                if not result:
+                    self.report_message(
+                        f"Could not compute GISANS for {self._data_manager.current_file_name}",
+                        detailed_message=str(traceback.format_exc()),
+                        pop_up=True,
+                        is_error=True,
+                    )
             else:
-                self._data_manager.reduce_gisans(active_only=active_only, progress=prog)
+                self._data_manager.reduce_gisans(progress=prog)
 
     def check_region_values_changed(self):
         """
@@ -1612,7 +1697,7 @@ class MainHandler(object):
         # Update the tables in the UI
         self.main_window.auto_change_active = True
 
-        self.ui.normalizeTable.setRowCount(len(self._data_manager.direct_beam_list))
+        self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
         for idx, _ in enumerate(self._data_manager.direct_beam_list):
             self._data_manager.set_active_data_from_direct_beam_list(idx)
             self.update_direct_beam_table(idx, self._data_manager.active_channel)

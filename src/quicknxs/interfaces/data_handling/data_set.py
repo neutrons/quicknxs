@@ -527,7 +527,7 @@ class CrossSectionData(object):
         """
         self.scattering_angle = self.configuration.instrument.scattering_angle_from_data(self)
 
-    def update_configuration(self, configuration):
+    def update_configuration(self, configuration: Configuration):
         """
         Update configuration
         """

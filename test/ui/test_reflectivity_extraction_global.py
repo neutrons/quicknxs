@@ -102,10 +102,10 @@ def test_reflectivity_recalculated_on_config_change(mocker, qtbot):
     # add two runs to the reduction table
     ui_utilities.setText(main_window.numberSearchEntry, str(40785), press_enter=True)
     ui_utilities.set_current_file_by_run_number(main_window, 40785)
-    main_window.actionAddPlot.triggered.emit()
+    main_window.actionAddRefl.triggered.emit()
     assert mock_calculate_reflectivity.call_count == 1
     ui_utilities.set_current_file_by_run_number(main_window, 40782)
-    main_window.actionAddPlot.triggered.emit()
+    main_window.actionAddRefl.triggered.emit()
     assert mock_calculate_reflectivity.call_count == 2
 
     # add a data tab - it is automatically initialized with the two runs from the first data tab

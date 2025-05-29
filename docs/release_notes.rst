@@ -10,6 +10,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. (date of release, format YYYY-MM-DD)
 
 .. **Of interest to the User**:
+.. PR #164 Fixes ability to edit cells in direct beam table
 
 .. **Of interest to the Developer:**
 

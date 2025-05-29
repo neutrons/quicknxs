@@ -1,14 +1,10 @@
-# local imports
-# third party imports
 import pytest
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
-
-# standard library imports
 
 
 class TestMainGui:
@@ -62,7 +58,7 @@ class TestMainGui:
         # check the current channel name displayed in the UI
         assert channel1.name in window_main.ui.currentChannel.text()
 
-    @pytest.mark.parametrize("table_widget", ["reductionTable", "normalizeTable"])
+    @pytest.mark.parametrize("table_widget", ["reductionTable", "directBeamTable"])
     def test_reduction_table_right_click(self, table_widget, qtbot, mocker):
         mock_save_run_data = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler.save_run_data")
         window_main = MainWindow()
@@ -351,18 +347,20 @@ class TestMainGui:
         qtbot.addWidget(window_main)
         Configuration.setup_default_values()
 
-        # add direct beam run and data run
+        # add direct beam run
         window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
-        window_main.actionNorm.triggered.emit()
+        window_main.actionAddDirectBeam.triggered.emit()
+
+        # add reflectivity run
         window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
-        window_main.actionAddPlot.triggered.emit()
+        window_main.actionAddRefl.triggered.emit()
 
         # add second peak tab
         window_main.ui.addTabButton.clicked.emit()
 
         # add another run to the primary data table
         window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
-        window_main.actionAddPlot.triggered.emit()
+        window_main.actionAddRefl.triggered.emit()
 
         reduction_lists = window_main.data_manager.peak_reduction_lists
         assert len(reduction_lists[1]) == 2
@@ -390,9 +388,53 @@ class TestMainGui:
         table_item_rect = table.visualItemRect(table_item)
         table.customContextMenuRequested.emit(table_item_rect.topLeft())
 
-    def test_reduction_table_remove_run(self):
+    @pytest.mark.skip(reason="Need to figure out how to simulate mouse position")
+    @pytest.mark.datarepo
+    def test_remove_run_from_tables(self, qtbot, data_server):
         """Test right-click action 'Remove run'"""
-        pass
+
+        def handle_menu(table):
+            """Trigger remove run action"""
+            menu = table.findChild(QtWidgets.QMenu)
+            action = menu.actions()[2]
+            assert action.text() == "Remove run from this tab"
+            qtbot.keyClick(menu, QtCore.Qt.Key_Down)
+            qtbot.keyClick(menu, QtCore.Qt.Key_Down)
+            qtbot.keyClick(menu, QtCore.Qt.Key_Down)
+            qtbot.keyClick(menu, QtCore.Qt.Key_Enter)
+
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+        Configuration.setup_default_values()
+
+        # Add direct beam run
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
+        window_main.actionAddDirectBeam.triggered.emit()
+
+        # Add reflectivity run
+        window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+        window_main.actionAddRefl.triggered.emit()
+
+        ### Simulate right-click -> remove run
+
+        table = window_main.ui.reductionTable
+        assert table.rowCount() == 1
+        QtCore.QTimer.singleShot(500, lambda: handle_menu(table))
+        table_item = table.item(0, 0)  # new run on row index 0
+        table_item_rect = table.visualItemRect(table_item)
+        table.customContextMenuRequested.emit(table_item_rect.topLeft())
+
+        # table = getattr(window_main.ui, "directBeamTable")
+        table = window_main.ui.directBeamTable
+        assert table.rowCount() == 1
+        QtCore.QTimer.singleShot(500, lambda: handle_menu(table))
+        table_item = table.item(0, 0)  # new run on row index 0
+        table_item_rect = table.visualItemRect(table_item)
+        table.customContextMenuRequested.emit(table_item_rect.topLeft())
+
+        # check that the run was removed from the tables
+        assert len(window_main.data_manager.reduction_list) == 0
+        assert len(window_main.data_manager.direct_beam_list) == 0
 
 
 if __name__ == "__main__":

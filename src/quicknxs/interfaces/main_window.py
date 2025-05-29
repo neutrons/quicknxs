@@ -1,17 +1,9 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=invalid-name, line-too-long, too-many-public-methods, too-many-instance-attributes,
-# pylint; disable=wrong-import-order, bare-except
-r"""
-Main application window
-"""
-
-# package imports
-# standard imports
 import logging
 import os
 
-# 3rd-party
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
+from qtpy.QtWidgets import QTableWidgetItem
 
 import quicknxs
 from quicknxs.interfaces import load_ui
@@ -30,25 +22,25 @@ class MainWindow(QtWidgets.QMainWindow):
     """Main application window"""
 
     # UI events
-    file_loaded_signal = QtCore.pyqtSignal()
+    file_loaded_signal = QtCore.Signal()
     """Signal emitted when a file is loaded."""
 
-    initiate_projection_plot = QtCore.pyqtSignal(bool)
+    initiate_projection_plot = QtCore.Signal(bool)
     """Signal to initiate the projection plot."""
 
-    initiate_reflectivity_plot = QtCore.pyqtSignal(bool)
+    initiate_reflectivity_plot = QtCore.Signal(bool)
     """Signal to initiate the reflectivity plot."""
 
-    initiate_intensity_plot = QtCore.pyqtSignal(bool)
+    initiate_intensity_plot = QtCore.Signal(bool)
     """Signal to initiate the intensity plot."""
 
-    update_specular_viewer = QtCore.pyqtSignal()
+    update_specular_viewer = QtCore.Signal()
     """Signal to update the specular viewer."""
 
-    update_off_specular_viewer = QtCore.pyqtSignal()
+    update_off_specular_viewer = QtCore.Signal()
     """Signal to update the off-specular viewer."""
 
-    update_gisans_viewer = QtCore.pyqtSignal()
+    update_gisans_viewer = QtCore.Signal()
     """Signal to update the GISANS viewer."""
 
     def __init__(self):
@@ -74,7 +66,9 @@ class MainWindow(QtWidgets.QMainWindow):
         r"""Setting `auto_change_active = True` bypasses execution of:
         - MainWindow.file_open_from_list()
         - MainWindow.changeRegionValues()
-        - MainHandler.reduction_table_changed()"""
+        - MainHandler.reduction_table_changed()
+        - MainHandler.direct_beam_table_changed()
+        """
         self.auto_change_active = False
 
         # Event handlers
@@ -92,8 +86,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_loaded_signal.connect(self.file_handler.update_info)
         self.file_loaded_signal.connect(self.file_handler.update_daslog)
         self.file_loaded_signal.connect(self.plotActiveTab)
-        self.initiate_projection_plot.connect(self.plot_manager.plot_projections)
 
+        self.initiate_projection_plot.connect(self.plot_manager.plot_projections)
         self.initiate_reflectivity_plot.connect(self.plot_manager.plot_refl)
         self.initiate_intensity_plot.connect(self.plot_manager.plot_intensity)
 
@@ -214,21 +208,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if is_checked:
             self.file_handler.active_channel_changed()
 
-    def getNorm(self):
-        """
-        TODO: deal with this
-        This is supposed to retrieve the normalization data for the active reflectivity
-        data so that we can normalize the distributions we are plotting.
-        See plotting.plot_xtof and plotting.plot_overview
-        """
-        return self.data_manager.get_active_direct_beam()
-
     def plotActiveTab(self):
         """
         Select the appropriate function to plot all visible images.
         """
         if self.data_manager.active_channel is None:
             return
+
         color = str(self.ui.color_selector.currentText())
         if color != self.plot_manager.color and self.plot_manager.color is not None:
             self.plot_manager.color = color
@@ -386,11 +372,11 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.initiate_reflectivity_plot.emit(True)
 
-    def addRefList(self):
+    def addRefl(self):
         """Signal handling"""
         self.file_handler.add_reflectivity()
 
-    def removeRefList(self):
+    def removeRefl(self):
         """Signal handling"""
         self.file_handler.remove_reflectivity()
 
@@ -398,15 +384,28 @@ class MainWindow(QtWidgets.QMainWindow):
         """Signal handling"""
         self.file_handler.clear_reflectivity()
 
-    def setNorm(self):
-        """Signal handling"""
+    ### Direct beam table management
+
+    def get_direct_beam(self):
+        """
+        TODO: deal with this
+        This is supposed to retrieve the normalization data for the active reflectivity
+        data so that we can normalize the distributions we are plotting.
+        See plotting.plot_xtof and plotting.plot_overview
+        """
+        return self.data_manager.get_active_direct_beam()
+
+    def add_direct_beam(self):
         self.file_handler.add_direct_beam()
 
-    def remove_normalization(self):
+    def direct_beam_table_changed(self, item: QTableWidgetItem):
+        self.file_handler.direct_beam_table_changed(item)
+
+    def remove_direct_beam(self):
         """Signal handling"""
         self.file_handler.remove_direct_beam()
 
-    def clearNormList(self):
+    def clear_direct_beam_list(self):
         """Signal handling"""
         self.file_handler.clear_direct_beams()
 
@@ -524,12 +523,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tabWidget.setTabVisible(3, False)
         self.ui.tabWidget.setTabVisible(4, False)
 
-    def setCurrentReductionTable(self, tab_index: int):
+    def current_table_changed(self, tab_index: int):
         """Update the state for active data set and the UI"""
-        if tab_index == 0:  # direct beam tab
-            return
-        # must first update the active reduction list index, then the UI from the active data
-        self.data_manager.update_active_reduction_list(tab_index)
+        if tab_index != 0:  # direct beam tab
+            # Update the active reduction list index
+            self.data_manager.update_active_reduction_list(tab_index)
         if self.data_manager.data_sets:
             self.file_loaded()
             self.file_handler.active_data_changed()
@@ -626,7 +624,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.get_configuration()
 
     # Un-used UI signals
-    # pylint: disable=missing-docstring, multiple-statements, no-self-use
     def change_gisans_colorscale(self):
         return NotImplemented
 

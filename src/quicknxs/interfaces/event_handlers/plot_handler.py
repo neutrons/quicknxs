@@ -374,7 +374,7 @@ class PlotHandler(object):
         #    self.ui.rangeEnd.setValue(self.cut_areas['fan'][1])
         #    self.main_window.auto_change_active = old_aca
         # elif not self.ui.fanReflectivity.isChecked() and self.refl and self.refl.options['extract_fan']:
-        #    norm = self.getNorm()
+        #    norm = self.get_direct_beam()
         #    if norm in self.cut_areas:
         #        old_aca = self.main_window.auto_change_active
         #        self.main_window.auto_change_active = False
