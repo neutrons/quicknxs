@@ -609,8 +609,7 @@ class MainHandler(object):
             logging.info("UI updated: %s", time.time() - t_0)
 
     def initialize_additional_reduction_table(self, tab_index: int):
-        """
-        Initialize new reduction table from the main reduction table
+        """Initialize new reduction table from the main reduction table
 
         Parameters
         ----------

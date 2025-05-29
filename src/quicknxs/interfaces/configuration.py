@@ -101,7 +101,7 @@ class Configuration(object):
         # Reduction parameters
         # Use region of interest specified in meta data
         self.set_direct_pixel = False
-        self.direct_pixel_overwrite = 0
+        self.direct_pixel_overwrite = 0.0
         self.set_direct_angle_offset = False
         self.direct_angle_offset_overwrite = 0
         self.use_dangle = False

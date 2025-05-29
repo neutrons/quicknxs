@@ -20,9 +20,10 @@ from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusDa
 
 
 def _find_h5_data(filename: str):
-    """
-    Because we have legacy data and new data re-processed for QuickNXS, we have to
-    ensure that we get the proper data file.
+    """Get the correct data file for QuickNXS.
+
+    Because we have legacy data and new data re-processed for QuickNXS,
+    we have to ensure that we get the proper data file.
     """
     if filename.endswith(".nxs"):
         _new_filename = filename.replace("_histo.nxs", ".nxs.h5")
@@ -46,15 +47,15 @@ def write_reflectivity_header(
 
     Parameters
     ----------
-    peak_reduction_lists: dict[int, list[~quicknxs.interfaces.data_handling.data_set.NexusData]]
+    peak_reduction_lists:
         All reduction lists to include as additional peaks in the header
-    active_list_index: int
+    active_list_index:
         The index of the reduction list that the output reflectivity data is for
-    direct_beam_list: list[~quicknxs.interfaces.data_handling.data_set.NexusData]
+    direct_beam_list:
         Direct beam list
-    output_path: str
+    output_path:
         Output file path
-    pol_state: str
+    pol_state:
         Descriptor for the polarization state
     """
     # Sanity check
@@ -118,7 +119,7 @@ def write_reflectivity_header(
         return
 
     # Direct beam section
-    i_direct_beam = 0
+    direct_beam_idx = 0
     for data_set in reduction_list:
         run_object = data_set.cross_sections[pol_list[0]].reflectivity_workspace.getRun()
         normalization_run = run_object.getProperty("normalization_run").value
@@ -132,12 +133,12 @@ def write_reflectivity_header(
             continue
         db_pol = list(direct_beam.cross_sections.keys())[0]
         conf = direct_beam.cross_sections[db_pol].configuration
-        i_direct_beam += 1
+        direct_beam_idx += 1
         dpix = run_object.getProperty("normalization_dirpix").value
         filename = run_object.getProperty("normalization_file_path").value
 
         item = dict(
-            DB_ID=i_direct_beam,
+            DB_ID=direct_beam_idx,
             tth=0,
             P0=0,
             PN=0,
@@ -171,10 +172,10 @@ def write_reflectivity_header(
     fd.write("# [Data Runs]\n")
     toks = ["%8s" % item for item in dataset_options]
     fd.write("# %s\n" % "  ".join(toks))
-    i_direct_beam = 0
+    direct_beam_idx = 0
     for data_set in reduction_list:
         cross_section_data = data_set.cross_sections[pol_list[0]]
-        config_value_dict = _get_cross_section_config_values(cross_section_data, i_direct_beam)
+        config_value_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx)
         fd.write(template.format(**config_value_dict))
 
     # All peaks
@@ -182,10 +183,10 @@ def write_reflectivity_header(
         fd.write("#\n")
         fd.write(f"# [Peak {peak_index} Runs]\n")
         fd.write("# %s\n" % "  ".join(toks))
-        i_direct_beam = 0
+        direct_beam_idx = 0
         for data_set in peak_reduction_list:
             cross_section_data = data_set.cross_sections[pol_list[0]]
-            config_value_dict = _get_cross_section_config_values(cross_section_data, i_direct_beam)
+            config_value_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx)
             fd.write(template.format(**config_value_dict))
 
     fd.write("#\n")
@@ -199,21 +200,8 @@ def write_reflectivity_header(
     fd.close()
 
 
-def _get_cross_section_config_values(cross_section_data: CrossSectionData, i_direct_beam: int):
-    """
-    Get dictionary of cross-section data configuration to write to QuickNXS file
-
-    Parameters
-    ----------
-    cross_section_data: ~quicknxs.interfaces.data_handling.data_set.CrossSectionData
-        Cross-section to get parameter values from
-    i_direct_beam: int
-        Current direct beam index in the reduction list
-
-    Returns
-    -------
-    dict
-    """
+def _get_cross_section_config_values(cross_section_data: CrossSectionData, direct_beam_idx: int) -> Dict[str, str]:
+    """Get dict of cross-section data configuration to write to QuickNXS file"""
     conf = cross_section_data.configuration
     ws = cross_section_data.reflectivity_workspace
     run_object = ws.getRun()
@@ -239,8 +227,8 @@ def _get_cross_section_config_values(cross_section_data: CrossSectionData, i_dir
     if normalization_run == "None":
         db_id = 0
     else:
-        i_direct_beam += 1
-        db_id = i_direct_beam
+        direct_beam_idx += 1
+        db_id = direct_beam_idx
     item = dict(
         scale=scaling_factor,
         scale_err=scaling_error,
@@ -271,12 +259,9 @@ def _get_cross_section_config_values(cross_section_data: CrossSectionData, i_dir
 def write_reflectivity_data(
     output_path: str, data: Union[list, np.ndarray], col_names: List[str], as_5col: bool = True
 ):
-    """
-    Write out reflectivity header in a format readable by QuickNXS
-    :param str output_path: output file path
-    :param ndarray or list data: data to be written
-    :param list col_names: list of column names
-    :param bool as_5col: if True, a 5-column ascii will be written (theta is the last column)
+    """Write out reflectivity header in a format readable by QuickNXS
+
+    If `as_5col` is False, only the first four columns passed will be written.
     """
     with open(output_path, "a") as fd:
         # Determine how many columns to write
@@ -307,11 +292,8 @@ def write_reflectivity_data(
                 np.savetxt(fd, data, delimiter="\t", fmt="%-18e")
 
 
-def read_reduced_file(file_path, configuration=None):
-    """
-    Read in configurations from a reduced data file.
-    :param str file_path: reduced data file
-    """
+def read_reduced_file(file_path: str, configuration=None):
+    """Read in configurations from a reduced data file."""
     direct_beam_runs = []
     data_runs = []
     additional_peaks = []
@@ -378,8 +360,8 @@ def read_reduced_file(file_path, configuration=None):
                     conf.direct_pixel_overwrite = float(_get_tok("dpix", cols, toks))
                     run_number = int(_get_tok("number", cols, toks))
                     run_file = _get_tok("File", cols, toks)
-                    if not Path(run_file).is_absolute():
-                        run_file = str(Path(file_path).parent / run_file)
+                    if not Path(str(run_file)).is_absolute():
+                        run_file = str(Path(file_path).parent / f"{run_file}")
                     # This application only deals with event data, to be able to load
                     # reduced files created with histo nexus files, we have to
                     # use the corresponding event file instead.
@@ -471,11 +453,13 @@ def read_reduced_file(file_path, configuration=None):
 
 
 def determine_which_files_to_sum(run_file, data_file_indices):
-    # Determeine which files are summed when reading a saved reduction file
-    # The saved file has the correct run numbers (numors) in the line
-    # that begins # Input file indices, however the file does not contain the corect paths
-    # the way the file is read ignores any files that were summed in the processing from which the
-    # saved file was created.
+    """Determine which files are summed when reading a saved reduction file
+
+    The saved file has the correct run numbers (numors) in the line that starts with
+        `# Input file indices`,
+    however the file does not contain the correct paths the way the file is read
+    ignores any files that were summed in the processing from which the saved file was created.
+    """
 
     if "+" in data_file_indices:
         runs = str.split(str.split(data_file_indices)[-1], "+")

@@ -853,7 +853,14 @@ class DataManager(object):
         logging.info("DONE: %s sec", time.time() - t_0)
 
     def load_direct_beam_and_data_files(
-        self, db_files, data_files, additional_peaks=None, configuration=None, progress=None, force=False, t_0=None
+        self,
+        db_files: List[tuple],
+        data_files: List[tuple],
+        additional_peaks: Optional[list] = None,
+        configuration: Optional[Configuration] = None,
+        progress: Optional[ProgressReporter] = None,
+        force: bool = False,
+        t_0: Optional[float] = None,
     ):
         """Load direct beam and data files and add them to the direct beam list and reduction list, respectively
 
