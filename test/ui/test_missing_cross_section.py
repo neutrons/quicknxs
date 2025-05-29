@@ -14,7 +14,9 @@ TEST_REFLECTIVITY_THRESHOLD_VALUE = 0.01
 
 @pytest.mark.datarepo
 def test_missing_cross_section(qtbot):
-    r"""Test a run where the crossection corresponding to the On-On spin combination has no integrated
+    """Missing cross section test.
+
+    Test a run where the crossection corresponding to the On-On spin combination has no integrated
     proton charge. The application produces the intensity curve with counts < 1 for all On-On tof.
     """
     Configuration.setup_default_values()

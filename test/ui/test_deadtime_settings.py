@@ -1,7 +1,3 @@
-# local imports
-# standard imports
-
-# third-party imports
 import pytest
 from qtpy import QtCore, QtWidgets
 

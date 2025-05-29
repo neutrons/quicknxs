@@ -276,8 +276,9 @@ class TestMainGui:
         assert conf2.use_dangle is False
 
     def test_add_remove_data_tab(self, qtbot):
-        """
-        Test that the add data tab buttons reveal/hide tabs as expected,
+        """Test that the add data tab buttons reveal/hide tabs as expected.
+
+        This test checks that the addTabButton and removeTabButton work correctly,
         and that the add/remove buttons are disabled when the max/min number of tabs is reached
         """
         window_main = MainWindow()

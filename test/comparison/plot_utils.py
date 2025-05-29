@@ -1,4 +1,5 @@
 from functools import reduce
+from typing import Optional
 
 import plotly.graph_objs as go
 import plotly.offline as py
@@ -6,12 +7,16 @@ import plotly.offline as py
 py.init_notebook_mode(connected=True)
 
 
-def plot1d(data_list, data_names=None, x_title="", y_title="", x_log=False, y_log=False, show_dx=True):
-    """
-    Produce a 1D plot
-    @param data_list: list of traces [ [x1, y1], [x2, y2], ...]
-    @param data_names: name for each trace, for the legend
-    """
+def plot1d(
+    data_list: list,
+    data_names: Optional[list] = None,
+    x_title: str = "",
+    y_title: str = "",
+    x_log: bool = False,
+    y_log: bool = False,
+    show_dx: bool = True,
+):
+    """Produce a 1D plot"""
     # Create traces
     if not isinstance(data_list, list):
         raise RuntimeError("plot1d: data_list parameter is expected to be a list")

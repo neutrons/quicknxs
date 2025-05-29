@@ -2,10 +2,14 @@
 
 import logging
 from multiprocessing import Pool
+from typing import TYPE_CHECKING, List
 
 import numpy as np
 
 from quicknxs.interfaces.configuration import get_direct_beam_low_res_roi
+
+if TYPE_CHECKING:
+    from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 
 H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
@@ -13,15 +17,13 @@ H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 class GISANS(object):
     """Compute grazing-incident SANS"""
 
-    def __init__(self, cross_section_data):
-        """
-        :param CrossSectionData cross_section_data: processed data object
+    def __init__(self, cross_section_data: "CrossSectionData"):
+        """Initialize GISANS calculations.
 
         The calculations here are meant to match QuickNXS v1. The following are
         items to improve on:
             - Background subtraction
             - Trim the TOF distribution to the chopper bandwidth
-
         """
         self.data_set = cross_section_data
 
@@ -118,17 +120,25 @@ class GISANS(object):
         self.QyGrid, self.QzGrid = np.meshgrid(qy, qz)
 
 
-def merge(reduction_list, pol_state, wl_min=0, wl_max=100):
-    """
-    Merge the off-specular data from a reduction list.
-    :param list reduction_list: list of NexusData objects
-    :param string pol_state: polarization state to consider
+def merge(reduction_list: List["NexusData"], pol_state: str, wl_min: float = 0, wl_max: float = 100):
+    """Merge the off-specular data from a reduction list.
 
-    The scaling factors should have been determined at this point. Just use them
-    to merge the different runs in a set.
+    The scaling factors should have been determined at this point.
+    Just use them to merge the different runs in a set.
 
-    TODO: This doesn't deal with the overlap properly. It assumes that the user
-    cut the overlapping points by hand.
+    TODO: This doesn't deal with the overlap properly.
+    It assumes that the user has cut the overlapping points by hand.
+
+    Parameters
+    ----------
+    reduction_list:
+        List of NexusData objects
+    pol_state:
+        Polarization state to consider
+    wl_min:
+        Minimum wavelength to consider
+    wl_max:
+        Maximum wavelength to consider
     """
     _qy = np.zeros(0)
     _qz = np.zeros(0)
@@ -153,7 +163,15 @@ def merge(reduction_list, pol_state, wl_min=0, wl_max=100):
     return _qy, _qz, _pf, _s, _ds, _wl
 
 
-def rebin_extract(reduction_list, pol_state, wl_min, wl_max, qy_npts=50, qz_npts=50, use_pf=False):
+def rebin_extract(
+    reduction_list: List["NexusData"],
+    pol_state: str,
+    wl_min: float,
+    wl_max: float,
+    qy_npts: int = 50,
+    qz_npts: int = 50,
+    use_pf: bool = False,
+):
     binning = (qy_npts + 1, qz_npts + 1)
     qy, qz, pf, intensity, d_intensity, _ = merge(reduction_list, pol_state, wl_min=wl_min, wl_max=wl_max)
     if use_pf:
@@ -175,7 +193,7 @@ def rebin_extract(reduction_list, pol_state, wl_min, wl_max, qy_npts=50, qz_npts
     return _intensity_summed, _qy, _qz_axis, _intensity_err
 
 
-def _rebin_proc(data):
+def _rebin_proc(data: dict):
     # Filter data
     wl = data["wl"]
     filtered = np.where((wl >= data["wl_min"]) & (wl <= data["wl_max"]))
@@ -199,7 +217,16 @@ def _rebin_proc(data):
     return _intensity_summed, _qy, _qz_axis, _intensity_err
 
 
-def rebin_parallel(reduction_list, pol_state, wl_min, wl_max, wl_npts=2, qy_npts=50, qz_npts=50, use_pf=False):
+def rebin_parallel(
+    reduction_list: List["NexusData"],
+    pol_state: str,
+    wl_min: float,
+    wl_max: float,
+    wl_npts: int = 2,
+    qy_npts: int = 50,
+    qz_npts: int = 50,
+    use_pf: bool = False,
+):
     """Process the wavelength bands in parallel."""
     # First, merge all the data
     binning = (qy_npts + 1, qz_npts + 1)

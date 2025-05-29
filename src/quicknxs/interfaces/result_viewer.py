@@ -1,16 +1,14 @@
 """Dialog to show final reduced data."""
 # pylint: disable=bare-except
 
-# standard imports
 import logging
 from typing import List
 
-# third-party imports
 from qtpy import QtCore, QtWidgets
 
-# quicknxs imports
 import quicknxs.ui.mplwidget as mpl
 from quicknxs.interfaces import load_ui
+from quicknxs.interfaces.data_manager import DataManager
 
 
 class ResultViewer(QtWidgets.QDialog):
@@ -18,7 +16,7 @@ class ResultViewer(QtWidgets.QDialog):
 
     default_template = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
 
-    def __init__(self, parent, data_manager):
+    def __init__(self, parent, data_manager: DataManager):
         super(ResultViewer, self).__init__(parent)
         self.ui = load_ui("ui_result_viewer.ui", base_instance=self)
         self.ui.resize(1024, 1024)
@@ -39,10 +37,13 @@ class ResultViewer(QtWidgets.QDialog):
     def update_specular(self):
         self.ui.specular_compare_widget.refl_preview()
 
-    def update_off_specular(self, crop=False):
-        """
-        Update the result viewer with the latest off-specular calculations.
-        :param bool crop: if True, all the plots will be cropped to the ++ cross-section
+    def update_off_specular(self, crop: bool = False):
+        """Update the result viewer with the latest off-specular calculations.
+
+        Parameters
+        ----------
+        crop:
+            If True, all the plots will be cropped to the ++ cross-section
         """
         off_spec_data = self.data_manager.cached_offspec
         if off_spec_data is None:
@@ -123,10 +124,13 @@ class ResultViewer(QtWidgets.QDialog):
         gisans_plot.draw()
         return gisans_plot
 
-    def update_gisans(self, crop=False):
-        """
-        Update the results viewer with the latest GISANS calculations
-        :param bool crop: if True, all the plots will be cropped to the ++ cross-section
+    def update_gisans(self, crop: bool = False):
+        """Update the results viewer with the latest GISANS calculations
+
+        Parameters
+        ----------
+        crop:
+            If True, all the plots will be cropped to the ++ cross-section
         """
         logging.info("Updating GISANS")
         gisans_data = self.data_manager.cached_gisans
