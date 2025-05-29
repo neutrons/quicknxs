@@ -6,6 +6,8 @@ from quicknxs.config import Settings
 
 
 class TestConfiguration(object):
+    """Test the Settings singleton class."""
+
     def test_init(self):
         settings = Settings()
 

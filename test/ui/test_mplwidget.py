@@ -70,6 +70,8 @@ def _compare_error_bar_data(collections: np.ndarray[LineCollection], gold_data: 
 
 
 class TestNavigationToolbar:
+    """Test the NavigationToolbar and its derived classes"""
+
     def test_toolbar_is_visible(self, qtbot):
         """Test that the plots have the correct toolbar"""
         main_window = MainWindow()

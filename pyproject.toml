@@ -86,8 +86,10 @@ ignore = [
     "ARG002", # Unused method argument
     "D100",   # Missing docstring in public module
     "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
     "D104",   # Missing docstring in public package
     "D105",   # Missing docstring in magic method
+    "D202",   # No blank lines allowed after function docstring
     "D400",   # First line should end with a period
     "D401",   # First line should be in imperative mood
     "D404",   # Docstring stars with "this"

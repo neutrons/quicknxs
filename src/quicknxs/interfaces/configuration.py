@@ -206,17 +206,11 @@ class Configuration(object):
         self.bck_width = value[1] - value[0]
 
 
-def get_direct_beam_low_res_roi(data_conf, direct_beam_conf):
-    """
-    Get the direct beam low res ROI either from the data run or from the direct beam depending on
-    the configuration `lock_direct_beam_y`
+def get_direct_beam_low_res_roi(data_conf: Configuration, direct_beam_conf: Configuration) -> [int, int]:
+    """Get the direct beam low res ROI.
 
-    Parameters
-    ----------
-    data_conf: Configuration
-        Configuration for the data run
-    direct_beam_conf: Configuration
-        Configuration for the direct beam run
+    Either from the data run or from the direct beam depending on
+    the configuration `data_conf.lock_direct_beam_y`
 
     Returns
     -------

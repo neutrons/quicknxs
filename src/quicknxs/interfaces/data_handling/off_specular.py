@@ -25,18 +25,25 @@ class OffSpecular(object):
     dS = None
 
     def __init__(self, cross_section_data):
-        """:param CrossSectionData cross_section_data: processed data object"""
+        """Initialize the OffSpecular class with processed data.
+
+        Parameters
+        ----------
+        cross_section_data: CrossSectionData
+            processed data object
+        """
         self.data_set = cross_section_data
 
     def __call__(self, direct_beam=None):
-        """
-        Extract off-specular scattering from 4D dataset (x,y,ToF,I).
+        """Extract off-specular scattering from 4D dataset (x,y,ToF,I).
+
         Uses a window in y to filter the 4D data
         and than sums all I values for each ToF and x channel.
         Qz,Qx,kiz,kfz is calculated using the x and ToF positions
         together with the tth-bank and direct pixel values.
 
-        :param CrossSectionData direct_beam: if given, this data will be used to normalize the output
+        direct_beam: CrossSectionData
+            if given, this data will be used to normalize the output
         """
         # TODO: correct for detector sensitivity
         x_pos = self.data_set.configuration.peak_position

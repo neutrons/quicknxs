@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=invalid-name, line-too-long, too-many-public-methods, too-many-instance-attributes,
-# pylint; disable=wrong-import-order, bare-except
 import logging
 import os
 
@@ -66,6 +64,7 @@ class MainWindow(QtWidgets.QMainWindow):
         - MainWindow.file_open_from_list()
         - MainWindow.changeRegionValues()
         - MainHandler.reduction_table_changed()
+        - MainHandler.direct_beam_table_changed()
         """
         self.auto_change_active = False
 
@@ -84,8 +83,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_loaded_signal.connect(self.file_handler.update_info)
         self.file_loaded_signal.connect(self.file_handler.update_daslog)
         self.file_loaded_signal.connect(self.plotActiveTab)
-        self.initiate_projection_plot.connect(self.plot_manager.plot_projections)
 
+        self.initiate_projection_plot.connect(self.plot_manager.plot_projections)
         self.initiate_reflectivity_plot.connect(self.plot_manager.plot_refl)
         self.initiate_intensity_plot.connect(self.plot_manager.plot_intensity)
 
@@ -109,10 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_handler.control_down = False
 
     def initialize_instrument(self):
-        """
-        Initialize instrument according to the instrument
-        and saved parameters
-        """
+        """Initialize instrument according to the instrument and saved parameters"""
         for i in range(1, 12):
             getattr(self.ui, "selectedChannel%i" % i).hide()
         self.ui.selectedChannel0.show()
@@ -161,9 +157,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # Actions defined in Qt Designer
     def file_open_sum_dialog(self):
-        r"""
-        @brief Read a set of congruent file data sets.
-        @details Select a list of event or histogram files, check their metadata is compatible, and read-in.
+        """Read a set of congruent file data sets.
+
+        Select a list of event or histogram files, check their metadata is compatible, and read-in.
         """
         self.file_handler.file_open_sum_dialog()
 
@@ -185,32 +181,25 @@ class MainWindow(QtWidgets.QMainWindow):
         """Reload the file that is currently selected form the list."""
         self.file_handler.open_file(self.data_manager.current_file, force=True)
 
-    def change_active_channel(self, is_checked):
-        """
-        The overview and reflectivity channel was changed. This updates the run
-        information and plots in the Overview area
+    def change_active_channel(self, is_checked: bool):
+        """Update the run info and overview plots when the active channel is changed.
 
         The toggled() signal is emitted from both radio buttons whose states were changed,
         therefore, use the bool value to only perform channel update actions once.
 
-        :param bool is_checked: the state of the radio button that emitted the signal
+        Parameters
+        ----------
+        is_checked: bool
+            The state of the radio button that emitted the signal.
         """
         if is_checked:
             self.file_handler.active_channel_changed()
-
-    def getNorm(self):
-        """
-        TODO: deal with this
-        This is supposed to retrieve the normalization data for the active reflectivity
-        data so that we can normalize the distributions we are plotting.
-        See plotting.plot_xtof and plotting.plot_overview
-        """
-        return self.data_manager.get_active_direct_beam()
 
     def plotActiveTab(self):
         """Select the appropriate function to plot all visible images."""
         if self.data_manager.active_channel is None:
             return
+
         color = str(self.ui.color_selector.currentText())
         if color != self.plot_manager.color and self.plot_manager.color is not None:
             self.plot_manager.color = color
@@ -271,8 +260,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.initiate_intensity_plot.emit(False)
 
     def changeRegionValues(self):
-        """
-        Called when the reflectivity extraction region has been changed.
+        """Called when the reflectivity extraction region has been changed.
+
         Sets up a trigger to replot the reflectivity with a delay so
         a subsequent change can occur without several replots.
         """
@@ -348,11 +337,11 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.initiate_reflectivity_plot.emit(True)
 
-    def addRefList(self):
+    def addRefl(self):
         """Signal handling to add a new reflectivity data set."""
         self.file_handler.add_reflectivity()
 
-    def removeRefList(self):
+    def removeRefl(self):
         """Signal handling to remove a reflectivity data set."""
         self.file_handler.remove_reflectivity()
 
@@ -360,16 +349,29 @@ class MainWindow(QtWidgets.QMainWindow):
         """Signal handling to clear the reflectivity data set list."""
         self.file_handler.clear_reflectivity()
 
-    def setNorm(self):
-        """Signal handling to add a new direct beam data set."""
+    ### Direct beam table management
+
+    # TODO: deal with this
+    def get_direct_beam(self):
+        """Retrieve the direct beam data for the active reflectivity data.
+
+        This is used to normalize the distributions we are plotting.
+        See `plotting.plot_xtof` and `plotting.plot_overview`
+        """
+        return self.data_manager.get_active_direct_beam()
+
+    def add_direct_beam(self):
         self.file_handler.add_direct_beam()
 
-    def remove_normalization(self):
-        """Signal handling to remove a direct beam data set."""
+    def direct_beam_table_changed(self, item: QtWidgets.QTableWidgetItem):
+        self.file_handler.direct_beam_table_changed(item)
+
+    def remove_direct_beam(self):
+        """Signal handling"""
         self.file_handler.remove_direct_beam()
 
-    def clearNormList(self):
-        """Signal handling to clear the direct beam data set list."""
+    def clear_direct_beam_list(self):
+        """Signal handling"""
         self.file_handler.clear_direct_beams()
 
     def match_direct_beam_clicked(self):
@@ -471,12 +473,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tabWidget.setTabVisible(3, False)
         self.ui.tabWidget.setTabVisible(4, False)
 
-    def setCurrentReductionTable(self, tab_index: int):
-        """Update the state for active data set and the UI."""
-        if tab_index == 0:  # direct beam tab
-            return
-        # must first update the active reduction list index, then the UI from the active data
-        self.data_manager.update_active_reduction_list(tab_index)
+    def current_table_changed(self, tab_index: int):
+        """Update the state for active data set and the UI"""
+        if tab_index != 0:  # direct beam tab
+            # Update the active reduction list index
+            self.data_manager.update_active_reduction_list(tab_index)
         if self.data_manager.data_sets:
             self.file_loaded()
             self.file_handler.active_data_changed()
@@ -574,7 +575,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.get_configuration()
 
     # Un-used UI signals
-    # pylint: disable=missing-docstring, multiple-statements, no-self-use
     def change_gisans_colorscale(self):
         return NotImplemented
 

@@ -9,7 +9,7 @@ from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
-    extract_meta_data,
+    extract_metadata,
     generate_short_script,
     smart_stitch_reflectivity,
 )
@@ -114,6 +114,8 @@ def stitching_reduction_list():
 
 
 class TestDataManipulation(object):
+    """Main test class for data manipulation functions"""
+
     @pytest.mark.datarepo
     def test_smart_stitch_reflectivity(self, data_server, mocker_file_open, stitching_config):
         manager = DataManager(data_server.directory)
@@ -281,10 +283,10 @@ class TestDataManipulation(object):
         ],
     )
     def test_extract_meta_data(self, data_server, data_file, expected):
-        """Test the extract_meta_data function"""
+        """Test the extract_metadata function"""
         manager = DataManager(data_server.directory)
         fp = f"{data_server.directory}/quicknxs-data/{data_file}"
-        metadata = extract_meta_data(fp)
+        metadata = extract_metadata(fp)
         assert metadata.mid_q == expected["mid_q"]
         assert metadata.is_direct_beam == expected["is_direct_beam"]
 

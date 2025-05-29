@@ -1,19 +1,21 @@
 # coding: utf-8
 """
 Dialog to let the user select smoothing options
+
 This code was taken as-is from QuickNXS v1
 """
 # pylint: disable=bare-except
 
-# third-party imports
 from mantid.simpleapi import logger
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
+from numpy import float64
+from numpy.typing import NDArray
 from qtpy import QtWidgets
 
-# quicknxs imports
 from quicknxs.interfaces import load_ui
 from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.ui.mplwidget import MPLWidget
 
 
@@ -26,7 +28,7 @@ class SmoothDialog(QtWidgets.QDialog):
 
     drawing = False
 
-    def __init__(self, parent, data_manager):
+    def __init__(self, parent, data_manager: DataManager):
         QtWidgets.QDialog.__init__(self, parent)
         self.ui = load_ui("ui_smooth_dialog.ui", base_instance=self)
         self.data_manager = data_manager
@@ -34,21 +36,40 @@ class SmoothDialog(QtWidgets.QDialog):
         self.ui.plot.canvas.mpl_connect("button_press_event", self.plotSelect)
         self.drawPlot()
 
-    def _grid_region_coordinates(self, x_min, x_max, y_min, y_max):
+    def _grid_region_coordinates(
+        self, x_min: float, x_max: float, y_min: float, y_max: float
+    ) -> tuple[float, float, float, float]:
         """
         Calculate the coordinates of box inside the plot area representing the grid region
 
-        :param x_min: Either k_diff_min, qx_min or ki_z_min
-        :param x_max: Either k_diff_max, qx_max or ki_z_max
-        :param y_min: Either qz_min or kf_z_min
-        :param y_max: Either qz_max or kf_z_max
-        :return: Tuple of coordinates (x1, x2, y1, y2)
+        Parameters
+        ----------
+        x_min:
+            k_diff_min, qx_min or ki_z_min
+        x_max:
+            k_diff_max, qx_max or ki_z_max
+        y_min:
+            qz_min or kf_z_min
+        y_max:
+            qz_max or kf_z_max
+
+        Returns
+        -------
+        Coordinates of the grid region box (x1, x2, y1, y2)
         """
         x_offset = (x_max - x_min) * self.GRID_OFFSET
         y_offset = (y_max - y_min) * self.GRID_OFFSET
         return x_min + x_offset, x_max - x_offset, y_min + y_offset, y_max - y_offset
 
-    def _paint_intensities(self, ki_z, kf_z, Qx, Qz, I, plot: MPLWidget):
+    def _paint_intensities(
+        self,
+        ki_z: NDArray[float64],
+        kf_z: NDArray[float64],
+        Qx: NDArray[float64],
+        Qz: NDArray[float64],
+        I: NDArray[float64],
+        plot: MPLWidget,
+    ):
         """
          Color-paint the intensities versus appropriate X and Y coordinates.
 
@@ -57,12 +78,20 @@ class SmoothDialog(QtWidgets.QDialog):
         - Qx, Qz
         - ki_z, kf_z
 
-        :param ki_z: Array of k$_{i,z}$ values
-        :param kf_z: Array of k$_{f,z}$ values
-        :param Qx: Array of Q$_x$ values
-        :param Qz: Array of Q$_z$ values
-        :param I: Intensity array
-        :param plot: The plot object to draw on
+        Parameters
+        ----------
+        ki_z:
+            Array of k$_{i,z}$ values
+        kf_z:
+            Array of k$_{f,z}$ values
+        Qx:
+            Array of Q$_x$ values
+        Qz:
+            Array of Q$_z$ values
+        I:
+            Intensity array
+        plot:
+            The plot object to draw on
         """
         common_args = {
             "log": True,
@@ -269,11 +298,8 @@ class SmoothDialog(QtWidgets.QDialog):
             self.drawing = False
             self.updateSettings()
 
-    def update_output_options(self, output_options):
-        """
-        Update a dict with smoothing options
-        :param dict: dictionary object
-        """
+    def update_output_options(self, output_options: dict) -> dict:
+        """Update a dict with smoothing options"""
         if self.ui.kizVSkfz.isChecked():
             output_options["off_spec_x_axis"] = Configuration.KZI_VS_KZF
         elif self.ui.qxVSqz.isChecked():

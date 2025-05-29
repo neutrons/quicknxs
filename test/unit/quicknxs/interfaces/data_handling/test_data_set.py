@@ -24,6 +24,8 @@ def _get_cross_section_data():
 
 
 class TestCrossSectionData(object):
+    """Test CrossSectionData class"""
+
     def test_r_scaling_factor(self):
         config = Configuration()
         xs = CrossSectionData("On_Off", config)

@@ -9,7 +9,7 @@ import math
 import os
 import time
 import traceback
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
@@ -113,12 +113,17 @@ class MainHandler(object):
     def open_file(
         self, file_path: Optional[str], force: Optional[bool] = False, silent: Optional[bool] = False
     ) -> None:
-        r"""
-        @brief Read one or more data files. If more than one, merge their data.
-        @param file_path: absolute path to data files. If more than one file, paths are joined with
-        the plus symbol '+'
-        @param force: if true, the file will be reloaded even if it was loaded previously
-        @param silent: if true, the plots currently shown in the interface will NOT be updated
+        """Read one or more data files. If more than one, merge their data.
+
+        Parameters
+        ----------
+        file_path:
+            Absolute path to data files.
+            If more than one file, paths are joined with the plus symbol '+'
+        force:
+            if true, the file will be reloaded even if it was loaded previously
+        silent:
+            if true, the plots currently shown in the interface will NOT be updated
         """
         # Actions carried out:
         # 1. check the file exists
@@ -212,12 +217,21 @@ class MainHandler(object):
             self.ui.selectedChannel0.setChecked(True)
         self.main_window.auto_change_active = False
 
-    def _congruency_fail_report(self, file_paths, log_names=None):
-        r"""
-        # type: List[str], Optional(List[str]) -> str
-        @brief Check whether these files can be merged
-        @param file_paths : List of Nexus files (full paths)
-        @returns str : Error message; empty string if no error is found,
+    def _congruency_fail_report(self, file_paths: List[str], log_names: Optional[List[str]] = None):
+        """Check whether these files can be merged
+
+        Parameters
+        ----------
+        file_paths:
+            List of Nexus files (full paths)
+        log_names:
+            List of log names to compare. If None, all logs from Settings are used.
+            If a log name is not in Settings, an error message is returned.
+
+        Returns
+        -------
+        str:
+            Error message; empty string if no error is found,
         """
         assert len(file_paths) > 1, "We require more than one data file in order to compare their metadata"
         # Log names validation and collect tolerances
@@ -266,10 +280,7 @@ class MainHandler(object):
         return message  # empty string if no failures
 
     def update_tables(self):
-        """
-        Update a data set that may be in the reduction table or the
-        direct beam table.
-        """
+        """Update a data set that may be in the reduction table or the direct beam table."""
         # Update the reduction table if this data set is in it
         idx = self._data_manager.find_active_data_id()
         if idx is not None:
@@ -282,10 +293,10 @@ class MainHandler(object):
             self.update_direct_beam_table(idx, self._data_manager.active_channel)
 
     def update_calculated_data(self):
-        """
-        Update the calculated entries in the overview tab.
-        We should call this after the peak ranges change, or
-        after a change is made that will affect the displayed results.
+        """Update the calculated entries in the overview tab.
+
+        We should call this after the peak ranges change,
+        or after a change is made that will affect the displayed results.
         """
         d = self._data_manager.active_channel
         self.ui.datasetAi.setText("%.3f°" % (d.scattering_angle))
@@ -389,18 +400,18 @@ class MainHandler(object):
         # Update the calculated data
         self.update_calculated_data()
 
-    def update_file_list(self, query_path=None):
-        # type: (Optional[str]) -> None
-        r"""
-        @brief Update the list of data files
-        @param query_path: full path of a directory, a Nexus file, or a list of Nexus files. If a list of files,
-        their paths are joined by the plus symbol '+'.
+    def update_file_list(self, query_path: Optional[str] = None) -> None:
+        """Update the list of data files
+
+        Parameters
+        ----------
+        query_path:
+            Full path of a directory, a Nexus file, or a list of Nexus files.
+            If a list of files, their paths are joined by the plus symbol '+'.
         """
 
         def _split_composites():
-            r"""Split the list of files in widget self.ui.file_list into a list of single files and
-            a list of composite files
-            """
+            """Split the list of files in widget self.ui.file_list into a list of single files and a list of composite files"""
             singles, composites = list(), list()
             for i in range(self.ui.file_list.count()):
                 file_base_name = self.ui.file_list.item(i).text()
@@ -482,9 +493,10 @@ class MainHandler(object):
             self.main_window.auto_change_active = False
 
     def automated_file_selection(self):
-        """
-        Go through the files in the current in order of run numbers, and
-        load files until the incident angle is no longer increasing.
+        """Automatically select files in the current directory based on incident angle.
+
+        Go through the files in the current in order of run numbers,
+        and load files until the incident angle is no longer increasing.
         """
         self.main_window.auto_change_active = True
         # Update the list of files
@@ -498,7 +510,7 @@ class MainHandler(object):
         n_count = 0
         logging.error("Current file: %s", self._data_manager.current_file_name)
 
-        q_current = self._data_manager.extract_meta_data().mid_q
+        q_current = self._data_manager.extract_metadata().mid_q
 
         # Add the current data set to the reduction table
         # Do nothing if the data is incompatible
@@ -514,10 +526,10 @@ class MainHandler(object):
             file_path = str(os.path.join(self._data_manager.current_directory, f))
             if current_file_found and n_count < 10:
                 n_count += 1
-                meta_data = self._data_manager.extract_meta_data(file_path)
+                metadata = self._data_manager.extract_metadata(file_path)
 
-                if q_current <= meta_data.mid_q and is_direct_beam == meta_data.is_direct_beam:
-                    q_current = meta_data.mid_q
+                if q_current <= metadata.mid_q and is_direct_beam == metadata.is_direct_beam:
+                    q_current = metadata.mid_q
                     self.open_file(file_path, silent=True)
                     d = self._data_manager.active_channel
                     # If we find data of another type, stop here
@@ -566,7 +578,7 @@ class MainHandler(object):
             self.main_window.auto_change_active = True
 
             # Update UI direct beam table
-            self.ui.normalizeTable.setRowCount(len(self._data_manager.direct_beam_list))
+            self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
             for idx, _ in enumerate(self._data_manager.direct_beam_list):
                 self._data_manager.set_active_data_from_direct_beam_list(idx)
                 self.update_direct_beam_table(idx, self._data_manager.active_channel)
@@ -613,12 +625,18 @@ class MainHandler(object):
                 active_channel = nexus_data.cross_sections[active_cross_section]
                 self.update_reduction_table(table_widget, idx, active_channel)
 
-    def _file_open_dialog(self, filter_=None):
-        # type: (Optional[str]) -> Optional[str]
-        r"""
-        @brief Pop a File dialog window for the user to select one file
-        @param filter_: show files with only selected extensions
-        @returns absolute path to the selected file
+    def _file_open_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
+        """Pop a File dialog window for the user to select one file
+
+        Parameters
+        ----------
+        filter_:
+            Show files with only selected extensions
+
+        Returns
+        -------
+        str:
+            Absolute path to the selected file
         """
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self.main_window, "Open NXS file...", directory=self._data_manager.current_directory, filter=filter_
@@ -626,12 +644,20 @@ class MainHandler(object):
         return file_path
 
     def _file_open_sum_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
-        r"""
-        @brief Pop a File dialog Window for the user to select two or more files
-        @details Congruency among the selected files is checked by comparing the values of selected metadata. User
-        is asked to override if congruency fails.
-        @param filter_: show files with only selected extensions
-        @returns absolute paths to the selected files, joined by the plus symbol '+'
+        """Open a File dialog Window for the user to select two or more files
+
+        Congruency among the selected files is checked by comparing the values of selected metadata.
+        User is asked to override if congruency fails.
+
+        Parameters
+        ----------
+        filter_:
+            Show files with only selected extensions
+
+        Returns
+        -------
+        str:
+            Absolute paths to the selected files, joined by the plus symbol '+'
         """
         file_paths, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self.main_window,
@@ -653,12 +679,12 @@ class MainHandler(object):
 
         return FilePath(file_paths).path
 
-    def _process_file_path(self, dialog_opening_method):
-        # type: (str) -> None
-        r"""
-        @brief Wrapper of the opening-file dialogs
-        @details This wrapper defines the extension of the files to be shown by the file dialog, and process the
-        file(s) selected by the user. It updates the file list widget as well as reads-in the file(s)
+    def _process_file_path(self, dialog_opening_method: str) -> None:
+        """Wrapper of the opening-file dialogs
+
+        This wrapper defines the extension of the files to be shown by the file dialog,
+        and process the file(s) selected by the user.
+        It updates the file list widget as well as reads-in the file(s)
         """
         if self.ui.histogramActive.isChecked():
             filter_ = "All (*.*);;histo.nxs (*histo.nxs)"
@@ -672,32 +698,33 @@ class MainHandler(object):
             self.open_file(file_path)
 
     def file_open_dialog(self):
-        r"""GUI callback for backend MainHandler._file_open_dialog."""
+        """GUI callback for backend MainHandler._file_open_dialog."""
         self._process_file_path("_file_open_dialog")
 
     def file_open_sum_dialog(self):
-        r"""GUI callback for backend MainHandler._file_open_sum_dialog."""
+        """GUI callback for backend MainHandler._file_open_sum_dialog."""
         self._process_file_path("_file_open_sum_dialog")
 
-    def _user_gives_permission(self, message):
-        # type: (str) -> bool
-        r"""
-        @brief Ask user's permission to proceed or quit if the select runs do not have same sample logs
-        @param message: message to show in the dialog box
-        """
+    def _user_gives_permission(self, message: str) -> bool:
+        """Ask user's permission to proceed or quit if the select runs do not have same sample logs"""
         message += ".\nProceed with Open Sum?"
         dialog = AcceptRejectDialog(self.main_window, title="Open Sum Confirmation", message=message)
         proceed = dialog.exec_()
         return proceed
 
-    def open_run_number(self, number=None):
-        r"""
-        @brief Open a data file by typing a run number or a composite run number for merging data sets
-        @details Example: 120:123+125+127:132 opens files with run numbers from 120 to 132 except 124 and 126
+    def open_run_number(self, number: Union[List[int], List[str], int, str, None] = None):
+        """Open a data file by typing a run number or a composite run number for merging data sets
+
+        Example
+        -------
+        "120:123+125+127:132" opens files with run numbers from 120 to 132 except 124 and 126
         """
         self.main_window.auto_change_active = True
         if number is None:
             number = str(self.ui.numberSearchEntry.text())  # cast from unicode to string
+        if number == "":
+            self.report_message("No run number entered", pop_up=True)
+            return
         QtWidgets.QApplication.instance().processEvents()
         run_numbers = RunNumbers(number)
         file_list = list()
@@ -733,10 +760,7 @@ class MainHandler(object):
         return success
 
     def update_daslog(self):
-        """
-        Write parameters from all file daslogs to the table in the
-        daslog tab.
-        """
+        """Write parameters from all file daslogs to the table in the daslog tab."""
         table = self.ui.daslogTableBox
         table.setRowCount(0)
         table.sortItems(-1)
@@ -759,11 +783,12 @@ class MainHandler(object):
         table.resizeColumnsToContents()
 
     def add_reflectivity(self, silent=False):
-        """
-        Collect information about the current extraction settings and store them
-        in the list of reduction items.
+        """Collect information about the current extraction settings and store them in the list of reduction items.
 
-        Returns true if everything is ok, false otherwise.
+        Returns
+        -------
+        bool:
+            True if everything is ok, false otherwise.
         """
         # Update the configuration according to current parameters
         # Note that when a data set is first loaded, the peaks may have a different
@@ -810,7 +835,8 @@ class MainHandler(object):
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
-        item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+        # Set the item to be non-editable (bitwise AND with the negation of the editable flag)
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         table_widget.setItem(idx, 0, item)
         table_widget.setItem(idx, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)))
         table_widget.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.cut_first_n_points)))
@@ -860,13 +886,6 @@ class MainHandler(object):
         if self.main_window.refl.isVisible():
             self.main_window.initiate_reflectivity_plot.emit(False)
 
-    def clear_direct_beams(self):
-        """Remove all items from the direct beam list."""
-        self._data_manager.clear_direct_beam_list()
-        self.ui.normalizeTable.setRowCount(0)
-        self.ui.normalization_list_label.setText("None")
-        self.main_window.initiate_intensity_plot.emit(False)
-
     def remove_reflectivity(self):
         """Remove one item from the reduction list."""
         index = self.reduction_table.currentRow()
@@ -875,15 +894,6 @@ class MainHandler(object):
         self._data_manager.reduction_list.pop(index)
         self.reduction_table.removeRow(index)
         self.main_window.initiate_reflectivity_plot.emit(False)
-
-    def remove_direct_beam(self):
-        """Remove one item from the direct beam list."""
-        index = self.ui.normalizeTable.currentRow()
-        if index < 0:
-            return
-        self._data_manager.direct_beam_list.pop(index)
-        self.ui.normalizeTable.removeRow(index)
-        self.main_window.initiate_intensity_plot.emit(False)
 
     def reduction_table_changed(self, item: QtWidgets.QTableWidgetItem):
         """Perform action upon change in data reduction list."""
@@ -963,11 +973,12 @@ class MainHandler(object):
                     is_error=False,
                 )
 
+        self.main_window.plotActiveTab()
         self.main_window.initiate_reflectivity_plot.emit(True)
         self.main_window.update_specular_viewer.emit()
 
     def add_direct_beam(self, silent=False):
-        """Add / remove dataset to the available normalizations or clear the normalization list."""
+        """Add dataset to the direct beam table."""
         # Update all cross-section parameters as needed.
         if self.ui.action_use_common_ranges.isChecked():
             config = self.get_configuration()
@@ -979,7 +990,7 @@ class MainHandler(object):
                 self.report_message("(Add direct beam) Data incompatible or already in the list.", pop_up=True)
             return False
 
-        self.ui.normalizeTable.setRowCount(len(self._data_manager.direct_beam_list))
+        self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
         self.update_tables()
 
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
@@ -988,40 +999,117 @@ class MainHandler(object):
         self.main_window.initiate_intensity_plot.emit(False)
         return True
 
-    def update_direct_beam_table(self, idx: int, d: CrossSectionData) -> None:
-        """Update a direct beam table entry.
+    def remove_direct_beam(self):
+        """Remove one item from the direct beam list."""
+        index = self.ui.directBeamTable.currentRow()
+        if index < 0:
+            return
+        self._data_manager.direct_beam_list.pop(index)
+        self.ui.directBeamTable.removeRow(index)
+        self.main_window.initiate_intensity_plot.emit(False)
 
-        Parameters
-        ----------
-        idx
-            Row index to update
-        d
-            Cross-section data object
+    def clear_direct_beams(self):
+        """Remove all items from the direct beam list."""
+        self._data_manager.clear_direct_beam_list()
+        self.ui.directBeamTable.setRowCount(0)
+        self.ui.normalization_list_label.setText("None")
+        self.main_window.initiate_intensity_plot.emit(False)
+
+    def update_direct_beam_table(self, idx: int, data: CrossSectionData) -> None:
+        """Update a direct beam table entry with cross-section data.
+
+        Table colums:
+            0: Run number - d.number
+            1: x0         - d.configuration.peak_position
+            2: xw         - d.configuration.peak_width
+            3: y0         - d.configuration.low_res_position
+            4: yw         - d.configuration.low_res_width
+            5: bg0        - d.configuration.bck_position
+            6: bgw        - d.configuration.bck_width
+            7: lambda     - d.wavelength
         """
         self.main_window.auto_change_active = True
-        item = QtWidgets.QTableWidgetItem(str(d.number))
+        item = QtWidgets.QTableWidgetItem(str(data.number))
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
-        if d == self._data_manager.active_channel:
+        if data == self._data_manager.active_channel:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
 
-        self.ui.normalizeTable.setItem(idx, 0, QtWidgets.QTableWidgetItem(item))
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.peak_position))
+        self.ui.directBeamTable.setItem(idx, 0, item)
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.peak_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.normalizeTable.setItem(idx, 1, QtWidgets.QTableWidgetItem(item))
-        self.ui.normalizeTable.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width)))
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.low_res_position))
+        self.ui.directBeamTable.setItem(idx, 1, item)
+        self.ui.directBeamTable.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(data.configuration.peak_width)))
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.low_res_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.normalizeTable.setItem(idx, 3, QtWidgets.QTableWidgetItem(item))
-        self.ui.normalizeTable.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width)))
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.bck_position))
+        self.ui.directBeamTable.setItem(idx, 3, item)
+        self.ui.directBeamTable.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(data.configuration.low_res_width)))
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.bck_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.normalizeTable.setItem(idx, 5, QtWidgets.QTableWidgetItem(item))
-        self.ui.normalizeTable.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
-        wl = "%s - %s" % (d.wavelength[0], d.wavelength[-1])
-        self.ui.normalizeTable.setItem(idx, 7, QtWidgets.QTableWidgetItem(wl))
+        self.ui.directBeamTable.setItem(idx, 5, item)
+        self.ui.directBeamTable.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(data.configuration.bck_width)))
+        wl = "%s - %s" % (data.wavelength[0], data.wavelength[-1])
+        item = QtWidgets.QTableWidgetItem(wl)
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
+        self.ui.directBeamTable.setItem(idx, 7, item)
         self.main_window.auto_change_active = False
+
+    def direct_beam_table_changed(self, item: QtWidgets.QTableWidgetItem):
+        """Perform action upon change in direct beam list."""
+        if self.main_window.auto_change_active:
+            return
+
+        data = self._data_manager.direct_beam_list[item.row()]
+
+        # col 0 and 7 are not editable
+        col_mapping = {
+            1: "peak_position",
+            2: "peak_width",
+            3: "low_res_position",
+            4: "low_res_width",
+            5: "bck_position",
+            6: "bck_width",
+        }
+
+        col = item.column()
+        if col in col_mapping:
+            try:
+                data.set_parameter(col_mapping[col], float(item.text()))
+            except ValueError:
+                self.report_message(
+                    f"Invalid value for {col_mapping[col]}:\n\t{item.text()}\nPlease enter a valid number.",
+                    pop_up=True,
+                    is_error=True,
+                )
+                # Reset to old value if conversion fails
+                old_value = getattr(self._data_manager.active_channel.configuration, col_mapping[col])
+                item.setText(str(old_value))
+                return
+
+        # Update calculated data
+        data.update_calculated_values()
+
+        # Update UI if this data set is the active one
+        if self._data_manager.is_active(data):
+            self.main_window.auto_change_active = True
+            self.update_info()
+            self.main_window.auto_change_active = False
+
+        # Recalculate reflectivity
+        try:
+            self._data_manager.calculate_reflectivity(nexus_data=data)
+        except:
+            self.report_message(
+                "Could not compute reflectivity for %s" % self._data_manager.current_file_name,
+                detailed_message=str(traceback.format_exc()),
+                pop_up=False,
+                is_error=False,
+            )
+
+        self.main_window.plotActiveTab()
+        self.main_window.initiate_intensity_plot.emit(True)
+        self.main_window.initiate_projection_plot.emit(True)
 
     def active_data_changed(self):
         """Actions to be taken once the active data set has changed"""
@@ -1038,8 +1126,8 @@ class MainHandler(object):
                     item.setBackground(QColors.white)
 
         idx = self._data_manager.find_active_direct_beam_id()
-        for i in range(self.ui.normalizeTable.rowCount()):
-            item = self.ui.normalizeTable.item(i, 0)
+        for i in range(self.ui.directBeamTable.rowCount()):
+            item = self.ui.directBeamTable.item(i, 0)
             if item is not None:
                 if i == idx:
                     item.setBackground(QColors.yellow)
@@ -1047,28 +1135,31 @@ class MainHandler(object):
                     item.setBackground(QColors.white)
         self.main_window.auto_change_active = False
 
-    def reduction_table_right_click(self, pos, is_reduction_table=True):
-        """
-        Handle right-click on the reduction table.
-        :param QPoint pos: mouse position
-        :param bool is_reduction_table: True if the reduction table is active, False if the direct beam table is active
-        """
-        if is_reduction_table:
-            table_widget = self.reduction_table
-            data_table = self._data_manager.reduction_list
-        else:
-            table_widget = self.ui.normalizeTable
-            data_table = self._data_manager.direct_beam_list
+    def reduction_table_right_click(self, pos: QtCore.QPoint, is_reduction_table: bool = True):
+        """Handle right-click on the reduction table.
 
+        Parameters
+        ----------
+        pos:
+            Mouse position
+        is_reduction_table:
+            True if the reduction table is active, False if the direct beam table is active
+        """
+
+        # Callbacks for the actions in the context menu
         def _export_data(_pos):
-            """Callback function to right-click action: Export data"""
             row = table_widget.rowAt(pos.y())
             if 0 <= row < len(data_table):
                 nexus_data = data_table[row]
                 self.save_run_data(nexus_data)
 
         def _propagate_run(_pos):
-            """Callback function to right-click action: Propagate run to all tabs"""
+            # If direct beam, make sure the user
+            if not is_reduction_table and not self.ask_question(
+                "Run is labeled as direct beam. Do you still want to add it to the list of reflectivity runs?"
+            ):
+                return
+
             row = table_widget.rowAt(pos.y())
             if 0 <= row < len(data_table):
                 nexus_data = data_table[row]
@@ -1086,8 +1177,18 @@ class MainHandler(object):
                         self.update_reduction_table(target_widget, idx, active_channel)
 
         def _remove_run(_pos):
-            """Callback function to right-click action: Remove run from this tab"""
-            self.remove_reflectivity()
+            if is_reduction_table:
+                self.remove_reflectivity()
+            else:
+                self.remove_direct_beam()
+
+        # Get the table widget and data table
+        if is_reduction_table:
+            table_widget = self.reduction_table
+            data_table = self._data_manager.reduction_list
+        else:
+            table_widget = self.ui.directBeamTable
+            data_table = self._data_manager.direct_beam_list
 
         reduction_table_menu = QtWidgets.QMenu(table_widget)
 
@@ -1106,10 +1207,7 @@ class MainHandler(object):
         reduction_table_menu.exec_(table_widget.mapToGlobal(pos))
 
     def save_run_data(self, nexus_data: NexusData):
-        """
-        Save run data to file
-        :param NexusData nexus_data: run data object
-        """
+        """Save run data to file."""
         path = QtWidgets.QFileDialog.getExistingDirectory(self.main_window, "Select directory")
         if not path:
             return
@@ -1164,14 +1262,19 @@ class MainHandler(object):
             config = self.get_configuration()
             self._data_manager.update_configuration(configuration=config, active_only=False)
             if active_only:
-                self._data_manager.calculate_gisans(progress=prog)
+                result = self._data_manager.calculate_gisans(progress=prog)
+                if not result:
+                    self.report_message(
+                        f"Could not compute GISANS for {self._data_manager.current_file_name}",
+                        detailed_message=str(traceback.format_exc()),
+                        pop_up=True,
+                        is_error=True,
+                    )
             else:
-                self._data_manager.reduce_gisans(active_only=active_only, progress=prog)
+                self._data_manager.reduce_gisans(progress=prog)
 
     def check_region_values_changed(self):
-        """
-        Return true if any of the parameters tied to a particular slot
-        has changed.
+        """Return true if any of the parameters tied to a particular slot has changed.
 
         Some parameters are tied to the changeRegionValues() slot.
         There are time-consuming actions that we only want to take
@@ -1182,9 +1285,11 @@ class MainHandler(object):
         refreshing of the plots. Those are parameters such as scaling
         factors or the number of points clipped.
 
-        Return values:
-            -1 = no valid change
-             0 = replot needed
+        Returns
+        -------
+        int:
+            -1 = no valid change,
+             0 = replot needed,
              1 = recalculation needed
         """
         if self._data_manager.active_channel is None:
@@ -1268,10 +1373,10 @@ class MainHandler(object):
         return -1
 
     def get_configuration(self) -> Configuration:
-        r"""
-        @brief Gather the reduction options.
-        @details Retrieve the reduction options either from the active channel or from the current settings
-        in the graphical interface.
+        """Gather the reduction options.
+
+        Retrieve the reduction options either from the active channel,
+        or from the current settings in the graphical interface.
         """
         if self._data_manager.active_channel is not None:
             configuration = self._data_manager.active_channel.configuration
@@ -1527,10 +1632,7 @@ class MainHandler(object):
             self.main_window.initiate_reflectivity_plot.emit(False)
 
     def trim_data_to_normalization(self):
-        """
-        Cut the start and end of the active data set to 5% of its
-        maximum intensity.
-        """
+        """Cut the start and end of the active data set to 5% of its maximum intensity."""
         trim_points = self._data_manager.get_trim_values()
         if trim_points is not None:
             self.ui.rangeStart.setValue(trim_points[0])
@@ -1541,10 +1643,7 @@ class MainHandler(object):
             self.report_message("No direct beam found to trim data", pop_up=False)
 
     def strip_overlap(self):
-        """
-        Remove overlapping points in the reflectivity, cutting always from the lower Qz
-        measurements.
-        """
+        """Remove overlapping points in the reflectivity, cutting always from the lower Qz measurements."""
         self._data_manager.strip_overlap()
 
         for i in range(len(self._data_manager.reduction_list)):
@@ -1555,8 +1654,7 @@ class MainHandler(object):
         self.main_window.initiate_reflectivity_plot.emit(False)
 
     def reload_all_files(self):
-        """
-        Reload all files upon change in loading configuration
+        """Reload all files upon change in loading configuration
 
         To speed up reloading, the file cache is first cleared of files that are not used in the
         reduction list or direct beam list.
@@ -1584,7 +1682,7 @@ class MainHandler(object):
         # Update the tables in the UI
         self.main_window.auto_change_active = True
 
-        self.ui.normalizeTable.setRowCount(len(self._data_manager.direct_beam_list))
+        self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
         for idx, _ in enumerate(self._data_manager.direct_beam_list):
             self._data_manager.set_active_data_from_direct_beam_list(idx)
             self.update_direct_beam_table(idx, self._data_manager.active_channel)
@@ -1614,14 +1712,17 @@ class MainHandler(object):
 
         self.main_window.auto_change_active = False
 
-    def report_message(self, message, informative_message=None, detailed_message=None, pop_up=False, is_error=False):
-        r"""
-        Report a message or error to the status bar at the bottom of the window.
-        :param str message: message string to be reported
-        :param str informative_message: extra information
-        :param str detailed_message: detailed message for the log
-        :param bool pop_up: if True, a dialog will pop up
-        :param bool is_error: if True, the message is logged on the error channel
+    def report_message(
+        self,
+        message: str,
+        informative_message: Optional[str] = None,
+        detailed_message: Optional[str] = None,
+        pop_up: bool = False,
+        is_error: bool = False,
+    ):
+        """Report a message or error to the status bar at the bottom of the window.
+
+        If `is_error` is True, the message is also logged on the error channel.
         """
         self.status_bar_handler.show_message(message)
         if is_error:
@@ -1646,12 +1747,8 @@ class MainHandler(object):
             msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg.exec_()
 
-    def ask_question(self, message):
-        """
-        Display a popup dialog with a message and choices "Ok" and "Cancel"
-        :param str message: question to ask
-        :returns: bool
-        """
+    def ask_question(self, message: str) -> bool:
+        """Display a popup dialog with a message and choices "Ok" and "Cancel"."""
         ret = QtWidgets.QMessageBox.warning(
             self.main_window,
             "Warning",
@@ -1674,11 +1771,11 @@ class MainHandler(object):
         self.main_window.update_gisans_viewer.connect(dialog.update_gisans)
         dialog.show()
 
-    def toggle_final_rebin_global(self, state):
-        r"""When the global rebin checkbox is toggled, update the run rebin checkbox
-        so that only one of them can be checked at a time.
+    def toggle_final_rebin_global(self, state: int):
+        """Toggle global rebin checkbox.
+
+        Ensure mutual exclusivity with the per-run rebin checkbox.
         """
-        # **Ensure mutual exclusivity of the checkboxes**
         if state == QtCore.Qt.Checked:
             self.ui.final_rebin_checkbox_run.blockSignals(True)
             self.ui.final_rebin_checkbox_run.setChecked(False)
@@ -1704,10 +1801,10 @@ class MainHandler(object):
                     self.ui.reductionTable.setItem(row, col_index, _item)
         self.ui.reductionTable.blockSignals(False)
 
-    def toggle_final_rebin_run(self, state):
-        """When the run rebin checkbox is toggled, update the global rebin checkbox
-        so that only one of them can be checked at a time.
+    def toggle_final_rebin_run(self, state: int):
+        """Toggle per-run rebin checkbox.
+
+        Ensure mutual exclusivity with the global rebin checkbox.
         """
-        # **Ensure mutual exclusivity of the checkboxes**
         if state == QtCore.Qt.Checked:
             self.ui.final_rebin_checkbox_global.setChecked(False)

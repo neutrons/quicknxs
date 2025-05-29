@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 # pylint: bare-except
 
-# standard imports
 import logging
 import sys
 from typing import List
 
-# third-party imports
 import numpy as np
 
-# quicknxs imports
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 from quicknxs.ui.mplwidget import MPLWidget
 
 
 class PlotManager(object):
+    """PlotManager is responsible for plotting the data in the main window."""
+
     _refl_color_list = ["blue", "red", "green", "purple", "#aaaa00", "cyan"]
 
     def __init__(self, main_window):
@@ -71,7 +70,7 @@ class PlotManager(object):
             logging.error("No positive data found")
             return
 
-        ref_norm = main_window.getNorm()
+        ref_norm = main_window.get_direct_beam()
         if main_window.ui.normalizeXTof.isChecked() and ref_norm is not None:
             ref_norm = ref_norm.get_counts_vs_TOF()
             # normalize ToF dataset for wavelength distribution
@@ -264,7 +263,7 @@ class PlotManager(object):
         imin = 1e20
         imax = 1e-20
         xtofnormed = []
-        ref_norm = main_window.getNorm()
+        ref_norm = main_window.get_direct_beam()
         if ref_norm is not None:
             ref_norm = ref_norm.get_counts_vs_TOF()
             ref_norm = np.where(ref_norm > 0, ref_norm, 1.0)

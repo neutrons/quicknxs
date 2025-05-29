@@ -33,12 +33,12 @@ def test_losing_direct_beam(qtbot):
     # select run in the file list
     ui_utilities.set_current_file_by_run_number(main_window, direct_beam_run)
     # add run to direct beams
-    main_window.actionNorm.triggered.emit()
+    main_window.actionAddDirectBeam.triggered.emit()
 
     # select run in the file list
     ui_utilities.set_current_file_by_run_number(main_window, 40785)
     # add run to the reduction list
-    main_window.actionAddPlot.triggered.emit()
+    main_window.actionAddRefl.triggered.emit()
 
     assert _get_reduction_list_run_direct_beam(0, "On_Off") == direct_beam_run
     assert _get_reduction_list_run_direct_beam(0, "Off_Off") == direct_beam_run

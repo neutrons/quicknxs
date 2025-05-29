@@ -316,6 +316,8 @@ class NavigationToolbarReflectivity(NavigationToolbar):
 
 
 class MplCanvas(FigureCanvas):
+    """A canvas for matplotlib figures, used in the MPLWidget."""
+
     def __init__(self, parent=None, width=3, height=3, dpi=100, sharex=None, sharey=None, adjust={}):
         self.fig = Figure(figsize=(width, height), dpi=dpi, facecolor="None")
         self.ax = self.fig.add_subplot(111, sharex=sharex, sharey=sharey)
@@ -348,6 +350,8 @@ class MplCanvas(FigureCanvas):
 
 
 class MPLWidget(QtWidgets.QWidget):
+    """A widget for displaying matplotlib plots, with a navigation toolbar."""
+
     cplot = None
     cbar = None
 
@@ -384,8 +388,8 @@ class MPLWidget(QtWidgets.QWidget):
         self.toolbar.update()
 
     def leaveEvent(self, event):
-        """
-        Make sure the cursor is reset to it's default when leaving the widget.
+        """Make sure the cursor is reset to it's default when leaving the widget.
+
         In some cases the zoom cursor does not reset when leaving the plot.
         """
         if self.toolbar:

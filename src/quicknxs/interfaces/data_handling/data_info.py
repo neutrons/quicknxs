@@ -78,10 +78,8 @@ class DataInfo(object):
         logging.info("INSPECT: %s sec" % (time.time() - t_0))
 
     def get_tof_range(self, ws):
-        """
-        Determine TOF range from the data
-        :param workspace ws: workspace to work with
-        """
+        """Determine TOF range from the data"""
+
         run_object = ws.getRun()
         sample_detector_distance = run_object["SampleDetDis"].getStatistics().mean
         source_sample_distance = run_object["ModeratorSamDis"].getStatistics().mean
@@ -107,14 +105,11 @@ class DataInfo(object):
         return [tof_min, tof_max]
 
     def process_roi(self, ws):
-        """
-        Process the ROI information and determine the peak
-        range, the low-resolution range, and the background range.
+        """Process the ROI information from a Mantid workspace.
 
+        Determines the peak range, low-resolution range, and background range.
         Starting in June 2018, with the DAS upgrade, the ROIs are
         specified with a start/width rather than start/stop.
-
-        :param workspace ws: workspace to work with
         """
         roi_peak = [0, 0]
         roi_low_res = [0, 0]
@@ -205,11 +200,7 @@ class DataInfo(object):
             self.roi_background = peak2
 
     def determine_data_type(self, ws):
-        """
-        Inspect the data and determine peak locations
-        and data type.
-        :param workspace ws: Workspace to inspect
-        """
+        """Inspect the data and determine peak locations and data type."""
         # Skip empty data entries
         if ws.getNumberEvents() < self.n_events_cutoff:
             self.data_type = -1
@@ -284,6 +275,8 @@ def chi2(data, model):
 
 
 class Fitter2(object):
+    """Class to fit the data and find the peak and beam width."""
+
     DEAD_PIXELS = 10
 
     def __init__(self, workspace):

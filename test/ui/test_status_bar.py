@@ -3,6 +3,8 @@ from quicknxs.interfaces.main_window import MainWindow
 
 
 class TestStatusBar:
+    """Test the status bar functionality in the main window."""
+
     def test_report_message(self, qtbot):
         """Test that function report_message updates the status bar message"""
         window_main = MainWindow()

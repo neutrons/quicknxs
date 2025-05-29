@@ -1,8 +1,5 @@
-# package imports
-# standard imports
 import os
 
-# third-party imports
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QDialog, QWidget
 from qtpy.uic import loadUi
@@ -53,10 +50,7 @@ class DeadTimeSettingsView(QDialog):
         return proceed
 
     def accept(self):
-        """
-        Read in the options on the form when the OK button is
-        clicked and update the global configuration.
-        """
+        """Read in the options on the form when the OK button is clicked and update the global configuration."""
         if self.check_values_changed() and self.ask_user_ok_to_reload_files():
             Configuration.paralyzable_deadtime = self.ui.use_paralyzable.isChecked()
             Configuration.deadtime_value = self.ui.dead_time_value.value()

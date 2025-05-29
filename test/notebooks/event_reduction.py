@@ -170,9 +170,9 @@ class EventReflectivity(object):
             self._ws_db = direct_workspace
 
         # Extract meta data
-        self.extract_meta_data()
+        self.extract_metadata()
 
-    def extract_meta_data(self):
+    def extract_metadata(self):
         # Set up basic data
         self.n_x = int(self._ws_sc.getInstrument().getNumberParameter("number-of-x-pixels")[0])
         self.n_y = int(self._ws_sc.getInstrument().getNumberParameter("number-of-y-pixels")[0])

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=bare-except
-"""Widget to compare different reflectivities."""
-
 import logging
 import os
 import sys
@@ -16,6 +14,8 @@ from quicknxs.interfaces.data_handling.processing_workflow import ProcessingWork
 
 
 class CompareWidget(QtWidgets.QWidget):
+    """Widget to compare different reflectivities."""
+
     changing_table = False
 
     def __init__(self, parent):
@@ -64,11 +64,8 @@ class CompareWidget(QtWidgets.QWidget):
         # Make sure the Open button is reset
         self.ui.pushButton_2.setDown(False)
 
-    def read_file(self, file_path):
-        """
-        Read data file
-        :param str file_path: file to load
-        """
+    def read_file(self, file_path: str):
+        """Read a data file"""
         label = os.path.basename(file_path)
         idx = self.ui.compareList.rowCount()
 

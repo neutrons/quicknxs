@@ -1,8 +1,5 @@
 # pylint: disable=bare-except
-"""
-Data manager. Holds information about the current data location
-and manages the data cache.
-"""
+"""Data manager. Holds information about the current data location and manages the data cache."""
 
 import copy
 import glob
@@ -10,13 +7,15 @@ import logging
 import os
 import sys
 import time
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 import numpy as np
 
+from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknxs_io
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 
 
 class DataManager(object):
@@ -24,31 +23,31 @@ class DataManager(object):
 
     Attributes
     ----------
-        current_directory
-            Current directory
-        current_file_name
-            Current file name, used for file list table to set the current item
-        _nexus_data
-            Current data set
-        active_channel
-            Currently active CrossSectionData
-        _cache
-            Cache of loaded data
-        active_reduction_list_index
-            Index of current data (ROI) tab
-        peak_reduction_lists
-            Dictionary of reduction lists
-            key: reduction list index, corresponds to the reduction table tab in the UI
-        direct_beam_list
-            List of direct beam data sets
-        reduction_states
-            List of cross-sections common to all reduced data sets
-        final_merged_reflectivity
-            Merged reflectivity data
-        cached_offspec
-            Cached off-specular data
-        cached_gisans
-            Cached GISANS data
+    current_directory
+        Current directory
+    current_file_name
+        Current file name, used for file list table to set the current item
+    _nexus_data
+        Current data set
+    active_channel
+        Currently active CrossSectionData
+    _cache
+        Cache of loaded data
+    active_reduction_list_index
+        Index of current data (ROI) tab
+    peak_reduction_lists
+        Dictionary of reduction lists
+        key: reduction list index, corresponds to the reduction table tab in the UI
+    direct_beam_list
+        List of direct beam data sets
+    reduction_states
+        List of cross-sections common to all reduced data sets
+    final_merged_reflectivity
+        Merged reflectivity data
+    cached_offspec
+        Cached off-specular data
+    cached_gisans
+        Cached GISANS data
     """
 
     MAX_CACHE = 50  # maximum number of loaded datasets (either single-file or merged-files types)
@@ -133,17 +132,8 @@ class DataManager(object):
             self._nexus_data = self.direct_beam_list[index]
             self.set_channel(0)
 
-    def set_channel(self, index):
-        """Set the current channel to the specified index, or zero if it doesn't exist.
-
-        Args
-        ----
-            index (int): channel index
-
-        Returns
-        -------
-            bool: True if successfully set, otherwise False
-        """
+    def set_channel(self, index: int) -> bool:
+        """Set the current channel to the specified index, or zero if it doesn't exist."""
         if self.data_sets is None:
             return False
         channels = list(self.data_sets.keys())
@@ -164,9 +154,8 @@ class DataManager(object):
         """Check if the given data set is the active data set."""
         return data_set == self._nexus_data
 
-    def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: list):
-        """
-        Determine if the data set is compatible with the data sets in the reduction list.
+    def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: List[NexusData]) -> bool:
+        """Determine if the data set is compatible with the data sets in the reduction list.
 
         A data set is compatible if the polarization cross-section states matches those of the
         first run in the reduction list, both the same number of states and the same states.
@@ -181,6 +170,7 @@ class DataManager(object):
         Returns
         -------
         bool
+            True if the data set is compatible with the reduction list, False otherwise.
         """
         # If we are starting a new reduction list, just proceed
         if not reduction_list:
@@ -207,15 +197,7 @@ class DataManager(object):
         return True
 
     def find_run_number_in_reduction_list(self, run_number: int, reduction_list: list[NexusData]):
-        """
-        Look for the given run number in the reduction list.
-
-        Parameters
-        ----------
-        run_number: int
-            Run number to look for
-        reduction_list: list[NexusData]
-            The reduction list to search
+        """Look for the given run number in the reduction list.
 
         Returns
         -------
@@ -228,44 +210,53 @@ class DataManager(object):
         return None
 
     def find_data_in_reduction_list(self, nexus_data):
-        """
-        Look for the given data in the reduction list.
-        Return the index within the reduction list or none.
-        :param NexusData: data set object
+        """Look for the given data in the reduction list.
+
+        Returns
+        -------
+        int | None:
+            The index within the reduction list, or none.
         """
         for i in range(len(self.reduction_list)):
             if nexus_data == self.reduction_list[i]:
                 return i
         return None
 
-    def find_data_in_direct_beam_list(self, nexus_data):
-        """
-        Look for the given data in the direct beam list.
-        Return the index within the direct beam list or none.
-        :param NexusData: data set object
+    def find_data_in_direct_beam_list(self, nexus_data: NexusData) -> Optional[int]:
+        """Look for the given data in the direct beam list.
+
+        Returns
+        -------
+        int | None:
+            The index within the direct beam list, or none.
         """
         for i in range(len(self.direct_beam_list)):
             if nexus_data == self.direct_beam_list[i]:
                 return i
         return None
 
-    def find_active_data_id(self):
-        """
-        Look for the active data in the reduction list.
-        Return the index within the reduction list or none.
+    def find_active_data_id(self) -> Optional[int]:
+        """Look for the active data in the reduction list.
+
+        Returns
+        -------
+        int | None:
+            The index within the reduction list or none.
         """
         return self.find_data_in_reduction_list(self._nexus_data)
 
-    def find_active_direct_beam_id(self):
-        """
-        Look for the active data in the direct beam list.
-        Return the index within the direct beam list or none.
+    def find_active_direct_beam_id(self) -> Optional[int]:
+        """Look for the active data in the direct beam list.
+
+        Returns
+        -------
+        int | None:
+            The index within the direct beam list or none.
         """
         return self.find_data_in_direct_beam_list(self._nexus_data)
 
-    def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX):
-        r"""
-        Add active data set to reduction list
+    def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX) -> bool:
+        """Add active data set to reduction list
 
         New data sets are always added to the main reduction list. Data sets are added to secondary
         reduction lists by initializing from the main reduction list (button to add new data tab)
@@ -306,15 +297,14 @@ class DataManager(object):
         return False
 
     def copy_nexus_data_to_reduction(self, nexus_data_to_copy: NexusData, peak_index: int):
-        r"""
-        Add data set to the reduction list specified by `peak_index`
+        """Add data set to the reduction list specified by `peak_index`
 
         Parameters
         ----------
         nexus_data_to_copy: NexusData
             Data set to copy
         peak_index: int
-            Peak (reduction list) to copy data set to
+            reduction list to copy data set to
 
         Returns
         -------
@@ -346,7 +336,7 @@ class DataManager(object):
 
     def add_active_to_normalization(self):
         """Add active data set to the direct beam list"""
-        if self._nexus_data not in self.direct_beam_list:
+        if self._nexus_data not in self.direct_beam_list and self._nexus_data.is_direct_beam():
             self.direct_beam_list.append(self._nexus_data)
             return True
         return False
@@ -371,29 +361,42 @@ class DataManager(object):
         self.reduction_list.pop(index)
 
     def clear_direct_beam_list(self):
-        """
-        Remove all items from the direct beam list, and make
-        sure to remove links to those items in the scattering data sets.
-
-        TODO: remove links from scattering data sets.
-        """
+        """Remove all items from the direct beam list."""
+        # TODO: remove links from scattering data sets.
         self.direct_beam_list = []
 
     def _loading_progress(self, call_back, start_value, stop_value, value, message=None):
         _value = start_value + (stop_value - start_value) * value
         call_back(_value, message)
 
-    def load(self, file_path, configuration, force=False, update_parameters=True, progress=None):
-        # type: (str, Configuration, Optional[bool], bool, Optional[ProgressReporter]) -> bool
-        r"""
-        @brief Load one ore more Nexus data files
-        @param file_path: absolute path to one or more files. If more than one, files are concatenated with the
-        merge symbol '+'.
-        @param configuration: configuration to use to load the data
-        @param force: it True, existing data in the cache will be replaced by reading from file.
-        @param update_parameters: if True, we will find peak ranges
-        @param progress: aggregator to estimate percent of time allotted to this function
-        @returns True if the data is retrieved from the cache of past loading events
+    def load(
+        self,
+        file_path: str,
+        configuration: Configuration,
+        force: bool = False,
+        update_parameters: bool = True,
+        progress: Optional[Callable] = None,
+    ) -> bool:
+        """Load one or more Nexus data files
+
+        Parameters
+        ----------
+        file_path:
+            absolute path to one or more files.
+            If more than one, files are concatenated with the merge symbol '+'.
+        configuration:
+            Configuration to use to load the data
+        force:
+            if True, existing data in the cache will be replaced by reading from file.
+        update_parameters:
+            if True, we will find peak ranges
+        progress:
+            aggregator to estimate percent of time allotted to this function
+
+        Returns
+        -------
+        bool:
+            True if the data is retrieved from the cache of past loading events
         """
         # Actions taken in this function:
         # 1. Find if the file has been loaded in the past. Retrieve the cache when force==False
@@ -485,13 +488,13 @@ class DataManager(object):
         """Return the direct beam data object for the active data"""
         return self._find_direct_beam(self._nexus_data)
 
-    def _find_direct_beam(self, nexus_data):
-        """
-        Determine whether we have a direct beam data set available
-        for a given reflectivity data set.
-        The object returned is a CrossSectionData object.
+    def _find_direct_beam(self, nexus_data: Union[NexusData, CrossSectionData]) -> Optional[CrossSectionData]:
+        """Attempt to find a direct beam data set for a given reflectivity data set.
 
-        :param NexusData or CrossSectionData nexus_data: data set to find a direct beam for
+        Returns
+        -------
+        CrossSectionData or None:
+            The direct beam data set if found, otherwise None.
         """
         direct_beam = None
         # Find the CrossSectionData object to work with
@@ -503,8 +506,10 @@ class DataManager(object):
                 logging.error("DataManager._find_direct_beam: no data available in NexusData object")
                 return
             data_xs = nexus_data.cross_sections[data_keys[0]]
-        else:
+        elif isinstance(nexus_data, CrossSectionData):
             data_xs = nexus_data
+        else:
+            raise TypeError("nexus_data must be a NexusData or CrossSectionData object")
 
         if data_xs.configuration is not None and data_xs.configuration.normalization is not None:
             for item in self.direct_beam_list:
@@ -530,12 +535,11 @@ class DataManager(object):
         return direct_beam
 
     def reduce_gisans(self, progress=None):
-        """
+        """Calculate GISANS for all datasets in the reduction list
+
         Since the specular reflectivity is prominently displayed, it is updated as
         soon as parameters change. This is not the case for GISANS, which is
         computed on-demand.
-        This method goes through the data sets in the reduction list and re-calculate
-        the GISANS.
         """
         if progress is not None:
             progress(1, "Reducing GISANS...")
@@ -559,27 +563,21 @@ class DataManager(object):
         # We must have a direct beam data set to normalize with
         direct_beam = self._find_direct_beam(nexus_data)
         if direct_beam is None:
-            # TODO 67 Handle this error with GUI prompt GUI
-            raise RuntimeError("Please select a direct beam data set for your data.")
+            return False
 
         nexus_data.calculate_gisans(direct_beam=direct_beam, progress=progress)
         logging.info("Calculate GISANS: %s %s sec", nexus_data.number, (time.time() - t_0))
+        return True
 
     def is_offspec_available(self):
-        """
-        Verify that all data sets and all cross-sections have calculated
-        off-specular data available.
-        """
+        """Verify that all data sets and all cross-sections have calculated off-specular data available."""
         for nexus_data in self.reduction_list:
             if not nexus_data.is_offspec_available():
                 return False
         return True
 
     def is_gisans_available(self, active_only=True):
-        """
-        Verify that all data sets and all cross-sections have calculated
-        GISANS data available.
-        """
+        """Verify that all data sets and all cross-sections have calculated GISANS data available."""
         if active_only:
             return self._nexus_data.is_gisans_available()
 
@@ -598,12 +596,11 @@ class DataManager(object):
                     logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.number, sys.exc_info()[1])
 
     def reduce_offspec(self, progress=None):
-        """
+        """Calculate off-specular reflectivity for all datasets in all reduction list
+
         Since the specular reflectivity is prominently displayed, it is updated as
         soon as parameters change. This is not the case for the off-specular, which is
         computed on-demand.
-        This method goes through the data sets in the reduction list and re-calculate
-        the off-specular reflectivity.
         """
         for nexus_data in self.reduction_list:
             try:
@@ -643,10 +640,12 @@ class DataManager(object):
             )
 
     def find_best_direct_beam(self):
-        """
-        Find the best direct beam in the direct beam list for the active data
-        Returns a run number.
-        Returns True if we have updated the data with a new normalization run.
+        """Find the best direct beam in the direct beam list for the active data
+
+        Returns
+        -------
+        bool:
+            True if we have updated the data with a new normalization run.
         """
         # TODO 65+ Can it work with merged data?
         # Select the first run number if the active channel cross section is derived from more than one run
@@ -681,10 +680,7 @@ class DataManager(object):
         return False
 
     def get_trim_values(self):
-        """
-        Cut the start and end of the active data set to 5% of its
-        maximum intensity.
-        """
+        """Cut the start and end of the active data set to 5% of its maximum intensity."""
         if (
             self.active_channel is not None
             and self.active_channel.q is not None
@@ -705,10 +701,7 @@ class DataManager(object):
         return
 
     def strip_overlap(self):
-        """
-        Remove overlapping points in the reflecitviy, cutting always from the lower Qz
-        measurements.
-        """
+        """Remove overlapping points in the reflectivity, cutting always from the lower Qz measurements."""
         if len(self.reduction_list) < 2:
             logging.error("You need to have at least two datasets in the reduction table")
             return
@@ -724,15 +717,27 @@ class DataManager(object):
                 item.set_parameter("cut_last_n_points", n_points)
 
     def stitch_data_sets(
-        self, normalize_to_unity=True, q_cutoff=0.01, global_stitching=False, poly_degree=None, poly_points=3
+        self,
+        normalize_to_unity: bool = True,
+        q_cutoff: float = 0.01,
+        global_stitching: bool = False,
+        poly_degree: Optional[int] = None,
+        poly_points: int = 3,
     ):
-        """
-        Determine scaling factors for each data set
-        :param bool normalize_to_unity: If True, the reflectivity plateau will be normalized to 1.
-        :param float q_cutoff: critical q-value below which we expect R=1
-        :param bool global_stitching: If True, use data from all cross-sections to calculate scaling factors
-        :param int poly_degree: if not None, find the scaling factor by simultaneously fitting a polynomial and scaling factor to the curves
-        :param int poly_points: number of additional points on each end of the overlap region to include in the fit
+        """Determine scaling factors for each data set
+
+        Parameters
+        ----------
+        normalize_to_unity:
+            If True, the reflectivity plateau will be normalized to 1.
+        q_cutoff:
+            critical q-value below which we expect R=1
+        global_stitching:
+            If True, use data from all cross-sections to calculate scaling factors
+        poly_degree:
+            if not None, find the scaling factor by simultaneously fitting a polynomial and scaling factor to the curves
+        poly_points:
+            number of additional points on each end of the overlap region to include in the fit
         """
         data_manipulation.smart_stitch_reflectivity(
             self.reduction_list,
@@ -812,24 +817,23 @@ class DataManager(object):
 
             self.final_merged_reflectivity["SA"] = ratio_ws
 
-    def extract_meta_data(self, file_path=None):
-        """
-        Return the current q-value at the center of the wavelength range of the current data set.
+    def extract_metadata(self, file_path=None):
+        """Return the current q-value at the center of the wavelength range of the current data set.
+
         If a file path is provided, the mid q-value will be extracted from that data file.
         """
         if file_path is not None:
-            return data_manipulation.extract_meta_data(
+            return data_manipulation.extract_metadata(
                 file_path=file_path, configuration=self.active_channel.configuration
             )
-        return data_manipulation.extract_meta_data(cross_section_data=self.active_channel)
+        return data_manipulation.extract_metadata(cross_section_data=self.active_channel)
 
-    def load_data_from_reduced_file(self, file_path, configuration=None, progress=None):
-        """
-        Load the information from a reduced file, the load the data.
+    def load_data_from_reduced_file(
+        self, file_path: str, configuration: Optional[Configuration] = None, progress: ProgressReporter = None
+    ):
+        """Load the information from a reduced file, the load the data.
+
         Ask the main event handler to update the UI once we are done.
-        :param str file_path: reduced file to load
-        :param Configuration configuration: configuration to base the loaded data on
-        :param ProgressReporter progress: progress reporter
         """
         t_0 = time.time()
         db_files, data_files, additional_peaks, has_scaling_error = quicknxs_io.read_reduced_file(
@@ -851,9 +855,7 @@ class DataManager(object):
     def load_direct_beam_and_data_files(
         self, db_files, data_files, additional_peaks=None, configuration=None, progress=None, force=False, t_0=None
     ):
-        """
-        Load direct beam and data files and add them to the direct beam list and reduction
-        list, respectively
+        """Load direct beam and data files and add them to the direct beam list and reduction list, respectively
 
         Parameters
         ----------
@@ -933,21 +935,20 @@ class DataManager(object):
                 self.add_active_to_reduction(peak_index)
 
     @property
-    def current_event_files(self):
-        # type: () -> List[str]
-        r"""
-        @brief Sorted list of event files in the current directory
-        @details return only file names with pattern '*event.nxs' or '*.nxs.h5'
+    def current_event_files(self) -> List[str]:
+        """Sorted list of event files in the current directory
+
+        Return only file names with pattern '*event.nxs' or '*.nxs.h5'
         """
         event_file_list = glob.glob(os.path.join(self.current_directory, "*event.nxs"))
         h5_file_list = glob.glob(os.path.join(self.current_directory, "*.nxs.h5"))
         event_file_list.extend(h5_file_list)
         return sorted([os.path.basename(name) for name in event_file_list])
 
-    def reload_files(self, configuration=None, progress=None):
+    def reload_files(self, configuration: Optional[Configuration] = None, progress=None):
         """Force reload of files in the reduction lists and direct beam list"""
 
-        def _get_nexus_conf(nexus_data):
+        def _get_nexus_conf(nexus_data: NexusData) -> Configuration:
             """Returns the configuration for the main cross-section of the run"""
             return nexus_data.cross_sections[nexus_data.main_cross_section].configuration
 
@@ -969,8 +970,7 @@ class DataManager(object):
         self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, True)
 
     def add_additional_reduction_list(self, tab_index: int):
-        """
-        Add reduction list for an additional ROI/peak
+        """Add reduction list for an additional ROI/peak
 
         Parameters
         ----------
@@ -981,8 +981,7 @@ class DataManager(object):
             self.peak_reduction_lists[tab_index] = copy.deepcopy(self.main_reduction_list)
 
     def remove_additional_reduction_list(self, tab_index: int):
-        """
-        Remove reduction list for additional ROI/peak
+        """Remove reduction list for additional ROI/peak
 
         Parameters
         ----------
@@ -993,8 +992,7 @@ class DataManager(object):
             self.peak_reduction_lists.pop(tab_index)
 
     def set_active_reduction_list_index(self, tab_index: int):
-        """
-        Set the active reduction list index
+        """Set the active reduction list index
 
         Parameters
         ----------
@@ -1004,8 +1002,7 @@ class DataManager(object):
         self.active_reduction_list_index = tab_index
 
     def update_active_reduction_list(self, tab_index: int):
-        """
-        Updates the active reduction list and run
+        """Updates the active reduction list and run
 
         Parameters
         ----------
