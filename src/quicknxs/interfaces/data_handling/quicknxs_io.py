@@ -455,10 +455,10 @@ def read_reduced_file(file_path: str, configuration=None):
 def determine_which_files_to_sum(run_file, data_file_indices):
     """Determine which files are summed when reading a saved reduction file
 
-    The saved file has the correct run numbers (numors) in the line that starts with
-        `# Input file indices`,
-    however the file does not contain the correct paths the way the file is read
-    ignores any files that were summed in the processing from which the saved file was created.
+    The saved file has the correct run numbers (numors) in the line that
+    starts with: `# Input file indices`, however the file does not contain
+    the correct paths the way the file is read ignores any files that were
+    summed in the processing from which the saved file was created.
     """
 
     if "+" in data_file_indices:

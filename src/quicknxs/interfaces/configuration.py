@@ -1,6 +1,8 @@
 # pylint: disable=invalid-name, line-too-long, too-few-public-methods, too-many-instance-attributes, wrong-import-order, bare-except
 """Application configuration, including reduction options"""
 
+from typing import List
+
 from quicknxs.interfaces.data_handling.instrument import Instrument
 
 # TODO: extract to file based parameter setting
@@ -206,7 +208,7 @@ class Configuration(object):
         self.bck_width = value[1] - value[0]
 
 
-def get_direct_beam_low_res_roi(data_conf: Configuration, direct_beam_conf: Configuration) -> [int, int]:
+def get_direct_beam_low_res_roi(data_conf: Configuration, direct_beam_conf: Configuration) -> List[int]:
     """Get the direct beam low res ROI.
 
     Either from the data run or from the direct beam depending on
@@ -214,7 +216,7 @@ def get_direct_beam_low_res_roi(data_conf: Configuration, direct_beam_conf: Conf
 
     Returns
     -------
-    [int, int]
+    List[int]
         The pixel range of the direct beam ROI in the low res direction (y)
     """
 
