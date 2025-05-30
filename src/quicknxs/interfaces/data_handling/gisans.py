@@ -20,10 +20,10 @@ class GISANS(object):
     def __init__(self, cross_section_data: "CrossSectionData"):
         """Initialize GISANS calculations.
 
-        The calculations here are meant to match QuickNXS v1. The following are
-        items to improve on:
-            - Background subtraction
-            - Trim the TOF distribution to the chopper bandwidth
+        The calculations here are meant to match QuickNXS v1.
+        The following are items to improve on:
+        - Background subtraction
+        - Trim the TOF distribution to the chopper bandwidth
         """
         self.data_set = cross_section_data
 

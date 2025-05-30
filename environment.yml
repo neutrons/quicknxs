@@ -29,3 +29,4 @@ dependencies:
   - pip
   - pip:
       - check-wheel-contents
+      - sphinx-qt-documentation

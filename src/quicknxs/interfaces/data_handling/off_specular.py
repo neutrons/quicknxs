@@ -4,11 +4,15 @@
 import logging
 from functools import reduce
 from multiprocessing import Pool
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import numpy as np
 import scipy.stats
 
 from quicknxs.interfaces.configuration import Configuration, get_direct_beam_low_res_roi
+
+if TYPE_CHECKING:
+    from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 
 H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
@@ -24,17 +28,11 @@ class OffSpecular(object):
     S = None
     dS = None
 
-    def __init__(self, cross_section_data):
-        """Initialize the OffSpecular class with processed data.
-
-        Parameters
-        ----------
-        cross_section_data: CrossSectionData
-            processed data object
-        """
+    def __init__(self, cross_section_data: "CrossSectionData"):
+        """Initialize the OffSpecular class with processed cross-section data."""
         self.data_set = cross_section_data
 
-    def __call__(self, direct_beam=None):
+    def __call__(self, direct_beam: Optional["CrossSectionData"] = None):
         """Extract off-specular scattering from 4D dataset (x,y,ToF,I).
 
         Uses a window in y to filter the 4D data
@@ -42,8 +40,10 @@ class OffSpecular(object):
         Qz,Qx,kiz,kfz is calculated using the x and ToF positions
         together with the tth-bank and direct pixel values.
 
-        direct_beam: CrossSectionData
-            if given, this data will be used to normalize the output
+        Parameters
+        ----------
+        direct_beam:
+            If given, this data will be used to normalize the output
         """
         # TODO: correct for detector sensitivity
         x_pos = self.data_set.configuration.peak_position
@@ -127,17 +127,14 @@ class OffSpecular(object):
             self.dS[:, np.logical_not(idxs)] = 0.0
 
 
-def merge(reduction_list, pol_state):
-    """
-    Merge the off-specular data from a reduction list.
-    :param list reduction_list: list of NexusData objects
-    :param string pol_state: polarization state to consider
+def merge(reduction_list: List["NexusData"], pol_state: str) -> Tuple[np.ndarray, ...]:
+    """Merge the off-specular data from a reduction list.
 
     The scaling factors should have been determined at this point. Just use them
     to merge the different runs in a set.
 
-    TODO: This doesn't deal with the overlap properly. It assumes that the user
-    cut the overlapping points by hand.
+    TODO: This doesn't deal with the overlap properly.
+    It assumes that the user cut the overlapping points by hand.
     """
     _qx = np.empty(0)
     _qz = np.empty(0)
@@ -172,12 +169,8 @@ def merge(reduction_list, pol_state):
     return _qx, _qz, _ki_z, _kf_z, _ki_z - _kf_z, _s, _ds
 
 
-def closest_bin(q, bin_edges):
-    """
-    Find closest bin to a q-value
-    :param float q: q-value
-    :param list bin_edges: list of bin edges
-    """
+def closest_bin(q: float, bin_edges: list) -> Optional[int]:
+    """Find index of closest bin to a q-value"""
     for i in range(len(bin_edges)):
         if q > bin_edges[i] and q <= bin_edges[i + 1]:
             return i
@@ -196,10 +189,10 @@ def rebin_extract(
     y_min=0,
     y_max=0.1,
 ):
-    """
-    Rebin off-specular data and extract cut at given Qz values.
-    Note: the analysis computers with RHEL7 have Scipy 0.12 installed, which makes
-    this code uglier. Refactor once we get a more recent version.
+    """Rebin off-specular data and extract cut at given Qz values.
+
+    TODO: the analysis computers with RHEL7 have Scipy 0.12 installed,
+    which makes this code uglier. Refactor once we get a more recent version.
     """
     Qx, Qz, ki_z, kf_z, delta_k, S, dS = merge(reduction_list, pol_state)
 
@@ -269,13 +262,20 @@ def rebin_extract(
 
 
 def get_slice(qz, data, error, q_min, q_max):
-    """
-    Get a slice for a Qz band
-    :param qz: Qz array
-    :param data: 2D data array
-    :param error: uncertainty on the data array
-    :param q_min: lower Qz bound
-    :param q_max: upper Qz bound
+    """Get a slice for a Qz band
+
+    Parameters
+    ----------
+    qz:
+        Qz array
+    data:
+        2d data array
+    error:
+        Uncertainty on the data array
+    q_min:
+        Lower Qz bound
+    q_max:
+        Upper Qz bound
     """
     i_min = len(qz[qz < q_min])
     i_max = len(qz[qz < q_max])
@@ -289,10 +289,10 @@ def get_slice(qz, data, error, q_min, q_max):
 
 
 def _smooth_data(
-    x,
-    y,
-    I,
-    sigmas=3.0,
+    x: np.ndarray,
+    y: np.ndarray,
+    I: np.ndarray,
+    sigmas: float = 3.0,
     gridx=150,
     gridy=50,
     sigmax=0.0005,
@@ -301,24 +301,15 @@ def _smooth_data(
     x2=0.03,
     y1=0.0,
     y2=0.1,
-    axis_sigma_scaling=None,
-    xysigma0=0.06,
-    indices=None,
+    axis_sigma_scaling: Optional[int] = None,
+    xysigma0: float = 0.06,
+    indices: Optional[list] = None,
 ):
-    """
-    Smooth a irregular spaced dataset onto a regular grid.
+    """Smooth a irregular spaced dataset onto a regular grid.
+
     Takes each intensities with a distance < 3*sigma
     to a given grid point and averages their intensities
     weighted by the gaussian of the distance.
-
-    :param dict settings: Contains options for 'grid', 'sigma' and 'region' of the algorithm
-    :param numpy.ndarray x: x-values of the original data
-    :param numpy.ndarray y: y-values of the original data
-    :param numpy.ndarray I: Intensity values of the original data
-    :param float sigmas: Range in units of sigma to search around a grid point
-    :param int axis_sigma_scaling: Defines how the sigmas change with the x/y value
-    :param float xysigma0: x/y value where the given sigmas are used
-    :param list indices: list of indices to run over
     """
     xout = np.linspace(x1, x2, gridx)
     yout = np.linspace(y1, y2, gridy)
@@ -355,7 +346,7 @@ def _smooth_data(
     return Xout, Yout, Iout
 
 
-def proc(data):
+def proc(data: dict) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Serializable function to be called by each thread"""
     return _smooth_data(
         x=data["x"],
@@ -377,10 +368,10 @@ def proc(data):
 
 
 def smooth_data(
-    x,
-    y,
-    I,
-    sigmas=3.0,
+    x: np.ndarray,
+    y: np.ndarray,
+    I: np.ndarray,
+    sigmas: float = 3.0,
     gridx=150,
     gridy=50,
     sigmax=0.0005,
@@ -389,13 +380,47 @@ def smooth_data(
     x2=0.03,
     y1=0.0,
     y2=0.1,
-    axis_sigma_scaling=None,
-    xysigma0=0.06,
+    axis_sigma_scaling: Optional[int] = None,
+    xysigma0: float = 0.06,
+    indices: Optional[list] = None,
     pool=5,
 ):
-    """
-    Execute legacy smoothing process by spreading it to a pool
-    of processes.
+    """Execute legacy smoothing process by spreading it to a pool of processes.
+
+    Parameters
+    ----------
+    x:
+        x-values of the original data
+    y:
+        y-values of the original data
+    I:
+        Intensity values of the original data
+    sigmas:
+        Range in units of sigma to search around a grid point
+    gridx:
+        Number of grid points in x direction
+    gridy:
+        Number of grid points in y direction
+    sigmax:
+        Sigma in x direction
+    sigmay:
+        Sigma in y direction
+    x1:
+        Lower x bound of the grid
+    x2:
+        Upper x bound of the grid
+    y1:
+        Lower y bound of the grid
+    y2:
+        Upper y bound of the grid
+    axis_sigma_scaling:
+        Defines how the sigmas change with the x/y value
+    xysigma0:
+        x/y value where the given sigmas are used
+    indices:
+        List of indices to run over
+    pool:
+        Number of processes to use for the smoothing
     """
     pool = int(pool)
     xout = np.linspace(x1, x2, gridx)

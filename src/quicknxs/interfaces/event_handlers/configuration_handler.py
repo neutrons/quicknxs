@@ -22,8 +22,9 @@ class ConfigurationHandler:
         self.connect_config_events()
 
     def config_setter_factory(self, qwidget: QWidget, config_name: str):
-        """
-        Generate anonymous functions to serve as callback when any of the global configurations
+        """Factory function to create configuration setters.
+
+        Generates anonymous functions to serve as callback when any of the global configurations
         (`Configuration` class variables) are updated in the UI.
 
         Each callback will be associated to one configuration parameter. Upon invoked,
@@ -65,10 +66,14 @@ class ConfigurationHandler:
             Holds widget name and the `Configuration` class variable it represents, as well
             as information about any events the widget triggers
 
-            Args:
-                widget_name (str): name of a QWidget
-                config_name (str): name of a `Configuration` class variable
-                recalc_reflectivity (bool): if True, trigger global reflectivity recalculation
+            Attributes
+            ----------
+            widget_name:
+                Name of a QWidget
+            config_name:
+                Name of a `Configuration` class variable
+            recalc_reflectivity:
+                If True, trigger global reflectivity recalculation
             """
 
             widget_name: str

@@ -379,7 +379,8 @@ def smart_stitch_reflectivity(
 
     Returns
     -------
-    tuple (list of scaling factors, list of scaling factor errors)
+    Tuple
+        (list of scaling factors, list of scaling factor errors)
 
     Raises
     ------

@@ -41,12 +41,15 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx_qt_documentation",
 ]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
-    # "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
+    "PyQt5": ("http://pyqt.sourceforge.net/Docs/PyQt5/", None),
     "mantid": ("http://docs.mantidproject.org/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
 }
 intersphinx_disabled_domains = ["std"]
 

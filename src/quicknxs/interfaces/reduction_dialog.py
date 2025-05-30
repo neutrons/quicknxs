@@ -1,4 +1,5 @@
-"""
+"""Modal dialog for reduction options.
+
 Dialog to select reduction options to choose which outputs are needed
 and in which formats to write them.
 """

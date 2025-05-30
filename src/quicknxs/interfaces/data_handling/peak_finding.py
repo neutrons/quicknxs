@@ -1,6 +1,7 @@
 """
-Bare bones version of the scipy 1.1.0 code to find peaks, which we use on a system that cannot
-run version 1.1.0 but only runs an old version.
+Bare bones version of the scipy 1.1.0 code to find peaks.
+
+Required as we use a system that cannot run version 1.1.0 but only runs an old version.
 
 Functions for identifying peaks in signals.
 
@@ -58,8 +59,8 @@ def peak_prominences(x, peaks, wlen=None):
 
 
 def peak_widths(x, peaks, rel_height=0.5, prominence_data=None, wlen=None):
-    """
-    Calculate the width of each peak in a signal.
+    """Calculate the width of each peak in a signal.
+
     .. versionadded:: 1.1.0
     """
     # Inner function expects `x` to be C-contiguous
@@ -86,8 +87,8 @@ def peak_widths(x, peaks, rel_height=0.5, prominence_data=None, wlen=None):
 
 
 def _unpack_condition_args(interval, x, peaks):
-    """
-    Parse condition arguments for `find_peaks`.
+    """Parse condition arguments for `find_peaks`.
+
     .. versionadded:: 1.1.0
     """
     try:
@@ -109,8 +110,8 @@ def _unpack_condition_args(interval, x, peaks):
 
 
 def _select_by_property(peak_properties, pmin, pmax):
-    """
-    Evaluate where the generic property of peaks confirms to an interval.
+    """Evaluate where the generic property of peaks confirms to an interval.
+
     .. versionadded:: 1.1.0
     """
     keep = np.ones(peak_properties.size, dtype=bool)
@@ -122,8 +123,8 @@ def _select_by_property(peak_properties, pmin, pmax):
 
 
 def _select_by_peak_threshold(x, peaks, tmin, tmax):
-    """
-    Evaluate which peaks fulfill the threshold condition.
+    """Evaluate which peaks fulfill the threshold condition.
+
     .. versionadded:: 1.1.0
     """
     # Stack thresholds on both sides to make min / max operations easier:
@@ -142,8 +143,8 @@ def _select_by_peak_threshold(x, peaks, tmin, tmax):
 
 
 def find_peaks(x, height=None, threshold=None, distance=None, prominence=None, width=None, wlen=None, rel_height=0.5):
-    """
-    Find peaks inside a signal based on peak properties.
+    """Find peaks inside a signal based on peak properties.
+
     .. versionadded:: 1.1.0
     """
     # _argmaxima1d expects array of dtype 'float64'
@@ -213,8 +214,8 @@ def find_peaks(x, height=None, threshold=None, distance=None, prominence=None, w
 
 
 def _argmaxima1d(x):
-    """
-    Find local maxima in a 1D array.
+    """Find local maxima in a 1D array.
+
     .. versionadded:: 1.1.0
     """
     # Preallocate, there can't be more maxima than half the size of `x`

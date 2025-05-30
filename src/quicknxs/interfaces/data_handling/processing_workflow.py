@@ -15,13 +15,14 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Dict
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 from mantid.simpleapi import CopyLogs, CreateWorkspace
 from mr_reduction import io_orso
 from mr_reduction.types import MantidWorkspace
 
+from quicknxs.config import Settings
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, off_specular, quicknxs_io
 from quicknxs.interfaces.data_manager import DataManager
@@ -54,18 +55,15 @@ DEFAULT_OPTIONS = dict(
 class ProcessingWorkflow(object):
     """Carry out the reduction process for a set of data runs and manages outputs"""
 
-    def __init__(self, data_manager: DataManager, output_options: dict = None):
-        """:param data_manager: all the reduced data shall come from data manager"""
+    def __init__(self, data_manager: DataManager, output_options: Optional[dict] = None):
+        """All the reduced data shall come from data manager"""
         self.data_manager = data_manager
         self.output_options = output_options if output_options else DEFAULT_OPTIONS
         self.exported_data_files = []
         self.exported_data_plots = []
 
-    def execute(self, progress: ProgressReporter = None):
-        """
-        Process data and write output files
-        :param ProgressReporter progress: reporter object
-        """
+    def execute(self, progress: Optional[ProgressReporter] = None):
+        """Process data and write output files"""
         if not self.data_manager.reduction_states:
             return
 
@@ -108,13 +106,25 @@ class ProcessingWorkflow(object):
         if progress is not None:
             progress(100, "Complete")
 
-    def get_file_name(self, run_list=None, pol_state=None, data_type="dat", process_type="Specular"):
-        """
-        Construct a file name according to the measurement type.
-        :param list run_list: list of run numbers
-        :param str pol_state: name for the polarization state
-        :param str data_type: file extension
-        :param str process_type: descriptor for the process type
+    def get_file_name(
+        self,
+        run_list: Optional[list] = None,
+        pol_state: Optional[str] = None,
+        data_type: str = "dat",
+        process_type: str = "Specular",
+    ):
+        """Construct a file name according to the measurement type.
+
+        Parameters
+        ----------
+        run_list:
+            List of run numbers
+        pol_state:
+            Name for the polarization state
+        data_type:
+            File extension
+        process_type:
+            Descriptor for the process type
         """
         if run_list is None:
             run_list = []
@@ -129,12 +139,17 @@ class ProcessingWorkflow(object):
         base_name = base_name.replace("{peak}", f"peak{self.data_manager.active_reduction_list_index}")
         return os.path.join(self.output_options["output_directory"], base_name)
 
-    def write_quicknxs(self, output_data: Dict[str, np.ndarray], output_file_base: str, xs: list = None):
-        """
-        Write QuickNXS output reflectivity file.
-        :param dict output_data: dictionary of numpy arrays
-        :param str output_file_base: template for output file paths
-        :param list xs: list of cross-sections available in the output_data
+    def write_quicknxs(self, output_data: Dict[str, np.ndarray], output_file_base: str, xs: Optional[list] = None):
+        """Write QuickNXS output reflectivity file.
+
+        Parameters
+        ----------
+        output_data:
+            Dictionary of numpy arrays
+        output_file_base:
+            Template for output file paths
+        xs:
+            List of cross-sections available in the output_data
         """
         # Get the column names
         units = output_data["units"]
@@ -205,8 +220,10 @@ class ProcessingWorkflow(object):
             individual_paths[run] = filepath
 
         def _create_combined_reflectivity_workspace(_ws: MantidWorkspace, _xs: str):
-            """Create a new workspace with metadata copied from the given workspace and
-            output data for the given cross-section
+            """Create a combined reflectivity workspace.
+
+            Create a new workspace with metadata copied from the given workspace
+            and output data for the given cross-section
             """
             output_xs = output_data[_xs]
             _ws_combined = CreateWorkspace(
@@ -308,11 +325,15 @@ class ProcessingWorkflow(object):
         if progress is not None:
             progress(100, "GISANS complete")
 
-    def offspec(self, raw=True, binned=False):
-        """
-        Export off-specular reflectivity.
-        :param bool raw: if true, the raw results will be saved
-        :param bool binned: if true, the raw results will be binned and saved
+    def offspec(self, raw: bool = True, binned: bool = False):
+        """Export off-specular reflectivity.
+
+        Parameters
+        ----------
+        raw:
+            If true, the raw results will be saved
+        binned:
+            If true, the raw results will be binned and saved
         """
         run_list = [str(item.number) for item in self.data_manager.reduction_list]
 
@@ -538,12 +559,8 @@ class ProcessingWorkflow(object):
         data_dict["ki_max"] = ki_max
         return data_dict
 
-    def smooth_offspec(self, data_dict):
-        """
-        NOTE:
-
-        Create a smoothed dataset from the off-specular scattering.
-        :param dict data_dict: the output of get_offspec_data()
+    def smooth_offspec(self, data_dict: dict) -> Tuple[dict, dict]:
+        """Create a smoothed dataset from the off-specular scattering.
 
         Note for my own integrity (MD):
            I don't think one should smooth data distributions and do any quantitative
@@ -552,6 +569,16 @@ class ProcessingWorkflow(object):
            which then would have to be properly taken into account when fitting.
            In addition, the process doesn't produce errors in intensity.
            It effectively only produces a pretty picture and should only be used as such.
+
+        Parameters
+        ----------
+        data_dict:
+            The output of `get_offspec_data()`
+
+        Returns
+        -------
+        Tuple[dict, dict]
+            A tuple containing the smoothed data dictionary and a slice data dictionary.
         """
         axes = self.data_manager.active_channel.configuration.off_spec_x_axis
         output_data = dict(cross_sections=dict())
@@ -650,7 +677,8 @@ class ProcessingWorkflow(object):
         return slice_data_dict
 
     def get_output_data(self):
-        """
+        """Re-format the reflectivity data for output.
+
         The QuickNXS format cannot be written from the merged reflectivity, so we
         have to treat it differently and give it the workspaces for each angle.
         """
@@ -749,11 +777,8 @@ class ProcessingWorkflow(object):
         )
 
     def send_email(self):
-        """
-        Collect all files and send them to the user via smtp mail.
-        #TODO: Put smtp server info in config file.
-        """
-        SMTP_SERVER = "160.91.4.26"
+        """Collect all files and send them to the user via smtp mail."""
+        SMTP_SERVER = Settings()["SMTP_SERVER"]
         msg = MIMEMultipart()
         msg["Subject"] = self._email_replace(self.output_options["email_subject"])
         msg["From"] = "BL4A@ornl.gov"

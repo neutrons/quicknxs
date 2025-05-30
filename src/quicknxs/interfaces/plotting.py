@@ -340,8 +340,8 @@ class PlotManager(object):
         progress(100, message="Ready", out_of=100)
 
     def plot_projections(self, preserve_lim=False):
-        """
-        Create projections of the data on the x and y axes.
+        """Create projections of the data on the x and y axes.
+
         The x-projection can also be done be means of quantile calculation,
         which means that the ToF intensities are calculation which are
         exceeded by a certain number of points. This can be helpful to better
@@ -429,7 +429,8 @@ class PlotManager(object):
         main_window.ui.y_project.draw()
 
     def plot_offspec(self, recalc=True, crop=False):
-        """
+        """Plot off-specular data.
+
         Create an offspecular plot for all channels of the datasets in the
         reduction list. The user can define upper and lower bounds for the
         plotted intensity and select the coordinates to be either kiz-kfz vs. Qz,
@@ -620,7 +621,8 @@ class PlotManager(object):
         self.main_window.ui.intensity_widget.show()
 
     def plot_refl(self, preserve_lim=False):
-        """
+        """Plot reflectivity data.
+
         Calculate and display the reflectivity from the current dataset
         and any dataset stored. Intensities from direct beam
         measurements can be used for normalization.

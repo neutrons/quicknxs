@@ -301,9 +301,9 @@ class DataManager(object):
 
         Parameters
         ----------
-        nexus_data_to_copy: NexusData
+        nexus_data_to_copy:
             Data set to copy
-        peak_index: int
+        peak_index:
             reduction list to copy data set to
 
         Returns
