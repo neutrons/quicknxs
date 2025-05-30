@@ -6,7 +6,7 @@ class TestStatusBar:
     """Test the status bar functionality in the main window."""
 
     def test_report_message(self, qtbot):
-        """Test that function report_message updates the status bar message"""
+        """Test that function report_message updates the status bar message."""
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         assert window_main.ui.statusbar.currentMessage() == ""
@@ -17,7 +17,7 @@ class TestStatusBar:
         assert window_main.ui.statusbar.currentMessage() == "Different message"
 
     def test_progress_reporter(self, qtbot):
-        """Test that the progress reporter updates the status bar message"""
+        """Test that the progress reporter updates the status bar message."""
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         progress_reporter = ProgressReporter(

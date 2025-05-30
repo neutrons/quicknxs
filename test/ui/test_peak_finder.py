@@ -6,7 +6,7 @@ from quicknxs.interfaces.main_window import MainWindow
 
 
 def test_metadata_roi_disables_peak_finder(qtbot):
-    """Test that the metadata ROI option disables the peak finder buttons"""
+    """Test that the metadata ROI option disables the peak finder buttons."""
     main_window = MainWindow()
 
     metadata_roi_checkbox = main_window.ui.use_roi_checkbox
@@ -21,7 +21,7 @@ def test_metadata_roi_disables_peak_finder(qtbot):
 
 def test_peak_finder_settings_persist(data_server, qtbot):
     def _assert_peak_finder_config():
-        """Assert that the peak finder config is as expected"""
+        """Assert that the peak finder config is as expected."""
         config = main_window.file_handler.get_configuration()
         assert config.use_roi is False
         assert config.use_roi_bck is True
@@ -31,7 +31,7 @@ def test_peak_finder_settings_persist(data_server, qtbot):
         assert config.bck_offset == 10
 
     def _assert_peak_finder_settings():
-        """Assert that the peak finder settings are as expected"""
+        """Assert that the peak finder settings are as expected."""
         assert main_window.ui.use_roi_checkbox.isChecked() is False
         assert main_window.ui.use_bck_roi_checkbox.isChecked() is True
         assert main_window.ui.fit_within_roi_checkbox.isChecked() is True

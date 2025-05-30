@@ -31,7 +31,7 @@ class ProgressReporter(object):
         self.progress_bar = progress_bar
 
     def __call__(self, value: int, message: str = "", out_of: Optional[int] = None):
-        """Shortcut to set_value() so that the object can be used
+        """Shortcut to set_value() so that the object can be used.
 
         as a function to be compatible with QProgressDialog.setValue().
 
@@ -47,7 +47,7 @@ class ProgressReporter(object):
         return self.set_value(value, message, out_of)
 
     def set_value(self, value: int, message: str = "", out_of: Optional[int] = None):
-        """Set the value of a progress indicator"""
+        """Set the value of a progress indicator."""
         if out_of is not None:
             value = int(value / out_of * self.max_value)
         value = min(value, self.max_value)

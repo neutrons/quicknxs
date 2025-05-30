@@ -8,7 +8,7 @@ from test.ui import ui_utilities
 
 
 class TestMainGui:
-    """Test the main GUI of QuickNXS"""
+    """Test the main GUI of QuickNXS."""
 
     def test_init(self, qtbot):
         window_main = MainWindow()
@@ -22,7 +22,7 @@ class TestMainGui:
         ui_utilities.setText(window_main.numberSearchEntry, "42100", press_enter=True)
 
     def test_set_global_stitching(self, qtbot):
-        """Test that the configuration is updated based on the checkbox value"""
+        """Test that the configuration is updated based on the checkbox value."""
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         window_main.global_fit_checkbox.setChecked(True)
@@ -31,7 +31,7 @@ class TestMainGui:
         assert window_main.file_handler.get_configuration().global_stitching is False
 
     def test_active_channel(self, mocker, qtbot):
-        """Test that selecting a cross-section radio button updates the active channel"""
+        """Test that selecting a cross-section radio button updates the active channel."""
         # mock updating the plots
         mocker.patch("quicknxs.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
         mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
@@ -71,7 +71,7 @@ class TestMainGui:
         table.insertRow(0)
 
         def handle_menu():
-            """Press Enter on item in menu and check that the function was called"""
+            """Press Enter on item in menu and check that the function was called."""
             menu = table.findChild(QtWidgets.QMenu)
             action = menu.actions()[0]
             assert action.text() == "Export data"
@@ -84,7 +84,7 @@ class TestMainGui:
         table.customContextMenuRequested.emit(pos)
 
     def test_global_vs_per_run(self, qtbot, mocker):
-        """Test the global vs per run reduction variables"""
+        """Test the global vs per run reduction variables."""
         # mock updating the plots
         mocker.patch("quicknxs.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
         mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
@@ -318,7 +318,7 @@ class TestMainGui:
 
     @pytest.mark.datarepo
     def test_change_active_data_tab(self, mocker, qtbot, data_server):
-        """Test that the internal state is updated when the active data tab is changed"""
+        """Test that the internal state is updated when the active data tab is changed."""
         mock_plot_refl = mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
 
         window_main = MainWindow()
@@ -344,7 +344,7 @@ class TestMainGui:
 
     @pytest.mark.datarepo
     def test_reduction_table_propagate_run(self, qtbot, data_server):
-        """Test right-click action 'Propagate run'"""
+        """Test right-click action 'Propagate run'."""
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         Configuration.setup_default_values()
@@ -375,7 +375,7 @@ class TestMainGui:
         table = getattr(window_main.ui, "reductionTable")
 
         def handle_menu():
-            """Trigger propagate run action and check that the run was added to the second tab"""
+            """Trigger propagate run action and check that the run was added to the second tab."""
             menu = table.findChild(QtWidgets.QMenu)
             action = menu.actions()[1]
             assert action.text() == "Propagate run to all tabs"
@@ -393,10 +393,10 @@ class TestMainGui:
     @pytest.mark.skip(reason="Need to figure out how to simulate mouse position")
     @pytest.mark.datarepo
     def test_remove_run_from_tables(self, qtbot, data_server):
-        """Test right-click action 'Remove run'"""
+        """Test right-click action 'Remove run'."""
 
         def handle_menu(table):
-            """Trigger remove run action"""
+            """Trigger remove run action."""
             menu = table.findChild(QtWidgets.QMenu)
             action = menu.actions()[2]
             assert action.text() == "Remove run from this tab"

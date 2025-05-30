@@ -1,4 +1,4 @@
-"""Methods used to process data, usually calling Mantid"""
+"""Methods used to process data, usually calling Mantid."""
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, multiple-statements, bare-except, protected-access, wrong-import-position
 
 import logging
@@ -17,13 +17,13 @@ from quicknxs.interfaces.data_handling.instrument import Instrument
 
 
 class NormalizeToUnityQCutoffError(Exception):
-    """When normalizing to unity fails due to no data below Q cutoff"""
+    """When normalizing to unity fails due to no data below Q cutoff."""
 
     pass
 
 
 def generate_short_script(reduction_list):
-    """Generate a simple reduction script for Mantid"""
+    """Generate a simple reduction script for Mantid."""
 
     if len(reduction_list) == 0:
         return "# No data in reduction list\n"
@@ -81,7 +81,7 @@ def generate_short_script(reduction_list):
 
 
 def generate_script(reduction_list: List[NexusData], pol_state: str):
-    """Generate a Mantid script for the reflectivity reduction
+    """Generate a Mantid script for the reflectivity reduction.
 
     Parameters
     ----------
@@ -112,7 +112,7 @@ def stitch_reflectivity(
     normalize_to_unity: bool = True,
     q_cutoff: float = 0.01,
 ):
-    """Stitch and normalize data sets
+    """Stitch and normalize data sets.
 
     Parameters
     ----------
@@ -218,7 +218,7 @@ def _prepare_workspace_for_stitching(cross_sections: dict, xs_input: str, global
 
 
 def _get_stitching_overlap_region(ws_lo: MatrixWorkspace, ws_hi: MatrixWorkspace, n_points_outside_overlap: int = 3):
-    """Get the x boundary values of the overlap region between two workspaces
+    """Get the x boundary values of the overlap region between two workspaces.
 
     Parameters
     ----------
@@ -270,7 +270,7 @@ def _get_polynomial_fit_stitching_scaling_factor(
     n_polynom: int,
     n_points_outside_overlap: int = 3,
 ):
-    """Get the scaling factor for stitching two curves by fitting a polynomial and a scaling factor
+    """Get the scaling factor for stitching two curves by fitting a polynomial and a scaling factor.
 
     For example, if the polynomial degree is 3, the scaling factor is obtained by minimizing the function
 
@@ -358,7 +358,7 @@ def smart_stitch_reflectivity(
     poly_degree: Optional[int] = None,
     poly_points: int = 3,
 ):
-    """Stitch and normalize data sets
+    """Stitch and normalize data sets.
 
     Parameters
     ----------
@@ -519,7 +519,7 @@ def merge_reflectivity(reduction_list, xs, q_min=0.001, q_step=-0.01):
 
 
 def get_scaled_workspaces(reduction_list: List[NexusData], xs: str):
-    """Return a list of scaled workspaces"""
+    """Return a list of scaled workspaces."""
     ws_list = []
 
     for i in range(len(reduction_list)):
@@ -547,7 +547,7 @@ def get_scaled_workspaces(reduction_list: List[NexusData], xs: str):
 
 
 def extract_metadata(file_path: Optional[str] = None, cross_section_data=None):
-    """Get mid Q-value from metadata"""
+    """Get mid Q-value from metadata."""
     metadata = NexusMetaData()
 
     if cross_section_data is not None:

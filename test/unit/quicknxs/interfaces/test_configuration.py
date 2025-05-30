@@ -2,7 +2,7 @@ from quicknxs.interfaces.configuration import Configuration, get_direct_beam_low
 
 
 def test_get_direct_beam_low_res_roi():
-    """Test function get_direct_beam_low_res_roi"""
+    """Test function get_direct_beam_low_res_roi."""
     Configuration.setup_default_values()
     conf_data_run = Configuration()
     conf_data_run.low_res_roi = [90, 110]

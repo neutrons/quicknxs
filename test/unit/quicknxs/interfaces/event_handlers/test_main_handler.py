@@ -22,13 +22,13 @@ this_module_path = sys.modules[__name__].__file__
 
 
 class DataManagerMock(object):
-    """Mock for DataManager to be used in MainWindowMock"""
+    """Mock for DataManager to be used in MainWindowMock."""
 
     current_directory = os.path.dirname(this_module_path)
 
 
 class MainWindowMock(object):
-    """Mock for MainWindow to be used in MainHandler tests"""
+    """Mock for MainWindow to be used in MainHandler tests."""
 
     ui = None
     main_window = None
@@ -36,7 +36,7 @@ class MainWindowMock(object):
 
 
 class TestMainHandler(object):
-    """Test MainHandler class"""
+    """Test MainHandler class."""
 
     app = QApplication(sys.argv)
     application = MainWindow()
@@ -80,7 +80,7 @@ class TestMainHandler(object):
         ],
     )
     def test_stitch_reflectivity_errors(self, mocker, error_type, error_msg):
-        """Test that stitch_reflectivity catches errors in stitching and calls report_message"""
+        """Test that stitch_reflectivity catches errors in stitching and calls report_message."""
         # Mock exception raised in stitch_data_sets
         mocker.patch("quicknxs.interfaces.data_manager.DataManager.stitch_data_sets", side_effect=error_type)
         # Mock call to function report_message
@@ -90,7 +90,7 @@ class TestMainHandler(object):
 
 
 def test_save_run_data(tmp_path, qtbot, mocker):
-    """Test of method save_run_data"""
+    """Test of method save_run_data."""
     mocker.patch(
         "quicknxs.interfaces.event_handlers.main_handler.QtWidgets.QFileDialog.getExistingDirectory",
         return_value=tmp_path,
@@ -127,7 +127,7 @@ def test_save_run_data(tmp_path, qtbot, mocker):
 
 
 def test_ask_question(qtbot):
-    """Test of helper function ask_question"""
+    """Test of helper function ask_question."""
     main_window = MainWindow()
     handler = MainHandler(main_window)
     qtbot.addWidget(main_window)
@@ -149,7 +149,7 @@ def test_ask_question(qtbot):
 
 @pytest.mark.datarepo
 def test_reload_all_files(qtbot):
-    """Test function reload_all_files"""
+    """Test function reload_all_files."""
     main_window = MainWindow()
     handler = MainHandler(main_window)
     data_manager = main_window.data_manager
@@ -180,7 +180,7 @@ def test_reload_all_files(qtbot):
 
 @pytest.mark.datarepo
 def test_reload_all_files_two_data_tabs(qtbot):
-    """Test function reload_all_files"""
+    """Test function reload_all_files."""
     main_window = MainWindow()
     handler = MainHandler(main_window)
     data_manager = main_window.data_manager
@@ -217,7 +217,7 @@ def test_reload_all_files_two_data_tabs(qtbot):
 
 
 def _get_nexus_data():
-    """Data for testing"""
+    """Data for testing."""
     config = Configuration()
     nexus_data = NexusData("file/path", config)
     off_off = CrossSectionData("Off_Off", config)
@@ -232,7 +232,7 @@ def _get_nexus_data():
 
 
 def test_reduction_table(qtbot):
-    """Test property reduction_table which is computed based on the selected tab in the UI"""
+    """Test property reduction_table which is computed based on the selected tab in the UI."""
     main_window = MainWindow()
     handler = MainHandler(main_window)
     data_tab_widget = main_window.ui.tabWidget

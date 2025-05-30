@@ -18,7 +18,7 @@ H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
 
 class OffSpecular(object):
-    """Compute off-specular reflectivity"""
+    """Compute off-specular reflectivity."""
 
     d_wavelength = 0
     Qx = None
@@ -170,7 +170,7 @@ def merge(reduction_list: List["NexusData"], pol_state: str) -> Tuple[np.ndarray
 
 
 def closest_bin(q: float, bin_edges: list) -> Optional[int]:
-    """Find index of closest bin to a q-value"""
+    """Find index of closest bin to a q-value."""
     for i in range(len(bin_edges)):
         if q > bin_edges[i] and q <= bin_edges[i + 1]:
             return i
@@ -262,7 +262,7 @@ def rebin_extract(
 
 
 def get_slice(qz, data, error, q_min, q_max):
-    """Get a slice for a Qz band
+    """Get a slice for a Qz band.
 
     Parameters
     ----------
@@ -347,7 +347,7 @@ def _smooth_data(
 
 
 def proc(data: dict) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Serializable function to be called by each thread"""
+    """Serializable function to be called by each thread."""
     return _smooth_data(
         x=data["x"],
         y=data["y"],

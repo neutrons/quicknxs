@@ -1,5 +1,5 @@
 # pylint: disable=bare-except, too-many-locals, too-many-statements, too-many-branches, wrong-import-order, too-many-arguments
-"""Read and write quicknxs reduced files"""
+"""Read and write quicknxs reduced files."""
 
 import copy
 import logging
@@ -43,7 +43,7 @@ def write_reflectivity_header(
     pol_state: str,
 ):
     """
-    Write out reflectivity header in a format readable by QuickNXS
+    Write out reflectivity header in a format readable by QuickNXS.
 
     Parameters
     ----------
@@ -201,7 +201,7 @@ def write_reflectivity_header(
 
 
 def _get_cross_section_config_values(cross_section_data: CrossSectionData, direct_beam_idx: int) -> Dict[str, str]:
-    """Get dict of cross-section data configuration to write to QuickNXS file"""
+    """Get dict of cross-section data configuration to write to QuickNXS file."""
     conf = cross_section_data.configuration
     ws = cross_section_data.reflectivity_workspace
     run_object = ws.getRun()
@@ -259,7 +259,7 @@ def _get_cross_section_config_values(cross_section_data: CrossSectionData, direc
 def write_reflectivity_data(
     output_path: str, data: Union[list, np.ndarray], col_names: List[str], as_5col: bool = True
 ):
-    """Write out reflectivity header in a format readable by QuickNXS
+    """Write out reflectivity header in a format readable by QuickNXS.
 
     If `as_5col` is False, only the first four columns passed will be written.
     """
@@ -299,7 +299,7 @@ def read_reduced_file(file_path: str, configuration=None):
     additional_peaks = []
 
     def _get_tok(col_name: str, cols: List[str], toks: List) -> Union[int, None]:
-        """Get the item in a list of index matching the column name"""
+        """Get the item in a list of index matching the column name."""
         try:
             idx = cols.index(col_name)
             return toks[idx]
@@ -453,7 +453,7 @@ def read_reduced_file(file_path: str, configuration=None):
 
 
 def determine_which_files_to_sum(run_file, data_file_indices):
-    """Determine which files are summed when reading a saved reduction file
+    """Determine which files are summed when reading a saved reduction file.
 
     The saved file has the correct run numbers (numors) in the line that
     starts with: `# Input file indices`, however the file does not contain

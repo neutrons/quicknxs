@@ -1,4 +1,4 @@
-"""Classes to handle string representations of sets of run numbers and absolute paths to data files"""
+"""Classes to handle string representations of sets of run numbers and absolute paths to data files."""
 
 import itertools
 import operator
@@ -17,7 +17,7 @@ class RunNumbers(object):
     range_symbol = ":"
 
     def __init__(self, numbers: Union[List[int], List[str], int, str]) -> None:
-        """Initialize the RunNumbers object
+        """Initialize the RunNumbers object.
 
         Parameters
         ----------
@@ -39,7 +39,7 @@ class RunNumbers(object):
             raise ValueError("Constructor requires a list or a string of run numbers as input")
 
     def _uncompress(self, numbers: str) -> List[int]:
-        """Split a string representation of a set of run numbers into a list
+        """Split a string representation of a set of run numbers into a list.
 
         Example: '1:3+6' becomes [1, 2, 3, 6]
         """
@@ -54,12 +54,12 @@ class RunNumbers(object):
 
     @property
     def numbers(self) -> List[int]:
-        """List of run numbers as a list of integers"""
+        """List of run numbers as a list of integers."""
         return self._numbers
 
     @property
     def long(self) -> str:
-        """Long string representation of the run numbers
+        """Long string representation of the run numbers.
 
         Example: [1, 2, 3, 6] becomes '1+2+3+6'
         """
@@ -67,7 +67,7 @@ class RunNumbers(object):
 
     @property
     def short(self) -> str:
-        """Short string representation of the run numbers
+        """Short string representation of the run numbers.
 
         Example: [1, 2, 3, 6] becomes '1:3+6'
         """
@@ -107,7 +107,7 @@ class FilePath(object):
 
     @classmethod
     def join(cls, dirname: str, basename: str, sort: bool = True) -> str:
-        r"""Create the file path for a single file or a set of files using one directory
+        r"""Create the file path for a single file or a set of files using one directory.
 
         Example: u'/SNS/REF_M/IPTS-25531/nexus/REF_M_38198.nxs.h5+/SNS/REF_M/IPTS-25531/nexus/REF_M_38199.nxs.h5'
 
@@ -135,7 +135,7 @@ class FilePath(object):
 
     @classmethod
     def unique_dirname(cls, file_path):
-        """For composite file paths, check that the dirname of the paths is the same for all files"""
+        """For composite file paths, check that the dirname of the paths is the same for all files."""
         dirs = [os.path.dirname(path) for path in file_path.split(cls.merge_symbol)]
         if len(set(dirs)) > 1:
             return False
@@ -196,7 +196,7 @@ class FilePath(object):
         return self.dirname, self.basename
 
     def run_numbers(self, string_representation: Optional[str] = None) -> Union[List[int], str]:
-        """Return the run number(s) associated to this file path
+        """Return the run number(s) associated to this file path.
 
         This function assumes the basename of each single file path has the pattern "REF_M_XXXX.*"
         where 'XXXX' is the run number to extract, and * is some file extension

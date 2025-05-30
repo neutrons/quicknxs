@@ -20,14 +20,14 @@ class DeadTimeSettingsView(QDialog):
         self.set_state_from_global_config()
 
     def set_state_from_global_config(self):
-        """Populate the form with the current global configuration"""
+        """Populate the form with the current global configuration."""
         self.ui.use_paralyzable.setChecked(Configuration.paralyzable_deadtime)
         self.ui.dead_time_value.setValue(Configuration.deadtime_value)
         self.ui.dead_time_tof.setValue(Configuration.deadtime_tof_step)
 
     def check_values_changed(self):
         """
-        Check if the dialog settings entries have been changed by the user
+        Check if the dialog settings entries have been changed by the user.
 
         Returns
         -------
@@ -43,7 +43,7 @@ class DeadTimeSettingsView(QDialog):
         return False
 
     def ask_user_ok_to_reload_files(self):
-        """Shows dialog asking user to confirm reloading all files"""
+        """Shows dialog asking user to confirm reloading all files."""
         message = "Change dead-time settings and reload all files?"
         dialog = AcceptRejectDialog(self, title="Reload files", message=message)
         proceed = dialog.exec_()

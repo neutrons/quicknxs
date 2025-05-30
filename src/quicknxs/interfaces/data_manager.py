@@ -256,7 +256,7 @@ class DataManager(object):
         return self.find_data_in_direct_beam_list(self._nexus_data)
 
     def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX) -> bool:
-        """Add active data set to reduction list
+        """Add active data set to reduction list.
 
         New data sets are always added to the main reduction list. Data sets are added to secondary
         reduction lists by initializing from the main reduction list (button to add new data tab)
@@ -297,7 +297,7 @@ class DataManager(object):
         return False
 
     def copy_nexus_data_to_reduction(self, nexus_data_to_copy: NexusData, peak_index: int):
-        """Add data set to the reduction list specified by `peak_index`
+        """Add data set to the reduction list specified by `peak_index`.
 
         Parameters
         ----------
@@ -335,14 +335,14 @@ class DataManager(object):
         return False
 
     def add_active_to_normalization(self):
-        """Add active data set to the direct beam list"""
+        """Add active data set to the direct beam list."""
         if self._nexus_data not in self.direct_beam_list and self._nexus_data.is_direct_beam():
             self.direct_beam_list.append(self._nexus_data)
             return True
         return False
 
     def remove_active_from_normalization(self):
-        """Remove the active data set from the direct beam list"""
+        """Remove the active data set from the direct beam list."""
         for i in range(len(self.direct_beam_list)):
             if self.direct_beam_list[i] == self._nexus_data:
                 self.direct_beam_list.pop(i)
@@ -351,7 +351,7 @@ class DataManager(object):
 
     def remove_from_active_reduction_list(self, index: int):
         """
-        Remove item from the active reduction list
+        Remove item from the active reduction list.
 
         Parameters
         ----------
@@ -377,7 +377,7 @@ class DataManager(object):
         update_parameters: bool = True,
         progress: Optional[Callable] = None,
     ) -> bool:
-        """Load one or more Nexus data files
+        """Load one or more Nexus data files.
 
         Parameters
         ----------
@@ -476,7 +476,7 @@ class DataManager(object):
         return is_from_cache
 
     def update_configuration(self, configuration, active_only: bool = False, nexus_data: Optional[NexusData] = None):
-        """Update configuration"""
+        """Update configuration."""
         if active_only:
             self.active_channel.update_configuration(configuration)
         elif nexus_data is not None:
@@ -485,7 +485,7 @@ class DataManager(object):
             self._nexus_data.update_configuration(configuration)
 
     def get_active_direct_beam(self):
-        """Return the direct beam data object for the active data"""
+        """Return the direct beam data object for the active data."""
         return self._find_direct_beam(self._nexus_data)
 
     def _find_direct_beam(self, nexus_data: Union[NexusData, CrossSectionData]) -> Optional[CrossSectionData]:
@@ -535,7 +535,7 @@ class DataManager(object):
         return direct_beam
 
     def reduce_gisans(self, progress=None):
-        """Calculate GISANS for all datasets in the reduction list
+        """Calculate GISANS for all datasets in the reduction list.
 
         Since the specular reflectivity is prominently displayed, it is updated as
         soon as parameters change. This is not the case for GISANS, which is
@@ -554,7 +554,7 @@ class DataManager(object):
             progress(100)
 
     def calculate_gisans(self, nexus_data=None, progress=None):
-        """Compute GISANS for a single data set"""
+        """Compute GISANS for a single data set."""
         t_0 = time.time()
         # Select the data to work on
         if nexus_data is None:
@@ -587,7 +587,7 @@ class DataManager(object):
         return True
 
     def reduce_spec(self):
-        """Calculate reflectivity for all runs in all reduction lists"""
+        """Calculate reflectivity for all runs in all reduction lists."""
         for reduct_list in self.peak_reduction_lists.values():
             for nexus_data in reduct_list:
                 try:
@@ -596,7 +596,7 @@ class DataManager(object):
                     logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.number, sys.exc_info()[1])
 
     def reduce_offspec(self, progress=None):
-        """Calculate off-specular reflectivity for all datasets in all reduction list
+        """Calculate off-specular reflectivity for all datasets in all reduction list.
 
         Since the specular reflectivity is prominently displayed, it is updated as
         soon as parameters change. This is not the case for the off-specular, which is
@@ -622,7 +622,7 @@ class DataManager(object):
 
     # TODO 67 FInd out whether it can work with merged data
     def calculate_reflectivity(self, configuration=None, active_only=False, nexus_data=None, specular=True):
-        """Calculate reflectivity using the current configuration"""
+        """Calculate reflectivity using the current configuration."""
         # Select the data to work on
         if nexus_data is None:
             nexus_data = self._nexus_data
@@ -640,7 +640,7 @@ class DataManager(object):
             )
 
     def find_best_direct_beam(self):
-        """Find the best direct beam in the direct beam list for the active data
+        """Find the best direct beam in the direct beam list for the active data.
 
         Returns
         -------
@@ -724,7 +724,7 @@ class DataManager(object):
         poly_degree: Optional[int] = None,
         poly_points: int = 3,
     ):
-        """Determine scaling factors for each data set
+        """Determine scaling factors for each data set.
 
         Parameters
         ----------
@@ -862,7 +862,7 @@ class DataManager(object):
         force: bool = False,
         t_0: Optional[float] = None,
     ):
-        """Load direct beam and data files and add them to the direct beam list and reduction list, respectively
+        """Load direct beam and data files and add them to the direct beam list and reduction list, respectively.
 
         Parameters
         ----------
@@ -943,7 +943,7 @@ class DataManager(object):
 
     @property
     def current_event_files(self) -> List[str]:
-        """Sorted list of event files in the current directory
+        """Sorted list of event files in the current directory.
 
         Return only file names with pattern '*event.nxs' or '*.nxs.h5'
         """
@@ -953,10 +953,10 @@ class DataManager(object):
         return sorted([os.path.basename(name) for name in event_file_list])
 
     def reload_files(self, configuration: Optional[Configuration] = None, progress=None):
-        """Force reload of files in the reduction lists and direct beam list"""
+        """Force reload of files in the reduction lists and direct beam list."""
 
         def _get_nexus_conf(nexus_data: NexusData) -> Configuration:
-            """Returns the configuration for the main cross-section of the run"""
+            """Returns the configuration for the main cross-section of the run."""
             return nexus_data.cross_sections[nexus_data.main_cross_section].configuration
 
         # Get files to reload
@@ -977,7 +977,7 @@ class DataManager(object):
         self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, True)
 
     def add_additional_reduction_list(self, tab_index: int):
-        """Add reduction list for an additional ROI/peak
+        """Add reduction list for an additional ROI/peak.
 
         Parameters
         ----------
@@ -988,7 +988,7 @@ class DataManager(object):
             self.peak_reduction_lists[tab_index] = copy.deepcopy(self.main_reduction_list)
 
     def remove_additional_reduction_list(self, tab_index: int):
-        """Remove reduction list for additional ROI/peak
+        """Remove reduction list for additional ROI/peak.
 
         Parameters
         ----------
@@ -999,7 +999,7 @@ class DataManager(object):
             self.peak_reduction_lists.pop(tab_index)
 
     def set_active_reduction_list_index(self, tab_index: int):
-        """Set the active reduction list index
+        """Set the active reduction list index.
 
         Parameters
         ----------
@@ -1009,7 +1009,7 @@ class DataManager(object):
         self.active_reduction_list_index = tab_index
 
     def update_active_reduction_list(self, tab_index: int):
-        """Updates the active reduction list and run
+        """Updates the active reduction list and run.
 
         Parameters
         ----------
@@ -1025,6 +1025,6 @@ class DataManager(object):
             self.set_active_data_from_reduction_list(0)
 
     def clear_reduction_lists(self):
-        """Resets to one empty reduction list"""
+        """Resets to one empty reduction list."""
         self.active_reduction_list_index = 1
         self.peak_reduction_lists = {self.active_reduction_list_index: []}

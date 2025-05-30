@@ -11,7 +11,7 @@ from quicknxs.interfaces.data_manager import DataManager
 
 @pytest.mark.datarepo
 def test_orso_output(data_server, tmpdir):
-    """Test saving reflectivity curves to ORSO"""
+    """Test saving reflectivity curves to ORSO."""
     Configuration.setup_default_values()
     conf = Configuration()
     conf.cut_first_n_points = 0

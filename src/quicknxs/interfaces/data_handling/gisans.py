@@ -1,4 +1,4 @@
-"""Computations for GISANS"""
+"""Computations for GISANS."""
 
 import logging
 from multiprocessing import Pool
@@ -15,7 +15,7 @@ H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
 
 class GISANS(object):
-    """Compute grazing-incident SANS"""
+    """Compute grazing-incident SANS."""
 
     def __init__(self, cross_section_data: "CrossSectionData"):
         """Initialize GISANS calculations.

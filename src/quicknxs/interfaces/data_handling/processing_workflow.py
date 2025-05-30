@@ -53,17 +53,17 @@ DEFAULT_OPTIONS = dict(
 
 
 class ProcessingWorkflow(object):
-    """Carry out the reduction process for a set of data runs and manages outputs"""
+    """Carry out the reduction process for a set of data runs and manages outputs."""
 
     def __init__(self, data_manager: DataManager, output_options: Optional[dict] = None):
-        """All the reduced data shall come from data manager"""
+        """All the reduced data shall come from data manager."""
         self.data_manager = data_manager
         self.output_options = output_options if output_options else DEFAULT_OPTIONS
         self.exported_data_files = []
         self.exported_data_plots = []
 
     def execute(self, progress: Optional[ProgressReporter] = None):
-        """Process data and write output files"""
+        """Process data and write output files."""
         if not self.data_manager.reduction_states:
             return
 
@@ -252,7 +252,7 @@ class ProcessingWorkflow(object):
         io_orso.save_cross_sections(combined_reflectivity_workspaces, combined_path)
 
     def specular_reflectivity(self):
-        """Retrieve the computed reflectivity and save it to file"""
+        """Retrieve the computed reflectivity and save it to file."""
         # The reflectivity should always be up to date, so we don't need to recalculate it.
         # The following would be used to recalculate it:
         #    self.data_manager.calculate_reflectivity(specular=True)
@@ -378,7 +378,7 @@ class ProcessingWorkflow(object):
                 self.data_manager.cached_offspec = binned_data
 
     def get_rebinned_offspec_data(self):
-        """Get a data dictionary ready for saving"""
+        """Get a data dictionary ready for saving."""
         data_dict = None
         slice_data_dict = {}
 
@@ -498,7 +498,7 @@ class ProcessingWorkflow(object):
         return data_dict, slice_data_dict
 
     def get_offspec_data(self):
-        """Get a data dictionary ready for saving"""
+        """Get a data dictionary ready for saving."""
         data_dict = dict(
             units=["1/A", "1/A", "1/A", "1/A", "1/A", "a.u.", "a.u."],
             columns=["Qx", "Qz", "ki_z", "kf_z", "ki_z-kf_z", "I", "dI"],
@@ -768,7 +768,7 @@ class ProcessingWorkflow(object):
         return data_dict
 
     def _email_replace(self, text):
-        """Replace token templates in text"""
+        """Replace token templates in text."""
         run_list = [str(item.number) for item in self.data_manager.reduction_list]
         return (
             text.replace("{ipts}", "")

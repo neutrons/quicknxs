@@ -1,4 +1,4 @@
-"""Loader for event nexus files using Mantid Framework"""
+"""Loader for event nexus files using Mantid Framework."""
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, multiple-statements, bare-except, wrong-import-order, \
 # too-many-locals, too-few-public-methods, wrong-import-position, too-many-public-methods
 
@@ -34,7 +34,7 @@ N_EVENTS_CUTOFF = 100
 REFLECTIVITY_THRESHOLD_VALUE = 1e-6
 
 
-def _is_empty_reflectivity_curve(input_workspace: Union[str, Workspace2D]) -> np.bool:
+def _is_empty_reflectivity_curve(input_workspace: Union[str, Workspace2D]) -> bool:
     r"""
     Check that the reflectivity values are not all zero.
 
@@ -88,13 +88,11 @@ def getIxyt(nxs_data: Workspace2D) -> tuple:
 
 
 class CrossSectionData(object):
-    """Data object to hold loaded reflectivity data"""
+    """Data object to hold loaded reflectivity data."""
 
     # Instrument specific attributes filled out by the instrument object
     dist_sam_det = 0.0
     dist_mod_det = 0.0
-    dist_mod_mon = 0.0
-    dist_mod_mon = 0.0
     dist_mod_mon = 0.0
     dangle = 0.0
     det_size_x = 0.0007
@@ -253,7 +251,7 @@ class CrossSectionData(object):
 
     @property
     def wavelength_range(self):
-        """Returns the wavelength range"""
+        """Returns the wavelength range."""
         # TODO: use the skipped points to trim the wl band.
         # The following would work, but not if we perform a final rebin.
         # We should use the final Q binning to determine the wl range.
@@ -339,7 +337,7 @@ class CrossSectionData(object):
         self.configuration.instrument.get_info(workspace, self)
 
     def process_configuration(self):
-        """Process loaded data"""
+        """Process loaded data."""
         self.scattering_angle = self.configuration.instrument.scattering_angle_from_data(self)
 
         # Determine binning
@@ -368,7 +366,7 @@ class CrossSectionData(object):
         self.tof_edges = tof_edges
 
     def prepare_plot_data(self):
-        """Bin events to be used for plotting and in-app calculations"""
+        """Bin events to be used for plotting and in-app calculations."""
         workspace = api.mtd[self._event_workspace]
         if self.xtofdata is None:
             t_0 = time.time()
@@ -435,7 +433,7 @@ class CrossSectionData(object):
         return (summed_raw / math.fabs(size_roi) - bck) / self.proton_charge
 
     def get_tof_counts_table(self):
-        """Get a table of TOF vs counts in the region-of-interest (ROI)
+        """Get a table of TOF vs counts in the region-of-interest (ROI).
 
         The table columns are:
         - TOF
@@ -487,7 +485,7 @@ class CrossSectionData(object):
         return data_table, header
 
     def get_background_vs_TOF(self):
-        """Returns the background counts vs TOF"""
+        """Returns the background counts vs TOF."""
         # Find the background pixels to use, excluding the peak if there's an overlap.
         dims = self.data.shape
         indices = [
@@ -504,11 +502,11 @@ class CrossSectionData(object):
         return summed_bck / math.fabs(size_bck)
 
     def update_calculated_values(self):
-        """Update parameters that are calculated from the configuration"""
+        """Update parameters that are calculated from the configuration."""
         self.scattering_angle = self.configuration.instrument.scattering_angle_from_data(self)
 
     def update_configuration(self, configuration: Configuration):
-        """Update configuration"""
+        """Update configuration."""
         if configuration is not None:
             self.configuration = copy.deepcopy(configuration)
             self.update_calculated_values()
@@ -522,7 +520,7 @@ class CrossSectionData(object):
             self.gisans_data = None
 
     def reflectivity(self, direct_beam=None, configuration=None):
-        """Compute reflectivity"""
+        """Compute reflectivity."""
         self.q = None
         self._r = None
         self._dr = None
@@ -650,7 +648,7 @@ class CrossSectionData(object):
         return self.off_spec(direct_beam)
 
     def gisans(self, direct_beam: Optional["CrossSectionData"] = None):
-        """Compute GISANS
+        """Compute GISANS.
 
         Parameters
         ----------
@@ -674,7 +672,7 @@ class NexusData(object):
     """Read a nexus file with multiple cross-section data."""
 
     def __init__(self, file_path: str, configuration: Configuration) -> None:
-        """Structure to read in one or more Nexus data files
+        """Structure to read in one or more Nexus data files.
 
         Parameters
         ----------
@@ -711,7 +709,7 @@ class NexusData(object):
         return large_xs
 
     def get_q_range(self):
-        """Return the Q range for the cross-sections"""
+        """Return the Q range for the cross-sections."""
         q_min = None
         q_max = None
         for xs in self.cross_sections:
@@ -730,7 +728,7 @@ class NexusData(object):
         return wsg
 
     def set_parameter(self, param, value):
-        """Loop through the cross-section data sets and update a parameter"""
+        """Loop through the cross-section data sets and update a parameter."""
         has_changed = False
         try:
             for xs in self.cross_sections:
@@ -890,7 +888,7 @@ class NexusData(object):
             self.cross_sections[xs_id]._reflectivity_workspacegroup = str(ws)
 
     def calculate_gisans(self, direct_beam, progress=None):
-        """Compute GISANS"""
+        """Compute GISANS."""
         has_errors = False
         detailed_msg = ""
         if progress is not None:
@@ -913,14 +911,14 @@ class NexusData(object):
             progress(100, "Complete", out_of=100.0)
 
     def is_offspec_available(self):
-        """Verify whether we have off-specular data calculated for all cross-sections"""
+        """Verify whether we have off-specular data calculated for all cross-sections."""
         for xs in self.cross_sections:
             if self.cross_sections[xs].off_spec is None:
                 return False
         return True
 
     def is_gisans_available(self):
-        """Verify whether we have GISANS data calculated for all cross-sections"""
+        """Verify whether we have GISANS data calculated for all cross-sections."""
         for xs in self.cross_sections:
             if self.cross_sections[xs].gisans_data is None:
                 return False
@@ -1030,12 +1028,12 @@ class NexusData(object):
         return self.cross_sections
 
     def is_direct_beam(self):
-        """Returns True if the main cross-section is a direct beam"""
+        """Returns True if the main cross-section is a direct beam."""
         return self.cross_sections[self.main_cross_section].is_direct_beam
 
 
 class NexusMetaData(object):
-    """Class used to hold meta-data read before loading the neutron events"""
+    """Class used to hold meta-data read before loading the neutron events."""
 
     mid_q = 0
     is_direct_beam = False

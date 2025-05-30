@@ -16,7 +16,7 @@ def plot1d(
     y_log: bool = False,
     show_dx: bool = True,
 ):
-    """Produce a 1D plot"""
+    """Produce a 1D plot."""
     # Create traces
     if not isinstance(data_list, list):
         raise RuntimeError("plot1d: data_list parameter is expected to be a list")
@@ -88,7 +88,7 @@ def plot1d(
 
 
 def plot_heatmap(x, y, z, x_title="", y_title="", surface=False, x_log=False, y_log=False):
-    """Produce a 2D plot"""
+    """Produce a 2D plot."""
     x_layout = dict(
         title=x_title,
         zeroline=False,
@@ -240,7 +240,7 @@ def read_settings(file_path):
 
 
 def find_peaks(workspace, x_min=50, x_max=250):
-    """Find reflectivity peaks"""
+    """Find reflectivity peaks."""
     roi = RefRoi(
         InputWorkspace=workspace,
         NXPixel=304,
@@ -276,7 +276,7 @@ def find_peaks(workspace, x_min=50, x_max=250):
 
 
 def process_run(run_number, settings, direct_beam=True):
-    """Process a run"""
+    """Process a run."""
     ws = LoadEventNexus(
         Filename="REF_M%s" % run_number, NXentryName="entry-Off_Off", OutputWorkspace="%s_%s" % ("REF_M", run_number)
     )

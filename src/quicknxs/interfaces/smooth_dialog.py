@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Dialog to let the user select smoothing options
+Dialog to let the user select smoothing options.
 
 This code was taken as-is from QuickNXS v1
 """
@@ -40,7 +40,7 @@ class SmoothDialog(QtWidgets.QDialog):
         self, x_min: float, x_max: float, y_min: float, y_max: float
     ) -> tuple[float, float, float, float]:
         """
-        Calculate the coordinates of box inside the plot area representing the grid region
+        Calculate the coordinates of box inside the plot area representing the grid region.
 
         Parameters
         ----------
@@ -299,7 +299,7 @@ class SmoothDialog(QtWidgets.QDialog):
             self.updateSettings()
 
     def update_output_options(self, output_options: dict) -> dict:
-        """Update a dict with smoothing options"""
+        """Update a dict with smoothing options."""
         if self.ui.kizVSkfz.isChecked():
             output_options["off_spec_x_axis"] = Configuration.KZI_VS_KZF
         elif self.ui.qxVSqz.isChecked():

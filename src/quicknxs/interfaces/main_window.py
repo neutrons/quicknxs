@@ -18,7 +18,7 @@ from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    """Main application window"""
+    """Main application window."""
 
     # UI events
     file_loaded_signal = QtCore.Signal()
@@ -43,7 +43,7 @@ class MainWindow(QtWidgets.QMainWindow):
     """Signal to update the GISANS viewer."""
 
     def __init__(self):
-        """Initialization"""
+        """Initialization."""
         # Base class
         QtWidgets.QMainWindow.__init__(self)
 
@@ -92,23 +92,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.deadtime_entry.reload_files_signal.connect(self.reload_all_files)
 
     def closeEvent(self, event):
-        """Close UI event"""
+        """Close UI event."""
         self.file_handler.get_configuration()
         event.accept()
 
     def keyPressEvent(self, event):
-        """UI event"""
+        """UI event."""
         if event.modifiers() == QtCore.Qt.ControlModifier:
             self.plot_handler.control_down = True
         else:
             self.plot_handler.control_down = False
 
     def keyReleaseEvent(self, event):
-        """UI event"""
+        """UI event."""
         self.plot_handler.control_down = False
 
     def initialize_instrument(self):
-        """Initialize instrument according to the instrument and saved parameters"""
+        """Initialize instrument according to the instrument and saved parameters."""
         for i in range(1, 12):
             getattr(self.ui, "selectedChannel%i" % i).hide()
         self.ui.selectedChannel0.show()
@@ -117,7 +117,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.populate_from_configuration()
 
     def handle_roi_checkbox(self, state):
-        """Handle the ROI checkbox state change"""
+        """Handle the ROI checkbox state change."""
         # Enable/disable the automatic x and y peak finding
         use_metadata_roi = state == QtCore.Qt.Checked
         if use_metadata_roi:
@@ -136,7 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.hide_data_table()
 
     def hide_unsupported(self):
-        """Hide what we don't support"""
+        """Hide what we don't support."""
         # Hide event filtering (which is not really event filtering)
         for i in range(self.ui.event_filtering_layout.rowCount() * self.ui.event_filtering_layout.columnCount()):
             if self.ui.event_filtering_layout.itemAt(i):
@@ -164,7 +164,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.file_open_sum_dialog()
 
     def file_loaded(self):
-        """Update UI after a file is loaded"""
+        """Update UI after a file is loaded."""
         self.file_handler.file_loaded()
 
     def file_open_from_list(self):
@@ -235,7 +235,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.compare_widget.draw()
 
     def toggleColorbars(self):
-        """Refresh plots because of a color or scale change"""
+        """Refresh plots because of a color or scale change."""
         plots = [
             self.ui.xy_pp,
             self.ui.xy_mp,
@@ -367,11 +367,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.direct_beam_table_changed(item)
 
     def remove_direct_beam(self):
-        """Signal handling"""
+        """Signal handling."""
         self.file_handler.remove_direct_beam()
 
     def clear_direct_beam_list(self):
-        """Signal handling"""
+        """Signal handling."""
         self.file_handler.clear_direct_beams()
 
     def match_direct_beam_clicked(self):
@@ -474,7 +474,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tabWidget.setTabVisible(4, False)
 
     def current_table_changed(self, tab_index: int):
-        """Update the state for active data set and the UI"""
+        """Update the state for active data set and the UI."""
         if tab_index != 0:  # direct beam tab
             # Update the active reduction list index
             self.data_manager.update_active_reduction_list(tab_index)

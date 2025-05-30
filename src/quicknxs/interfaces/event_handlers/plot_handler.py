@@ -23,7 +23,7 @@ def slow_down_events(fn):
     """
 
     def function_wrapper(self, *args, **kws):
-        """Wrap a function to slow it down"""
+        """Wrap a function to slow it down."""
         if self.last_event is not None and time.time() - self.last_event < 0.3:
             return None
         self.last_event = time.time()
@@ -33,7 +33,7 @@ def slow_down_events(fn):
 
 
 class PlotHandler(object):
-    """Class to handle plotting events"""
+    """Class to handle plotting events."""
 
     _picked_line = None
     control_down = False
@@ -354,7 +354,7 @@ class PlotHandler(object):
         #        self.main_window.auto_change_active = old_aca
 
     def change_offspec_colorscale(self):
-        """Modify color scale"""
+        """Modify color scale."""
         plots: List[MPLWidget] = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
         Imin = 10 ** self.ui.offspecImin.value()
         Imax = 10 ** self.ui.offspecImax.value()
@@ -369,7 +369,7 @@ class PlotHandler(object):
         self.plot_manager.plot_offspec(recalc=False)
 
     def clip_offspec_colorscale(self):
-        """Modify color scale"""
+        """Modify color scale."""
         plots = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
         Imin = 1e10
         data_set_keys = list(self.main_window.data_manager.data_sets.keys())

@@ -11,7 +11,7 @@ def assert_equal_arrays(actual, expected):
 
 
 class TestRunNumber(object):
-    """Test RunNumbers class"""
+    """Test RunNumbers class."""
 
     def test_init(self):
         assert_equal_arrays(RunNumbers(123).numbers, [123])
@@ -35,7 +35,7 @@ class TestRunNumber(object):
 
 
 class TestFilePath(object):
-    """Test FilePath class"""
+    """Test FilePath class."""
 
     def test_init(self):
         assert FilePath("/SNS/REF_M_1.nxs").path == "/SNS/REF_M_1.nxs"

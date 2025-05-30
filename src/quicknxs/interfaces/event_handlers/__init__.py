@@ -1,1 +1,1 @@
-"""Qt Event Handlers"""
+"""Qt Event Handlers."""

@@ -12,7 +12,7 @@ from quicknxs.interfaces.data_manager import DataManager
 
 
 class ResultViewer(QtWidgets.QDialog):
-    """Reduction dialog"""
+    """Reduction dialog."""
 
     default_template = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
 
@@ -125,7 +125,7 @@ class ResultViewer(QtWidgets.QDialog):
         return gisans_plot
 
     def update_gisans(self, crop: bool = False):
-        """Update the results viewer with the latest GISANS calculations
+        """Update the results viewer with the latest GISANS calculations.
 
         Parameters
         ----------

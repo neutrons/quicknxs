@@ -13,7 +13,7 @@ from quicknxs.interfaces import load_ui
 
 
 class ReductionDialog(QtWidgets.QDialog):
-    """Reduction dialog"""
+    """Reduction dialog."""
 
     default_template = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
 
@@ -52,18 +52,18 @@ class ReductionDialog(QtWidgets.QDialog):
         self.is_accepted = False
 
     def _verify_true(self, parameter, default):
-        """Utility function to read a bool"""
+        """Utility function to read a bool."""
         _value = self.settings.value(parameter, str(default))
         return str(_value).lower() == "true"
 
     def accept(self):
-        """Save the current options and close dialog"""
+        """Save the current options and close dialog."""
         self.save_settings()
         self.is_accepted = True
         self.close()
 
     def get_options(self):
-        """Return the reduction options as a dict"""
+        """Return the reduction options as a dict."""
         if self.is_accepted is False:
             return None
         return dict(
@@ -89,16 +89,16 @@ class ReductionDialog(QtWidgets.QDialog):
         )
 
     def change_directory(self):
-        """Change the output directory"""
+        """Change the output directory."""
         old_d = self.ui.directoryEntry.text()
         new_d = QtWidgets.QFileDialog.getExistingDirectory(parent=self, caption="Select new directory", directory=old_d)
         if new_d is not None:
             self.ui.directoryEntry.setText(new_d)
 
     def reset_filename_template(self):
-        """Reset the filename template to the default"""
+        """Reset the filename template to the default."""
         self.ui.fileNameEntry.setText(ReductionDialog.default_template)
 
     def save_settings(self) -> None:
-        """Save reduction options in QSettings"""
+        """Save reduction options in QSettings."""
         self.settings.setValue("output_directory", self.ui.directoryEntry.text())

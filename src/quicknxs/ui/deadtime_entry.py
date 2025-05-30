@@ -54,7 +54,7 @@ class DeadTimeEntryPoint(QGroupBox):
             super().__init__(*args, **kwargs)
 
         def ask_user_ok_to_reload_files(self):
-            """Shows dialog asking user to confirm reloading all files"""
+            """Shows dialog asking user to confirm reloading all files."""
             message = "Change dead-time settings and reload all files?"
             dialog = AcceptRejectDialog(self, title="Reload files", message=message)
             proceed = dialog.exec_()

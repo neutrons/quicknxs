@@ -20,6 +20,7 @@ class TestConfiguration(object):
         settings = Settings()
         assert settings["OpenSum"]["LogNames"][-1] == "S3Vheight"
         assert settings["OpenSum"]["Tolerances"][-1] == 0.01
+        assert settings["SMTP_SERVER"] == "160.91.4.26"
 
 
 if __name__ == "__main__":

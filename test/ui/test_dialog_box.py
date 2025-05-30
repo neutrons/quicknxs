@@ -6,7 +6,7 @@ wait = 100
 
 
 def test_customized_dialog(qtbot):
-    """Test customized dialog box"""
+    """Test customized dialog box."""
     window = AcceptRejectDialog(None, "pyqt test", "Hello World")
 
     # Add widget and launch

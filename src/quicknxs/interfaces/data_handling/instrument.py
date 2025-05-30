@@ -67,7 +67,7 @@ def get_cross_section_label(ws, entry_name):
 
 
 def mantid_algorithm_exec(algorithm_class: PythonAlgorithm, **kwargs) -> Optional[EventWorkspace]:
-    """Helper function for executing a Mantid-style algorithm
+    """Helper function for executing a Mantid-style algorithm.
 
     Parameters
     ----------
@@ -149,7 +149,7 @@ def apply_dead_time_correction(
 
 def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
     """
-    Removes workspaces with number of events below the cutoff from a list of workspaces
+    Removes workspaces with number of events below the cutoff from a list of workspaces.
 
     Parameters
     ----------
@@ -442,7 +442,7 @@ class Instrument(object):
 
     @classmethod
     def check_direct_beam(cls, ws):
-        """Determine whether this data is a direct beam"""
+        """Determine whether this data is a direct beam."""
         try:
             return ws.getRun().getProperty("data_type").value[0] == 1
         except:
@@ -464,7 +464,7 @@ class Instrument(object):
     @classmethod
     def get_info(cls, workspace, data_object):
         """
-        Retrieve information that is specific to this particular instrument
+        Retrieve information that is specific to this particular instrument.
 
         @param workspace: Mantid workspace
         @param data_object: CrossSectionData object

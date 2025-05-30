@@ -17,11 +17,11 @@ from quicknxs.interfaces.data_handling.quicknxs_io import (
 
 
 class TestDataLoader(object):
-    """Test the data loading functionality from quicknxs_io module"""
+    """Test the data loading functionality from quicknxs_io module."""
 
     @pytest.fixture(autouse=True)
     def _data_dir(self, data_server):
-        r"""Pass the data_file fixture"""
+        r"""Pass the data_file fixture."""
         self.file = data_server.path_to
 
     def test_simple_load(self):
@@ -82,7 +82,7 @@ class TestDataLoader(object):
 
 @pytest.fixture
 def mock_nexus_data(tmp_path, temp_workspace_name):
-    """Generate mock Nexus data for testing"""
+    """Generate mock Nexus data for testing."""
 
     def mock_nexus_data_function(run_number: int):
         # create reflectivity workspace
@@ -114,10 +114,10 @@ def mock_nexus_data(tmp_path, temp_workspace_name):
 
 
 class TestDataWriter(object):
-    """Test the data writing functionality from quicknxs_io module"""
+    """Test the data writing functionality from quicknxs_io module."""
 
     def test_save_multiple_peaks(self, tmp_path, mock_nexus_data):
-        """Test saving session with multiple peaks"""
+        """Test saving session with multiple peaks."""
         output_path = tmp_path / "test_REF_M_save_data_output.dat"
         pol_state = "On_Off"
         col_names = ["Qz [1/A]", "R [a.u.]", "dR [a.u.]", "dQz [1/A]", "theta [rad]"]

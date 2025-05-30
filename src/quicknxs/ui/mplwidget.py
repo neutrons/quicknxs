@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # pylint: disable=invalid-name, too-many-instance-attributes
 """
-Plotting widget taken from QuickNXS
+Plotting widget taken from QuickNXS.
 
 #TODO: refactor this or replace it with a standard solution
 """
@@ -258,7 +258,7 @@ class NavigationToolbarReflectivity(NavigationToolbar):
         self.canvas.draw()
 
     def toggle_rq4_scale(self, *args):
-        """Toggle between plotting R and R * Q^4"""
+        """Toggle between plotting R and R * Q^4."""
         # should the y data be scaled by Q^4?
         is_yaxis_q_pow_4 = self.q_pow_4_button.isChecked()
 
@@ -299,7 +299,7 @@ class NavigationToolbarReflectivity(NavigationToolbar):
         self.canvas.draw()
 
     def toggle_lines(self, *args):
-        """Toggle lines between points in the plot"""
+        """Toggle lines between points in the plot."""
         ax = self.canvas.ax
         if len(ax.lines) < 3:
             return
@@ -411,19 +411,19 @@ class MPLWidget(QtWidgets.QWidget):
         self.canvas.draw()
 
     def plot(self, *args, **opts):
-        """Convenience wrapper for self.canvas.ax.plot"""
+        """Convenience wrapper for self.canvas.ax.plot."""
         result = self.canvas.ax.plot(*args, **opts)
         self.sync_toolbar_view()
         return result
 
     def semilogy(self, *args, **opts):
-        """Convenience wrapper for self.canvas.ax.semilogy"""
+        """Convenience wrapper for self.canvas.ax.semilogy."""
         result = self.canvas.ax.semilogy(*args, **opts)
         self.sync_toolbar_view()
         return result
 
     def errorbar(self, *args, **opts):
-        """Convenience wrapper for self.canvas.ax.errorbar"""
+        """Convenience wrapper for self.canvas.ax.errorbar."""
         if self.toolbar:
             # change to toolbar with reflectivity-specific options
             self.stacked_toolbars.setCurrentIndex(1)
@@ -449,7 +449,7 @@ class MPLWidget(QtWidgets.QWidget):
         return result
 
     def pcolormesh(self, datax, datay, dataz, log=False, imin=None, imax=None, update=False, **opts):
-        """Convenience wrapper for self.canvas.ax.plot"""
+        """Convenience wrapper for self.canvas.ax.plot."""
         if self.cplot is None or not update:
             if log:
                 self.cplot = self.canvas.ax.pcolormesh(datax, datay, dataz, norm=LogNorm(imin, imax), **opts)
@@ -461,7 +461,7 @@ class MPLWidget(QtWidgets.QWidget):
         return self.cplot
 
     def imshow(self, data, log=False, imin=None, imax=None, update=True, **opts):
-        """Convenience wrapper for self.canvas.ax.plot"""
+        """Convenience wrapper for self.canvas.ax.plot."""
         if self.cplot is None or not update:
             if log:
                 self.cplot = self.canvas.ax.imshow(data, norm=LogNorm(imin, imax), **opts)

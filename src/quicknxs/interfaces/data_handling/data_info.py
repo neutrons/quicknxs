@@ -1,4 +1,4 @@
-"""Meta-data information for MR reduction"""
+"""Meta-data information for MR reduction."""
 # pylint: disable=too-few-public-methods, wrong-import-position, too-many-instance-attributes, wrong-import-order
 
 import copy
@@ -78,7 +78,7 @@ class DataInfo(object):
         logging.info("INSPECT: %s sec" % (time.time() - t_0))
 
     def get_tof_range(self, ws):
-        """Determine TOF range from the data"""
+        """Determine TOF range from the data."""
 
         run_object = ws.getRun()
         sample_detector_distance = run_object["SampleDetDis"].getStatistics().mean
@@ -268,7 +268,7 @@ class DataInfo(object):
 
 
 def chi2(data, model):
-    """Returns the chi^2 for a data set and model pair"""
+    """Returns the chi^2 for a data set and model pair."""
     err = np.fabs(data)
     err[err <= 0] = 1
     return np.sum((data - model) ** 2 / err) / len(data)
@@ -284,7 +284,7 @@ class Fitter2(object):
         self._prepare_data()
 
     def _prepare_data(self):
-        """Read in the data and create arrays for fitting"""
+        """Read in the data and create arrays for fitting."""
         # Prepare data to fit
         self.n_x = int(self.workspace.getInstrument().getNumberParameter("number-of-x-pixels")[0])
         self.n_y = int(self.workspace.getInstrument().getNumberParameter("number-of-y-pixels")[0])
@@ -338,7 +338,7 @@ class Fitter2(object):
         return found_peaks
 
     def fit_2d_peak(self):
-        """Backward compatibility"""
+        """Backward compatibility."""
         spec_peak = self.fit_peak()
         beam_peak = self.fit_beam_width()
         return spec_peak, beam_peak
@@ -353,7 +353,7 @@ class Fitter2(object):
         return [x_min, x_max]
 
     def gaussian_1d(self, value, *p):
-        """1D Gaussian"""
+        """1D Gaussian."""
         A, center_x, width_x, background = p
         A = np.abs(A)
         values = A * np.exp(-((value - center_x) ** 2) / (2.0 * width_x**2))

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name, line-too-long, too-many-public-methods, too-many-instance-attributes, wrong-import-order, \
 # bare-except, protected-access, too-many-arguments, too-many-statements
-"""Manage file-related and UI events"""
+"""Manage file-related and UI events."""
 
 import glob
 import logging
@@ -66,7 +66,7 @@ class MainHandler(object):
     @property
     def reduction_table(self):
         """
-        Returns the active reduction table widget if one of the data tabs is active, else the first one
+        Returns the active reduction table widget if one of the data tabs is active, else the first one.
 
         Returns
         -------
@@ -80,15 +80,15 @@ class MainHandler(object):
         return current_table
 
     def get_reduction_table_by_index(self, tab_index: int) -> QtWidgets.QTableWidget:
-        """Return the QTableWidget for the data tab with the given index"""
+        """Return the QTableWidget for the data tab with the given index."""
         return self.ui.tabWidget.widget(tab_index).findChild(QtWidgets.QTableWidget)
 
     def new_progress_reporter(self):
-        """Return a progress reporter"""
+        """Return a progress reporter."""
         return ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
 
     def empty_cache(self):
-        """Empty the data cache"""
+        """Empty the data cache."""
         self._data_manager.clear_cache()
         self.cache_indicator.setText("Files loaded: 0")
 
@@ -169,7 +169,7 @@ class MainHandler(object):
         logging.info("DONE: %s sec", time.time() - t_0)
 
     def file_loaded(self):
-        """Update UI after a file is loaded"""
+        """Update UI after a file is loaded."""
         self.main_window.auto_change_active = True
         self._set_data_manager_active_channel()
 
@@ -193,7 +193,7 @@ class MainHandler(object):
         self.cache_indicator.setText("Files loaded: %s" % (self._data_manager.get_cachesize()))
 
     def active_channel_changed(self):
-        """Update UI metadata and plots after the active channel is changed"""
+        """Update UI metadata and plots after the active channel is changed."""
         self._set_data_manager_active_channel()
         self.update_channel_info()
         self.main_window.plotActiveTab()
@@ -204,7 +204,7 @@ class MainHandler(object):
         self.main_window.initiate_projection_plot.emit(False)
 
     def _set_data_manager_active_channel(self):
-        """Set the data manager's active channel from the active channel in the UI"""
+        """Set the data manager's active channel from the active channel in the UI."""
         self.main_window.auto_change_active = True
         current_channel = 0
         for i in range(12):
@@ -218,7 +218,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
 
     def _congruency_fail_report(self, file_paths: List[str], log_names: Optional[List[str]] = None):
-        """Check whether these files can be merged
+        """Check whether these files can be merged.
 
         Parameters
         ----------
@@ -401,7 +401,7 @@ class MainHandler(object):
         self.update_calculated_data()
 
     def update_file_list(self, query_path: Optional[str] = None) -> None:
-        """Update the list of data files
+        """Update the list of data files.
 
         Parameters
         ----------
@@ -411,7 +411,7 @@ class MainHandler(object):
         """
 
         def _split_composites():
-            """Split the list of files in widget self.ui.file_list into a list of single files and a list of composite files"""
+            """Split the list of files in widget self.ui.file_list into a list of single files and a list of composite files."""
             singles, composites = list(), list()
             for i in range(self.ui.file_list.count()):
                 file_base_name = self.ui.file_list.item(i).text()
@@ -422,12 +422,12 @@ class MainHandler(object):
             return singles, composites
 
         def _updated_current_list():
-            r"""Most updated list of single and composite files from the current directory"""
+            r"""Most updated list of single and composite files from the current directory."""
             _, composites = _split_composites()
             return sorted(self._data_manager.current_event_files + composites)
 
         def _reset_ui_file_list(fresh_list):
-            r"""Reset widget self.ui.file_list and highlight the current file_name"""
+            r"""Reset widget self.ui.file_list and highlight the current file_name."""
             self.ui.file_list.clear()  # Reset ui.file_list, a QtWidgets.QListWidget object
             assert isinstance(fresh_list, list), f"fresh_list must be list but not {type(fresh_list)}"
             for item in fresh_list:
@@ -439,7 +439,7 @@ class MainHandler(object):
                     self.ui.file_list.setCurrentItem(listitem)
 
         def _update_current_directory(new_dir):
-            r"""Update the directory path in the main window and the path watcher"""
+            r"""Update the directory path in the main window and the path watcher."""
             self.main_window.settings.setValue("current_directory", new_dir)
             self._path_watcher.removePath(self._data_manager.current_directory)
             self._data_manager.current_directory = new_dir
@@ -609,7 +609,7 @@ class MainHandler(object):
             logging.info("UI updated: %s", time.time() - t_0)
 
     def initialize_additional_reduction_table(self, tab_index: int):
-        """Initialize new reduction table from the main reduction table
+        """Initialize new reduction table from the main reduction table.
 
         Parameters
         ----------
@@ -625,7 +625,7 @@ class MainHandler(object):
                 self.update_reduction_table(table_widget, idx, active_channel)
 
     def _file_open_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
-        """Pop a File dialog window for the user to select one file
+        """Pop a File dialog window for the user to select one file.
 
         Parameters
         ----------
@@ -643,7 +643,7 @@ class MainHandler(object):
         return file_path
 
     def _file_open_sum_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
-        """Open a File dialog Window for the user to select two or more files
+        """Open a File dialog Window for the user to select two or more files.
 
         Congruency among the selected files is checked by comparing the values of selected metadata.
         User is asked to override if congruency fails.
@@ -679,7 +679,7 @@ class MainHandler(object):
         return FilePath(file_paths).path
 
     def _process_file_path(self, dialog_opening_method: str) -> None:
-        """Wrapper of the opening-file dialogs
+        """Wrapper of the opening-file dialogs.
 
         This wrapper defines the extension of the files to be shown by the file dialog,
         and process the file(s) selected by the user.
@@ -705,14 +705,14 @@ class MainHandler(object):
         self._process_file_path("_file_open_sum_dialog")
 
     def _user_gives_permission(self, message: str) -> bool:
-        """Ask user's permission to proceed or quit if the select runs do not have same sample logs"""
+        """Ask user's permission to proceed or quit if the select runs do not have same sample logs."""
         message += ".\nProceed with Open Sum?"
         dialog = AcceptRejectDialog(self.main_window, title="Open Sum Confirmation", message=message)
         proceed = dialog.exec_()
         return proceed
 
     def open_run_number(self, number: Union[List[int], List[str], int, str, None] = None):
-        """Open a data file by typing a run number or a composite run number for merging data sets
+        """Open a data file by typing a run number or a composite run number for merging data sets.
 
         Example
         -------
@@ -817,7 +817,7 @@ class MainHandler(object):
         return True
 
     def update_reduction_table(self, table_widget: QtWidgets.QTableWidget, idx: int, d: CrossSectionData):
-        """Update the reduction table
+        """Update the reduction table.
 
         Parameters
         ----------
@@ -1111,7 +1111,7 @@ class MainHandler(object):
         self.main_window.initiate_projection_plot.emit(True)
 
     def active_data_changed(self):
-        """Actions to be taken once the active data set has changed"""
+        """Actions to be taken once the active data set has changed."""
         # If we update an entry, it's because that data is currently active.
         # Highlight it and un-highlight the other ones.
         self.main_window.auto_change_active = True
@@ -1239,7 +1239,7 @@ class MainHandler(object):
             np.savetxt(filepath, data_to_save, header=header)
 
     def compute_offspec_on_change(self, force=False):
-        """Compute off-specular as needed"""
+        """Compute off-specular as needed."""
         prog = self.new_progress_reporter()
         has_changed_values = self.check_region_values_changed()
         offspec_data_exists = self._data_manager.is_offspec_available()
@@ -1251,7 +1251,7 @@ class MainHandler(object):
             self._data_manager.reduce_offspec(progress=prog)
 
     def compute_gisans_on_change(self, force=False, active_only=True):
-        """Compute GISANS as needed"""
+        """Compute GISANS as needed."""
         prog = self.new_progress_reporter()
         has_changed_values = self.check_region_values_changed()
         gisans_data_exists = self._data_manager.is_gisans_available(active_only=active_only)
@@ -1653,7 +1653,7 @@ class MainHandler(object):
         self.main_window.initiate_reflectivity_plot.emit(False)
 
     def reload_all_files(self):
-        """Reload all files upon change in loading configuration
+        """Reload all files upon change in loading configuration.
 
         To speed up reloading, the file cache is first cleared of files that are not used in the
         reduction list or direct beam list.
@@ -1760,7 +1760,7 @@ class MainHandler(object):
         return True
 
     def show_results(self):
-        """Pop up the result viewer"""
+        """Pop up the result viewer."""
         from quicknxs.interfaces.result_viewer import ResultViewer
 
         dialog = ResultViewer(self.main_window, self._data_manager)

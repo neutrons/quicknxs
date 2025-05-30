@@ -17,7 +17,7 @@ def _refl_data():
 
 
 def _initialize_compare_plot(main_window: MainWindow):
-    """Populate reflectivity data and draw the compare tab plot"""
+    """Populate reflectivity data and draw the compare tab plot."""
     compare_widget = main_window.ui.compare_widget
     compare_widget.show_preview = True
     compare_widget.refl_data = _refl_data()
@@ -26,7 +26,7 @@ def _initialize_compare_plot(main_window: MainWindow):
 
 
 def _toggle_toolbar_button(toolbar: NavigationToolbar, button_text: str):
-    """Trigger a toolbar button by the button text"""
+    """Trigger a toolbar button by the button text."""
     for action in toolbar.findChildren(QtWidgets.QAction):
         if action.text() == button_text:
             action.trigger()
@@ -34,7 +34,7 @@ def _toggle_toolbar_button(toolbar: NavigationToolbar, button_text: str):
 
 
 def _compare_lines_data(lines: np.ndarray[Line2D], gold_data: dict, is_q4_plot: bool = False):
-    """Assert that the data for the plotted line and upper and lower error bars are correct"""
+    """Assert that the data for the plotted line and upper and lower error bars are correct."""
     for ics, cross_section in enumerate(gold_data["cross_sections"].keys()):
         gold_x, gold_y, gold_yerr = gold_data[cross_section].T
         plot_line = lines[3 * ics]
@@ -54,7 +54,7 @@ def _compare_lines_data(lines: np.ndarray[Line2D], gold_data: dict, is_q4_plot: 
 
 
 def _compare_error_bar_data(collections: np.ndarray[LineCollection], gold_data: dict, is_q4_plot: bool = False):
-    """Assert that the data for the vertical error bars are correct"""
+    """Assert that the data for the vertical error bars are correct."""
     for ics, cross_section in enumerate(gold_data["cross_sections"].keys()):
         gold_x, gold_y, gold_yerr = gold_data[cross_section].T
         plot_err_bar = collections[ics]
@@ -70,24 +70,24 @@ def _compare_error_bar_data(collections: np.ndarray[LineCollection], gold_data: 
 
 
 class TestNavigationToolbar:
-    """Test the NavigationToolbar and its derived classes"""
+    """Test the NavigationToolbar and its derived classes."""
 
     def test_toolbar_is_visible(self, qtbot):
-        """Test that the plots have the correct toolbar"""
+        """Test that the plots have the correct toolbar."""
         main_window = MainWindow()
         qtbot.addWidget(main_window)
         toolbar = main_window.ui.xy_overview.toolbar
         assert isinstance(toolbar, NavigationToolbarGeneric)
 
     def test_compare_plot_toolbar(self, qtbot):
-        """Test that the reflectivity toolbar is visible for the Compare tab plot"""
+        """Test that the reflectivity toolbar is visible for the Compare tab plot."""
         main_window = MainWindow()
         qtbot.addWidget(main_window)
         compare_widget = _initialize_compare_plot(main_window)
         assert isinstance(compare_widget.comparePlot.toolbar, NavigationToolbarReflectivity)
 
     def test_reflectivity_toolbar_xlog(self, qtbot):
-        """Test the XLog button of the reflectivity navigation toolbar"""
+        """Test the XLog button of the reflectivity navigation toolbar."""
         main_window = MainWindow()
         qtbot.addWidget(main_window)
         compare_widget = _initialize_compare_plot(main_window)
@@ -97,7 +97,7 @@ class TestNavigationToolbar:
         assert compare_widget.comparePlot.canvas.ax.get_xscale() == "log"
 
     def test_reflectivity_toolbar_ylog(self, qtbot):
-        """Test the YLog button of the reflectivity navigation toolbar"""
+        """Test the YLog button of the reflectivity navigation toolbar."""
         main_window = MainWindow()
         qtbot.addWidget(main_window)
         compare_widget = _initialize_compare_plot(main_window)
@@ -107,7 +107,7 @@ class TestNavigationToolbar:
         assert compare_widget.comparePlot.canvas.ax.get_yscale() == "linear"
 
     def test_reflectivity_toolbar_q4(self, qtbot):
-        """Test the Q^4 button of the reflectivity navigation toolbar"""
+        """Test the Q^4 button of the reflectivity navigation toolbar."""
         main_window = MainWindow()
         qtbot.addWidget(main_window)
         compare_widget = _initialize_compare_plot(main_window)

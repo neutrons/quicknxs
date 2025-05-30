@@ -1,1 +1,1 @@
-"""Qt UI files"""
+"""Qt UI files."""

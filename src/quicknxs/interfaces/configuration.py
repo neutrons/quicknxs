@@ -1,5 +1,5 @@
 # pylint: disable=invalid-name, line-too-long, too-few-public-methods, too-many-instance-attributes, wrong-import-order, bare-except
-"""Application configuration, including reduction options"""
+"""Application configuration, including reduction options."""
 
 from typing import List
 
@@ -10,7 +10,7 @@ from quicknxs.interfaces.data_handling.instrument import Instrument
 
 
 class Configuration(object):
-    """Hold reduction options"""
+    """Hold reduction options."""
 
     # Choice of axes for off-specular binning
     QX_VS_QZ = 0
@@ -54,7 +54,7 @@ class Configuration(object):
 
     @classmethod
     def setup_default_values(cls):
-        """Initialize class variables - only used for testing purposes"""
+        """Initialize class variables - only used for testing purposes."""
         cls.QX_VS_QZ = 0
         cls.KZI_VS_KZF = 1
         cls.DELTA_KZ_VS_QZ = 3

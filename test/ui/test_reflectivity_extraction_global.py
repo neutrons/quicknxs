@@ -11,7 +11,7 @@ from test.ui import ui_utilities
 
 
 def _initialize_test_data(main_window):
-    """Add one run with two cross-sections to the data manager"""
+    """Add one run with two cross-sections to the data manager."""
     config = Configuration()
     nexus_data = NexusData("file/path", config)
     off_off = CrossSectionData("Off_Off", config)
@@ -24,7 +24,7 @@ def _initialize_test_data(main_window):
 
 
 def _assert_configuration_value(main_window, param_name, gold_value):
-    """Check parameter value through the data hierarchy"""
+    """Check parameter value through the data hierarchy."""
     assert getattr(main_window.data_manager.active_channel.configuration, param_name) is gold_value
     for nexus_data in main_window.data_manager.reduction_list:
         assert getattr(nexus_data.configuration, param_name) is gold_value
@@ -33,7 +33,7 @@ def _assert_configuration_value(main_window, param_name, gold_value):
 
 
 def _assert_configuration_float_value(main_window, param_name, gold_value):
-    """Check float parameter value through the data hierarchy"""
+    """Check float parameter value through the data hierarchy."""
     assert getattr(main_window.data_manager.active_channel.configuration, param_name) == pytest.approx(gold_value)
     for nexus_data in main_window.data_manager.reduction_list:
         assert getattr(nexus_data.configuration, param_name) == pytest.approx(gold_value)
@@ -53,7 +53,7 @@ def _assert_configuration_float_value(main_window, param_name, gold_value):
     ],
 )
 def test_global_checkboxes(qtbot, widget, config_param):
-    """Test that UI global config checkbox changes get propagated to all configuration levels"""
+    """Test that UI global config checkbox changes get propagated to all configuration levels."""
     main_window = MainWindow()
     qtbot.addWidget(main_window)
     _initialize_test_data(main_window)
@@ -77,7 +77,7 @@ def test_global_checkboxes(qtbot, widget, config_param):
     ],
 )
 def test_global_spinboxes(qtbot, widget, config_param, gold_value):
-    """Test that UI global config spinbox changes get propagated to all configuration levels"""
+    """Test that UI global config spinbox changes get propagated to all configuration levels."""
     main_window = MainWindow()
     qtbot.addWidget(main_window)
     _initialize_test_data(main_window)
@@ -89,7 +89,7 @@ def test_global_spinboxes(qtbot, widget, config_param, gold_value):
 
 @pytest.mark.datarepo
 def test_reflectivity_recalculated_on_config_change(mocker, qtbot):
-    """Test that changing global binning configuration triggers recalculating reflectivity for all runs"""
+    """Test that changing global binning configuration triggers recalculating reflectivity for all runs."""
     main_window = MainWindow()
     qtbot.addWidget(main_window)
 
