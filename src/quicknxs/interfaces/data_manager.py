@@ -60,9 +60,17 @@ class DataManager(object):
 
         self.active_channel: Optional[CrossSectionData] = None
         self.active_reduction_list_index: int = 1
+
+        # Main data structure holding the reduction list for each ROI/peak
+        #    key: reduction list index, corresponds to the reduction table tab in the UI
+        #    value: list of NexusData
         self.peak_reduction_lists: Dict[int, List[NexusData]] = {self.active_reduction_list_index: []}
+
         self.direct_beam_list: List[NexusData] = []
+
+        # List of cross-sections common to all reduced data sets
         self.reduction_states: List[str] = []
+
         self.final_merged_reflectivity = {}
 
         self._cache: List[NexusData] = list()
