@@ -41,7 +41,18 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx_qt_documentation",
 ]
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "PyQt5": ("http://pyqt.sourceforge.net/Docs/PyQt5/", None),
+    "mantid": ("http://docs.mantidproject.org/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+}
+intersphinx_disabled_domains = ["std"]
+
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
@@ -67,7 +78,7 @@ html_theme = "sphinx_rtd_theme"  # "alabaster"
 autosummary_generate = True
 
 # Napoleon settings
-napoleon_google_docstring = False
+napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 
 # Add any paths that contain custom static files (such as style sheets) here,

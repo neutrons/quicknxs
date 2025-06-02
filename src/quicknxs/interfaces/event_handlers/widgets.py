@@ -1,13 +1,11 @@
-"""
-Zoo for customized simple widgets
-"""
+"""Zoo for customized simple widgets."""
 
 from qtpy.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout
 
 
 class AcceptRejectDialog(QDialog):
     """
-    Customized widget for user to accept or reject a state
+    Customized widget for user to accept or reject a state.
 
     Refer to: https://www.mfitzp.com/tutorials/pyqt-dialogs/
     """

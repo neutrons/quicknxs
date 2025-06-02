@@ -9,7 +9,7 @@ from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
-    extract_meta_data,
+    extract_metadata,
     generate_short_script,
     smart_stitch_reflectivity,
 )
@@ -70,10 +70,10 @@ def stitching_config():
 
 @pytest.fixture
 def stitching_reduction_list():
-    """List of NexusData objects for testing of stitching"""
+    """List of NexusData objects for testing of stitching."""
 
     class _MockCrossSectionData(object):
-        """Test class to use instead of CrossSectionData, which requires EventWorkspaces"""
+        """Test class to use instead of CrossSectionData, which requires EventWorkspaces."""
 
         def __init__(self, xs: str, config: Configuration, data_x: list, data_y: list, ws_name: str):
             self.name = xs
@@ -114,6 +114,8 @@ def stitching_reduction_list():
 
 
 class TestDataManipulation(object):
+    """Main test class for data manipulation functions."""
+
     @pytest.mark.datarepo
     def test_smart_stitch_reflectivity(self, data_server, mocker_file_open, stitching_config):
         manager = DataManager(data_server.directory)
@@ -146,7 +148,7 @@ class TestDataManipulation(object):
         expected_scaling_factors,
         expected_scaling_errors,
     ):
-        """Test all combinations of the smart_stitch_reflectivity parameters `normalize_to_unity` and `global_fit`
+        """Test all combinations of the smart_stitch_reflectivity parameters `normalize_to_unity` and `global_fit`.
 
         The fixture stitching_reduction_list has three runs with two cross-sections each: `On_On` and `On_Off`.
         When `global_fit` is True, both cross-sections are used to calculate the scaling factors.
@@ -162,7 +164,7 @@ class TestDataManipulation(object):
         api.mtd.clear()
 
     def test_get_stitching_overlap_region(self):
-        """Test of helper function _get_stitching_overlap_region"""
+        """Test of helper function _get_stitching_overlap_region."""
         x1 = [1, 2, 3, 4, 5]
         x2 = [3, 4, 5, 6, 7]
         x3 = [7, 8, 9, 10, 11]
@@ -188,7 +190,7 @@ class TestDataManipulation(object):
         api.mtd.clear()
 
     def test_get_polynomial_fit_stitching_scaling_factor(self):
-        """Test of helper function _get_polynomial_fit_stitching_scaling_factor
+        """Test of helper function _get_polynomial_fit_stitching_scaling_factor.
 
         Tests stitching of two parts of a parabola x^2 with no overlap in the x-range
         """
@@ -215,7 +217,7 @@ class TestDataManipulation(object):
         assert "Levenberg-Marquardt minimizer failed to initialize" in str(error_info.value)
 
     def test_smart_stitch_normalize_to_unity_error(self, stitching_reduction_list):
-        """Test that error is raised when the normalize to unity Q cutoff is too low"""
+        """Test that error is raised when the normalize to unity Q cutoff is too low."""
         q_cutoff = 0.5
         with pytest.raises(NormalizeToUnityQCutoffError):
             smart_stitch_reflectivity(stitching_reduction_list, "On_On", True, q_cutoff)
@@ -280,11 +282,11 @@ class TestDataManipulation(object):
             ("REF_M_42112.nxs.h5", {"mid_q": 0.00013398646965655087, "is_direct_beam": False}),
         ],
     )
-    def test_extract_meta_data(self, data_server, data_file, expected):
-        """Test the extract_meta_data function"""
+    def test_extract_metadata(self, data_server, data_file, expected):
+        """Test the extract_metadata function."""
         manager = DataManager(data_server.directory)
         fp = f"{data_server.directory}/quicknxs-data/{data_file}"
-        metadata = extract_meta_data(fp)
+        metadata = extract_metadata(fp)
         assert metadata.mid_q == expected["mid_q"]
         assert metadata.is_direct_beam == expected["is_direct_beam"]
 

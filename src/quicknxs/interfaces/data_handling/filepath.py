@@ -1,6 +1,4 @@
-r"""
-Classes to handle string representations of sets of run numbers and absolute paths to data files
-"""
+"""Classes to handle string representations of sets of run numbers and absolute paths to data files."""
 
 import itertools
 import operator
@@ -10,20 +8,24 @@ from typing import List, Optional, Union
 
 
 class RunNumbers(object):
-    r"""
-    A helper class to handle string representations of one or more run numbers. It translates from a
-    string representation to a list of run numbers, and viceversa
+    """A helper class to handle string representations of one or more run numbers.
+
+    Translates from a string representation to a list of run numbers, and viceversa
     """
 
     merge_symbol = "+"
     range_symbol = ":"
 
     def __init__(self, numbers: Union[List[int], List[str], int, str]) -> None:
-        r"""
-        @param numbers: a list of numbers or a string containing one or more numbers. For instance, '1:3+5' translates
-          to [1, 2, 3, 5]
+        """Initialize the RunNumbers object.
+
+        Parameters
+        ----------
+        numbers:
+            a list of numbers or a string containing one or more numbers.
+            For instance, '1:3+5' translates to [1, 2, 3, 5]
         """
-        self._numbers = None  # type: Optional[int]
+        self._numbers: List[int]
         if isinstance(numbers, int):
             self._numbers = [numbers]  # just one run number
         elif isinstance(numbers, list):
@@ -36,11 +38,10 @@ class RunNumbers(object):
         else:
             raise ValueError("Constructor requires a list or a string of run numbers as input")
 
-    def _uncompress(self, numbers):
-        # type: (str) ->  List[int]
-        r"""
-        @brief Split a string representation of a set of run numbers into a list
-        @details Example: '1:3+6' becomes [1, 2, 3, 6]
+    def _uncompress(self, numbers: str) -> List[int]:
+        """Split a string representation of a set of run numbers into a list.
+
+        Example: '1:3+6' becomes [1, 2, 3, 6]
         """
         run_numbers = list()
         for run_range in numbers.split(self.merge_symbol):  # e.g. 1:3+6' becomes ['1:3', '6']
@@ -52,28 +53,23 @@ class RunNumbers(object):
         return run_numbers
 
     @property
-    def numbers(self):
-        # type: () -> List[int]
-        r"""
-        @brief List of run numbers as a list of integers
-        """
+    def numbers(self) -> List[int]:
+        """List of run numbers as a list of integers."""
         return self._numbers
 
     @property
-    def long(self):
-        # type: () -> str
-        r"""
-        @brief Long string representation of the run numbers
-        @details Example: [1, 2, 3, 6] becomes '1+2+3+6'
+    def long(self) -> str:
+        """Long string representation of the run numbers.
+
+        Example: [1, 2, 3, 6] becomes '1+2+3+6'
         """
         return self.merge_symbol.join([str(n) for n in self._numbers])
 
     @property
-    def short(self):
-        # type: () -> str
-        r"""
-        @brief Short string representation of the run numbers
-        @details Example: [1, 2, 3, 6] becomes '1:3+6'
+    def short(self) -> str:
+        """Short string representation of the run numbers.
+
+        Example: [1, 2, 3, 6] becomes '1:3+6'
         """
         ranges = list()
         for _, g in itertools.groupby(enumerate(self._numbers), lambda i_run_number: i_run_number[0] - i_run_number[1]):
@@ -83,11 +79,10 @@ class RunNumbers(object):
         return self.merge_symbol.join(ranges)
 
     @property
-    def statement(self):
-        # type: () -> str
-        r"""
-        @brief Human readable string representation.
-         @details Examples: '12', '12 and 13', '12, 13, and 14'
+    def statement(self) -> str:
+        """Human readable string representation.
+
+        Examples: '12', '12 and 13', '12, 13, and 14'
         """
         runs_str = [str(n) for n in self._numbers]
         if len(runs_str) == 1:
@@ -100,7 +95,7 @@ class RunNumbers(object):
 
 
 class FilePath(object):
-    r"""Helper class to deal with string representation of one or more absolute file paths.
+    """Helper class to deal with string representation of one or more absolute file paths.
 
     Example:
     file_path = '/SNS/REF_M/IPTS-25531/nexus/REF_M_38202.nxs.h5+/SNS/REF_M/IPTS-25531/nexus/REF_M_38201.nxs.h5'
@@ -112,16 +107,25 @@ class FilePath(object):
 
     @classmethod
     def join(cls, dirname: str, basename: str, sort: bool = True) -> str:
-        r"""Create the file path for a single file or a set of files using one directory
+        r"""Create the file path for a single file or a set of files using one directory.
 
         Example: u'/SNS/REF_M/IPTS-25531/nexus/REF_M_38198.nxs.h5+/SNS/REF_M/IPTS-25531/nexus/REF_M_38199.nxs.h5'
 
-        @param dirname: absolute path to a directory
-        @param basename: name of one or more files. If more than one file, they're concatenated with the merge
-        symbol '+'. Example: u'REF_M_38198.nxs.h5+REF_M_38199.nxs.h5'
-        @param sort: if True, sort the basenames according to increasing run number when more than one file.
+        Parameters
+        ----------
+        dirname:
+            absolute path to a directory
+        basename:
+            name of one or more files.
+            If more than one file, they're concatenated with the merge
+            symbol '+'. Example: u'REF_M_38198.nxs.h5+REF_M_38199.nxs.h5'
+        sort:
+            if True, sort the basenames according to increasing run number when more than one file.
 
-        @returns string representing the absolute path to the files.
+        Returns
+        -------
+        str:
+            string representing the absolute path to the files.
         """
         base_names = basename.split(cls.merge_symbol)
         file_paths = [os.path.join(dirname, name) for name in base_names]
@@ -131,14 +135,13 @@ class FilePath(object):
 
     @classmethod
     def unique_dirname(cls, file_path):
-        r"""For composite file paths, check that the dirname of the paths is the same for all files"""
+        """For composite file paths, check that the dirname of the paths is the same for all files."""
         dirs = [os.path.dirname(path) for path in file_path.split(cls.merge_symbol)]
         if len(set(dirs)) > 1:
             return False
         return True
 
-    def __init__(self, file_path, sort=True):
-        # type: (Union[str, List[str]], Optional[bool]) -> None
+    def __init__(self, file_path: Union[str, List[str]], sort: bool = True):
         if isinstance(file_path, list):
             file_path = self.merge_symbol.join(file_path)
         if not self.unique_dirname(file_path):
@@ -193,13 +196,17 @@ class FilePath(object):
         return self.dirname, self.basename
 
     def run_numbers(self, string_representation: Optional[str] = None) -> Union[List[int], str]:
-        r"""
-        @brief return the run number(s) associated to this file path
-        @details This function assumes the basename of each single file path has the pattern "REF_M_XXXX.*" where
-        'XXXX' is the run number to extract, and * is some file extension
-        @param string_representation: If None, return the run numbers as a list of integers. If 'long', return all
-        the run numbers concatenated by the merge symbol ('+'). If 'short', return a compressed string representation.
-        For instance, return run numbers 1, 2, 3, 5, 7, 8 as 1:3+5+7:8
+        """Return the run number(s) associated to this file path.
+
+        This function assumes the basename of each single file path has the pattern "REF_M_XXXX.*"
+        where 'XXXX' is the run number to extract, and * is some file extension
+
+        Parameters
+        ----------
+        string_representation:
+            One of [None, "long", "short", "statement"] to return the run numbers
+            as a list of integers, a long string representation, a short string representation,
+            or a human readable statement, respectively.
         """
         numbers = list()
         for path in self.single_paths:

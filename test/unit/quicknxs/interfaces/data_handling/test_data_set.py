@@ -6,7 +6,7 @@ from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 
 
 def _get_cross_section_data():
-    """Get instance of CrossSectionData for testing"""
+    """Get instance of CrossSectionData for testing."""
     config = Configuration()
     config.peak_position = 3
     config.peak_width = 1
@@ -24,6 +24,8 @@ def _get_cross_section_data():
 
 
 class TestCrossSectionData(object):
+    """Test CrossSectionData class."""
+
     def test_r_scaling_factor(self):
         config = Configuration()
         xs = CrossSectionData("On_Off", config)
@@ -36,7 +38,7 @@ class TestCrossSectionData(object):
         assert xs.dr == pytest.approx(0.035902646, rel=1e-6)
 
     def test_get_tof_counts_table(self, mocker):
-        """Test of method get_tof_counts_table"""
+        """Test of method get_tof_counts_table."""
         mocker.patch("quicknxs.interfaces.data_handling.data_set.CrossSectionData.prepare_plot_data")
         rel_tol = 1e-6
         xs = _get_cross_section_data()

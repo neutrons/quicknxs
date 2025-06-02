@@ -1,7 +1,3 @@
-"""
-Dead time correction algorithm for single-readout detectors.
-"""
-
 import numpy as np
 import scipy
 from mantid.api import (
@@ -16,6 +12,8 @@ from mantid.simpleapi import Rebin, SumSpectra, logger
 
 
 class SingleReadoutDeadTimeCorrection(PythonAlgorithm):
+    """Dead time correction algorithm for single-readout detectors."""
+
     def category(self):
         return "Reflectometry\\SNS"
 

@@ -1,10 +1,8 @@
-# package imports
-# 3rd-party imports
 import mantid.simpleapi as api
 import pytest
 from mantid.kernel import amend_config
 
-from quicknxs.interfaces.data_handling.DeadTimeCorrection import SingleReadoutDeadTimeCorrection
+from quicknxs.interfaces.data_handling.dead_time_correction import SingleReadoutDeadTimeCorrection
 from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
 
 # standard imports
@@ -13,7 +11,7 @@ from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
 @pytest.mark.datarepo
 @pytest.mark.parametrize("is_paralyzable", [False, True])
 def test_deadtime(is_paralyzable, data_server):
-    """Test of the dead-time correction algorithm SingleReadoutDeadTimeCorrection"""
+    """Test of the dead-time correction algorithm SingleReadoutDeadTimeCorrection."""
     with amend_config(data_dir=data_server.h5_full_path):
         ws = api.Load("REF_M_42112")
     corr_ws = mantid_algorithm_exec(

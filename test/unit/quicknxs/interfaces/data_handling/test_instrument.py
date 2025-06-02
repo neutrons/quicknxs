@@ -12,7 +12,7 @@ from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
 
 @pytest.mark.datarepo
 def test_load_data_pre_epics(data_server):
-    """Test load data with pre-epics cross-sections"""
+    """Test load data with pre-epics cross-sections."""
     conf = Configuration()
     file_path = data_server.path_to("REF_M_24945_event.nxs")
     ws_list = conf.instrument.load_data(file_path, conf)
@@ -23,7 +23,7 @@ def test_load_data_pre_epics(data_server):
 
 @pytest.mark.datarepo
 def test_load_data_deadtime(data_server):
-    """Test load data with and without dead-time correction"""
+    """Test load data with and without dead-time correction."""
     conf = Configuration()
     file_path = data_server.path_to("REF_M_42112")
     corrected_events = [52226.65, 42024.57, 66802.82, 43401.94]
@@ -46,7 +46,7 @@ def test_load_data_deadtime(data_server):
 
 
 def test_mantid_algorithm_exec():
-    """Test helper function mantid_algorithm_exec"""
+    """Test helper function mantid_algorithm_exec."""
 
     # test wrong type of class
     class TestNotMantidAlgo:
@@ -76,7 +76,7 @@ def test_mantid_algorithm_exec():
 
 @pytest.mark.datarepo
 def test_load_data_nbr_events_min(data_server):
-    """Test load data with one cross-section with too few events"""
+    """Test load data with one cross-section with too few events."""
     conf = Configuration()
     file_path = data_server.path_to("REF_M_40776")
 
@@ -106,7 +106,7 @@ def test_load_data_nbr_events_min(data_server):
 )
 @pytest.mark.datarepo
 def test_load_unpolarized_data(data_server, apply_deadtime):
-    """Test load unpolarized data with Polarizer = 0 and Analyzer = 0"""
+    """Test load unpolarized data with Polarizer = 0 and Analyzer = 0."""
     conf = Configuration()
     conf.apply_deadtime = apply_deadtime
     file_path = data_server.path_to("REF_M_41889")

@@ -1,5 +1,3 @@
-# package imports
-# third party imports
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QCheckBox, QGroupBox, QHBoxLayout, QPushButton
 
@@ -8,6 +6,8 @@ from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
 
 
 class DeadTimeEntryPoint(QGroupBox):
+    """Group box for dead-time correction settings."""
+
     reload_files_signal = Signal()
 
     def __init__(self, title="Dead Time Correction"):
@@ -44,8 +44,9 @@ class DeadTimeEntryPoint(QGroupBox):
         self.setLayout(hbox)
 
     class VerifyChangeCheckBox(QCheckBox):
-        """
-        Checkbox that intercepts the state change to ask user to confirm the change in
+        """Checkbox for applying dead-time correction.
+
+        Intercepts the state change to ask user to confirm the change in
         dead-time settings, since it requires reloading all files
         """
 
@@ -53,7 +54,7 @@ class DeadTimeEntryPoint(QGroupBox):
             super().__init__(*args, **kwargs)
 
         def ask_user_ok_to_reload_files(self):
-            """Shows dialog asking user to confirm reloading all files"""
+            """Shows dialog asking user to confirm reloading all files."""
             message = "Change dead-time settings and reload all files?"
             dialog = AcceptRejectDialog(self, title="Reload files", message=message)
             proceed = dialog.exec_()

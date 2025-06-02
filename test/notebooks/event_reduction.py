@@ -34,11 +34,8 @@ def get_peak(center, width, max_pixel=None):
     return peak_min, peak_max
 
 
-def get_wl_range(ws):
-    """
-    Determine TOF range from the data
-    :param workspace ws: workspace to work with
-    """
+def get_wl_range(ws: api.Workspace):
+    """Determine TOF range from the data"""
     run_object = ws.getRun()
 
     wl = run_object.getProperty("LambdaRequest").value[0]
@@ -114,21 +111,36 @@ class EventReflectivity(object):
         """
         Pixel ranges include the min and max pixels.
 
-        :param scattering_workspace: Mantid workspace containing the reflected data
-        :param direct_workspace: Mantid workspace containing the direct beam data [if None, normalization won't be applied]
-        :param signal_peak: pixel min and max for the specular peak
-        :param signal_bck: pixel range of the background [if None, the background won't be subtracted]
-        :param norm_peak: pixel range of the direct beam peak
-        :param norm_bck: pixel range of the direct beam background [if None, the background won't be subtracted]
-        :param specular_pixel: pixel of the specular peak
-        :param signal_low_res: pixel range of the specular peak out of the scattering plane
-        :param norm_low_res: pixel range of the direct beam out of the scattering plane
-        :param q_min: value of lowest q point
-        :param q_step: step size in Q. Enter a negative value to get a log scale
-        :param q_min: value of largest q point
-        :param tof_range: TOF range,or None
-        :param theta: theta scattering angle in radians
-        :param sample_length: sample size, for resolution calculation
+        scattering_workspace:
+            Mantid workspace containing the reflected data
+        direct_workspace:
+            Mantid workspace containing the direct beam data [if None, normalization won't be applied]
+        signal_peak:
+            Pixel min and max for the specular peak
+        signal_bck:
+            Pixel range of the background [if None, the background won't be subtracted]
+        norm_peak:
+            Pixel range of the direct beam peak
+        norm_bck:
+            Pixel range of the direct beam background [if None, the background won't be subtracted]
+        specular_pixel:
+            Pixel of the specular peak
+        signal_low_res:
+            Pixel range of the specular peak out of the scattering plane
+        norm_low_res:
+            Pixel range of the direct beam out of the scattering plane
+        q_min:
+            Value of lowest q point
+        q_step:
+            Step size in Q. Enter a negative value to get a log scale
+        q_min:
+            Value of largest q point
+        tof_range:
+            Tof range,or None
+        theta:
+            Theta scattering angle in radians
+        sample_length:
+            Sample size, for resolution calculation
 
         """
         if instrument in [self.INSTRUMENT_4A, self.INSTRUMENT_4B]:
@@ -170,9 +182,9 @@ class EventReflectivity(object):
             self._ws_db = direct_workspace
 
         # Extract meta data
-        self.extract_meta_data()
+        self.extract_metadata()
 
-    def extract_meta_data(self):
+    def extract_metadata(self):
         # Set up basic data
         self.n_x = int(self._ws_sc.getInstrument().getNumberParameter("number-of-x-pixels")[0])
         self.n_y = int(self._ws_sc.getInstrument().getNumberParameter("number-of-y-pixels")[0])
@@ -381,13 +393,20 @@ class EventReflectivity(object):
     ):
         """
         Compute off-specular
-        :param x_axis: Axis selection
-        :param x_min: Min value on x-axis
-        :param x_max: Max value on x-axis
-        :param x_npts: Number of points in x (negative will produce a log scale)
-        :param z_min: Min value on z-axis (if none, default Qz will be used)
-        :param z_max: Max value on z-axis (if none, default Qz will be used)
-        :param z_npts: Number of points in z (negative will produce a log scale)
+        x_axis:
+            Axis selection
+        x_min:
+            Min value on x-axis
+        x_max:
+            Max value on x-axis
+        x_npts:
+            Number of points in x (negative will produce a log scale)
+        z_min:
+            Min value on z-axis (if none, default Qz will be used)
+        z_max:
+            Max value on z-axis (if none, default Qz will be used)
+        z_npts:
+            Number of points in z (negative will produce a log scale)
         """
         # Z axis binning
         qz_bins = self.q_bins

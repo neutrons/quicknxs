@@ -27,7 +27,8 @@ def setValue(widget, value, editing_finished=True):
 
 
 def data_from_plot1D(widget: "MplWidget", line_number=0) -> tuple:
-    r"""Get the data from an MplWidget representing a 1D plot
+    r"""Get the data from an MplWidget representing a 1D plot.
+
     Returns
     -------
     X and Y data as a tuple of numpy arrays
@@ -38,7 +39,8 @@ def data_from_plot1D(widget: "MplWidget", line_number=0) -> tuple:
 
 
 def data_from_plot2D(widget: "MplWidget") -> MaskedArray:
-    r"""Get the data from an MplWidget representing a 1D plot
+    r"""Get the data from an MplWidget representing a 1D plot.
+
     Returns
     -------
     2D data as a masked numpy array
@@ -49,7 +51,8 @@ def data_from_plot2D(widget: "MplWidget") -> MaskedArray:
 
 
 def text_from_plot1D(widget: "MplWidget", line_number=0) -> tuple:
-    r"""Get the text from an MplWidget representing a 1D plot
+    r"""Get the text from an MplWidget representing a 1D plot.
+
     Returns
     -------
     str
@@ -66,6 +69,6 @@ def text_from_plot1D(widget: "MplWidget", line_number=0) -> tuple:
 
 
 def set_current_file_by_run_number(widget, run_number):
-    r"""Set the selected file in the main window file list by the given run number"""
+    r"""Set the selected file in the main window file list by the given run number."""
     list_item = widget.file_list.findItems(str(run_number), QtCore.Qt.MatchContains)[0]
     widget.file_list.setCurrentItem(list_item)

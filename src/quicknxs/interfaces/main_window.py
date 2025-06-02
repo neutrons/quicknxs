@@ -3,7 +3,6 @@ import logging
 import os
 
 from qtpy import QtCore, QtWidgets
-from qtpy.QtWidgets import QTableWidgetItem
 
 import quicknxs
 from quicknxs.interfaces import load_ui
@@ -19,7 +18,7 @@ from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    """Main application window"""
+    """Main application window."""
 
     # UI events
     file_loaded_signal = QtCore.Signal()
@@ -44,15 +43,13 @@ class MainWindow(QtWidgets.QMainWindow):
     """Signal to update the GISANS viewer."""
 
     def __init__(self):
-        """
-        Initialization
-        """
+        """Initialization."""
         # Base class
         QtWidgets.QMainWindow.__init__(self)
 
         # Initialize the UI widgets
         self.reduction_table_menu = None
-        self.ui = load_ui("ui_main_window.ui", baseinstance=self)
+        self.ui = load_ui("ui_main_window.ui", base_instance=self)
         version = quicknxs.__version__ if quicknxs.__version__.lower() != "unknown" else ""
         self.setWindowTitle(f"QuickNXS Magnetic Reflectivity {version}")
 
@@ -95,26 +92,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.deadtime_entry.reload_files_signal.connect(self.reload_all_files)
 
     def closeEvent(self, event):
-        """Close UI event"""
+        """Close UI event."""
         self.file_handler.get_configuration()
         event.accept()
 
     def keyPressEvent(self, event):
-        """UI event"""
+        """UI event."""
         if event.modifiers() == QtCore.Qt.ControlModifier:
             self.plot_handler.control_down = True
         else:
             self.plot_handler.control_down = False
 
     def keyReleaseEvent(self, event):
-        """UI event"""
+        """UI event."""
         self.plot_handler.control_down = False
 
     def initialize_instrument(self):
-        """
-        Initialize instrument according to the instrument
-        and saved parameters
-        """
+        """Initialize instrument according to the instrument and saved parameters."""
         for i in range(1, 12):
             getattr(self.ui, "selectedChannel%i" % i).hide()
         self.ui.selectedChannel0.show()
@@ -123,7 +117,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.populate_from_configuration()
 
     def handle_roi_checkbox(self, state):
-        """Handle the ROI checkbox state change"""
+        """Handle the ROI checkbox state change."""
         # Enable/disable the automatic x and y peak finding
         use_metadata_roi = state == QtCore.Qt.Checked
         if use_metadata_roi:
@@ -142,9 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.hide_data_table()
 
     def hide_unsupported(self):
-        """
-        Hide what we don't support
-        """
+        """Hide what we don't support."""
         # Hide event filtering (which is not really event filtering)
         for i in range(self.ui.event_filtering_layout.rowCount() * self.ui.event_filtering_layout.columnCount()):
             if self.ui.event_filtering_layout.itemAt(i):
@@ -160,23 +152,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # Actions defined in Qt Designer
     def file_open_dialog(self):
-        """
-        Show a dialog to open a new file.
-        """
+        """Show a dialog to open a new file."""
         self.file_handler.file_open_dialog()
 
     # Actions defined in Qt Designer
     def file_open_sum_dialog(self):
-        r"""
-        @brief Read a set of congruent file data sets.
-        @details Select a list of event or histogram files, check their metadata is compatible, and read-in.
+        """Read a set of congruent file data sets.
+
+        Select a list of event or histogram files, check their metadata is compatible, and read-in.
         """
         self.file_handler.file_open_sum_dialog()
 
     def file_loaded(self):
-        """
-        Update UI after a file is loaded
-        """
+        """Update UI after a file is loaded."""
         self.file_handler.file_loaded()
 
     def file_open_from_list(self):
@@ -190,28 +178,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.open_file(filepath)
 
     def reload_file(self):
-        """
-        Reload the file that is currently selected form the list.
-        """
+        """Reload the file that is currently selected form the list."""
         self.file_handler.open_file(self.data_manager.current_file, force=True)
 
-    def change_active_channel(self, is_checked):
-        """
-        The overview and reflectivity channel was changed. This updates the run
-        information and plots in the Overview area
+    def change_active_channel(self, is_checked: bool):
+        """Update the run info and overview plots when the active channel is changed.
 
         The toggled() signal is emitted from both radio buttons whose states were changed,
         therefore, use the bool value to only perform channel update actions once.
 
-        :param bool is_checked: the state of the radio button that emitted the signal
+        Parameters
+        ----------
+        is_checked: bool
+            The state of the radio button that emitted the signal.
         """
         if is_checked:
             self.file_handler.active_channel_changed()
 
     def plotActiveTab(self):
-        """
-        Select the appropriate function to plot all visible images.
-        """
+        """Select the appropriate function to plot all visible images."""
         if self.data_manager.active_channel is None:
             return
 
@@ -250,7 +235,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.compare_widget.draw()
 
     def toggleColorbars(self):
-        """Refresh plots because of a color or scale change"""
+        """Refresh plots because of a color or scale change."""
         plots = [
             self.ui.xy_pp,
             self.ui.xy_mp,
@@ -275,8 +260,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.initiate_intensity_plot.emit(False)
 
     def changeRegionValues(self):
-        """
-        Called when the reflectivity extraction region has been changed.
+        """Called when the reflectivity extraction region has been changed.
+
         Sets up a trigger to replot the reflectivity with a delay so
         a subsequent change can occur without several replots.
         """
@@ -310,9 +295,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.update_specular_viewer.emit()
 
     def global_reflectivity_config_changed(self):
-        """
-        Perform action upon change in global reflectivity configuration.
-        """
+        """Perform action upon change in global reflectivity configuration."""
         if self.auto_change_active:
             return
 
@@ -321,51 +304,33 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_specular_viewer.emit()
 
     def reductionTableChanged(self, item):
-        """
-        Perform action upon change in data reduction list.
-        """
+        """Perform action upon change in data reduction list."""
         self.file_handler.reduction_table_changed(item)
 
-    def reduction_cell_activated(self, row, col):
-        """
-        Select a data set when the user double-clicks on a run number (col 0).
-        in the reduction table.
-        :param int row: row index
-        :param int col: column index
-        """
+    def reduction_cell_activated(self, row: int, col: int):
+        """Select a data set when the user double-clicks on a run number (col 0) in the reduction table."""
         if col == 0:
             self.data_manager.set_active_data_from_reduction_list(row)
             self.file_loaded()
             self.file_handler.active_data_changed()
 
-    def reduction_table_right_click(self, pos):
-        """
-        Handle right-click on the reduction table.
-        :param QPoint pos: mouse position
-        """
+    def reduction_table_right_click(self, pos: QtCore.QPoint):
+        """Handle right-click on the reduction table."""
         self.file_handler.reduction_table_right_click(pos, True)
 
-    def direct_beam_table_right_click(self, pos):
-        """
-        Handle right-click on the direct beam table.
-        :param QPoint pos: mouse position
-        """
+    def direct_beam_table_right_click(self, pos: QtCore.QPoint):
+        """Handle right-click on the direct beam table."""
         self.file_handler.reduction_table_right_click(pos, False)
 
-    def direct_beam_cell_activated(self, row, col):
-        """
-        Select a data set when the user double-clicks on a run number (col 0).
-        in the direct beam table.
-        :param int row: row index
-        :param int col: column index
-        """
+    def direct_beam_cell_activated(self, row: int, col: int):
+        """Select a data set when the user double-clicks on a run number (col 0) in the direct beam table."""
         if col == 0:
             self.data_manager.set_active_data_from_direct_beam_list(row)
             self.file_loaded()
             # self.file_handler.active_data_changed()
 
     def replotProjections(self):
-        """Signal handling"""
+        """Signal handling to replot the projections."""
         self.initiate_projection_plot.emit(True)
         if self.data_manager.active_channel.is_direct_beam:
             self.initiate_intensity_plot.emit(True)
@@ -373,47 +338,44 @@ class MainWindow(QtWidgets.QMainWindow):
             self.initiate_reflectivity_plot.emit(True)
 
     def addRefl(self):
-        """Signal handling"""
+        """Signal handling to add a new reflectivity data set."""
         self.file_handler.add_reflectivity()
 
     def removeRefl(self):
-        """Signal handling"""
+        """Signal handling to remove a reflectivity data set."""
         self.file_handler.remove_reflectivity()
 
     def clearRefList(self):
-        """Signal handling"""
+        """Signal handling to clear the reflectivity data set list."""
         self.file_handler.clear_reflectivity()
 
     ### Direct beam table management
 
+    # TODO: deal with this
     def get_direct_beam(self):
-        """
-        TODO: deal with this
-        This is supposed to retrieve the normalization data for the active reflectivity
-        data so that we can normalize the distributions we are plotting.
-        See plotting.plot_xtof and plotting.plot_overview
+        """Retrieve the direct beam data for the active reflectivity data.
+
+        This is used to normalize the distributions we are plotting.
+        See `plotting.plot_xtof` and `plotting.plot_overview`
         """
         return self.data_manager.get_active_direct_beam()
 
     def add_direct_beam(self):
         self.file_handler.add_direct_beam()
 
-    def direct_beam_table_changed(self, item: QTableWidgetItem):
+    def direct_beam_table_changed(self, item: QtWidgets.QTableWidgetItem):
         self.file_handler.direct_beam_table_changed(item)
 
     def remove_direct_beam(self):
-        """Signal handling"""
+        """Signal handling."""
         self.file_handler.remove_direct_beam()
 
     def clear_direct_beam_list(self):
-        """Signal handling"""
+        """Signal handling."""
         self.file_handler.clear_direct_beams()
 
     def match_direct_beam_clicked(self):
-        """
-        Find the best direct beam run for the activate data set
-        and compute the reflectivity as needed.
-        """
+        """Find the best direct beam run for the activate data set and compute the reflectivity as needed."""
         if self.data_manager.find_best_direct_beam():
             self.file_handler.update_tables()
             self.file_handler.update_calculated_data()
@@ -430,52 +392,44 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.initiate_reflectivity_plot.emit(True)
 
     def openByNumber(self):
-        """Signal handling"""
+        """Signal handling to open a file by run number."""
         self.file_handler.open_run_number()
 
     def refresh_offspec(self):
-        """
-        Refresh / recalculate the off-specular plots
-        """
+        """Refresh / recalculate the off-specular plots."""
         self.file_handler.compute_offspec_on_change(force=True)
         self.plot_manager.plot_offspec()
 
     def change_offspec_colorscale(self):
-        """
-        Change the intensity limits for the color scale of the off-specular plots
-        """
+        """Change the intensity limits for the color scale of the off-specular plots."""
         self.plot_handler.change_offspec_colorscale()
 
     def cutPoints(self):
-        """
-        Cut the start and end of the active data set to 5% of its
-        maximum intensity.
-        """
+        """Cut the start and end of the active data set to 5% of its maximum intensity."""
         self.file_handler.trim_data_to_normalization()
         self.update_specular_viewer.emit()
 
     def stripOverlap(self):
-        """
-        Remove overlapping points in the reflecitviy, cutting always from the lower Qz
-        measurements.
+        """Remove overlapping points in the reflectivity.
+
+        Cutting is done from the lower Qz measurements.
         """
         self.file_handler.strip_overlap()
         self.update_specular_viewer.emit()
 
     def normalizeTotalReflection(self):
-        """
-        Stitch the reflectivity parts and normalize to 1.
-        """
+        """Stitch the reflectivity parts and normalize to 1."""
         self.file_handler.stitch_reflectivity()
         self.update_specular_viewer.emit()
 
     def autoRef(self):
+        """Signal handling to run automated file selection."""
         self.file_handler.automated_file_selection()
 
     ### Data tab management
 
     def addDataTable(self):
-        """Add data tab for additional peaks/ROI:s"""
+        """Add data tab for additional peaks/ROIs."""
         next_tab_idx = self.data_tab_count + 1
         self.ui.tabWidget.setTabVisible(next_tab_idx, True)
         self.data_manager.add_additional_reduction_list(next_tab_idx)
@@ -486,7 +440,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.addTabButton.setEnabled(False)
 
     def removeDataTable(self):
-        """Remove last data tab for additional peaks/ROI:s"""
+        """Remove last data tab for additional peaks/ROIs."""
         self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
         self.data_manager.remove_additional_reduction_list(self.data_tab_count)
         self.data_tab_count -= 1
@@ -495,9 +449,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.removeTabButton.setEnabled(False)
 
     def add_data_tab_by_index(self, tab_index: int):
-        """
-        Add/update a specific data tab
-        """
+        """Add/update a specific data tab."""
         if self.data_tab_count < tab_index <= self.max_data_tab_count:
             self.ui.tabWidget.setTabVisible(tab_index, True)
             self.data_tab_count = tab_index
@@ -507,9 +459,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.addTabButton.setEnabled(False)
 
     def reset_data_tabs(self):
-        """
-        Reset UI to one visible data tab
-        """
+        """Reset UI to one visible data tab."""
         self.min_data_tab_count = 1
         self.max_data_tab_count = 4
         self.data_tab_count = 1
@@ -524,7 +474,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tabWidget.setTabVisible(4, False)
 
     def current_table_changed(self, tab_index: int):
-        """Update the state for active data set and the UI"""
+        """Update the state for active data set and the UI."""
         if tab_index != 0:  # direct beam tab
             # Update the active reduction list index
             self.data_manager.update_active_reduction_list(tab_index)
@@ -536,7 +486,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def reduceDatasets(self):
         """Open a dialog to select reduction options for the current list of reduction items."""
-
         if len(self.data_manager.reduction_list) == 0:
             self.file_handler.report_message("The data to be reduced must be added to the reduction table", pop_up=True)
             return
@@ -603,23 +552,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.offspec_qz_bin_width_label.setText("%8.6f 1/A" % width)
 
     def open_deadtime_settings(self):
-        r"""Show the dialog for dead-time options. Update global configuration parameters upon
-        closing the dialog."""
+        """Show the dialog for dead-time options.
+
+        Update global configuration parameters upon closing the dialog.
+        """
         view = DeadTimeSettingsView(parent=self)
         view.reload_files_signal.connect(self.reload_all_files)
         view.exec_()
 
     def reload_all_files(self):
-        r"""Reload all previously loaded files upon change in loading configuration"""
+        """Reload all previously loaded files upon change in loading configuration."""
         self.file_handler.reload_all_files()
 
     def toggleFinalRebinRun(self, state):
-        """Signal handling"""
+        """Signal handling."""
         self.file_handler.toggle_final_rebin_run(state)
         self.changeRegionValues()
 
     def toggleFinalRebinGlobal(self, state):
-        """Signal handling"""
+        """Signal handling."""
         self.file_handler.toggle_final_rebin_global(state)
         self.file_handler.get_configuration()
 

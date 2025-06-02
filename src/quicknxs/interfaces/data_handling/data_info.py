@@ -1,6 +1,4 @@
-"""
-Meta-data information for MR reduction
-"""
+"""Meta-data information for MR reduction."""
 # pylint: disable=too-few-public-methods, wrong-import-position, too-many-instance-attributes, wrong-import-order
 
 import copy
@@ -21,9 +19,7 @@ NY_PIXELS = 256
 
 
 class DataInfo(object):
-    """
-    Class to hold the relevant information from a run (scattering or direct beam).
-    """
+    """Class to hold the relevant information from a run (scattering or direct beam)."""
 
     peak_range_offset = 0
     tolerance = 0.02
@@ -82,10 +78,8 @@ class DataInfo(object):
         logging.info("INSPECT: %s sec" % (time.time() - t_0))
 
     def get_tof_range(self, ws):
-        """
-        Determine TOF range from the data
-        :param workspace ws: workspace to work with
-        """
+        """Determine TOF range from the data."""
+
         run_object = ws.getRun()
         sample_detector_distance = run_object["SampleDetDis"].getStatistics().mean
         source_sample_distance = run_object["ModeratorSamDis"].getStatistics().mean
@@ -111,14 +105,11 @@ class DataInfo(object):
         return [tof_min, tof_max]
 
     def process_roi(self, ws):
-        """
-        Process the ROI information and determine the peak
-        range, the low-resolution range, and the background range.
+        """Process the ROI information from a Mantid workspace.
 
+        Determines the peak range, low-resolution range, and background range.
         Starting in June 2018, with the DAS upgrade, the ROIs are
         specified with a start/width rather than start/stop.
-
-        :param workspace ws: workspace to work with
         """
         roi_peak = [0, 0]
         roi_low_res = [0, 0]
@@ -209,11 +200,7 @@ class DataInfo(object):
             self.roi_background = peak2
 
     def determine_data_type(self, ws):
-        """
-        Inspect the data and determine peak locations
-        and data type.
-        :param workspace ws: Workspace to inspect
-        """
+        """Inspect the data and determine peak locations and data type."""
         # Skip empty data entries
         if ws.getNumberEvents() < self.n_events_cutoff:
             self.data_type = -1
@@ -281,13 +268,15 @@ class DataInfo(object):
 
 
 def chi2(data, model):
-    """Returns the chi^2 for a data set and model pair"""
+    """Returns the chi^2 for a data set and model pair."""
     err = np.fabs(data)
     err[err <= 0] = 1
     return np.sum((data - model) ** 2 / err) / len(data)
 
 
 class Fitter2(object):
+    """Class to fit the data and find the peak and beam width."""
+
     DEAD_PIXELS = 10
 
     def __init__(self, workspace):
@@ -295,9 +284,7 @@ class Fitter2(object):
         self._prepare_data()
 
     def _prepare_data(self):
-        """
-        Read in the data and create arrays for fitting
-        """
+        """Read in the data and create arrays for fitting."""
         # Prepare data to fit
         self.n_x = int(self.workspace.getInstrument().getNumberParameter("number-of-x-pixels")[0])
         self.n_y = int(self.workspace.getInstrument().getNumberParameter("number-of-y-pixels")[0])
@@ -351,7 +338,7 @@ class Fitter2(object):
         return found_peaks
 
     def fit_2d_peak(self):
-        """Backward compatibility"""
+        """Backward compatibility."""
         spec_peak = self.fit_peak()
         beam_peak = self.fit_beam_width()
         return spec_peak, beam_peak
@@ -366,9 +353,7 @@ class Fitter2(object):
         return [x_min, x_max]
 
     def gaussian_1d(self, value, *p):
-        """
-        1D Gaussian
-        """
+        """1D Gaussian."""
         A, center_x, width_x, background = p
         A = np.abs(A)
         values = A * np.exp(-((value - center_x) ** 2) / (2.0 * width_x**2))
@@ -376,9 +361,7 @@ class Fitter2(object):
         return values
 
     def peak_derivative(self, value, *p):
-        """
-        Double Gaussian to fit the first derivative of a plateau/peak.
-        """
+        """Double Gaussian to fit the first derivative of a plateau/peak."""
         A, center_x, width_x, edge_width, background = p
         mu_right = center_x + width_x / 2.0
         mu_left = center_x - width_x / 2.0
@@ -404,9 +387,7 @@ class Fitter2(object):
         return _coef
 
     def fit_beam_width(self):
-        """
-        Fit the data distribution in y and get its range.
-        """
+        """Fit the data distribution in y and get its range."""
         peak_min = 0
         peak_max = self.n_x
         try:

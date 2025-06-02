@@ -1,7 +1,7 @@
 # pylint: disable=invalid-name, line-too-long, too-few-public-methods, too-many-instance-attributes, wrong-import-order, bare-except
-"""
-Application configuration, including reduction options
-"""
+"""Application configuration, including reduction options."""
+
+from typing import List
 
 from quicknxs.interfaces.data_handling.instrument import Instrument
 
@@ -10,7 +10,7 @@ from quicknxs.interfaces.data_handling.instrument import Instrument
 
 
 class Configuration(object):
-    """Hold reduction options"""
+    """Hold reduction options."""
 
     # Choice of axes for off-specular binning
     QX_VS_QZ = 0
@@ -54,7 +54,7 @@ class Configuration(object):
 
     @classmethod
     def setup_default_values(cls):
-        """Initialize class variables - only used for testing purposes"""
+        """Initialize class variables - only used for testing purposes."""
         cls.QX_VS_QZ = 0
         cls.KZI_VS_KZF = 1
         cls.DELTA_KZ_VS_QZ = 3
@@ -103,7 +103,7 @@ class Configuration(object):
         # Reduction parameters
         # Use region of interest specified in meta data
         self.set_direct_pixel = False
-        self.direct_pixel_overwrite = 0
+        self.direct_pixel_overwrite = 0.0
         self.set_direct_angle_offset = False
         self.direct_angle_offset_overwrite = 0
         self.use_dangle = False
@@ -208,21 +208,15 @@ class Configuration(object):
         self.bck_width = value[1] - value[0]
 
 
-def get_direct_beam_low_res_roi(data_conf, direct_beam_conf):
-    """
-    Get the direct beam low res ROI either from the data run or from the direct beam depending on
-    the configuration `lock_direct_beam_y`
+def get_direct_beam_low_res_roi(data_conf: Configuration, direct_beam_conf: Configuration) -> List[int]:
+    """Get the direct beam low res ROI.
 
-    Parameters
-    ----------
-    data_conf: Configuration
-        Configuration for the data run
-    direct_beam_conf: Configuration
-        Configuration for the direct beam run
+    Either from the data run or from the direct beam depending on
+    the configuration `data_conf.lock_direct_beam_y`
 
     Returns
     -------
-    [int, int]
+    List[int]
         The pixel range of the direct beam ROI in the low res direction (y)
     """
 

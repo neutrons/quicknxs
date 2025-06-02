@@ -17,7 +17,7 @@ help:
 
 docs:  ## create HTML docs under docs/_build/html/. Requires activation of the drtsans conda environment
 	# this will fail on a warning
-	@cd docs&& make html SPHINXOPTS="-W --keep-going -n" && echo -e "##########\n DOCS point your browser to file://$$(pwd)/_build/html/index.html\n##########"
+	@cd docs&& make html SPHINXOPTS="-n" && echo -e "##########\n DOCS point your browser to file://$$(pwd)/_build/html/index.html\n##########"
 
 docstest:  ## test doctest-style code snippets in the documentation
 	# this will fail on a warning

@@ -1,27 +1,27 @@
 """
-Class used to report on progress. It allows for sub-tasks and
-computes a meaningful progress status accordingly.
+Class used to report on progress.
+
+It allows for sub-tasks and computes a meaningful progress status accordingly.
 """
+
+from typing import Callable, Optional
+
+from qtpy.QtWidgets import QProgressBar
+
+from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
 
 
 class ProgressReporter(object):
-    """
-    Progress reporter class that allows for sub-tasks.
-    """
+    """Progress reporter class that allows for sub-tasks."""
 
-    def __init__(self, max_value=100, call_back=None, status_bar=None, progress_bar=None):
-        """
-
-        Parameters
-        ----------
-        max_value: int
-            max value
-        call_back:
-        status_bar:
-            status bar
-        progress_bar:
-            progress bar
-        """
+    def __init__(
+        self,
+        max_value: int = 100,
+        call_back: Optional[Callable] = None,
+        status_bar: Optional[StatusBarHandler] = None,
+        progress_bar: Optional[QProgressBar] = None,
+    ):
+        """Initialize the progress reporter."""
         self.max_value = max_value
         self.message = ""
         self.call_back = call_back
@@ -30,42 +30,32 @@ class ProgressReporter(object):
         self.status_bar = status_bar
         self.progress_bar = progress_bar
 
-    def __call__(self, value, message="", out_of=None):
-        """Shortcut to set_value() so that the object can be used
+    def __call__(self, value: int, message: str = "", out_of: Optional[int] = None):
+        """Shortcut to set_value() so that the object can be used.
+
         as a function to be compatible with QProgressDialog.setValue().
 
         Parameters
         ----------
-        value
-        message: str
+        value:
+            completion value, as a percentage
+        message:
             message to be displayed
-        out_of
-
-        Returns
-        -------
-        None
-
+        out_of:
+            if provided, the value is scaled to the max_value of the progress reporter
         """
         return self.set_value(value, message, out_of)
 
-    def set_value(self, value, message="", out_of=None):
-        """
-        Set the value of a progress indicator
-        :param int value: completion value, as a percentage
-        """
+    def set_value(self, value: int, message: str = "", out_of: Optional[int] = None):
+        """Set the value of a progress indicator."""
         if out_of is not None:
             value = int(value / out_of * self.max_value)
         value = min(value, self.max_value)
         self.value = value
         self.update(message)
 
-    def update(self, message=""):
-        """
-        Updates the progress status according to
-        sub-tasks.
-
-        :param str message: message to be displayed
-        """
+    def update(self, message: str = ""):
+        """Updates the progress status according to sub-tasks."""
         _value = self.value
         for item in self.sub_tasks:
             _value += min(item.value, item.max_value)
@@ -80,13 +70,19 @@ class ProgressReporter(object):
         if message and self.status_bar:
             self.status_bar.show_message(message)
 
-    def create_sub_task(self, max_value):
-        """
-        Create a sub-task, with max_value being its portion
-        of the complete task. Returns a call-back function
-        to be called by the worker to update the progress.
+    def create_sub_task(self, max_value: int) -> "ProgressReporter":
+        """Create a sub-task, with max_value being its portion of the complete task.
 
-        :param int max_value: portion of the task
+        Parameters
+        ----------
+        max_value :
+            The maximum value for the sub-task, representing its portion of the total task.
+
+        Returns
+        -------
+        ProgressReporter
+            A new ProgressReporter instance representing the sub-task,
+            to be called by the worker to update the progress.
         """
         sub_task_progress = ProgressReporter(max_value, self.update)
         self.sub_tasks.append(sub_task_progress)

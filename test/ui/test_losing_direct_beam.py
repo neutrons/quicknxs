@@ -9,12 +9,13 @@ from test.ui import ui_utilities
 
 
 def test_losing_direct_beam(qtbot):
-    r"""Test that reduction list runs do not lose their direct beam when the user clicks another run in the file list"""
+    r"""Test that reduction list runs do not lose their direct beam when the user clicks another run in the file list."""
     main_window = MainWindow()
     qtbot.addWidget(main_window)
 
     def _get_reduction_list_run_direct_beam(reduction_list_index, xs):
-        r"""Get the direct beam for the given reduction list run and cross-section
+        r"""Get the direct beam for the given reduction list run and cross-section.
+
         Returns
         -------
         int

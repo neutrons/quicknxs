@@ -1,16 +1,24 @@
 {
-    "OpenSum": {
-        "LogNames": [
-            "LambdaRequest", "frequency", "DANGLE", "SANGLE",
-            "S1HCenter", "S1VCenter", "S1HWidth", "S1Vheight",
-            "S2HCenter", "S2VCenter", "S2HWidth", "S2Vheight",
-            "S3HCenter", "S3VCenter", "S3HWidth", "S3Vheight"
-        ],
-        "Tolerances": [
-            0.01, 1.0, 0.01, 0.01,
-            0.01, 0.01, 0.01, 0.01,
-            0.01, 0.01, 0.01, 0.01,
-            0.01, 0.01, 0.01, 0.01
-        ]
-    }
+  "OpenSum": {
+    "LogNames": [
+      "LambdaRequest",
+      "frequency",
+      "DANGLE",
+      "SANGLE",
+      "S1HCenter",
+      "S1VCenter",
+      "S1HWidth",
+      "S1Vheight",
+      "S2HCenter",
+      "S2VCenter",
+      "S2HWidth",
+      "S2Vheight",
+      "S3HCenter",
+      "S3VCenter",
+      "S3HWidth",
+      "S3Vheight"
+    ],
+    "Tolerances": [0.01, 1.0, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+  },
+  "SMTP_SERVER": "160.91.4.26"
 }

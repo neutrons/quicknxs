@@ -7,7 +7,7 @@ from quicknxs.interfaces.main_window import MainWindow
 
 @pytest.mark.datarepo
 def test_table_data(qtbot, data_server):
-    """Test that the direct beam table is populated with the correct data"""
+    """Test that the direct beam table is populated with the correct data."""
     window_main = MainWindow()
     qtbot.addWidget(window_main)
     Configuration.setup_default_values()

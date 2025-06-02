@@ -1,8 +1,6 @@
 # pylint: disable=invalid-name
 # -*- coding: utf-8 -*-
-"""
-Options for the matplotlib graph creation.
-"""
+"""Options for the matplotlib graph creation."""
 
 config_file = "gui"
 

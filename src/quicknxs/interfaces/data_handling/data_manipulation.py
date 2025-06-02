@@ -1,31 +1,30 @@
-"""
-Methods used to process data, usually calling Mantid
-"""
+"""Methods used to process data, usually calling Mantid."""
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, multiple-statements, bare-except, protected-access, wrong-import-position
 
 import logging
 import math
 import time
+from typing import List, Optional
 
 import h5py
 import mantid
 import mantid.simpleapi as api
 import numpy as np
+from mantid.api import MatrixWorkspace
 
-from quicknxs.interfaces.data_handling.data_set import NexusMetaData
+from quicknxs.interfaces.data_handling.data_set import NexusData, NexusMetaData
 from quicknxs.interfaces.data_handling.instrument import Instrument
 
 
 class NormalizeToUnityQCutoffError(Exception):
-    """When normalizing to unity fails due to no data below Q cutoff"""
+    """When normalizing to unity fails due to no data below Q cutoff."""
 
     pass
 
 
 def generate_short_script(reduction_list):
-    """
-    Generate a simple reduction script for Mantid
-    """
+    """Generate a simple reduction script for Mantid."""
+
     if len(reduction_list) == 0:
         return "# No data in reduction list\n"
 
@@ -81,12 +80,15 @@ def generate_short_script(reduction_list):
     return script
 
 
-def generate_script(reduction_list, pol_state):
-    """
-    Generate a Mantid script for the reflectivity reduction
+def generate_script(reduction_list: List[NexusData], pol_state: str):
+    """Generate a Mantid script for the reflectivity reduction.
 
-    :param list reduction_list: list of NexusData objects
-    :param str pol_state: cross-section name
+    Parameters
+    ----------
+    reduction_list:
+        list of NexusData objects
+    pol_state:
+        cross-section name
     """
     ws_list = get_scaled_workspaces(reduction_list, pol_state)
 
@@ -104,12 +106,24 @@ def generate_script(reduction_list, pol_state):
     return script
 
 
-def stitch_reflectivity(reduction_list, xs=None, normalize_to_unity=True, q_cutoff=0.01):
-    """
-    Stitch and normalize data sets
+def stitch_reflectivity(
+    reduction_list: List[NexusData],
+    xs: Optional[str] = None,
+    normalize_to_unity: bool = True,
+    q_cutoff: float = 0.01,
+):
+    """Stitch and normalize data sets.
 
-    :param string xs: name of the cross-section to use
-    :param bool normalize_to_unity: if True, the specular ridge will be normalized to 1
+    Parameters
+    ----------
+    reduction_list:
+        List of NexusData objects to stitch
+    xs:
+        Name of the cross-section to use
+    normalize_to_unity:
+        if True, the specular ridge will be normalized to 1
+    q_cutoff:
+        Used if normalize_to_unity = True, data with q < q_cutoff are part of the specular ridge
     """
     if not reduction_list:
         return []
@@ -161,14 +175,19 @@ def stitch_reflectivity(reduction_list, xs=None, normalize_to_unity=True, q_cuto
     return scaling_factors
 
 
-def _prepare_workspace_for_stitching(cross_sections, xs_input, global_fit, ws_name):
-    """
-    Create a workspace from a CrossSectionData object that we
-    can call Stitch1D on.
-    :param dict cross_sections: dictionary with cross-section name and CrossSectionData objects
-    :param str xs: cross-section to use
-    :param bool global_fit: if True, merge data from all cross-sections
-    :param str ws_name: output workspace name
+def _prepare_workspace_for_stitching(cross_sections: dict, xs_input: str, global_fit: bool, ws_name: str):
+    """Create a workspace from a CrossSectionData object that we can call Stitch1D on.
+
+    Parameters
+    ----------
+    cross_sections:
+        Dictionary with cross-section name and CrossSectionData objects
+    xs:
+        Which cross-section to use
+    global_fit:
+        if True, merge data from all cross-sections
+    ws_name:
+        Name for the output Mantid workspace
     """
     if global_fit:
         xs_names = cross_sections.keys()
@@ -198,14 +217,27 @@ def _prepare_workspace_for_stitching(cross_sections, xs_input, global_fit, ws_na
     return ws
 
 
-def _get_stitching_overlap_region(ws_lo, ws_hi, n_points_outside_overlap=3):
-    """Get the x boundary values of the overlap region between two workspaces
+def _get_stitching_overlap_region(ws_lo: MatrixWorkspace, ws_hi: MatrixWorkspace, n_points_outside_overlap: int = 3):
+    """Get the x boundary values of the overlap region between two workspaces.
 
-    :param ~mantid.api.MatrixWorkspace ws_lo: the low-Q reflectivity curve
-    :param ~mantid.api.MatrixWorkspace ws_hi: the high-Q reflectivity curve
-    :param int n_points_outside_overlap: number of additional points on each end of the overlap region to include in the fit
-    :returns: tuple (min, max) defining the overlap region
-    :raises ValueError: if the x-range of workspace ws_lo is higher than the x-range of ws_hi
+    Parameters
+    ----------
+    ws_lo:
+        The low-Q reflectivity curve
+    ws_hi:
+        The high-Q reflectivity curve
+    n_points_outside_overlap:
+        Number of additional points on each end of the overlap region to include in the fit
+
+    Returns
+    -------
+    tuple
+        (min, max) defining the overlap region
+
+    Raises
+    ------
+    ValueError:
+        If the x-range of workspace ws_lo is higher than the x-range of ws_hi
     """
     if ws_lo.readX(0)[0] > ws_hi.readX(0)[0] or ws_lo.readX(0)[-1] > ws_hi.readX(0)[-1]:
         raise ValueError("x-range for ws_lo must not be higher than x-range for ws_hi")
@@ -232,23 +264,42 @@ def _get_stitching_overlap_region(ws_lo, ws_hi, n_points_outside_overlap=3):
     return xmin, xmax
 
 
-def _get_polynomial_fit_stitching_scaling_factor(ws_lo, ws_hi, n_polynom, n_points_outside_overlap=3):
-    """Get the scaling factor for stitching two curves by fitting a polynomial and a scaling factor
+def _get_polynomial_fit_stitching_scaling_factor(
+    ws_lo: MatrixWorkspace,
+    ws_hi: MatrixWorkspace,
+    n_polynom: int,
+    n_points_outside_overlap: int = 3,
+):
+    """Get the scaling factor for stitching two curves by fitting a polynomial and a scaling factor.
 
     For example, if the polynomial degree is 3, the scaling factor is obtained by minimizing the function
 
-    f(ws_lo, ws_hi) = sum_{ws_lo}{A0 + A1*x_i + A2*x_i^2 + A3*x_i^3} +
-        scaling_factor * sum_{ws_hi}{A0 + A1*x_i + A2*x_i^2 + A3*x_i^3}
+        f(ws_lo, ws_hi) = sum_{ws_lo}{A0 + A1*x_i + A2*x_i^2 + A3*x_i^3} +
+            scaling_factor * sum_{ws_hi}{A0 + A1*x_i + A2*x_i^2 + A3*x_i^3}
 
     where the independent variables are A0, A1, A2, A3 and scaling_factor.
 
-    :param ~mantid.api.MatrixWorkspace ws_lo: Low-Q reflectivity curve
-    :param ~mantid.api.MatrixWorkspace ws_hi: High-Q reflectivity curve
-    :param int n_polynom: Degree of the polynomial to fit the curves to
-    :param int n_points_outside_overlap: Number of additional points on each end of the overlap region to include in the fit
-    :returns: dictionary with keys `scale_factor_value`, `scale_factor_error`, `polynomial_coeffients`
-    :raises RunTimeError: If there are too few data points compared to the number of independent variables
-    :raises ValueError: If the x-range of workspace ws_lo is higher than the x-range of ws_hi
+    Parameters
+    ----------
+    ws_lo:
+        Low-Q reflectivity curve
+    ws_hi:
+        High-Q reflectivity curve
+    n_polynom:
+        Degree of the polynomial to fit the curves to
+    n_points_outside_overlap:
+        Number of additional points on each end of the overlap region to include in the fit
+
+    Returns
+    -------
+    Dictionary with keys `scale_factor_value`, `scale_factor_error`, `polynomial_coeffients`
+
+    Raises
+    ------
+    RunTimeError:
+        If there are too few data points compared to the number of independent variables
+    ValueError:
+        If the x-range of workspace ws_lo is higher than the x-range of ws_hi
     """
     # crop to the overlap region of the curves plus extra points
     xmin, xmax = _get_stitching_overlap_region(ws_lo, ws_hi, n_points_outside_overlap)
@@ -299,20 +350,42 @@ def _get_polynomial_fit_stitching_scaling_factor(ws_lo, ws_hi, n_polynom, n_poin
 
 
 def smart_stitch_reflectivity(
-    reduction_list, xs=None, normalize_to_unity=True, q_cutoff=0.01, global_fit=False, poly_degree=None, poly_points=3
+    reduction_list: List[NexusData],
+    xs: Optional[str] = None,
+    normalize_to_unity: bool = True,
+    q_cutoff: float = 0.01,
+    global_fit: bool = False,
+    poly_degree: Optional[int] = None,
+    poly_points: int = 3,
 ):
-    """
-    Stitch and normalize data sets
+    """Stitch and normalize data sets.
 
-    :param list[NexusData] reduction_list: list of data sets to stitch
-    :param string xs: name of the cross-section to use for the first data set
-    :param bool normalize_to_unity: if `True`, the specular ridge will be normalized to 1
-    :param float q_cutoff: used if `normalize_to_unity` = `True`, data with q < `q_cutoff` are part of the specular ridge
-    :param bool global_fit: if `True`, use data from all cross-sections to calculate scaling factors
-    :param int poly_degree: if not `None`, find the scaling factor by simultaneously fitting a polynomial and scaling factor to the two curves
-    :param int poly_points: number of additional points on each end of the overlap region to include in the fit
-    :returns: tuple (list of scaling factors, list of scaling factor errors)
-    :raises: NormalizeToUnityQCutoffError: if `normalize_to_unity` = `True`, but there is no data below `q_cutoff`
+    Parameters
+    ----------
+    reduction_list:
+        list of data sets to stitch
+    xs:
+        name of the cross-section to use for the first data set
+    normalize_to_unity:
+        if `True`, the specular ridge will be normalized to 1
+    q_cutoff:
+        used if `normalize_to_unity` = `True`, data with q < `q_cutoff` are part of the specular ridge
+    global_fit:
+        if `True`, use data from all cross-sections to calculate scaling factors
+    poly_degree:
+        if not `None`, find the scaling factor by simultaneously fitting a polynomial and scaling factor to the two curves
+    poly_points:
+        number of additional points on each end of the overlap region to include in the fit
+
+    Returns
+    -------
+    Tuple
+        (list of scaling factors, list of scaling factor errors)
+
+    Raises
+    ------
+    NormalizeToUnityQCutoffError:
+        if `normalize_to_unity` = `True`, but there is no data below `q_cutoff`
     """
     if not reduction_list:
         return []
@@ -445,12 +518,8 @@ def merge_reflectivity(reduction_list, xs, q_min=0.001, q_step=-0.01):
     return merged_ws
 
 
-def get_scaled_workspaces(reduction_list, xs):
-    """
-    Return a list of scaled workspaces
-    :param list reduction_list: list of NexusData objects
-    :param str xs: cross-section name
-    """
+def get_scaled_workspaces(reduction_list: List[NexusData], xs: str):
+    """Return a list of scaled workspaces."""
     ws_list = []
 
     for i in range(len(reduction_list)):
@@ -477,17 +546,14 @@ def get_scaled_workspaces(reduction_list, xs):
     return ws_list
 
 
-def extract_meta_data(file_path=None, cross_section_data=None):
-    """
-    Get mid Q-value from meta data
-    :param str file_path: name of the file to read
-    """
-    meta_data = NexusMetaData()
+def extract_metadata(file_path: Optional[str] = None, cross_section_data=None):
+    """Get mid Q-value from metadata."""
+    metadata = NexusMetaData()
 
     if cross_section_data is not None:
-        meta_data.mid_q = Instrument.mid_q_value(cross_section_data.event_workspace)
-        meta_data.is_direct_beam = cross_section_data.is_direct_beam
-        return meta_data
+        metadata.mid_q = Instrument.mid_q_value(cross_section_data.event_workspace)
+        metadata.is_direct_beam = cross_section_data.is_direct_beam
+        return metadata
     elif file_path is None:
         raise RuntimeError("Either a file path or a data object must be supplied")
 
@@ -498,27 +564,34 @@ def extract_meta_data(file_path=None, cross_section_data=None):
 
     if len(keys) == 0:
         logging.error("No entry in data file %s", file_path)
-        return meta_data
+        return metadata
 
     try:
         ws = api.LoadEventNexus(str(file_path), MetaDataOnly=True, NXentryName=str(keys[0]))
-        meta_data.mid_q = Instrument.mid_q_value(ws)
-        meta_data.is_direct_beam = Instrument.check_direct_beam(ws)
+        metadata.mid_q = Instrument.mid_q_value(ws)
+        metadata.is_direct_beam = Instrument.check_direct_beam(ws)
     except:
         logging.error("Exception extracting metadata")
         raise RuntimeError("Could not load file %s [%s]" % (file_path, keys[0]))
 
-    return meta_data
+    return metadata
 
 
-def read_log(ws, name, target_units="", assumed_units=""):
-    """
-    Read a log value, taking care of units.
+def read_log(ws: api.Workspace, name: str, target_units: str = "", assumed_units: str = ""):
+    """Read a log value, taking care of units.
+
     If the log entry has no units, the target units are assumed.
-    :param ws: workspace
-    :param str name: name of the property to read
-    :param str target_units: units to convert to
-    :param str assumed_units: units of origin, if not specified in the log itself
+
+    Parameters
+    ----------
+    ws:
+        Mantid workspace
+    name:
+        Name of the property to read
+    target_units:
+        Units to convert to
+    assumed_units:
+        Units of origin, if not specified in the log itself
     """
     _units = {
         "m": {

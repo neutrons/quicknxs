@@ -11,7 +11,7 @@ from quicknxs.interfaces.data_manager import DataManager
 
 @pytest.mark.datarepo
 def test_orso_output(data_server, tmpdir):
-    """Test saving reflectivity curves to ORSO"""
+    """Test saving reflectivity curves to ORSO."""
     Configuration.setup_default_values()
     conf = Configuration()
     conf.cut_first_n_points = 0
@@ -22,7 +22,7 @@ def test_orso_output(data_server, tmpdir):
     pw = ProcessingWorkflow(manager, output_options)
 
     def _load_to_reduction_list(filename):
-        """Loads a Nexus file and adds it to the reduction list"""
+        """Load a Nexus file and add it to the reduction list."""
         file_path = data_server.path_to(filename)
         manager.load(file_path, conf)
         manager.add_active_to_reduction()

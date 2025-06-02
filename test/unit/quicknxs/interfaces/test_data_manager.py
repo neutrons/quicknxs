@@ -16,6 +16,8 @@ def setup_method():
 
 
 class TestDataManagerTest(object):
+    """Test DataManager class."""
+
     @pytest.mark.datarepo
     def test_manager(self, data_server, setup_method):
         manager = DataManager(data_server.directory)
@@ -76,7 +78,7 @@ class TestDataManagerTest(object):
         manager.load_data_from_reduced_file(data_server.path_to("REF_M_29160_Specular_++.dat"))
 
     def test_clear_cached_unused_data(self, data_server):
-        """Test helper function clear_cached_unused_data"""
+        """Test helper function clear_cached_unused_data."""
         manager = DataManager(data_server.directory)
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
         manager.add_active_to_reduction()

@@ -3,30 +3,27 @@
 # pylint: disable=access-member-before-definition, too-many-locals, too-many-branches
 """
 Event handlers for the main application window.
+
 Most of those come straight from QuickNXS.
 """
 
-# standard imports
 import time
 from typing import List
 
-# third-party imports
+from matplotlib.backend_bases import MouseEvent
 from qtpy import QtWidgets
 
-# quicknxs imports
 from quicknxs.ui.mplwidget import MPLWidget
 
 
 def slow_down_events(fn):
-    """
-    Decorator to slow down UI events since PyQt5 seems to
-    be overactive with the UI events.
+    """Decorator to slow down UI events.
+
+    Seems to be necessary since PyQt5 seems to be overactive with the UI events.
     """
 
     def function_wrapper(self, *args, **kws):
-        """
-        Wrap a function to slow it down
-        """
+        """Wrap a function to slow it down."""
         if self.last_event is not None and time.time() - self.last_event < 0.3:
             return None
         self.last_event = time.time()
@@ -36,9 +33,7 @@ def slow_down_events(fn):
 
 
 class PlotHandler(object):
-    """
-    Class to handle plotting events
-    """
+    """Class to handle plotting events."""
 
     _picked_line = None
     control_down = False
@@ -53,9 +48,7 @@ class PlotHandler(object):
         self.connect_plot_events()
 
     def connect_plot_events(self):
-        """
-        Connect matplotlib mouse events.
-        """
+        """Connect matplotlib mouse events."""
         for plot in [
             self.ui.xy_pp,
             self.ui.xy_mp,
@@ -119,12 +112,10 @@ class PlotHandler(object):
         self.y_position_indicator.setMinimumWidth(100)
         self.ui.statusbar.addPermanentWidget(self.y_position_indicator)
 
-    def plot_mouse_event(self, event):
-        """
-        Show the mouse position of any plot in the main window
-        status bar, as the single plot status indicator is only
-        visible for larger plot toolbars.
-        :param event: event object
+    def plot_mouse_event(self, event: MouseEvent):
+        """Show the mouse position of any plot in the main window status bar.
+
+        The single plot status indicator is only visible for larger plot toolbars.
         """
         if event.inaxes is None:
             return
@@ -132,11 +123,8 @@ class PlotHandler(object):
         self.y_position_indicator.setText(" y=%g" % event.ydata)
 
     @slow_down_events
-    def change_color_scale(self, event):
-        """
-        Change the intensity limits of a map plot with the mouse wheel.
-        :param event: event object
-        """
+    def change_color_scale(self, event: MouseEvent):
+        """Change the intensity limits of a map plot with the mouse wheel."""
         # Scaling parameters
         _scale = 1.5
         _step = 0.42
@@ -167,18 +155,13 @@ class PlotHandler(object):
             canv.draw()
 
     def plot_release(self, event):
-        """
-        :param event: event object
-        """
+        """Release the mouse button on a plot."""
         self._picked_line = None
         self.main_window.changeRegionValues()
 
     @slow_down_events
-    def plot_pick_x(self, event):
-        """
-        Plot for x-projection has been clicked.
-        :param event: event object
-        """
+    def plot_pick_x(self, event: MouseEvent):
+        """Plot for x-projection has been clicked."""
         if event.button is not None and event.xdata is not None:
             self.main_window.auto_change_active = True
             if event.button == 1:
@@ -214,12 +197,8 @@ class PlotHandler(object):
             self.main_window.auto_change_active = False
             self.change_region_values()
 
-    def plot_pick_y(self, event):
-        """
-        Plot for y-projection has been clicked.
-        :param self QMainWindow: main window object
-        :param event: event object
-        """
+    def plot_pick_y(self, event: MouseEvent):
+        """Plot for y-projection has been clicked."""
         self.main_window.auto_change_active = True
         if event.button == 1 and event.xdata is not None:
             ypos = self.ui.refYPos.value()
@@ -241,11 +220,7 @@ class PlotHandler(object):
         self.change_region_values()
 
     def plot_pick_xy(self, event):
-        """
-        Plot for xy-map has been clicked.
-        :param self QMainWindow: main window object
-        :param event: event object
-        """
+        """Plot for xy-map has been clicked."""
         self.main_window.auto_change_active = True
         if event.button == 1 and event.xdata is not None:
             self.ui.refXPos.setValue(event.xdata)
@@ -268,10 +243,8 @@ class PlotHandler(object):
         self.main_window.auto_change_active = False
         self.change_region_values()
 
-    def plot_pick_xtof(self, event):
-        """
-        :param event: event object
-        """
+    def plot_pick_xtof(self, event: MouseEvent):
+        """Plot for xtof-map has been clicked."""
         self.main_window.auto_change_active = True
         if event.button == 1 and event.ydata is not None:
             xcen = self.ui.refXPos.value()
@@ -308,10 +281,8 @@ class PlotHandler(object):
         self.change_region_values()
 
     @slow_down_events
-    def scale_on_plot(self, event):
-        """
-        :param event: event object
-        """
+    def scale_on_plot(self, event: MouseEvent):
+        """Scale the reflectivity on the plot with the mouse wheel."""
         steps = event.step
         xpos = event.xdata
         if xpos is None:
@@ -327,8 +298,8 @@ class PlotHandler(object):
                 self.ui.reductionTable.setItem(i, 1, QtWidgets.QTableWidgetItem("%.4f" % (Inew)))
 
     def change_region_values(self):
-        """
-        Called when the reflectivity extraction region has been changed.
+        """Called when the reflectivity extraction region has been changed.
+
         Sets up a trigger to replot the reflectivity with a delay so
         a subsequent change can occur without several replots.
         """
@@ -383,7 +354,7 @@ class PlotHandler(object):
         #        self.main_window.auto_change_active = old_aca
 
     def change_offspec_colorscale(self):
-        """Modify color scale"""
+        """Modify color scale."""
         plots: List[MPLWidget] = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
         Imin = 10 ** self.ui.offspecImin.value()
         Imax = 10 ** self.ui.offspecImax.value()
@@ -398,7 +369,7 @@ class PlotHandler(object):
         self.plot_manager.plot_offspec(recalc=False)
 
     def clip_offspec_colorscale(self):
-        """Modify color scale"""
+        """Modify color scale."""
         plots = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
         Imin = 1e10
         data_set_keys = list(self.main_window.data_manager.data_sets.keys())

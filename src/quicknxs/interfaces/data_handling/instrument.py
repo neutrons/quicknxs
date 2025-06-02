@@ -1,7 +1,7 @@
 """
-This instrument description contains information
-that is instrument-specific and abstracts out how we obtain
-information from the data file
+Container class for instrument-specific data handling.
+
+Abstracts out how we obtaininformation from the data file
 """
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, bare-except
 
@@ -10,15 +10,19 @@ import math
 import random
 import string
 import sys
-from typing import List
+from typing import TYPE_CHECKING, List, Optional
 
 import mantid.simpleapi as api
 import numpy as np
-from mantid.api import WorkspaceGroup
+from mantid.api import PythonAlgorithm, WorkspaceGroup
 from mantid.dataobjects import EventWorkspace
 
-from quicknxs.interfaces.data_handling import DeadTimeCorrection
+from quicknxs.interfaces.data_handling import dead_time_correction
 from quicknxs.interfaces.data_handling.filepath import FilePath
+
+if TYPE_CHECKING:
+    from quicknxs.interfaces.configuration import Configuration
+    from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 
 # Constants
 h = 6.626e-34  # m^2 kg s^-1
@@ -28,9 +32,7 @@ UNPOLARIZED_XS_LABEL = "Off_Off"
 
 
 def get_cross_section_label(ws, entry_name):
-    """
-    Return the proper cross-section label.
-    """
+    """Return the proper cross-section label."""
     entry_name = str(entry_name)
     pol_is_on = entry_name.lower().startswith("on")
     ana_is_on = entry_name.lower().endswith("on")
@@ -64,14 +66,21 @@ def get_cross_section_label(ws, entry_name):
         return "%s%s" % (pol_label, ana_label)
 
 
-def mantid_algorithm_exec(algorithm_class, **kwargs):
-    """
-    Helper function for executing a Mantid-style algorithm
+def mantid_algorithm_exec(algorithm_class: PythonAlgorithm, **kwargs) -> Optional[EventWorkspace]:
+    """Helper function for executing a Mantid-style algorithm.
 
-    :param PythonAlgorithm algorithm_class: the algorithm class to execute
-    :param kwargs: keyword arguments
-    :returns Workspace: if ``OutputWorkspace`` is passed as a keyword argument, the value of the
-                       algorithm property ``OutputWorkspace`` will be returned
+    Parameters
+    ----------
+    algorithm_class:
+        The algorithm class to execute
+    **kwargs:
+        Keyword arguments to set the algorithm properties.
+
+    Returns
+    -------
+    Workspace or None:
+        If ``OutputWorkspace`` is passed as a keyword argument,
+        the value of the algorithm property ``OutputWorkspace`` will be returned
     """
     algorithm_instance = algorithm_class()
     assert hasattr(algorithm_instance, "PyInit"), f"{algorithm_class} is not a Mantid Python algorithm"
@@ -83,21 +92,28 @@ def mantid_algorithm_exec(algorithm_class, **kwargs):
         return algorithm_instance.getProperty("OutputWorkspace").value
 
 
-def get_dead_time_correction(ws, configuration, error_ws=None):
+def get_dead_time_correction(
+    ws: EventWorkspace, configuration: "Configuration", error_ws: Optional[EventWorkspace] = None
+):
     """Compute dead time correction to be applied to the reflectivity curve.
 
     The method will also try to load the error events from each of the
     data files to ensure that we properly estimate the dead time correction.
 
-    :param ws: workspace with raw data to compute correction for
-    :param configuration: reduction parameters
-    :param error_ws: workspace with error events
+    Parameters
+    ----------
+    ws:
+        Workspace with raw data to compute correction for
+    configuration:
+        Reduction parameters
+    error_ws:
+        Workspace with error events
     """
     tof_min = ws.getTofMin()
     tof_max = ws.getTofMax()
 
     corr_ws = mantid_algorithm_exec(
-        DeadTimeCorrection.SingleReadoutDeadTimeCorrection,
+        dead_time_correction.SingleReadoutDeadTimeCorrection,
         InputWorkspace=ws,
         InputErrorEventsWorkspace=error_ws,
         Paralyzable=configuration.paralyzable_deadtime,
@@ -110,12 +126,19 @@ def get_dead_time_correction(ws, configuration, error_ws=None):
     return corr_ws
 
 
-def apply_dead_time_correction(ws, configuration, error_ws=None) -> EventWorkspace:
+def apply_dead_time_correction(
+    ws: EventWorkspace, configuration: "Configuration", error_ws: Optional[EventWorkspace] = None
+) -> EventWorkspace:
     """Apply dead time correction, and ensure that it is done only once per workspace.
 
-    :param ws: workspace with raw data to compute correction for
-    :param configuration: reduction parameters
-    :param error_ws: workspace with error events
+    Parameters
+    ----------
+    ws:
+        Workspace with raw data to compute correction for
+    configuration:
+        Reduction parameters
+    error_ws:
+        Workspace with error events
     """
     if "dead_time_applied" not in ws.getRun():
         corr_ws = get_dead_time_correction(ws, configuration, error_ws=error_ws)
@@ -126,7 +149,7 @@ def apply_dead_time_correction(ws, configuration, error_ws=None) -> EventWorkspa
 
 def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
     """
-    Removes workspaces with number of events below the cutoff from a list of workspaces
+    Removes workspaces with number of events below the cutoff from a list of workspaces.
 
     Parameters
     ----------
@@ -136,7 +159,7 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
 
     Returns
     -------
-    list[EventWorkspace]
+    List[EventWorkspace]
         Input list with low event workspaces removes
     """
     pruned_list = []
@@ -150,9 +173,7 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
 
 
 class Instrument(object):
-    """
-    Instrument class. Holds the data handling that is unique to a specific instrument.
-    """
+    """Instrument class. Holds the data handling that is unique to a specific instrument."""
 
     n_x_pixel = 304
     n_y_pixel = 256
@@ -175,21 +196,29 @@ class Instrument(object):
         self.ana_veto = "AnalyzerVeto"
 
     @staticmethod
-    def dummy_filter_cross_sections(ws: EventWorkspace, name_prefix: str = None) -> WorkspaceGroup:
+    def dummy_filter_cross_sections(ws: EventWorkspace, name_prefix: Optional[str] = None) -> WorkspaceGroup:
         r"""Filter events according to an aggregated state log.
 
-        Examples:
+        Parameters
+        ----------
+        ws:
+            Workspace containing the unfiltered events
+        name_prefix:
+            Root name of the output WorkspaceGroup.
+            If None, the run number of the workspace is chosen as the root name.
+
+        Returns
+        -------
+        WorkspaceGroup:
+            A group workspace for each of the four different filter/analyzer conbinations
+
+        Examples
+        --------
         BL4A:SF:ICP:getDI
         015 (0000 1111): SF1=OFF, SF2=OFF, SF1Veto=OFF, SF2Veto=OFF
         047 (0010 1111): SF1=ON, SF2=OFF, SF1Veto=OFF, SF2Veto=OFF
         031 (0001 1111): SF1=OFF, SF2=ON, SF1Veto=OFF, SF2Veto=OFF
         063 (0011 1111): SF1=ON, SF2=ON, SF1Veto=OFF, SF2Veto=OFF
-
-        @param ws: workspace containing the unfiltered events
-        @param name_prefix: root name of the output WorkspaceGroup. If None, the run number of the workspace is chosen
-        as the root name.
-
-        @return a group workspace for each of the four different filter/analyzer conbinations
         """
         state_log = "BL4A:SF:ICP:getDI"
         states = {"Off_Off": 15, "On_Off": 47, "Off_On": 31, "On_On": 63}
@@ -223,21 +252,21 @@ class Instrument(object):
 
         return cross_sections
 
-    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration) -> List[EventWorkspace]:
+    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration: "Configuration") -> List[EventWorkspace]:
         """Load the cross-sections from a data file. Handles both pre- and post-epics data.
 
         Parameters
         ----------
-        file_path: str
+        file_path:
             Path to the data file
-        ws_root_name: str
+        ws_root_name:
             Root name of the workspace (used to rename the cross-sections after loading)
-        configuration: Configuration
-            Reduction configuration parameters
+        configuration:
+            Reduction parameters
 
         Returns
         -------
-        list[EventWorkspace]
+        List[EventWorkspace]
             List of cross-section workspaces
         """
         temp_ws_root_name = "".join(random.sample(string.ascii_letters, 12))  # random string of 12 characters
@@ -345,7 +374,7 @@ class Instrument(object):
                 )
         return xs_list
 
-    def load_data(self, file_path: str, configuration=None) -> List[EventWorkspace]:
+    def load_data(self, file_path: str, configuration: Optional["Configuration"] = None) -> List[EventWorkspace]:
         r"""Load one or more data sets according to the needs of the instrument.
 
         This function assumes that when loading more than one data file, the files are congruent and their
@@ -355,7 +384,9 @@ class Instrument(object):
             file_path (str): absolute path to one or more data files. If more than one, paths should be concatenated with the plus symbol '+'.
             configuration (Configuration): reduction configuration parameters
 
-        Returns:
+        Returns
+        -------
+        List[EventWorkspace]:
             A list of EventWorkspaces, one for each cross-section
         """
         fp_instance = FilePath(file_path)
@@ -377,22 +408,18 @@ class Instrument(object):
         return xs_list
 
     @classmethod
-    def mid_q_value(cls, ws):
-        """
-        Get the mid q value, at the requested wl mid-point.
+    def mid_q_value(cls, ws: EventWorkspace) -> float:
+        """Get the mid q value, at the requested wl mid-point.
+
         This is used when sorting out data sets and doesn't need any overwrites.
-        :param workspace ws: Mantid workspace
         """
         wl = ws.getRun().getProperty("LambdaRequest").value[0]
         theta_d = api.MRGetTheta(ws)
         return 4.0 * math.pi * math.sin(theta_d) / wl
 
     @classmethod
-    def scattering_angle_from_data(cls, data_object):
-        """
-        Compute the scattering angle from a CrossSectionData object, in degrees.
-        @param data_object: CrossSectionData object
-        """
+    def scattering_angle_from_data(cls, data_object: "CrossSectionData") -> float:
+        """Compute the scattering angle from a CrossSectionData object, in degrees."""
         _dirpix = (
             data_object.configuration.direct_pixel_overwrite if data_object.configuration.set_direct_pixel else None
         )
@@ -415,18 +442,14 @@ class Instrument(object):
 
     @classmethod
     def check_direct_beam(cls, ws):
-        """
-        Determine whether this data is a direct beam
-        """
+        """Determine whether this data is a direct beam."""
         try:
             return ws.getRun().getProperty("data_type").value[0] == 1
         except:
             return False
 
     def direct_beam_match(self, scattering, direct_beam, skip_slits=False):
-        """
-        Verify whether two data sets are compatible.
-        """
+        """Verify whether two data sets are compatible."""
         if math.fabs(scattering.lambda_center - direct_beam.lambda_center) < self.tolerance and (
             skip_slits
             or (
@@ -441,7 +464,7 @@ class Instrument(object):
     @classmethod
     def get_info(cls, workspace, data_object):
         """
-        Retrieve information that is specific to this particular instrument
+        Retrieve information that is specific to this particular instrument.
 
         @param workspace: Mantid workspace
         @param data_object: CrossSectionData object
@@ -490,13 +513,14 @@ class Instrument(object):
         except:
             data_object.is_direct_beam = False
 
-    def integrate_detector(self, ws, specular=True):
-        """
-        Integrate a workspace along either the main direction (specular=False) or
-        the low-resolution direction (specular=True.
+    def integrate_detector(self, ws: EventWorkspace, specular: bool = True):
+        """Integrate a workspace along either the main direction or the low-resolution direction.
 
-        :param ws: Mantid workspace
-        :param specular bool: if True, the low-resolution direction is integrated over
+        ws:
+            Mantid workspace to integrate
+        specular:
+            If True, the workspace is integrated over the low-resolution direction.
+            If False, the workspace is integrated over the main direction.
         """
         ws_summed = api.RefRoi(
             InputWorkspace=ws,

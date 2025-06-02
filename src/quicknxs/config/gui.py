@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name
-"""
-GUI configuration settings
-"""
+"""GUI configuration settings."""
 
 from qtpy.QtGui import QColor
 
@@ -29,7 +27,7 @@ figure_params = [
 
 
 class QColors:
-    """Container for reused QColors"""
+    """Container for reused QColors."""
 
     black = QColor(0, 0, 0)
     dark_grey = QColor(200, 200, 200)

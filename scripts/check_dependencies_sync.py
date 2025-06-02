@@ -8,8 +8,7 @@ repo_dir: str = os.path.dirname(script_dir)
 
 
 def check_dependencies_synced():
-    r"""Check that the dependencies of environment.yml, meta.yaml and pyproject.toml are in sync"""
-
+    r"""Check that the dependencies of environment.yml, meta.yaml and pyproject.toml are in sync."""
     conda_env = open(os.path.join(repo_dir, "environment.yml"), "r").read()
     pyproject_toml = open(os.path.join(repo_dir, "pyproject.toml"), "r").read()
     conda_recipe = open(os.path.join(repo_dir, "conda.recipe", "meta.yaml"), "r").read()

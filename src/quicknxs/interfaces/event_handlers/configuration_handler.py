@@ -8,7 +8,7 @@ from quicknxs.interfaces.configuration import Configuration
 
 class ConfigurationHandler:
     """
-    Handles events upon changes in the configuration
+    Handles events upon changes in the configuration.
 
     Configuration state that is global to all runs is stored as class variables in the class
     `Configuration`. This class handles updating the configuration state upon changes in the UI
@@ -22,8 +22,9 @@ class ConfigurationHandler:
         self.connect_config_events()
 
     def config_setter_factory(self, qwidget: QWidget, config_name: str):
-        """
-        Generate anonymous functions to serve as callback when any of the global configurations
+        """Factory function to create configuration setters.
+
+        Generates anonymous functions to serve as callback when any of the global configurations
         (`Configuration` class variables) are updated in the UI.
 
         Each callback will be associated to one configuration parameter. Upon invoked,
@@ -52,25 +53,27 @@ class ConfigurationHandler:
         return config_setter
 
     def global_reflectivity_updater(self):
-        """
-        Recalculate and replot reflectivity upon change in global reflectivity configuration
-        """
+        """Recalculate and replot reflectivity upon change in global reflectivity configuration."""
         self.main_window.global_reflectivity_config_changed()
 
     def connect_config_events(self):
-        """Connect configuration widget events"""
+        """Connect configuration widget events."""
 
         @dataclass
         class ConfigWidget:
-            """Class to help connect UI configuration widgets to events
+            """Class to help connect UI configuration widgets to events.
 
             Holds widget name and the `Configuration` class variable it represents, as well
             as information about any events the widget triggers
 
-            Args:
-                widget_name (str): name of a QWidget
-                config_name (str): name of a `Configuration` class variable
-                recalc_reflectivity (bool): if True, trigger global reflectivity recalculation
+            Attributes
+            ----------
+            widget_name:
+                Name of a QWidget
+            config_name:
+                Name of a `Configuration` class variable
+            recalc_reflectivity:
+                If True, trigger global reflectivity recalculation
             """
 
             widget_name: str

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # pylint: disable=invalid-name, too-many-instance-attributes
 """
-Plotting widget taken from QuickNXS
+Plotting widget taken from QuickNXS.
 
 #TODO: refactor this or replace it with a standard solution
 """
@@ -50,9 +50,7 @@ def getIcon(filename: str) -> "QtGui.QIcon":
 
 
 class NavigationToolbar(NavigationToolbar2QT):
-    """
-    A small change to the original navigation toolbar.
-    """
+    """A small change to the original navigation toolbar."""
 
     _auto_toggle = False
 
@@ -95,15 +93,11 @@ class NavigationToolbar(NavigationToolbar2QT):
         self.adj_window = None
 
     def _add_buttons(self):
-        """
-        Function for derived classes to add buttons to the toolbar.
-        """
+        """Function for derived classes to add buttons to the toolbar."""
         pass
 
     def print_figure(self):
-        """
-        Save the plot to a temporary png file and show a preview dialog also used for printing.
-        """
+        """Save the plot to a temporary png file and show a preview dialog also used for printing."""
         filetypes = self.canvas.get_supported_filetypes_grouped()
 
         filename = os.path.join(tempfile.gettempdir(), "quicknxs_print.png")
@@ -184,9 +178,7 @@ class NavigationToolbar(NavigationToolbar2QT):
 
 
 class NavigationToolbarGeneric(NavigationToolbar):
-    """
-    A navigation toolbar for a generic plot.
-    """
+    """A navigation toolbar for a generic plot."""
 
     def _add_buttons(self):
         """Add buttons specific to this navigation toolbar."""
@@ -217,9 +209,7 @@ class NavigationToolbarGeneric(NavigationToolbar):
 
 
 class NavigationToolbarReflectivity(NavigationToolbar):
-    """
-    A navigation toolbar for reflectivity plots created using matplotlib's errorbar function.
-    """
+    """A navigation toolbar for reflectivity plots created using matplotlib's errorbar function."""
 
     def __init__(self, canvas, parent, coordinates=False):
         self.q_pow_4_button = None
@@ -248,9 +238,7 @@ class NavigationToolbarReflectivity(NavigationToolbar):
         a.setToolTip("Toggle lines between points")
 
     def toggle_xlog(self, *args):
-        """
-        Toggle between linear and logarithmic x-axis.
-        """
+        """Toggle between linear and logarithmic x-axis."""
         ax = self.canvas.ax
         logstate = ax.get_xscale()
         if logstate == "linear":
@@ -260,9 +248,7 @@ class NavigationToolbarReflectivity(NavigationToolbar):
         self.canvas.draw()
 
     def toggle_ylog(self, *args):
-        """
-        Toggle between linear and logarithmic y-axis.
-        """
+        """Toggle between linear and logarithmic y-axis."""
         ax = self.canvas.ax
         logstate = ax.get_yscale()
         if logstate == "linear":
@@ -272,9 +258,7 @@ class NavigationToolbarReflectivity(NavigationToolbar):
         self.canvas.draw()
 
     def toggle_rq4_scale(self, *args):
-        """
-        Toggle between plotting R and R * Q^4
-        """
+        """Toggle between plotting R and R * Q^4."""
         # should the y data be scaled by Q^4?
         is_yaxis_q_pow_4 = self.q_pow_4_button.isChecked()
 
@@ -315,9 +299,7 @@ class NavigationToolbarReflectivity(NavigationToolbar):
         self.canvas.draw()
 
     def toggle_lines(self, *args):
-        """
-        Toggle lines between points in the plot
-        """
+        """Toggle lines between points in the plot."""
         ax = self.canvas.ax
         if len(ax.lines) < 3:
             return
@@ -334,6 +316,8 @@ class NavigationToolbarReflectivity(NavigationToolbar):
 
 
 class MplCanvas(FigureCanvas):
+    """A canvas for matplotlib figures, used in the MPLWidget."""
+
     def __init__(self, parent=None, width=3, height=3, dpi=100, sharex=None, sharey=None, adjust={}):
         self.fig = Figure(figsize=(width, height), dpi=dpi, facecolor="None")
         self.ax = self.fig.add_subplot(111, sharex=sharex, sharey=sharey)
@@ -366,6 +350,8 @@ class MplCanvas(FigureCanvas):
 
 
 class MPLWidget(QtWidgets.QWidget):
+    """A widget for displaying matplotlib plots, with a navigation toolbar."""
+
     cplot = None
     cbar = None
 
@@ -402,8 +388,8 @@ class MPLWidget(QtWidgets.QWidget):
         self.toolbar.update()
 
     def leaveEvent(self, event):
-        """
-        Make sure the cursor is reset to it's default when leaving the widget.
+        """Make sure the cursor is reset to it's default when leaving the widget.
+
         In some cases the zoom cursor does not reset when leaving the plot.
         """
         if self.toolbar:
@@ -420,32 +406,24 @@ class MPLWidget(QtWidgets.QWidget):
         return config
 
     def draw(self):
-        """
-        Convenience to redraw the graph.
-        """
+        """Convenience to redraw the graph."""
         self.canvas.fig.tight_layout()
         self.canvas.draw()
 
     def plot(self, *args, **opts):
-        """
-        Convenience wrapper for self.canvas.ax.plot
-        """
+        """Convenience wrapper for self.canvas.ax.plot."""
         result = self.canvas.ax.plot(*args, **opts)
         self.sync_toolbar_view()
         return result
 
     def semilogy(self, *args, **opts):
-        """
-        Convenience wrapper for self.canvas.ax.semilogy
-        """
+        """Convenience wrapper for self.canvas.ax.semilogy."""
         result = self.canvas.ax.semilogy(*args, **opts)
         self.sync_toolbar_view()
         return result
 
     def errorbar(self, *args, **opts):
-        """
-        Convenience wrapper for self.canvas.ax.errorbar
-        """
+        """Convenience wrapper for self.canvas.ax.errorbar."""
         if self.toolbar:
             # change to toolbar with reflectivity-specific options
             self.stacked_toolbars.setCurrentIndex(1)
@@ -471,9 +449,7 @@ class MPLWidget(QtWidgets.QWidget):
         return result
 
     def pcolormesh(self, datax, datay, dataz, log=False, imin=None, imax=None, update=False, **opts):
-        """
-        Convenience wrapper for self.canvas.ax.plot
-        """
+        """Convenience wrapper for self.canvas.ax.plot."""
         if self.cplot is None or not update:
             if log:
                 self.cplot = self.canvas.ax.pcolormesh(datax, datay, dataz, norm=LogNorm(imin, imax), **opts)
@@ -485,9 +461,7 @@ class MPLWidget(QtWidgets.QWidget):
         return self.cplot
 
     def imshow(self, data, log=False, imin=None, imax=None, update=True, **opts):
-        """
-        Convenience wrapper for self.canvas.ax.plot
-        """
+        """Convenience wrapper for self.canvas.ax.plot."""
         if self.cplot is None or not update:
             if log:
                 self.cplot = self.canvas.ax.imshow(data, norm=LogNorm(imin, imax), **opts)

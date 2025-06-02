@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 # pylint: bare-except
 
-# standard imports
 import logging
 import sys
 from typing import List
 
-# third-party imports
 import numpy as np
 
-# quicknxs imports
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 from quicknxs.ui.mplwidget import MPLWidget
 
 
 class PlotManager(object):
+    """PlotManager is responsible for plotting the data in the main window."""
+
     _refl_color_list = ["blue", "red", "green", "purple", "#aaaa00", "cyan"]
 
     def __init__(self, main_window):
@@ -38,9 +37,7 @@ class PlotManager(object):
         self.xtof_bck2 = None
 
     def plot_overview(self):
-        """
-        X vs. Y and X vs. Tof for main channel.
-        """
+        """X vs. Y and X vs. Tof for main channel."""
         self.xy_x1 = None
         self.xy_x2 = None
         self.xy_y1 = None
@@ -178,9 +175,7 @@ class PlotManager(object):
         main_window.ui.xtof_overview.draw()
 
     def plot_xy(self):
-        """
-        X vs. Y plots for all channels.
-        """
+        """X vs. Y plots for all channels."""
         main_window = self.main_window
         data_set_keys = list(main_window.data_manager.data_sets.keys())
         plots = [main_window.ui.xy_pp, main_window.ui.xy_mm, main_window.ui.xy_pm, main_window.ui.xy_mp]
@@ -262,9 +257,7 @@ class PlotManager(object):
         progress(100, message="Ready", out_of=100)
 
     def plot_xtof(self):
-        """
-        X vs. ToF plots for all channels.
-        """
+        """X vs. ToF plots for all channels."""
         main_window = self.main_window
         data_set_keys = list(main_window.data_manager.data_sets.keys())
         imin = 1e20
@@ -347,8 +340,8 @@ class PlotManager(object):
         progress(100, message="Ready", out_of=100)
 
     def plot_projections(self, preserve_lim=False):
-        """
-        Create projections of the data on the x and y axes.
+        """Create projections of the data on the x and y axes.
+
         The x-projection can also be done be means of quantile calculation,
         which means that the ToF intensities are calculation which are
         exceeded by a certain number of points. This can be helpful to better
@@ -436,7 +429,8 @@ class PlotManager(object):
         main_window.ui.y_project.draw()
 
     def plot_offspec(self, recalc=True, crop=False):
-        """
+        """Plot off-specular data.
+
         Create an offspecular plot for all channels of the datasets in the
         reduction list. The user can define upper and lower bounds for the
         plotted intensity and select the coordinates to be either kiz-kfz vs. Qz,
@@ -587,10 +581,7 @@ class PlotManager(object):
         widget.draw()
 
     def plot_intensity(self, preserve_lim=False):
-        """
-        Calculate and display the direct beam intensity from the current dataset.
-        """
-
+        """Calculate and display the direct beam intensity from the current dataset."""
         # hide the reflectivity plot or clear existing intensity plot
         self.main_window.ui.refl_widget.hide()
         self.main_window.ui.intensity.clear()
@@ -630,7 +621,8 @@ class PlotManager(object):
         self.main_window.ui.intensity_widget.show()
 
     def plot_refl(self, preserve_lim=False):
-        """
+        """Plot reflectivity data.
+
         Calculate and display the reflectivity from the current dataset
         and any dataset stored. Intensities from direct beam
         measurements can be used for normalization.
@@ -722,9 +714,7 @@ class PlotManager(object):
         self.main_window.ui.compare_widget.update_preview()
 
     def plot_gisans(self):
-        """
-        Create GISANS plots of the current dataset with Qy-Qz maps.
-        """
+        """Create GISANS plots of the current dataset with Qy-Qz maps."""
         if self.main_window.data_manager.active_channel is None:
             return
 
