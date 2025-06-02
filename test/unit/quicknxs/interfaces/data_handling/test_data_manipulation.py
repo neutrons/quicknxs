@@ -282,7 +282,7 @@ class TestDataManipulation(object):
             ("REF_M_42112.nxs.h5", {"mid_q": 0.00013398646965655087, "is_direct_beam": False}),
         ],
     )
-    def test_extract_meta_data(self, data_server, data_file, expected):
+    def test_extract_metadata(self, data_server, data_file, expected):
         """Test the extract_metadata function."""
         manager = DataManager(data_server.directory)
         fp = f"{data_server.directory}/quicknxs-data/{data_file}"
