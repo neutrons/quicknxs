@@ -5,7 +5,7 @@ Release Notes
 =============
 Notes for major and minor releases. Notes for Patch releases are deferred.
 
-.. v4.5.0
+.. v4.6.0
 .. ------
 .. (date of release, format YYYY-MM-DD)
 
@@ -15,6 +15,13 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. **Of interest to the Developer:**
 
 .. PR #167 Adds a utility class for reusing QColors
+
+v4.5.0
+------
+2025-06-10
+
+This release adds the ability to edit cells in the direct beam table (PR #164) and a new utility
+class for reusing QColors (PR #167).
 
 v4.4.0
 ------
