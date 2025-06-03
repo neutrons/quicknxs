@@ -36,7 +36,7 @@ requirements:
     - versioningit
 
   run:
-    - mr_reduction=2.2.0
+    - mr_reduction=2.5.0
 
 test:
   imports:
