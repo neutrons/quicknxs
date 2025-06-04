@@ -23,7 +23,7 @@ jobs:
       - name: Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          channels: neutrons/label/main,mantid/label/main,oncat,conda-forge
+          channels: neutrons/label/main,oncat,conda-forge,mantid-ornl,mantid/label/main
           python-version: '3.10'
           miniconda-version: latest
           mamba-version: "*"
