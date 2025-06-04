@@ -3,7 +3,7 @@ name = "quicknxs"
 description = "Magnetic Reflectivity Reduction"
 dynamic = ["version"]
 requires-python = ">=3.10"
-dependencies = ["mr_reduction==2.2.0"]
+dependencies = ["mr_reduction==2.5.0"]
 license = { text = "Apache-2.0" }
 keywords = ["neutrons", "quicknxs", "magnetic reflectivity"]
 readme = "README.md"

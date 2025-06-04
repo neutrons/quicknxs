@@ -1,11 +1,13 @@
 name: quicknxs
 channels:
   - neutrons/label/main
-  - mantid/label/main
   - oncat
   - conda-forge
+  # required by mr_reduction
+  - mantid-ornl
+  - mantid
 dependencies:
-  - mr_reduction=2.2.0
+  - mr_reduction=2.5.0
   - anaconda-client
   - boa
   - codecov
@@ -13,7 +15,6 @@ dependencies:
   - conda-verify
   - libarchive
   - libmamba
-  - muparser=2.3.4 # Pin until mantid releases 6.12.0.2
   - pre-commit
   - pylint
   - pytest

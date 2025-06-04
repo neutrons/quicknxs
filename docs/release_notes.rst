@@ -13,7 +13,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. PR #164 Fixes ability to edit cells in direct beam table
 
 .. **Of interest to the Developer:**
-
+.. PR #169 Update mr_reduction to 2.5.0
 .. PR #167 Adds a utility class for reusing QColors
 
 v4.5.0
