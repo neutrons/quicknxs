@@ -29,7 +29,7 @@ class DataManager(object):
         Current file name, used for file list table to set the current item
     _nexus_data
         Current data set
-    active_channel
+    active_cross_section
         Currently active CrossSectionData
     _cache
         Cache of loaded data
@@ -58,7 +58,7 @@ class DataManager(object):
         self.current_file_name: Optional[str] = None
         self._nexus_data: Optional[NexusData] = None
 
-        self.active_channel: Optional[CrossSectionData] = None
+        self.active_cross_section: Optional[CrossSectionData] = None
         self.active_reduction_list_index: int = 1
 
         # Main data structure holding the reduction list for each ROI/peak
@@ -74,8 +74,8 @@ class DataManager(object):
         self.final_merged_reflectivity = {}
 
         self._cache: List[NexusData] = list()
-        self.cached_offspec = None
-        self.cached_gisans = None
+        self.cached_offspec: Optional[dict] = None
+        self.cached_gisans: Optional[dict] = None
 
     @property
     def data_sets(self):
@@ -128,7 +128,7 @@ class DataManager(object):
         """
         if index < len(self.reduction_list):
             self._nexus_data = self.reduction_list[index]
-            self.set_channel(0)
+            self.set_active_cross_section(0)
 
     def set_active_data_from_direct_beam_list(self, index: int):
         """Set a data set in the direct beam list as the active data set according to its index.
@@ -138,23 +138,23 @@ class DataManager(object):
         """
         if index < len(self.direct_beam_list):
             self._nexus_data = self.direct_beam_list[index]
-            self.set_channel(0)
+            self.set_active_cross_section(0)
 
-    def set_channel(self, index: int) -> bool:
-        """Set the current channel to the specified index, or zero if it doesn't exist."""
+    def set_active_cross_section(self, index: int) -> bool:
+        """Set the current cross section to the specified index, or zero if it doesn't exist."""
         if self.data_sets is None:
             return False
-        channels = list(self.data_sets.keys())
-        if index < len(channels):
-            # channel index is allowed
-            self.active_channel = self.data_sets[channels[index]]
+        cross_sections = list(self.data_sets.keys())
+        if index < len(cross_sections):
+            # cross section index is allowed
+            self.active_cross_section = self.data_sets[cross_sections[index]]
             return True
-        elif len(channels) == 0:
-            # no channel
-            logging.error("Could not set active channel: no data available")
+        elif len(cross_sections) == 0:
+            # no cross sections
+            logging.error("Could not set active cross section: no data available")
         else:
             # default
-            self.active_channel = self.data_sets[channels[0]]
+            self.active_cross_section = self.data_sets[cross_sections[0]]
 
         return False
 
@@ -453,7 +453,7 @@ class DataManager(object):
             directory, file_name = FilePath(file_path).split()
             self.current_directory = directory
             self.current_file_name = file_name
-            self.set_channel(0)
+            self.set_active_cross_section(0)
 
             # If we didn't get this data set from our cache, add it and compute its reflectivity.
             if not is_from_cache:
@@ -486,7 +486,7 @@ class DataManager(object):
     def update_configuration(self, configuration, active_only: bool = False, nexus_data: Optional[NexusData] = None):
         """Update configuration."""
         if active_only:
-            self.active_channel.update_configuration(configuration)
+            self.active_cross_section.update_configuration(configuration)
         elif nexus_data is not None:
             nexus_data.update_configuration(configuration)
         else:
@@ -641,7 +641,7 @@ class DataManager(object):
         if not specular:
             nexus_data.calculate_offspec(direct_beam=direct_beam)
         elif active_only:
-            self.active_channel.reflectivity(direct_beam=direct_beam, configuration=configuration)
+            self.active_cross_section.reflectivity(direct_beam=direct_beam, configuration=configuration)
         else:
             nexus_data.calculate_reflectivity(
                 direct_beam=direct_beam, configuration=configuration, ws_suffix=str(self.active_reduction_list_index)
@@ -656,18 +656,18 @@ class DataManager(object):
             True if we have updated the data with a new normalization run.
         """
         # TODO 65+ Can it work with merged data?
-        # Select the first run number if the active channel cross section is derived from more than one run
-        active_channel_number = RunNumbers(self.active_channel.number).numbers[0]
+        # Select the first run number if the active cross section is derived from more than one run
+        active_cross_section_number = RunNumbers(self.active_cross_section.number).numbers[0]
         closest = None
         for item in self.direct_beam_list:
             item_number = int(item.number)
             xs_keys = list(item.cross_sections.keys())
             if len(xs_keys) > 0:
-                channel = item.cross_sections[list(item.cross_sections.keys())[0]]
-                if self.active_channel.configuration.instrument.direct_beam_match(self.active_channel, channel):
+                xs = item.cross_sections[list(item.cross_sections.keys())[0]]
+                if self.active_cross_section.configuration.instrument.direct_beam_match(self.active_cross_section, xs):
                     if closest is None:
                         closest = item_number
-                    elif abs(item_number - active_channel_number) < abs(closest - active_channel_number):
+                    elif abs(item_number - active_cross_section_number) < abs(closest - active_cross_section_number):
                         closest = item_number
 
         if closest is None:
@@ -675,13 +675,15 @@ class DataManager(object):
             for item in self.direct_beam_list:
                 xs_keys = list(item.cross_sections.keys())
                 if len(xs_keys) > 0:
-                    channel = item.cross_sections[list(item.cross_sections.keys())[0]]
-                    if self.active_channel.configuration.instrument.direct_beam_match(
-                        self.active_channel, channel, skip_slits=True
+                    xs = item.cross_sections[list(item.cross_sections.keys())[0]]
+                    if self.active_cross_section.configuration.instrument.direct_beam_match(
+                        self.active_cross_section, xs, skip_slits=True
                     ):
                         if closest is None:
                             closest = item_number
-                        elif abs(item_number - active_channel_number) < abs(closest - active_channel_number):
+                        elif abs(item_number - active_cross_section_number) < abs(
+                            closest - active_cross_section_number
+                        ):
                             closest = item_number
         if closest is not None:
             return self._nexus_data.set_parameter("normalization", closest)
@@ -690,11 +692,11 @@ class DataManager(object):
     def get_trim_values(self):
         """Cut the start and end of the active data set to 5% of its maximum intensity."""
         if (
-            self.active_channel is not None
-            and self.active_channel.q is not None
-            and self.active_channel.configuration.normalization is not None
+            self.active_cross_section is not None
+            and self.active_cross_section.q is not None
+            and self.active_cross_section.configuration.normalization is not None
         ):
-            direct_beam = self._find_direct_beam(self.active_channel)
+            direct_beam = self._find_direct_beam(self.active_cross_section)
 
             if direct_beam is None:
                 logging.error("The specified direct beam is not available: skipping")
@@ -713,7 +715,7 @@ class DataManager(object):
         if len(self.reduction_list) < 2:
             logging.error("You need to have at least two datasets in the reduction table")
             return
-        xs = self.active_channel.name
+        xs = self.active_cross_section.name
         for idx, item in enumerate(self.reduction_list[:-1]):
             next_item = self.reduction_list[idx + 1]
             end_idx = next_item.cross_sections[xs].configuration.cut_first_n_points
@@ -749,7 +751,7 @@ class DataManager(object):
         """
         data_manipulation.smart_stitch_reflectivity(
             self.reduction_list,
-            self.active_channel.name,
+            self.active_cross_section.name,
             normalize_to_unity,
             q_cutoff,
             global_stitching,
@@ -832,9 +834,9 @@ class DataManager(object):
         """
         if file_path is not None:
             return data_manipulation.extract_metadata(
-                file_path=file_path, configuration=self.active_channel.configuration
+                file_path=file_path, configuration=self.active_cross_section.configuration
             )
-        return data_manipulation.extract_metadata(cross_section_data=self.active_channel)
+        return data_manipulation.extract_metadata(cross_section_data=self.active_cross_section)
 
     def load_data_from_reduced_file(
         self, file_path: str, configuration: Optional[Configuration] = None, progress: ProgressReporter = None

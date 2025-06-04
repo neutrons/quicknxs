@@ -171,50 +171,50 @@ class MainHandler(object):
     def file_loaded(self):
         """Update UI after a file is loaded."""
         self.main_window.auto_change_active = True
-        self._set_data_manager_active_channel()
+        self._set_data_manager_active_cross_section()
 
-        channels = list(self._data_manager.data_sets.keys())
-        for i, channel in enumerate(channels):
-            getattr(self.ui, "selectedChannel%i" % i).show()
-            good_label = channel.replace("_", "-")
-            if not good_label == self._data_manager.data_sets[channel].cross_section_label:
-                good_label = "%s: %s" % (good_label, self._data_manager.data_sets[channel].cross_section_label)
-            getattr(self.ui, "selectedChannel%i" % i).setText(good_label)
-        for i in range(len(channels), 12):
-            getattr(self.ui, "selectedChannel%i" % i).hide()
+        cross_sections = list(self._data_manager.data_sets.keys())
+        for i, xs in enumerate(cross_sections):
+            getattr(self.ui, "selectedCrossSection%i" % i).show()
+            good_label = xs.replace("_", "-")
+            if not good_label == self._data_manager.data_sets[xs].cross_section_label:
+                good_label = "%s: %s" % (good_label, self._data_manager.data_sets[xs].cross_section_label)
+            getattr(self.ui, "selectedCrossSection%i" % i).setText(good_label)
+        for i in range(len(cross_sections), 12):
+            getattr(self.ui, "selectedCrossSection%i" % i).hide()
         self.main_window.auto_change_active = False
 
         self.main_window.file_loaded_signal.emit()
-        if self.main_window.data_manager.active_channel.is_direct_beam:
+        if self.main_window.data_manager.active_cross_section.is_direct_beam:
             self.main_window.initiate_intensity_plot.emit(False)
         else:
             self.main_window.initiate_reflectivity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
         self.cache_indicator.setText("Files loaded: %s" % (self._data_manager.get_cachesize()))
 
-    def active_channel_changed(self):
-        """Update UI metadata and plots after the active channel is changed."""
-        self._set_data_manager_active_channel()
-        self.update_channel_info()
+    def active_cross_section_changed(self):
+        """Update UI metadata and plots after the active cross section is changed."""
+        self._set_data_manager_active_cross_section()
+        self.update_cross_section_info()
         self.main_window.plotActiveTab()
-        if self.main_window.data_manager.active_channel.is_direct_beam:
+        if self.main_window.data_manager.active_cross_section.is_direct_beam:
             self.main_window.initiate_intensity_plot.emit(False)
         else:
             self.main_window.initiate_reflectivity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
 
-    def _set_data_manager_active_channel(self):
-        """Set the data manager's active channel from the active channel in the UI."""
+    def _set_data_manager_active_cross_section(self):
+        """Set the data manager's active cross section to the one in the UI."""
         self.main_window.auto_change_active = True
-        current_channel = 0
+        current_cross_section = 0
         for i in range(12):
-            if getattr(self.ui, "selectedChannel%i" % i).isChecked():
-                current_channel = i
+            if getattr(self.ui, "selectedCrossSection%i" % i).isChecked():
+                current_cross_section = i
                 break
 
-        success = self._data_manager.set_channel(current_channel)
+        success = self._data_manager.set_active_cross_section(current_cross_section)
         if not success:
-            self.ui.selectedChannel0.setChecked(True)
+            self.ui.selectedCrossSection0.setChecked(True)
         self.main_window.auto_change_active = False
 
     def _congruency_fail_report(self, file_paths: List[str], log_names: Optional[List[str]] = None):
@@ -285,12 +285,12 @@ class MainHandler(object):
         idx = self._data_manager.find_active_data_id()
         if idx is not None:
             table_widget = self.reduction_table
-            self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
+            self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
 
         # Update the direct beam table if this data set is in it
         idx = self._data_manager.find_active_direct_beam_id()
         if idx is not None:
-            self.update_direct_beam_table(idx, self._data_manager.active_channel)
+            self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
 
     def update_calculated_data(self):
         """Update the calculated entries in the overview tab.
@@ -298,7 +298,7 @@ class MainHandler(object):
         We should call this after the peak ranges change,
         or after a change is made that will affect the displayed results.
         """
-        d = self._data_manager.active_channel
+        d = self._data_manager.active_cross_section
         self.ui.datasetAi.setText("%.3f°" % (d.scattering_angle))
 
         try:
@@ -328,7 +328,7 @@ class MainHandler(object):
     def update_info(self):
         """Update metadata shown in the overview tab."""
         self.main_window.auto_change_active = True
-        d = self._data_manager.active_channel
+        d = self._data_manager.active_cross_section
         self.populate_from_configuration(d.configuration)
         self.main_window.initiate_projection_plot.emit(False)
         QtWidgets.QApplication.instance().processEvents()
@@ -356,7 +356,7 @@ class MainHandler(object):
         self.ui.datasetDangle0.setText(dangle0)
         self.ui.datasetSangle.setText("%.3f°" % d.sangle)
         self.ui.datasetDirectPixel.setText(dpix)
-        self.ui.currentChannel.setText(
+        self.ui.currentCrossSection.setText(
             "<b>%s</b> (%s)&nbsp;&nbsp;&nbsp;Type: %s&nbsp;&nbsp;&nbsp;Current State: "
             "<b>%s</b>" % (d.number, d.experiment, d.measurement_type, d.name)
         )
@@ -381,10 +381,10 @@ class MainHandler(object):
 
         self.main_window.auto_change_active = False
 
-    def update_channel_info(self):
-        """Update channel metadata shown in the overview tab."""
+    def update_cross_section_info(self):
+        """Update cross section metadata shown in the overview tab."""
         # Update cross-section specific information in the overview tab
-        d = self._data_manager.active_channel
+        d = self._data_manager.active_cross_section
         self.ui.datasetPCharge.setText("%.3e" % d.proton_charge)
         self.ui.datasetTime.setText("%i s" % d.total_time)
         self.ui.datasetTotCounts.setText("%.4e" % d.total_counts)
@@ -392,7 +392,7 @@ class MainHandler(object):
             self.ui.datasetRate.setText("%.1f cps" % (d.total_counts / d.total_time))
         except ZeroDivisionError:
             self.ui.datasetRate.setText("NaN")
-        self.ui.currentChannel.setText(
+        self.ui.currentCrossSection.setText(
             "<b>%s</b> (%s)&nbsp;&nbsp;&nbsp;Type: %s&nbsp;&nbsp;&nbsp;Current State: "
             "<b>%s</b>" % (d.number, d.experiment, d.measurement_type, d.name)
         )
@@ -514,7 +514,7 @@ class MainHandler(object):
 
         # Add the current data set to the reduction table
         # Do nothing if the data is incompatible
-        is_direct_beam = self._data_manager.active_channel.is_direct_beam
+        is_direct_beam = self._data_manager.active_cross_section.is_direct_beam
         if is_direct_beam:
             if not self.add_direct_beam():
                 return
@@ -531,13 +531,13 @@ class MainHandler(object):
                 if q_current <= metadata.mid_q and is_direct_beam == metadata.is_direct_beam:
                     q_current = metadata.mid_q
                     self.open_file(file_path, silent=True)
-                    d = self._data_manager.active_channel
+                    d = self._data_manager.active_cross_section
                     # If we find data of another type, stop here
-                    if not is_direct_beam == self._data_manager.active_channel.is_direct_beam:
+                    if not is_direct_beam == self._data_manager.active_cross_section.is_direct_beam:
                         break
                     self.main_window.auto_change_active = True
                     self.populate_from_configuration(d.configuration)
-                    if self._data_manager.active_channel.is_direct_beam:
+                    if self._data_manager.active_cross_section.is_direct_beam:
                         self.add_direct_beam()
                     else:
                         self.add_reflectivity()
@@ -581,7 +581,7 @@ class MainHandler(object):
             self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
             for idx, _ in enumerate(self._data_manager.direct_beam_list):
                 self._data_manager.set_active_data_from_direct_beam_list(idx)
-                self.update_direct_beam_table(idx, self._data_manager.active_channel)
+                self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
             # Update UI data table(s) with the loaded data
             for ipeak, _ in self._data_manager.peak_reduction_lists.items():
                 self._data_manager.set_active_reduction_list_index(ipeak)
@@ -590,7 +590,7 @@ class MainHandler(object):
                 table_widget.setRowCount(len(self._data_manager.reduction_list))
                 for idx, _ in enumerate(self._data_manager.reduction_list):
                     self._data_manager.set_active_data_from_reduction_list(idx)
-                    self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
+                    self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
 
             # Set the first reduction table and its first run as the active (plotted) data
             self._data_manager.set_active_reduction_list_index(self._data_manager.MAIN_REDUCTION_LIST_INDEX)
@@ -601,8 +601,8 @@ class MainHandler(object):
 
             self.file_loaded()
 
-            if self._data_manager.active_channel is not None:
-                self.populate_from_configuration(self._data_manager.active_channel.configuration)
+            if self._data_manager.active_cross_section is not None:
+                self.populate_from_configuration(self._data_manager.active_cross_section.configuration)
                 self.update_file_list(self._data_manager.current_file)
             self.main_window.auto_change_active = False
 
@@ -619,10 +619,10 @@ class MainHandler(object):
         if self._data_manager.main_reduction_list:
             table_widget = self.get_reduction_table_by_index(tab_index)
             table_widget.setRowCount(len(self._data_manager.main_reduction_list))
-            active_cross_section = self._data_manager.active_channel.name
+            active_cross_section_name: str = self._data_manager.active_cross_section.name
             for idx, nexus_data in enumerate(self._data_manager.main_reduction_list):
-                active_channel = nexus_data.cross_sections[active_cross_section]
-                self.update_reduction_table(table_widget, idx, active_channel)
+                active_cross_section = nexus_data.cross_sections[active_cross_section_name]
+                self.update_reduction_table(table_widget, idx, active_cross_section)
 
     def _file_open_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
         """Pop a File dialog window for the user to select one file.
@@ -765,13 +765,13 @@ class MainHandler(object):
         table.sortItems(-1)
         table.setColumnCount(len(self._data_manager.data_sets) + 2)
         table.setHorizontalHeaderLabels(["Name"] + list(self._data_manager.data_sets.keys()) + ["Unit"])
-        for j, key in enumerate(sorted(self._data_manager.active_channel.logs.keys(), key=lambda s: s.lower())):
+        for j, key in enumerate(sorted(self._data_manager.active_cross_section.logs.keys(), key=lambda s: s.lower())):
             table.insertRow(j)
             table.setItem(j, 0, QtWidgets.QTableWidgetItem(key))
             table.setItem(
                 j,
                 len(self._data_manager.data_sets) + 1,
-                QtWidgets.QTableWidgetItem(self._data_manager.active_channel.log_units[key]),
+                QtWidgets.QTableWidgetItem(self._data_manager.active_cross_section.log_units[key]),
             )
             i = 0
             for xs in self._data_manager.data_sets:
@@ -830,7 +830,7 @@ class MainHandler(object):
         """
         self.main_window.auto_change_active = True
         item = QtWidgets.QTableWidgetItem(str(d.number))
-        if d == self._data_manager.active_channel:
+        if d == self._data_manager.active_cross_section:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
@@ -957,8 +957,8 @@ class MainHandler(object):
         # Update the direct beam table if this data set is in it
         idx = self._data_manager.find_data_in_direct_beam_list(refl)
         if idx is not None:
-            channels = list(refl.cross_sections.keys())
-            self.update_direct_beam_table(idx, refl.cross_sections[channels[0]])
+            cross_sections = list(refl.cross_sections.keys())
+            self.update_direct_beam_table(idx, refl.cross_sections[cross_sections[0]])
 
         # Only recalculate if we need to, otherwise just replot
         if column not in [1, 2, 3]:
@@ -1030,7 +1030,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = True
         item = QtWidgets.QTableWidgetItem(str(data.number))
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
-        if data == self._data_manager.active_channel:
+        if data == self._data_manager.active_cross_section:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
@@ -1082,7 +1082,7 @@ class MainHandler(object):
                     is_error=True,
                 )
                 # Reset to old value if conversion fails
-                old_value = getattr(self._data_manager.active_channel.configuration, col_mapping[col])
+                old_value = getattr(self._data_manager.active_cross_section.configuration, col_mapping[col])
                 item.setText(str(old_value))
                 return
 
@@ -1162,8 +1162,8 @@ class MainHandler(object):
             row = table_widget.rowAt(pos.y())
             if 0 <= row < len(data_table):
                 nexus_data = data_table[row]
-                active_cross_section = self._data_manager.active_channel.name
-                active_channel = nexus_data.cross_sections[active_cross_section]
+                active_cross_section = self._data_manager.active_cross_section.name
+                active_cross_section = nexus_data.cross_sections[active_cross_section]
                 for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
                     if self._data_manager.copy_nexus_data_to_reduction(nexus_data, ipeak):
                         # get widget for target reduction table
@@ -1173,7 +1173,7 @@ class MainHandler(object):
                             raise RuntimeError("Run number not in reduction list")
                         target_widget.insertRow(idx)
                         # update UI table widget
-                        self.update_reduction_table(target_widget, idx, active_channel)
+                        self.update_reduction_table(target_widget, idx, active_cross_section)
 
         def _remove_run(_pos):
             if is_reduction_table:
@@ -1291,10 +1291,10 @@ class MainHandler(object):
              0 = replot needed,
              1 = recalculation needed
         """
-        if self._data_manager.active_channel is None:
+        if self._data_manager.active_cross_section is None:
             return -1
 
-        configuration = self._data_manager.active_channel.configuration
+        configuration = self._data_manager.active_cross_section.configuration
         valid_change = False
         replot_change = False
 
@@ -1374,11 +1374,11 @@ class MainHandler(object):
     def get_configuration(self) -> Configuration:
         """Gather the reduction options.
 
-        Retrieve the reduction options either from the active channel,
+        Retrieve the reduction options either from the active cross section,
         or from the current settings in the graphical interface.
         """
-        if self._data_manager.active_channel is not None:
-            configuration = self._data_manager.active_channel.configuration
+        if self._data_manager.active_cross_section is not None:
+            configuration = self._data_manager.active_cross_section.configuration
         else:
             configuration = Configuration(self.main_window.settings)
         configuration.tof_bins = self.ui.eventTofBins.value()
@@ -1622,7 +1622,7 @@ class MainHandler(object):
             )
         else:
             for i in range(len(self._data_manager.reduction_list)):
-                xs = self._data_manager.active_channel.name
+                xs = self._data_manager.active_cross_section.name
                 d = self._data_manager.reduction_list[i].cross_sections[xs]
                 self.reduction_table.setItem(
                     i, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor))
@@ -1646,7 +1646,7 @@ class MainHandler(object):
         self._data_manager.strip_overlap()
 
         for i in range(len(self._data_manager.reduction_list)):
-            xs = self._data_manager.active_channel.name
+            xs = self._data_manager.active_cross_section.name
             d = self._data_manager.reduction_list[i].cross_sections[xs]
             self.reduction_table.setItem(i, 3, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points)))
 
@@ -1684,7 +1684,7 @@ class MainHandler(object):
         self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
         for idx, _ in enumerate(self._data_manager.direct_beam_list):
             self._data_manager.set_active_data_from_direct_beam_list(idx)
-            self.update_direct_beam_table(idx, self._data_manager.active_channel)
+            self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
         self.ui.reductionTable.setRowCount(len(self._data_manager.reduction_list))
         for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
             self._data_manager.set_active_reduction_list_index(ipeak)
@@ -1692,7 +1692,7 @@ class MainHandler(object):
             table_widget.setRowCount(len(self._data_manager.reduction_list))
             for idx, _ in enumerate(self._data_manager.reduction_list):
                 self._data_manager.set_active_data_from_reduction_list(idx)
-                self.update_reduction_table(table_widget, idx, self._data_manager.active_channel)
+                self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
 
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
         self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))

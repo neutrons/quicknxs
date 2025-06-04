@@ -5,7 +5,7 @@
     <file>autoRef.png</file>
     <file>stripOverlap.png</file>
     <file>cutPoints.png</file>
-    <file>clearNorm.png</file>
+    <file>clearDirectBeams.png</file>
     <file>document-open.png</file>
     <file>listUp.png</file>
     <file>listDown.png</file>
@@ -20,8 +20,8 @@
     <file>exportRawData.png</file>
     <file>totalReflection.png</file>
     <file>tthZero.png</file>
-    <file>extractNormalization.png</file>
-    <file>delNormalization.png</file>
+    <file>addDirectBeam.png</file>
+    <file>delDirectBeam.png</file>
   </qresource>
   <qresource prefix="MPL Toolbar">
     <file>document-open-reduced.png</file>

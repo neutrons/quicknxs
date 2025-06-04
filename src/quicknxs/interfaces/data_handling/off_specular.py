@@ -35,9 +35,9 @@ class OffSpecular(object):
     def __call__(self, direct_beam: Optional["CrossSectionData"] = None):
         """Extract off-specular scattering from 4D dataset (x,y,ToF,I).
 
-        Uses a window in y to filter the 4D data
-        and than sums all I values for each ToF and x channel.
-        Qz,Qx,kiz,kfz is calculated using the x and ToF positions
+        Uses a window in y to filter the 4D data,
+        then sums all I values for each ToF and x channel.
+        Qz, Qx, kiz, kfz are calculated using the x and ToF positions
         together with the tth-bank and direct pixel values.
 
         Parameters

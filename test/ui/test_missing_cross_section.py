@@ -26,7 +26,7 @@ def test_missing_cross_section(qtbot):
     ui_utilities.setText(main_window.numberSearchEntry, "42100", press_enter=True)
     intensity_off_on = np.sum(ui_utilities.data_from_plot2D(main_window.xtof_overview))
     # select the On-On spin combination
-    main_window.selectedChannel1.click()
+    main_window.selectedCrossSection1.click()
     # check that counts is < 1 for entire tof
     assert np.max(ui_utilities.data_from_plot1D(main_window.intensity)[1]) < 1
     # check the x vs TOF plot has changed

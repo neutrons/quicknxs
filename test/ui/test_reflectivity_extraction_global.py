@@ -19,13 +19,13 @@ def _initialize_test_data(main_window):
     nexus_data.cross_sections["Off_Off"] = off_off
     nexus_data.cross_sections["On_Off"] = on_off
     main_window.data_manager._nexus_data = nexus_data
-    main_window.data_manager.set_channel(0)
+    main_window.data_manager.set_active_cross_section(0)
     main_window.data_manager.add_active_to_reduction()
 
 
 def _assert_configuration_value(main_window, param_name, gold_value):
     """Check parameter value through the data hierarchy."""
-    assert getattr(main_window.data_manager.active_channel.configuration, param_name) is gold_value
+    assert getattr(main_window.data_manager.active_cross_section.configuration, param_name) is gold_value
     for nexus_data in main_window.data_manager.reduction_list:
         assert getattr(nexus_data.configuration, param_name) is gold_value
         for xs_data in nexus_data.cross_sections.values():
@@ -34,7 +34,7 @@ def _assert_configuration_value(main_window, param_name, gold_value):
 
 def _assert_configuration_float_value(main_window, param_name, gold_value):
     """Check float parameter value through the data hierarchy."""
-    assert getattr(main_window.data_manager.active_channel.configuration, param_name) == pytest.approx(gold_value)
+    assert getattr(main_window.data_manager.active_cross_section.configuration, param_name) == pytest.approx(gold_value)
     for nexus_data in main_window.data_manager.reduction_list:
         assert getattr(nexus_data.configuration, param_name) == pytest.approx(gold_value)
         for xs_data in nexus_data.cross_sections.values():
