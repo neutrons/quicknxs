@@ -172,7 +172,7 @@ class Configuration(object):
 
         # Reduction options
         self.match_direct_beam = False
-        self.normalization = None
+        self.direct_beam = None
 
     @property
     def peak_roi(self):

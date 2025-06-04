@@ -22,7 +22,7 @@ def test_losing_direct_beam(qtbot):
             the run number of the direct beam
         """
         return (
-            main_window.data_manager.reduction_list[reduction_list_index].cross_sections[xs].configuration.normalization
+            main_window.data_manager.reduction_list[reduction_list_index].cross_sections[xs].configuration.direct_beam
         )
 
     direct_beam_run = 40786

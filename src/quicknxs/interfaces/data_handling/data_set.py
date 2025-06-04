@@ -541,7 +541,7 @@ class CrossSectionData(object):
             self.number,
             self.entry_name,
             direct_beam.number,
-            self.configuration.normalization,
+            self.configuration.direct_beam,
         )
         angle_offset = 0  # Offset from dangle0, in radians
 
@@ -781,7 +781,7 @@ class NexusData(object):
             direct_beam = CrossSectionData("none", self.configuration, "none")
 
         logging.info(
-            "%s Reduction with DB: %s [config: %s]", self.number, direct_beam.number, self.configuration.normalization
+            "%s Reduction with DB: %s [config: %s]", self.number, direct_beam.number, self.configuration.direct_beam
         )
         angle_offset = 0  # Offset from dangle0, in radians
 

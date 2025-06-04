@@ -13,7 +13,7 @@ def test_gisans(data_server):
     manager.load(data_server.path_to("REF_M_42112"), Configuration())
     manager.add_active_to_reduction()
     manager.load(data_server.path_to("REF_M_42100"), Configuration())
-    manager.add_active_to_normalization()
+    manager.add_active_to_direct_beam_list()
     direct_beam = manager.direct_beam_list[0].cross_sections["Off_On"]
     xs = manager.reduction_list[0].cross_sections["Off_On"]
     xs.gisans(direct_beam=direct_beam)

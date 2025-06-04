@@ -320,8 +320,8 @@ class MainHandler(object):
             dpix = "%.1f" % d.direct_pixel
         self.ui.datasetDirectPixel.setText(dpix)
 
-        if d.configuration.normalization is not None:
-            self.ui.matched_direct_beam_label.setText("%s" % d.configuration.normalization)
+        if d.configuration.direct_beam is not None:
+            self.ui.matched_direct_beam_label.setText("%s" % d.configuration.direct_beam)
         else:
             self.ui.matched_direct_beam_label.setText("None")
 
@@ -597,7 +597,7 @@ class MainHandler(object):
             self._data_manager.set_active_data_from_reduction_list(0)
 
             direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
-            self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))
+            self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
             self.file_loaded()
 
@@ -854,10 +854,10 @@ class MainHandler(object):
         table_widget.setItem(idx, 9, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
         table_widget.setItem(idx, 10, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
         table_widget.setItem(idx, 11, QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle))
-        norma = "none"
-        if d.configuration.normalization is not None:
-            norma = d.configuration.normalization
-        table_widget.setItem(idx, 12, QtWidgets.QTableWidgetItem(str(norma)))
+        direct_beam = "none"
+        if d.configuration.direct_beam is not None:
+            direct_beam = d.configuration.direct_beam
+        table_widget.setItem(idx, 12, QtWidgets.QTableWidgetItem(str(direct_beam)))
         if d.configuration.do_final_rebin_run:
             item = QtWidgets.QTableWidgetItem(str(d.configuration.final_rebin_step_run))
         else:
@@ -920,7 +920,7 @@ class MainHandler(object):
             "bck_width",
             "direct_pixel",
             "scattering_angle",
-            "normalization",
+            "direct_beam",
             "final_rebin_step_run",
         ]
 
@@ -984,7 +984,7 @@ class MainHandler(object):
             self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        if not self._data_manager.add_active_to_normalization():
+        if not self._data_manager.add_active_to_direct_beam_list():
             if not silent:
                 self.report_message("(Add direct beam) Data incompatible or already in the list.", pop_up=True)
             return False
@@ -993,7 +993,7 @@ class MainHandler(object):
         self.update_tables()
 
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
-        self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))
+        self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
         self.main_window.initiate_intensity_plot.emit(False)
         return True
@@ -1011,7 +1011,7 @@ class MainHandler(object):
         """Remove all items from the direct beam list."""
         self._data_manager.clear_direct_beam_list()
         self.ui.directBeamTable.setRowCount(0)
-        self.ui.normalization_list_label.setText("None")
+        self.ui.direct_beam_list_label.setText("None")
         self.main_window.initiate_intensity_plot.emit(False)
 
     def update_direct_beam_table(self, idx: int, data: CrossSectionData) -> None:
@@ -1695,7 +1695,7 @@ class MainHandler(object):
                 self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
 
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
-        self.ui.normalization_list_label.setText(", ".join(direct_beam_ids))
+        self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
         # Restore the active data tab
         self._data_manager.set_active_reduction_list_index(active_data_tab)

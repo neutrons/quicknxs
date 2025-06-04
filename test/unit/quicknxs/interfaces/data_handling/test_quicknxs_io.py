@@ -30,7 +30,7 @@ class TestDataLoader(object):
         assert len(db_list) == 7
         assert len(data_list) == 7
         assert data_list[0][2].peak_position == 179.5
-        assert data_list[0][2].normalization == 28610
+        assert data_list[0][2].direct_beam == 28610
 
     def test_load_no_db(self):
         file_path = self.file("REF_M_29160_Specular_++.dat")
@@ -56,7 +56,7 @@ class TestDataLoader(object):
         db_list, data_list, _, _ = read_reduced_file(file_path)
         assert len(db_list) == 5
         assert len(data_list) == 6
-        assert data_list[4][2].normalization is None
+        assert data_list[4][2].direct_beam is None
 
     def test_load_global_options(self):
         file_path = self.file("REF_M_29526_global_options.dat")
