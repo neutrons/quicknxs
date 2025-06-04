@@ -37,7 +37,7 @@ jobs:
       - name: Build Conda package
         run: |
           cd conda.recipe
-          CHANNELS="--channel neutrons/label/main --channel mantid/label/main --channel oncat --channel conda-forge"
+          CHANNELS="--channel neutrons/label/main --channel mantid-ornl --channel mantid/label/main --channel oncat --channel conda-forge"
           VERSION=$(versioningit ../) conda mambabuild $CHANNELS --output-folder . .
           conda verify noarch/quicknxs-*.tar.bz2
 
