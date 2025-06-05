@@ -581,11 +581,11 @@ class ProcessingWorkflow(object):
             A tuple containing the smoothed data dictionary and a slice data dictionary.
         """
         axes = self.data_manager.active_cross_section.configuration.off_spec_x_axis
-        output_data = dict(
-            units=[],
-            columns=[],
-            cross_sections={},
-        )
+        output_data = {
+            "units": [],
+            "columns": [],
+            "cross_sections": {},
+        }
         slice_data_dict = {}
 
         for xs in data_dict["cross_sections"].keys():

@@ -111,10 +111,10 @@ class TestMainGui:
 
         cross_section_1 = CrossSectionData("On_Off", configuration)
         nexus_data1 = NexusData("filepath1", configuration)
-        nexus_data1.cross_sections = {cross_section_1.name: cross_section_1, cross_section_1.name: cross_section_1}
+        nexus_data1.cross_sections = {cross_section_1.name: cross_section_1}
         cross_section_2 = CrossSectionData("On_Off", configuration)
         nexus_data2 = NexusData("filepath2", configuration)
-        nexus_data2.cross_sections = {cross_section_2.name: cross_section_2, cross_section_2.name: cross_section_2}
+        nexus_data2.cross_sections = {cross_section_2.name: cross_section_2}
 
         window_main.data_manager.reduction_list.append(nexus_data1)
         window_main.data_manager.reduction_list.append(nexus_data2)

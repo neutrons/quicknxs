@@ -673,6 +673,7 @@ class DataManager(object):
         if closest is None:
             # If we didn't find a direct beam, try with just the wavelength
             for item in self.direct_beam_list:
+                item_number = int(item.number)
                 xs_keys = list(item.cross_sections.keys())
                 if len(xs_keys) > 0:
                     xs = item.cross_sections[list(item.cross_sections.keys())[0]]
@@ -690,7 +691,7 @@ class DataManager(object):
             return self._nexus_data.set_parameter("direct_beam", closest)
         return False
 
-    def get_trim_values(self):
+    def get_trim_values(self) -> Optional[List[int]]:
         """Cut the start and end of the active data set to 5% of its maximum intensity."""
         if (
             self.active_cross_section is not None
