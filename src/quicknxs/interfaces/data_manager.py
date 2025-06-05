@@ -155,7 +155,6 @@ class DataManager(object):
         else:
             # default
             self.active_cross_section = self.data_sets[cross_sections[0]]
-
         return False
 
     def is_active(self, data_set: NexusData):
@@ -486,6 +485,9 @@ class DataManager(object):
     def update_configuration(self, configuration, active_only: bool = False, nexus_data: Optional[NexusData] = None):
         """Update configuration."""
         if active_only:
+            if self.active_cross_section is None:
+                logging.error("No active cross section to update configuration")
+                return
             self.active_cross_section.update_configuration(configuration)
         elif nexus_data is not None:
             nexus_data.update_configuration(configuration)
@@ -702,7 +704,7 @@ class DataManager(object):
 
             if direct_beam is None:
                 logging.error("The specified direct beam is not available: skipping")
-                return
+                return None
 
             region = np.where(direct_beam.r >= (direct_beam.r.max() * 0.05))[0]
             p_0 = region[0]
@@ -710,7 +712,7 @@ class DataManager(object):
             self._nexus_data.set_parameter("cut_first_n_points", p_0)
             self._nexus_data.set_parameter("cut_last_n_points", p_n)
             return [p_0, p_n]
-        return
+        return None
 
     def strip_overlap(self):
         """Remove overlapping points in the reflectivity, cutting always from the lower Qz measurements."""
