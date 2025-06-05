@@ -30,8 +30,8 @@ class TestMainGui:
         window_main.global_fit_checkbox.setChecked(False)
         assert window_main.file_handler.get_configuration().global_stitching is False
 
-    def test_active_channel(self, mocker, qtbot):
-        """Test that selecting a cross-section radio button updates the active channel."""
+    def test_active_cross_section(self, mocker, qtbot):
+        """Test that selecting a cross-section radio button updates the active cross section."""
         # mock updating the plots
         mocker.patch("quicknxs.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
         mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
@@ -41,24 +41,24 @@ class TestMainGui:
         window_main = MainWindow()
         qtbot.addWidget(window_main)
 
-        # set up data objects for two channels
+        # set up data objects for two cross sections
         configuration = window_main.file_handler.get_configuration()
-        channel0 = CrossSectionData("On_Off", configuration)
-        channel1 = CrossSectionData("On_On", configuration)
+        cross_section_0 = CrossSectionData("On_Off", configuration)
+        cross_section_1 = CrossSectionData("On_On", configuration)
         nexus_data = NexusData("filepath", configuration)
-        nexus_data.cross_sections = {channel0.name: channel0, channel1.name: channel1}
+        nexus_data.cross_sections = {cross_section_0.name: cross_section_0, cross_section_1.name: cross_section_1}
         window_main.data_manager._nexus_data = nexus_data
-        window_main.data_manager.set_channel(0)
+        window_main.data_manager.set_active_cross_section(0)
 
-        assert window_main.data_manager.active_channel.name == channel0.name
+        assert window_main.data_manager.active_cross_section.name == cross_section_0.name
 
-        # change the selected channel
-        window_main.selectedChannel1.setChecked(True)
+        # change the selected cross section
+        window_main.selectedCrossSection1.setChecked(True)
 
-        # check the active channel in the data manager
-        assert window_main.data_manager.active_channel.name == channel1.name
-        # check the current channel name displayed in the UI
-        assert channel1.name in window_main.ui.currentChannel.text()
+        # check the active cross section in the data manager
+        assert window_main.data_manager.active_cross_section.name == cross_section_1.name
+        # check the current cross section name displayed in the UI
+        assert cross_section_1.name in window_main.ui.currentCrossSection.text()
 
     @pytest.mark.parametrize("table_widget", ["reductionTable", "directBeamTable"])
     def test_reduction_table_right_click(self, table_widget, qtbot, mocker):
@@ -109,12 +109,12 @@ class TestMainGui:
         Configuration.polynomial_stitching_points = 3
         Configuration.lock_direct_beam_y = False
 
-        channel1 = CrossSectionData("On_Off", configuration)
+        cross_section_1 = CrossSectionData("On_Off", configuration)
         nexus_data1 = NexusData("filepath1", configuration)
-        nexus_data1.cross_sections = {channel1.name: channel1, channel1.name: channel1}
-        channel2 = CrossSectionData("On_Off", configuration)
+        nexus_data1.cross_sections = {cross_section_1.name: cross_section_1}
+        cross_section_2 = CrossSectionData("On_Off", configuration)
         nexus_data2 = NexusData("filepath2", configuration)
-        nexus_data2.cross_sections = {channel2.name: channel2, channel2.name: channel2}
+        nexus_data2.cross_sections = {cross_section_2.name: cross_section_2}
 
         window_main.data_manager.reduction_list.append(nexus_data1)
         window_main.data_manager.reduction_list.append(nexus_data2)
@@ -122,7 +122,7 @@ class TestMainGui:
         assert window_main.data_manager.current_file == "filepath1"
 
         # check that the configuration is the default
-        conf1 = window_main.data_manager.active_channel.configuration
+        conf1 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
         assert conf1.do_final_rebin_global is True
@@ -195,7 +195,7 @@ class TestMainGui:
         window_main.file_handler.get_configuration()  # to update configuration from UI
 
         # check that the current config has been updated for both global and per run
-        conf1 = window_main.data_manager.active_channel.configuration
+        conf1 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
         assert conf1.do_final_rebin_global is False
@@ -241,7 +241,7 @@ class TestMainGui:
         assert window_main.data_manager.current_file == "filepath2"
 
         # check that the configuration is the default
-        conf2 = window_main.data_manager.active_channel.configuration
+        conf2 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
         assert conf2.do_final_rebin_global is False

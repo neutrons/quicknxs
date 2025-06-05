@@ -110,9 +110,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def initialize_instrument(self):
         """Initialize instrument according to the instrument and saved parameters."""
         for i in range(1, 12):
-            getattr(self.ui, "selectedChannel%i" % i).hide()
-        self.ui.selectedChannel0.show()
-        self.ui.selectedChannel0.setText("None")
+            getattr(self.ui, "selectedCrossSection%i" % i).hide()
+        self.ui.selectedCrossSection0.show()
+        self.ui.selectedCrossSection0.setText("None")
 
         self.file_handler.populate_from_configuration()
 
@@ -181,11 +181,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """Reload the file that is currently selected form the list."""
         self.file_handler.open_file(self.data_manager.current_file, force=True)
 
-    def change_active_channel(self, is_checked: bool):
-        """Update the run info and overview plots when the active channel is changed.
+    def change_active_cross_section(self, is_checked: bool):
+        """Update the run info and overview plots when the active cross section is changed.
 
         The toggled() signal is emitted from both radio buttons whose states were changed,
-        therefore, use the bool value to only perform channel update actions once.
+        therefore, use the bool value to only perform update actions once.
 
         Parameters
         ----------
@@ -193,11 +193,11 @@ class MainWindow(QtWidgets.QMainWindow):
             The state of the radio button that emitted the signal.
         """
         if is_checked:
-            self.file_handler.active_channel_changed()
+            self.file_handler.active_cross_section_changed()
 
     def plotActiveTab(self):
         """Select the appropriate function to plot all visible images."""
-        if self.data_manager.active_channel is None:
+        if self.data_manager.active_cross_section is None:
             return
 
         color = str(self.ui.color_selector.currentText())
@@ -256,7 +256,7 @@ class MainWindow(QtWidgets.QMainWindow):
             plot.clear_fig()
         self.plotActiveTab()
 
-        if self.data_manager.active_channel.is_direct_beam:
+        if self.data_manager.active_cross_section.is_direct_beam:
             self.initiate_intensity_plot.emit(False)
 
     def changeRegionValues(self):
@@ -272,7 +272,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if change_type >= 0:
             configuration = self.file_handler.get_configuration()
 
-            if self.data_manager.active_channel is not None:
+            if self.data_manager.active_cross_section is not None:
                 active_only = not self.ui.action_use_common_ranges.isChecked()
                 self.data_manager.update_configuration(configuration=configuration, active_only=active_only)
                 self.plot_handler.change_region_values()
@@ -288,7 +288,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     except Exception:
                         self.file_handler.report_message("There was a problem updating the reflectivity", pop_up=False)
                         logging.error("There was a problem updating the reflectivity")
-                if self.data_manager.active_channel.is_direct_beam:
+                if self.data_manager.active_cross_section.is_direct_beam:
                     self.plot_manager.plot_intensity()
                 else:
                     self.plot_manager.plot_refl()
@@ -332,7 +332,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def replotProjections(self):
         """Signal handling to replot the projections."""
         self.initiate_projection_plot.emit(True)
-        if self.data_manager.active_channel.is_direct_beam:
+        if self.data_manager.active_cross_section.is_direct_beam:
             self.initiate_intensity_plot.emit(True)
         else:
             self.initiate_reflectivity_plot.emit(True)
@@ -386,7 +386,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.file_handler.report_message("There was a problem updating the reflectivity", pop_up=False)
                 logging.error("There was a problem updating the reflectivity")
 
-            if self.data_manager.active_channel.is_direct_beam:
+            if self.data_manager.active_cross_section.is_direct_beam:
                 self.initiate_intensity_plot.emit(True)
             else:
                 self.initiate_reflectivity_plot.emit(True)

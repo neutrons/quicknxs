@@ -84,8 +84,7 @@ class Configuration(object):
         cls.bck_offset = 5
         cls.force_bck_roi = True
 
-    # TODO: settings may not be needed anymore
-    def __init__(self, settings=None):
+    def __init__(self):
         self.instrument = Instrument()
         # Number of TOF bins
         self.tof_bins = 400
@@ -172,7 +171,7 @@ class Configuration(object):
 
         # Reduction options
         self.match_direct_beam = False
-        self.normalization = None
+        self.direct_beam = None
 
     @property
     def peak_roi(self):

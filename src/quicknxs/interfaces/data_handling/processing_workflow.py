@@ -130,7 +130,7 @@ class ProcessingWorkflow(object):
             run_list = []
         base_name = self.output_options["output_file_template"].replace("{numbers}", "+".join(run_list))
         base_name = base_name.replace(
-            "{instrument}", self.data_manager.active_channel.configuration.instrument.instrument_name
+            "{instrument}", self.data_manager.active_cross_section.configuration.instrument.instrument_name
         )
         base_name = base_name.replace("{item}", process_type)
         if pol_state is not None:
@@ -351,7 +351,7 @@ class ProcessingWorkflow(object):
 
         # Export binned result
         if binned:
-            if self.data_manager.active_channel.configuration.apply_smoothing:
+            if self.data_manager.active_cross_section.configuration.apply_smoothing:
                 # "Smooth" version
                 try:
                     smooth_output, slice_data_dict = self.smooth_offspec(output_data)
@@ -391,14 +391,14 @@ class ProcessingWorkflow(object):
             r, dr, x, y, labels = off_specular.rebin_extract(
                 self.data_manager.reduction_list,
                 pol_state,
-                axes=self.data_manager.active_channel.configuration.off_spec_x_axis,
-                use_weights=self.data_manager.active_channel.configuration.off_spec_err_weight,
-                n_bins_x=self.data_manager.active_channel.configuration.off_spec_nxbins,
-                n_bins_y=self.data_manager.active_channel.configuration.off_spec_nybins,
-                x_min=self.data_manager.active_channel.configuration.off_spec_x_min,
-                x_max=self.data_manager.active_channel.configuration.off_spec_x_max,
-                y_min=self.data_manager.active_channel.configuration.off_spec_y_min,
-                y_max=self.data_manager.active_channel.configuration.off_spec_y_max,
+                axes=self.data_manager.active_cross_section.configuration.off_spec_x_axis,
+                use_weights=self.data_manager.active_cross_section.configuration.off_spec_err_weight,
+                n_bins_x=self.data_manager.active_cross_section.configuration.off_spec_nxbins,
+                n_bins_y=self.data_manager.active_cross_section.configuration.off_spec_nybins,
+                x_min=self.data_manager.active_cross_section.configuration.off_spec_x_min,
+                x_max=self.data_manager.active_cross_section.configuration.off_spec_x_max,
+                y_min=self.data_manager.active_cross_section.configuration.off_spec_y_min,
+                y_max=self.data_manager.active_cross_section.configuration.off_spec_y_max,
             )
             if data_dict is None:
                 data_dict = dict(
@@ -428,15 +428,15 @@ class ProcessingWorkflow(object):
 
         return data_dict, slice_data_dict
 
-    def get_gisans_data(self, progress=None):
-        wl_npts = self.data_manager.active_channel.configuration.gisans_wl_npts
-        wl_min = self.data_manager.active_channel.configuration.gisans_wl_min
-        wl_max = self.data_manager.active_channel.configuration.gisans_wl_max
-        qy_npts = self.data_manager.active_channel.configuration.gisans_qy_npts
-        qz_npts = self.data_manager.active_channel.configuration.gisans_qz_npts
-        use_pf = self.data_manager.active_channel.configuration.gisans_use_pf
+    def get_gisans_data(self, progress=None) -> dict | Tuple[dict, dict]:
+        wl_npts = self.data_manager.active_cross_section.configuration.gisans_wl_npts
+        wl_min = self.data_manager.active_cross_section.configuration.gisans_wl_min
+        wl_max = self.data_manager.active_cross_section.configuration.gisans_wl_max
+        qy_npts = self.data_manager.active_cross_section.configuration.gisans_qy_npts
+        qz_npts = self.data_manager.active_cross_section.configuration.gisans_qz_npts
+        use_pf = self.data_manager.active_cross_section.configuration.gisans_use_pf
 
-        data_dict = dict(units=["1/A", "1/A", "a.u.", "a.u."], cross_sections={}, cross_section_bins={})
+        data_dict = {"units": ["1/A", "1/A", "a.u.", "a.u."], "cross_sections": {}, "cross_section_bins": {}}
         if use_pf:
             data_dict["columns"] = ["Qy", "pf", "I", "dI"]
         else:
@@ -580,12 +580,16 @@ class ProcessingWorkflow(object):
         Tuple[dict, dict]
             A tuple containing the smoothed data dictionary and a slice data dictionary.
         """
-        axes = self.data_manager.active_channel.configuration.off_spec_x_axis
-        output_data = dict(cross_sections=dict())
+        axes = self.data_manager.active_cross_section.configuration.off_spec_x_axis
+        output_data = {
+            "units": [],
+            "columns": [],
+            "cross_sections": {},
+        }
         slice_data_dict = {}
 
-        for channel in data_dict["cross_sections"].keys():
-            data = np.hstack(data_dict[channel])
+        for xs in data_dict["cross_sections"].keys():
+            data = np.hstack(data_dict[xs])
             I = data[:, :, 5].flatten()
             Qzmax = data[:, :, 2].max() * 2.0
             y_label = "Qz"
@@ -628,11 +632,11 @@ class ProcessingWorkflow(object):
                 axis_sigma_scaling=axis_sigma_scaling,
                 xysigma0=xysigma0,
             )
-            output_data[channel] = [np.array([x, y, I]).transpose((1, 2, 0))]
-            output_data["cross_sections"][channel] = data_dict["cross_sections"][channel]
+            output_data[xs] = [np.array([x, y, I]).transpose((1, 2, 0))]
+            output_data["cross_sections"][xs] = data_dict["cross_sections"][xs]
 
             # Slices
-            slice_data_dict = self.get_slice_output_data(x[0], y.T[0], I, None, channel, y_label, **slice_data_dict)
+            slice_data_dict = self.get_slice_output_data(x[0], y.T[0], I, None, xs, y_label, **slice_data_dict)
 
         output_data["ki_max"] = data_dict["ki_max"]
         return output_data, slice_data_dict
@@ -642,8 +646,8 @@ class ProcessingWorkflow(object):
         if slice_data_dict == {}:
             slice_data_dict = dict(units=["1/A", "a.u.", "a.u."], columns=[label, "I", "dI"], cross_sections={})
 
-        q_min = self.data_manager.active_channel.configuration.off_spec_slice_qz_min
-        q_max = self.data_manager.active_channel.configuration.off_spec_slice_qz_max
+        q_min = self.data_manager.active_cross_section.configuration.off_spec_slice_qz_min
+        q_max = self.data_manager.active_cross_section.configuration.off_spec_slice_qz_max
         result, error = off_specular.get_slice(qz, r, dr, q_min, q_max)
         if error is not None:
             # Is x what we need here, or the middle of the bin
@@ -660,8 +664,8 @@ class ProcessingWorkflow(object):
         if slice_data_dict == {}:
             slice_data_dict = dict(units=["1/A", "a.u.", "a.u."], columns=[label, "I", "dI"], cross_sections={})
 
-        q_min = self.data_manager.active_channel.configuration.gisans_slice_qz_min
-        q_max = self.data_manager.active_channel.configuration.gisans_slice_qz_max
+        q_min = self.data_manager.active_cross_section.configuration.gisans_slice_qz_min
+        q_max = self.data_manager.active_cross_section.configuration.gisans_slice_qz_max
 
         # We can use the off-specular get_slice() function because it's not specific to off-specular
         result, error = off_specular.get_slice(qz, r, dr, q_min, q_max)
@@ -773,7 +777,7 @@ class ProcessingWorkflow(object):
         return (
             text.replace("{ipts}", "")
             .replace("{numbers}", "+".join(run_list))
-            .replace("{instrument}", self.data_manager.active_channel.configuration.instrument.instrument_name)
+            .replace("{instrument}", self.data_manager.active_cross_section.configuration.instrument.instrument_name)
         )
 
     def send_email(self):

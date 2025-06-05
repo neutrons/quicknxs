@@ -37,7 +37,7 @@ class PlotManager(object):
         self.xtof_bck2 = None
 
     def plot_overview(self):
-        """X vs. Y and X vs. Tof for main channel."""
+        """X vs. Y and X vs. Tof for main xs."""
         self.xy_x1 = None
         self.xy_x2 = None
         self.xy_y1 = None
@@ -50,7 +50,7 @@ class PlotManager(object):
         main_window.ui.xy_overview.clear()
         main_window.ui.xtof_overview.clear()
 
-        data: CrossSectionData = main_window.data_manager.active_channel
+        data: CrossSectionData = main_window.data_manager.active_cross_section
         # Initialize data as needed
         data.prepare_plot_data()
 
@@ -175,7 +175,7 @@ class PlotManager(object):
         main_window.ui.xtof_overview.draw()
 
     def plot_xy(self):
-        """X vs. Y plots for all channels."""
+        """X vs. Y plots for all xss."""
         main_window = self.main_window
         data_set_keys = list(main_window.data_manager.data_sets.keys())
         plots = [main_window.ui.xy_pp, main_window.ui.xy_mm, main_window.ui.xy_pm, main_window.ui.xy_mp]
@@ -257,7 +257,7 @@ class PlotManager(object):
         progress(100, message="Ready", out_of=100)
 
     def plot_xtof(self):
-        """X vs. ToF plots for all channels."""
+        """X vs. ToF plots for all xss."""
         main_window = self.main_window
         data_set_keys = list(main_window.data_manager.data_sets.keys())
         imin = 1e20
@@ -287,8 +287,8 @@ class PlotManager(object):
 
         progress(n_total, message="Plotting...", out_of=n_total + 1)
 
-        wavelength = main_window.data_manager.active_channel.wavelength
-        tof = main_window.data_manager.active_channel.tof
+        wavelength = main_window.data_manager.active_cross_section.wavelength
+        tof = main_window.data_manager.active_cross_section.tof
 
         plots = [main_window.ui.xtof_pp, main_window.ui.xtof_mm, main_window.ui.xtof_pm, main_window.ui.xtof_mp]
         for i in range(len(data_set_keys), 4):
@@ -348,9 +348,9 @@ class PlotManager(object):
         separate the specular reflection from bragg-sheets
         """
         main_window = self.main_window
-        if main_window.data_manager.active_channel is None:
+        if main_window.data_manager.active_cross_section is None:
             return
-        data = main_window.data_manager.active_channel
+        data = main_window.data_manager.active_cross_section
         data.prepare_plot_data()
 
         if data.total_counts == 0:
@@ -431,12 +431,12 @@ class PlotManager(object):
     def plot_offspec(self, recalc=True, crop=False):
         """Plot off-specular data.
 
-        Create an offspecular plot for all channels of the datasets in the
+        Create an offspecular plot for all cross sections of the datasets in the
         reduction list. The user can define upper and lower bounds for the
         plotted intensity and select the coordinates to be either kiz-kfz vs. Qz,
         Qx vs. Qz or kiz vs. kfz.
         """
-        if self.main_window.data_manager.active_channel is None:
+        if self.main_window.data_manager.active_cross_section is None:
             return
 
         xlim = None
@@ -480,13 +480,11 @@ class PlotManager(object):
         progress(0.1, message="Computing off-specular", out_of=n_total)
         final_msg = "Off-specular calculation complete"
         for i_run, nexus_data in enumerate(self.main_window.data_manager.reduction_list):
-            for i, channel in enumerate(data_set_keys):
+            for i, xs in enumerate(data_set_keys):
                 plot = plots[i]
                 plot.show()
-                selected_data = nexus_data.cross_sections[channel]
-                progress(
-                    i_run + i / 4.0, message="Processed run %s %s" % (selected_data.number, channel), out_of=n_total
-                )
+                selected_data = nexus_data.cross_sections[xs]
+                progress(i_run + i / 4.0, message="Processed run %s %s" % (selected_data.number, xs), out_of=n_total)
 
                 PN = len(selected_data.tof) - selected_data.configuration.cut_first_n_points
                 P0 = selected_data.configuration.cut_last_n_points
@@ -538,7 +536,7 @@ class PlotManager(object):
                         cmap=self.color,
                         shading="gouraud",
                     )
-        for i, channel in enumerate(data_set_keys):
+        for i, xs in enumerate(data_set_keys):
             plot = plots[i]
             if self.main_window.ui.kizmkfzVSqz.isChecked():
                 plot.canvas.ax.set_xlim([k_diff_min, k_diff_max])
@@ -557,7 +555,7 @@ class PlotManager(object):
                 plot.set_ylabel("k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
             plot.set_xticks_fontsize(8)
             plot.set_yticks_fontsize(8)
-            plot.set_title(channel, fontsize=14)
+            plot.set_title(xs, fontsize=14)
             if plot.cplot is not None:
                 plot.cplot.set_clim([i_min, i_max])
                 if self.main_window.ui.show_colorbars.isChecked() and plots[i].cbar is None:
@@ -586,25 +584,25 @@ class PlotManager(object):
         self.main_window.ui.refl_widget.hide()
         self.main_window.ui.intensity.clear()
 
-        if self.main_window.data_manager.active_channel is None:
+        if self.main_window.data_manager.active_cross_section is None:
             self._plot_message(self.main_window.ui.intensity, "No data")
             return False
 
         # format and plot tof data
 
-        counts_normalized = self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 2]
-        counts_normalized_error = self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 3]
+        counts_normalized = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 2]
+        counts_normalized_error = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 3]
 
         if self.main_window.ui.xLamda.isChecked():
             self.main_window.ui.intensity.errorbar(
-                self.main_window.data_manager.active_channel.wavelength,
+                self.main_window.data_manager.active_cross_section.wavelength,
                 counts_normalized,
                 yerr=counts_normalized_error,
             )
             self.main_window.ui.intensity.set_xlabel("$\\lambda{}$ [Å]")
         else:
             # convert raw microsecond units to milliseconds to match xtof plot
-            tof_ms = tof_ms = self.main_window.data_manager.active_channel.get_tof_counts_table()[0][:, 0] / 1000
+            tof_ms = tof_ms = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 0] / 1000
 
             self.main_window.ui.intensity.errorbar(
                 tof_ms,
@@ -631,15 +629,15 @@ class PlotManager(object):
         self.main_window.ui.refl.clear()
 
         if (
-            self.main_window.data_manager.active_channel is None
-            or self.main_window.data_manager.active_channel.r is None
-            or self.main_window.data_manager.active_channel.q is None
-            or self.main_window.data_manager.active_channel.dr is None
+            self.main_window.data_manager.active_cross_section is None
+            or self.main_window.data_manager.active_cross_section.r is None
+            or self.main_window.data_manager.active_cross_section.q is None
+            or self.main_window.data_manager.active_cross_section.dr is None
         ):
             self._plot_message(self.main_window.ui.refl, "No data")
             return False
 
-        data = self.main_window.data_manager.active_channel
+        data = self.main_window.data_manager.active_cross_section
         if data.total_counts == 0:
             self._plot_message(self.main_window.ui.refl, "No points to show\nin active dataset!")
             return False
@@ -654,8 +652,8 @@ class PlotManager(object):
         ymin = 1.5
         ymax = 1e-7
         P0 = self.main_window.ui.rangeStart.value()
-        PN = len(self.main_window.data_manager.active_channel.q) - self.main_window.ui.rangeEnd.value()
-        ynormed = self.main_window.data_manager.active_channel.r[P0:PN]
+        PN = len(self.main_window.data_manager.active_cross_section.q) - self.main_window.ui.rangeEnd.value()
+        ynormed = self.main_window.data_manager.active_cross_section.r[P0:PN]
         if len(ynormed[ynormed > 0]) < 2:
             self._plot_message(self.main_window.ui.refl, "No points to show\nin active dataset!")
             return False
@@ -663,25 +661,22 @@ class PlotManager(object):
         ymin = min(ymin, ynormed[ynormed > 0].min())
         ymax = _set_ymax(ymax, ynormed)
         self.main_window.ui.refl.errorbar(
-            self.main_window.data_manager.active_channel.q[P0:PN],
+            self.main_window.data_manager.active_cross_section.q[P0:PN],
             ynormed,
-            yerr=self.main_window.data_manager.active_channel.dr[P0:PN],
+            yerr=self.main_window.data_manager.active_cross_section.dr[P0:PN],
             label="Active",
             lw=2,
             capsize=1,
             color="black",
         )
 
-        channel_name = self.main_window.data_manager.active_channel.name
+        xs_name = self.main_window.data_manager.active_cross_section.name
         for i, refli in enumerate(self.main_window.data_manager.reduction_list):
-            if refli.cross_sections[channel_name].q is None:
+            if refli.cross_sections[xs_name].q is None:
                 continue
-            P0i = refli.cross_sections[channel_name].configuration.cut_first_n_points
-            PNi = (
-                len(refli.cross_sections[channel_name].q)
-                - refli.cross_sections[channel_name].configuration.cut_last_n_points
-            )
-            ynormed = refli.cross_sections[channel_name].r[P0i:PNi]
+            P0i = refli.cross_sections[xs_name].configuration.cut_first_n_points
+            PNi = len(refli.cross_sections[xs_name].q) - refli.cross_sections[xs_name].configuration.cut_last_n_points
+            ynormed = refli.cross_sections[xs_name].r[P0i:PNi]
             try:
                 ymin = min(ymin, ynormed[ynormed > 0].min())
             except ValueError:
@@ -691,9 +686,9 @@ class PlotManager(object):
             except ValueError:
                 pass
             self.main_window.ui.refl.errorbar(
-                refli.cross_sections[channel_name].q[P0i:PNi],
+                refli.cross_sections[xs_name].q[P0i:PNi],
                 ynormed,
-                yerr=refli.cross_sections[channel_name].dr[P0i:PNi],
+                yerr=refli.cross_sections[xs_name].dr[P0i:PNi],
                 label=str(refli.number),
                 capsize=1,
                 color=self._refl_color_list[i % len(self._refl_color_list)],
@@ -715,7 +710,7 @@ class PlotManager(object):
 
     def plot_gisans(self):
         """Create GISANS plots of the current dataset with Qy-Qz maps."""
-        if self.main_window.data_manager.active_channel is None:
+        if self.main_window.data_manager.active_cross_section is None:
             return
 
         plots = [
@@ -736,10 +731,10 @@ class PlotManager(object):
         Imin = 10 ** self.main_window.ui.gisansImin.value()
         Imax = 10 ** self.main_window.ui.gisansImax.value()
 
-        for i, channel in enumerate(data_set_keys):
+        for i, xs in enumerate(data_set_keys):
             plot = plots[i]
             plot.show()
-            selected_data = self.main_window.data_manager.data_sets[channel]
+            selected_data = self.main_window.data_manager.data_sets[xs]
             plots[i].clear_fig()
             plots[i].pcolormesh(
                 selected_data.gisans_data.QyGrid,
@@ -752,7 +747,7 @@ class PlotManager(object):
             )
             plots[i].set_xlabel("Q$_y$ [Å$^{-1}$]")
             plots[i].set_ylabel("Q$_z$ [Å$^{-1}$]")
-            plots[i].set_title(channel)
+            plots[i].set_title(xs)
             if plots[i].cplot is not None:
                 plots[i].cplot.set_clim([Imin, Imax])
             if plots[i].cplot is not None and self.main_window.ui.show_colorbars.isChecked() and plots[i].cbar is None:

@@ -2,24 +2,73 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="48"
    height="48"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.3.1 r9886"
-   sodipodi:docname="extractNormalization.svg"
-   inkscape:export-filename="/home/glavic/Software/Scripte/QuickNXS/icons/extractNormalization.png"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="delDirectBeam.svg"
+   inkscape:export-filename="/Users/m2d/git/quicknxs/icons/delDirectBeam.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
-     id="defs4" />
+     id="defs4">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient6649">
+      <stop
+         offset="0"
+         id="stop6651"
+         style="stop-color:#9d0000;stop-opacity:1" />
+      <stop
+         offset="1"
+         id="stop6653"
+         style="stop-color:#f20000;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient6446"
+       osb:paint="gradient">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop6448" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop6450" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4336"
+       osb:paint="gradient">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="0"
+         id="stop4338" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop4340" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient6649"
+       id="linearGradient6655"
+       x1="11.875001"
+       y1="1027.4604"
+       x2="42.732144"
+       y2="1027.4604"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-2.2321433,-1.1607143)" />
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -28,16 +77,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="11.2"
-     inkscape:cx="26.655306"
-     inkscape:cy="24.689844"
+     inkscape:cx="8.0392347"
+     inkscape:cy="28.56068"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
-     showgrid="false"
-     inkscape:window-width="1818"
-     inkscape:window-height="1005"
-     inkscape:window-x="98"
-     inkscape:window-y="-6"
-     inkscape:window-maximized="1">
+     showgrid="true"
+     inkscape:window-width="1837"
+     inkscape:window-height="933"
+     inkscape:window-x="1447"
+     inkscape:window-y="213"
+     inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
        id="grid2985"
@@ -54,7 +103,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -85,5 +134,19 @@
        d="m 48.082439,1051.5133 -46.6867746,0 0,-21.1836"
        id="path3001"
        inkscape:connector-curvature="0" />
+    <rect
+       y="1020.0407"
+       x="10.625001"
+       height="10.017875"
+       width="30.857143"
+       id="rect6616"
+       style="fill:#333333;fill-opacity:1;stroke:none" />
+    <rect
+       style="opacity:1;fill:url(#linearGradient6655);fill-opacity:1;stroke:none;stroke-opacity:1"
+       id="rect6518"
+       width="30.857143"
+       height="10.017875"
+       x="9.6428576"
+       y="1021.2909" />
   </g>
 </svg>

@@ -377,6 +377,7 @@ class CrossSectionData(object):
             # Create projections for the 2D datasets
             Ixy = Ixyt.sum(axis=2)
             Ixt = Ixyt.sum(axis=1)
+
             # Store the data
             self.data = Ixyt.astype(float)  # 3D dataset
             self.raw_error = Ixyt_error.astype(float)  # 3D dataset
@@ -540,7 +541,7 @@ class CrossSectionData(object):
             self.number,
             self.entry_name,
             direct_beam.number,
-            self.configuration.normalization,
+            self.configuration.direct_beam,
         )
         angle_offset = 0  # Offset from dangle0, in radians
 
@@ -631,9 +632,9 @@ class CrossSectionData(object):
     def offspec(self, direct_beam: Optional["CrossSectionData"] = None):
         """Extract off-specular scattering from 4D dataset (x,y,ToF,I).
 
-        Uses a window in y to filter the 4D data
-        and than sums all I values for each ToF and x channel.
-        Qz,Qx,kiz,kfz is calculated using the x and ToF positions
+        Uses a window in y to filter the 4D data,
+        then sums all I values for each ToF and x channel.
+        Qz, Qx, kiz, kfz are calculated using the x and ToF positions
         together with the tth-bank and direct pixel values.
 
         Parameters
@@ -780,7 +781,7 @@ class NexusData(object):
             direct_beam = CrossSectionData("none", self.configuration, "none")
 
         logging.info(
-            "%s Reduction with DB: %s [config: %s]", self.number, direct_beam.number, self.configuration.normalization
+            "%s Reduction with DB: %s [config: %s]", self.number, direct_beam.number, self.configuration.direct_beam
         )
         angle_offset = 0  # Offset from dangle0, in radians
 
@@ -987,21 +988,21 @@ class NexusData(object):
         _loaded_with_getDI = False
         for ws in xs_list:
             # Get the unique name for the cross-section, determined by the filtering
-            channel = ws.getRun().getProperty("cross_section_id").value
+            xs_id = ws.getRun().getProperty("cross_section_id").value
             if ws.getRun().hasProperty("loaded_with_getDI"):
                 _loaded_with_getDI = True
             if progress is not None:
                 progress_value += int(100.0 / len(xs_list))
-                progress(progress_value, "Loading %s..." % str(channel), out_of=100.0)
+                progress(progress_value, "Loading %s..." % str(xs_id), out_of=100.0)
 
             # Get rid of empty workspaces
-            logging.info("Loading %s: %s events", str(channel), ws.getNumberEvents())
+            logging.info("Loading %s: %s events", str(xs_id), ws.getNumberEvents())
             if ws.getNumberEvents() < self.configuration.nbr_events_min:
-                logging.warning("Too few events for %s: %s", channel, ws.getNumberEvents())
+                logging.warning("Too few events for %s: %s", xs_id, ws.getNumberEvents())
                 continue
 
             name = ws.getRun().getProperty("cross_section_id").value
-            cross_section = CrossSectionData(name, self.configuration, entry_name=channel, workspace=ws)
+            cross_section = CrossSectionData(name, self.configuration, entry_name=xs_id, workspace=ws)
             self.cross_sections[name] = cross_section
             self.number = cross_section.number  # e.g '1234:1238+1239' if more than one run made up this cross section
             if cross_section.total_counts > _max_counts:

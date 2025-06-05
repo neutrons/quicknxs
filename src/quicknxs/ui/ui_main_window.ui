@@ -1580,7 +1580,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLabel" name="currentChannel">
+                <widget class="QLabel" name="currentCrossSection">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -2455,7 +2455,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLabel" name="normalization_list_label">
+                   <widget class="QLabel" name="direct_beam_list_label">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                       <horstretch>0</horstretch>
@@ -2510,7 +2510,7 @@
                   <item>
                    <layout class="QGridLayout" name="gridLayout_7">
                     <item row="0" column="0">
-                     <widget class="QRadioButton" name="selectedChannel0">
+                     <widget class="QRadioButton" name="selectedCrossSection0">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2526,7 +2526,7 @@
                      </widget>
                     </item>
                     <item row="1" column="1">
-                     <widget class="QRadioButton" name="selectedChannel5">
+                     <widget class="QRadioButton" name="selectedCrossSection5">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2539,7 +2539,7 @@
                      </widget>
                     </item>
                     <item row="1" column="3">
-                     <widget class="QRadioButton" name="selectedChannel7">
+                     <widget class="QRadioButton" name="selectedCrossSection7">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2552,7 +2552,7 @@
                      </widget>
                     </item>
                     <item row="0" column="1">
-                     <widget class="QRadioButton" name="selectedChannel1">
+                     <widget class="QRadioButton" name="selectedCrossSection1">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2565,7 +2565,7 @@
                      </widget>
                     </item>
                     <item row="1" column="0">
-                     <widget class="QRadioButton" name="selectedChannel4">
+                     <widget class="QRadioButton" name="selectedCrossSection4">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2578,7 +2578,7 @@
                      </widget>
                     </item>
                     <item row="0" column="2">
-                     <widget class="QRadioButton" name="selectedChannel2">
+                     <widget class="QRadioButton" name="selectedCrossSection2">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2591,7 +2591,7 @@
                      </widget>
                     </item>
                     <item row="0" column="3">
-                     <widget class="QRadioButton" name="selectedChannel3">
+                     <widget class="QRadioButton" name="selectedCrossSection3">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2604,7 +2604,7 @@
                      </widget>
                     </item>
                     <item row="1" column="2">
-                     <widget class="QRadioButton" name="selectedChannel6">
+                     <widget class="QRadioButton" name="selectedCrossSection6">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2617,7 +2617,7 @@
                      </widget>
                     </item>
                     <item row="2" column="0">
-                     <widget class="QRadioButton" name="selectedChannel8">
+                     <widget class="QRadioButton" name="selectedCrossSection8">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2630,7 +2630,7 @@
                      </widget>
                     </item>
                     <item row="2" column="1">
-                     <widget class="QRadioButton" name="selectedChannel9">
+                     <widget class="QRadioButton" name="selectedCrossSection9">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2643,7 +2643,7 @@
                      </widget>
                     </item>
                     <item row="2" column="2">
-                     <widget class="QRadioButton" name="selectedChannel10">
+                     <widget class="QRadioButton" name="selectedCrossSection10">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -2656,7 +2656,7 @@
                      </widget>
                     </item>
                     <item row="2" column="3">
-                     <widget class="QRadioButton" name="selectedChannel11">
+                     <widget class="QRadioButton" name="selectedCrossSection11">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                         <horstretch>0</horstretch>
@@ -3626,7 +3626,7 @@
          <string>X-Y</string>
         </attribute>
         <attribute name="toolTip">
-         <string>X-Y intensity maps for all channels in this file</string>
+         <string>X-Y intensity maps for all cross sections in this file</string>
         </attribute>
         <layout class="QGridLayout" name="gridLayout">
          <property name="leftMargin">
@@ -3727,7 +3727,7 @@
          <string>X-ToF</string>
         </attribute>
         <attribute name="toolTip">
-         <string>X-ToF intensity maps for all channels in this file</string>
+         <string>X-ToF intensity maps for all cross sections in this file</string>
         </attribute>
         <layout class="QGridLayout" name="gridLayout_2">
          <property name="leftMargin">
@@ -5436,10 +5436,10 @@
   <action name="actionAddDirectBeam">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/extractNormalization.png</normaloff>../icons/extractNormalization.png</iconset>
+     <normaloff>../icons/addDirectBeam.png</normaloff>../icons/addDirectBeam.png</iconset>
    </property>
    <property name="text">
-    <string>Set as normalization</string>
+    <string>Add to direct beam list</string>
    </property>
    <property name="toolTip">
     <string>Take current data set as direct beam for wavelength normalization</string>
@@ -5597,10 +5597,10 @@
   <action name="actionClearDirectBeams">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/clearNorm.png</normaloff>../icons/clearNorm.png</iconset>
+     <normaloff>../icons/clearDirectBeams.png</normaloff>../icons/clearDirectBeams.png</iconset>
    </property>
    <property name="text">
-    <string>Clear normalization list</string>
+    <string>Clear direct beam list</string>
    </property>
    <property name="toolTip">
     <string>Remove all data sets from the direct beam list</string>
@@ -5796,13 +5796,13 @@
   <action name="actionRemoveDirectBeam">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/delNormalization.png</normaloff>../icons/delNormalization.png</iconset>
+     <normaloff>../icons/delDirectBeam.png</normaloff>../icons/delDirectBeam.png</iconset>
    </property>
    <property name="text">
-    <string>Remove from normalizations</string>
+    <string>Remove from direct beam list</string>
    </property>
    <property name="iconText">
-    <string>Remove from normalizations</string>
+    <string>Remove from direct beam list</string>
    </property>
    <property name="toolTip">
     <string>Remove the selected data set from normalization list</string>
@@ -6708,10 +6708,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel0</sender>
+   <sender>selectedCrossSection0</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1439</x>
@@ -6724,10 +6724,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel1</sender>
+   <sender>selectedCrossSection1</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1517</x>
@@ -6740,10 +6740,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel2</sender>
+   <sender>selectedCrossSection2</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1596</x>
@@ -6756,10 +6756,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel3</sender>
+   <sender>selectedCrossSection3</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1674</x>
@@ -6820,10 +6820,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel4</sender>
+   <sender>selectedCrossSection4</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1439</x>
@@ -6836,10 +6836,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel5</sender>
+   <sender>selectedCrossSection5</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1517</x>
@@ -6852,10 +6852,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel6</sender>
+   <sender>selectedCrossSection6</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1596</x>
@@ -6868,10 +6868,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel7</sender>
+   <sender>selectedCrossSection7</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1674</x>
@@ -6884,10 +6884,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel8</sender>
+   <sender>selectedCrossSection8</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1439</x>
@@ -6900,10 +6900,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel9</sender>
+   <sender>selectedCrossSection9</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1517</x>
@@ -6916,10 +6916,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel10</sender>
+   <sender>selectedCrossSection10</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1596</x>
@@ -6932,10 +6932,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>selectedChannel11</sender>
+   <sender>selectedCrossSection11</sender>
    <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>change_active_channel()</slot>
+   <slot>change_active_cross_section()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1674</x>
@@ -7434,7 +7434,7 @@
   <slot>apply_offspec_crop()</slot>
   <slot>automaticExtraction()</slot>
   <slot>autoRef()</slot>
-  <slot>change_active_channel()</slot>
+  <slot>change_active_cross_section()</slot>
   <slot>change_gisans_colorscale()</slot>
   <slot>change_offspec_colorscale()</slot>
   <slot>changeRegionValues()</slot>

@@ -411,7 +411,7 @@ def read_reduced_file(file_path: str, configuration=None):
                     conf.direct_pixel_overwrite = float(_get_tok("dpix", cols, toks))
                     DB_ID = int(_get_tok("DB_ID", cols, toks))
                     if DB_ID > 0 and len(direct_beam_runs) > DB_ID - 1:
-                        conf.normalization = direct_beam_runs[DB_ID - 1][0]
+                        conf.direct_beam = direct_beam_runs[DB_ID - 1][0]
                     run_number = int(_get_tok("number", cols, toks))
                     run_file = _get_tok("File", cols, toks)
                     if not Path(run_file).is_absolute():

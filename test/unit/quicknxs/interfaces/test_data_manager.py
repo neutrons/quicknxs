@@ -31,8 +31,8 @@ class TestDataManagerTest(object):
 
         q_range = manager._nexus_data.get_q_range()
         assert q_range[0:2] == pytest.approx([0.034, 0.068], abs=0.05)
-        assert manager.add_active_to_normalization() == False
-        assert manager.remove_active_from_normalization() == -1
+        assert manager.add_active_to_direct_beam_list() == False
+        assert manager.remove_active_from_direct_beam_list() == -1
 
         manager.set_active_data_from_reduction_list(0)
         manager.set_active_data_from_direct_beam_list(0)
@@ -85,7 +85,7 @@ class TestDataManagerTest(object):
         manager.load(data_server.path_to("REF_M_42113"), Configuration())
         manager.add_active_to_reduction()
         manager.load(data_server.path_to("REF_M_42099"), Configuration())
-        manager.add_active_to_normalization()
+        manager.add_active_to_direct_beam_list()
         assert manager.get_cachesize() == 3
         # Load files without adding them to reduction or normalization
         manager.load(data_server.path_to("REF_M_42100"), Configuration())

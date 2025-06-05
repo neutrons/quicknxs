@@ -2,7 +2,7 @@
 # pylint: disable=bare-except
 
 import logging
-from typing import List
+from typing import List, Optional, Tuple
 
 from qtpy import QtCore, QtWidgets
 
@@ -77,15 +77,15 @@ class ResultViewer(QtWidgets.QDialog):
         i_min = 10 ** self.ui.offspec_intensity_min.value()
         i_max = 10 ** self.ui.offspec_intensity_max.value()
 
-        for i, channel in enumerate(data_set_keys):
+        for i, xs in enumerate(data_set_keys):
             plot = plots[i]
             plot.show()
             plots[i].clear_fig()
-            _data = off_spec_data[channel][0].T
+            _data = off_spec_data[xs][0].T
             plots[i].pcolormesh(_data[0], _data[1], _data[2], log=True, imin=i_min, imax=i_max)
             plots[i].set_xlabel("%s [%s]" % (off_spec_data["columns"][0], off_spec_data["units"][0]))
             plots[i].set_ylabel("%s [%s]" % (off_spec_data["columns"][1], off_spec_data["units"][1]))
-            plots[i].set_title(channel)
+            plots[i].set_title(xs)
             if plots[i].cplot is not None:
                 plots[i].cplot.set_clim([i_min, i_max])
                 if xlim is not None and ylim is not None:
@@ -105,8 +105,17 @@ class ResultViewer(QtWidgets.QDialog):
     def reset_gisans_crop(self):
         self.update_gisans(crop=False)
 
-    def _plot_gisans(self, gisans_data, channel, layout, i_min, i_max, xlim=None, ylim=None):
-        _data = gisans_data[channel][0].T
+    def _plot_gisans(
+        self,
+        gisans_data: dict,
+        xs_name: str,
+        layout: QtWidgets.QGridLayout,
+        i_min: float,
+        i_max: float,
+        xlim: Optional[Tuple[float, float]] = None,
+        ylim: Optional[Tuple[float, float]] = None,
+    ):
+        _data = gisans_data[xs_name][0].T
         gisans_plot = mpl.MPLWidget(self)
         gisans_plot.setMinimumSize(QtCore.QSize(0, 250))
         if self._gisans_reference is None:
@@ -116,7 +125,7 @@ class ResultViewer(QtWidgets.QDialog):
         gisans_plot.pcolormesh(_data[0], _data[1], _data[2], log=True, imin=i_min, imax=i_max)
         gisans_plot.set_xlabel("%s [%s]" % (gisans_data["columns"][0], gisans_data["units"][0]))
         gisans_plot.set_ylabel("%s [%s]" % (gisans_data["columns"][1], gisans_data["units"][1]))
-        gisans_plot.set_title(channel)
+        gisans_plot.set_title(xs_name)
         if xlim is not None and ylim is not None:
             gisans_plot.canvas.ax.set_xlim(*xlim)
             gisans_plot.canvas.ax.set_ylim(*ylim)
@@ -164,9 +173,9 @@ class ResultViewer(QtWidgets.QDialog):
         for i, pol_state in enumerate(data_set_keys):
             clear_layout(layouts[i])
             logging.info("State: %s" % pol_state)
-            for j, channel in enumerate(gisans_data["cross_section_bins"][pol_state]):
-                logging.info("  channel: %s", channel)
-                _plot = self._plot_gisans(gisans_data, channel, layouts[i], i_min, i_max, xlim=xlim, ylim=ylim)
+            for j, xs in enumerate(gisans_data["cross_section_bins"][pol_state]):
+                logging.info("  cross section: %s", xs)
+                _plot = self._plot_gisans(gisans_data, xs, layouts[i], i_min, i_max, xlim=xlim, ylim=ylim)
                 if i == 0 and j == 0:
                     self._gisans_reference = _plot
 
