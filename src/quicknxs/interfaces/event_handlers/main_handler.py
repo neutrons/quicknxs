@@ -1380,7 +1380,7 @@ class MainHandler(object):
         if self._data_manager.active_cross_section is not None:
             configuration = self._data_manager.active_cross_section.configuration
         else:
-            configuration = Configuration(self.main_window.settings)
+            configuration = Configuration()
         configuration.tof_bins = self.ui.eventTofBins.value()
         configuration.tof_bin_type = self.ui.eventBinMode.currentIndex()
 
@@ -1486,7 +1486,7 @@ class MainHandler(object):
     def populate_from_configuration(self, configuration=None):
         """Set reduction options in UI, usually after loading a reduced data set."""
         if configuration is None:
-            configuration = Configuration(self.main_window.settings)
+            configuration = Configuration()
 
         self.ui.eventTofBins.setValue(configuration.tof_bins)
         self.ui.eventBinMode.setCurrentIndex(configuration.tof_bin_type)
