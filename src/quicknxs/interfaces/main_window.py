@@ -441,7 +441,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def removeDataTable(self):
         """Remove last data tab for additional peaks/ROI:s"""
-        self.ui.removeTabButton.setEnabled(False) # Disable the `removeTabButton` at the beginning
+        self.ui.removeTabButton.setEnabled(False)  # Disable the `removeTabButton` at the beginning
         try:
             self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
             self.data_manager.remove_additional_reduction_list(self.data_tab_count)
