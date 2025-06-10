@@ -11,6 +11,8 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 .. **Of interest to the User**:
 
+.. PR #171: Fixed removing tab index issue
+
 .. **Of interest to the Developer:**
 
 v4.5.0
