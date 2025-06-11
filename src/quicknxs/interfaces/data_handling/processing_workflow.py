@@ -100,7 +100,8 @@ class ProcessingWorkflow(object):
 
         # restore current peak shown in the UI
         self.data_manager.set_active_reduction_list_index(active_peak)
-        self.data_manager.set_active_data_from_reduction_list(active_data)
+        if active_data is not None:
+            self.data_manager.set_active_data_from_reduction_list(active_data)
 
         if self.output_options["email_send"]:
             self.send_email()
