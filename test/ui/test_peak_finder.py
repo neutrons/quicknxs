@@ -7,21 +7,28 @@ from quicknxs.interfaces.main_window import MainWindow
 
 def test_metadata_roi_updates_ui(data_server, qtbot):
     main_window = MainWindow()
-    # qtbot.addWidget(main_window)
-
-    # add direct beam run
-    main_window.file_handler.open_file(data_server.path_to("REF_M_42099"))
-    main_window.actionAddDirectBeam.triggered.emit()
+    qtbot.addWidget(main_window)
 
     config = main_window.file_handler.get_configuration()
 
-    assert main_window.ui.roi_peak_value.text() == str(config.metadata_roi_peak)
-    assert main_window.ui.roi_bck_value.text() == str(config.metadata_roi_bck)
+    # add direct beam run
+    main_window.file_handler.open_file(data_server.path_to("REF_M_42099"))
+
+    qtbot.waitUntil(
+        lambda: main_window.ui.roi_peak_value.text()
+        == str(main_window.file_handler.get_configuration().metadata_roi_peak)
+    )
+
+    qtbot.waitUntil(
+        lambda: main_window.ui.roi_bck_value.text()
+        == str(main_window.file_handler.get_configuration().metadata_roi_bck)
+    )
 
 
 def test_metadata_roi_disables_peak_finder(qtbot):
     """Test that the metadata ROI option disables the peak finder buttons."""
     main_window = MainWindow()
+    qtbot.addWidget(main_window)
 
     metadata_roi_checkbox = main_window.ui.use_roi_checkbox
     metadata_roi_checkbox.setChecked(True)
@@ -53,6 +60,7 @@ def test_peak_finder_settings_persist(data_server, qtbot):
         assert main_window.ui.side_bck_width.value() == 10
 
     main_window = MainWindow()
+    qtbot.addWidget(main_window)
 
     # Change peak finder settings
     main_window.ui.use_roi_checkbox.setChecked(False)
