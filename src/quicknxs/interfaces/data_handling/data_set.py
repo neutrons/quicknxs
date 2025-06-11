@@ -133,8 +133,6 @@ class CrossSectionData(object):
         self.xtofdata = None
         self.raw_error = None
 
-        self.meta_data_roi_peak = None
-        self.meta_data_roi_bck = None
         self._direct_pixel = 0
         self._angle_offset = 0
         self.scattering_angle = 0
@@ -401,8 +399,8 @@ class CrossSectionData(object):
             self.use_roi_actual = data_info.use_roi_actual
             self.is_direct_beam = data_info.is_direct_beam
 
-            self.meta_data_roi_peak = data_info.roi_peak
-            self.meta_data_roi_bck = data_info.roi_background
+            self.configuration.metadata_roi_peak = data_info.roi_peak
+            self.configuration.metadata_roi_bck = data_info.roi_background
 
             if self.configuration.use_peak_finder or self.configuration.use_roi:
                 self.configuration.peak_roi = data_info.peak_range

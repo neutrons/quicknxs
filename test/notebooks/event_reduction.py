@@ -192,9 +192,9 @@ class EventReflectivity(object):
         self.pixel_width = float(self._ws_sc.getInstrument().getNumberParameter("pixel-width")[0]) / 1000.0
 
         if self.instrument == self.INSTRUMENT_4B:
-            self.extract_meta_data_4B()
+            self.extract_metadata_4B()
         else:
-            self.extract_meta_data_4A()
+            self.extract_metadata_4A()
 
         h = 6.626e-34  # m^2 kg s^-1
         m = 1.675e-27  # kg
@@ -213,7 +213,7 @@ class EventReflectivity(object):
         # Q binning to use
         self.q_bins = get_q_binning(self.q_min, self.q_max, self.q_step)
 
-    def extract_meta_data_4A(self):
+    def extract_metadata_4A(self):
         run_object = self._ws_sc.getRun()
         self.det_distance = run_object["SampleDetDis"].getStatistics().mean
         source_sample_distance = run_object["ModeratorSamDis"].getStatistics().mean
@@ -223,7 +223,7 @@ class EventReflectivity(object):
             source_sample_distance /= 1000.0
         self.source_detector_distance = source_sample_distance + self.det_distance
 
-    def extract_meta_data_4B(self):
+    def extract_metadata_4B(self):
         self.det_distance = 1.83
         source_sample_distance = 13.63
         self.source_detector_distance = source_sample_distance + self.det_distance

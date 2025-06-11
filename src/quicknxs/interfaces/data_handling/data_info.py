@@ -6,6 +6,7 @@ import logging
 import math
 import sys
 import time
+from typing import List
 
 import mantid.simpleapi as api
 import numpy as np
@@ -77,7 +78,7 @@ class DataInfo(object):
         self.determine_data_type(ws)
         logging.info("INSPECT: %s sec" % (time.time() - t_0))
 
-    def get_tof_range(self, ws):
+    def get_tof_range(self, ws) -> List[float]:
         """Determine TOF range from the data."""
 
         run_object = ws.getRun()
@@ -193,7 +194,7 @@ class DataInfo(object):
         # After all this, update the ROI according to reduction options
         self.roi_peak = roi_peak
         self.roi_low_res = roi_low_res
-        self.meta_data_peak2 = peak2
+        self.metadata_peak2 = peak2
 
         if self.force_bck_roi == True:
             self.background = peak2
