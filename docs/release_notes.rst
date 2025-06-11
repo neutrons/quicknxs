@@ -5,13 +5,15 @@ Release Notes
 =============
 Notes for major and minor releases. Notes for Patch releases are deferred.
 
-.. v4.6.0
-.. ------
-.. (date of release, format YYYY-MM-DD)
+v4.6.0
+------
+(date of release, format YYYY-MM-DD)
 
-.. **Of interest to the User**:
+**Of interest to the User**:
 
-.. **Of interest to the Developer:**
+  - Fix an issue where after a reduction the index of the active data did not match the GUI (PR #172).
+
+**Of interest to the Developer:**
 
 v4.5.0
 ------
