@@ -5,6 +5,20 @@ import pytest
 from quicknxs.interfaces.main_window import MainWindow
 
 
+def test_metadata_roi_updates_ui(data_server, qtbot):
+    main_window = MainWindow()
+    # qtbot.addWidget(main_window)
+
+    # add direct beam run
+    main_window.file_handler.open_file(data_server.path_to("REF_M_42099"))
+    main_window.actionAddDirectBeam.triggered.emit()
+
+    config = main_window.file_handler.get_configuration()
+
+    assert main_window.ui.roi_peak_value.text() == str(config.metadata_roi_peak)
+    assert main_window.ui.roi_bck_value.text() == str(config.metadata_roi_bck)
+
+
 def test_metadata_roi_disables_peak_finder(qtbot):
     """Test that the metadata ROI option disables the peak finder buttons."""
     main_window = MainWindow()
@@ -47,7 +61,6 @@ def test_peak_finder_settings_persist(data_server, qtbot):
     main_window.ui.use_side_bck_checkbox.setChecked(True)
     main_window.ui.side_bck_width.setValue(10)
 
-    config = main_window.file_handler.get_configuration()
     _assert_peak_finder_config()
 
     # Load a reduced data file

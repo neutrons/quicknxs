@@ -6,7 +6,7 @@ import logging
 import math
 import sys
 import time
-from typing import List
+from typing import Tuple
 
 import mantid.simpleapi as api
 import numpy as np
@@ -78,7 +78,7 @@ class DataInfo(object):
         self.determine_data_type(ws)
         logging.info("INSPECT: %s sec" % (time.time() - t_0))
 
-    def get_tof_range(self, ws) -> List[float]:
+    def get_tof_range(self, ws) -> Tuple[float, float]:
         """Determine TOF range from the data."""
 
         run_object = ws.getRun()

@@ -22,7 +22,7 @@ class Configuration(object):
 
     metadata_roi_peak: List[float]
         Peak range of interest, obtained from data set's metadata
-    metadat_roi_bck: List[float]
+    metadata_roi_bck: List[float]
         Background range of interest, obtained from data set's metadata
     """
 
@@ -116,8 +116,8 @@ class Configuration(object):
         ### Reduction parameters
 
         # Use region of interest specified in metadata
-        self.metadata_roi_peak = []
-        self.metadata_roi_bck = []
+        self.metadata_roi_peak: List[int] = []
+        self.metadata_roi_bck: List[int] = []
         self.set_direct_pixel = False
         self.direct_pixel_overwrite = 0.0
         self.set_direct_angle_offset = False
