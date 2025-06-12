@@ -11,6 +11,8 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 .. **Of interest to the User**:
 
+..   - PR 172: Fix an issue where after a reduction the index of the active data did not match the GUI
+
 .. **Of interest to the Developer:**
 
 v4.5.0
