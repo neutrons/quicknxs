@@ -9,20 +9,14 @@ def test_metadata_roi_updates_ui(data_server, qtbot):
     main_window = MainWindow()
     qtbot.addWidget(main_window)
 
-    config = main_window.file_handler.get_configuration()
-
     # add direct beam run
     main_window.file_handler.open_file(data_server.path_to("REF_M_42099"))
+    main_window.actionAddDirectBeam.triggered.emit()
 
-    qtbot.waitUntil(
-        lambda: main_window.ui.roi_peak_value.text()
-        == str(main_window.file_handler.get_configuration().metadata_roi_peak)
-    )
+    config = main_window.file_handler.get_configuration()
 
-    qtbot.waitUntil(
-        lambda: main_window.ui.roi_bck_value.text()
-        == str(main_window.file_handler.get_configuration().metadata_roi_bck)
-    )
+    assert main_window.ui.roi_peak_value.text() == str(config.metadata_roi_peak)
+    assert main_window.ui.roi_bck_value.text() == str(config.metadata_roi_bck)
 
 
 def test_metadata_roi_disables_peak_finder(qtbot):

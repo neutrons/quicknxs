@@ -1232,7 +1232,7 @@
                <string>Peak ROI in the metadata:</string>
               </property>
               <property name="text">
-               <string>0 - 0</string>
+               <string>[0, 0]</string>
               </property>
              </widget>
             </item>
@@ -1249,7 +1249,7 @@
                <string>Background ROI in the metadata</string>
               </property>
               <property name="text">
-               <string>0 - 0</string>
+               <string>[0, 0]</string>
               </property>
              </widget>
             </item>
