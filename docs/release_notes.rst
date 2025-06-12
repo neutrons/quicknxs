@@ -10,6 +10,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 .. (date of release, format YYYY-MM-DD)
 
 .. **Of interest to the User**:
+.. - PR #173 metadata ROI now globally set and used more consistently
 
 ..   - PR 172: Fix an issue where after a reduction the index of the active data did not match the GUI
 

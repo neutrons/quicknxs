@@ -1,7 +1,7 @@
 # pylint: disable=invalid-name, line-too-long, too-few-public-methods, too-many-instance-attributes, wrong-import-order, bare-except
 """Application configuration, including reduction options."""
 
-from typing import List
+from typing import List, Optional
 
 from quicknxs.interfaces.data_handling.instrument import Instrument
 
@@ -10,7 +10,21 @@ from quicknxs.interfaces.data_handling.instrument import Instrument
 
 
 class Configuration(object):
-    """Hold reduction options."""
+    """Hold reduction options.
+
+    Class Attributes
+    ----------------
+
+    TBD
+
+    Instance Attributes
+    -------------------
+
+    metadata_roi_peak: List[float]
+        Peak range of interest, obtained from data set's metadata
+    metadata_roi_bck: List[float]
+        Background range of interest, obtained from data set's metadata
+    """
 
     # Choice of axes for off-specular binning
     QX_VS_QZ = 0
@@ -88,7 +102,7 @@ class Configuration(object):
         self.instrument = Instrument()
         # Number of TOF bins
         self.tof_bins = 400
-        self.tof_range = None
+        self.tof_range: Optional[List[float]] = None
         # Bin type:
         #    0 = Constant bin width
         #    1 = Constant Q bin width
@@ -99,8 +113,11 @@ class Configuration(object):
         self.count_threshold = 0.01
         self.tof_overwrite = None
 
-        # Reduction parameters
-        # Use region of interest specified in meta data
+        ### Reduction parameters
+
+        # Use region of interest specified in metadata
+        self.metadata_roi_peak: List[int] = []
+        self.metadata_roi_bck: List[int] = []
         self.set_direct_pixel = False
         self.direct_pixel_overwrite = 0.0
         self.set_direct_angle_offset = False

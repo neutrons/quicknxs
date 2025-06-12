@@ -1222,7 +1222,7 @@
             <item row="4" column="0">
              <widget class="QLabel" name="roi_peak_label">
               <property name="text">
-               <string>Metadata ROI peak</string>
+               <string>Metadata peak ROI</string>
               </property>
              </widget>
             </item>
@@ -1232,7 +1232,7 @@
                <string>Peak ROI in the metadata:</string>
               </property>
               <property name="text">
-               <string>0 - 0</string>
+               <string>[0, 0]</string>
               </property>
              </widget>
             </item>
@@ -1246,10 +1246,10 @@
             <item row="5" column="1">
              <widget class="QLabel" name="roi_bck_value">
               <property name="toolTip">
-               <string>Bck ROI in the metadata</string>
+               <string>Background ROI in the metadata</string>
               </property>
               <property name="text">
-               <string>0 - 0</string>
+               <string>[0, 0]</string>
               </property>
              </widget>
             </item>

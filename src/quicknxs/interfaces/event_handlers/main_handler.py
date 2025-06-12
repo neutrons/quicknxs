@@ -371,8 +371,8 @@ class MainHandler(object):
         self.update_calculated_data()
 
         self.ui.roi_used_value.setText("%s" % d.use_roi_actual)
-        self.ui.roi_peak_value.setText("%s" % str(d.meta_data_roi_peak))
-        self.ui.roi_bck_value.setText("%s" % str(d.meta_data_roi_bck))
+        self.ui.roi_peak_value.setText(str(d.configuration.metadata_roi_peak))
+        self.ui.roi_bck_value.setText(str(d.configuration.metadata_roi_bck))
 
         # Update reduction tables
         self.update_tables()
