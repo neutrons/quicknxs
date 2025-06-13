@@ -3,22 +3,94 @@ name = "quicknxs"
 description = "Magnetic Reflectivity Reduction"
 dynamic = ["version"]
 requires-python = ">=3.10"
-dependencies = ["mr_reduction==2.5.0"]
 license = { text = "Apache-2.0" }
 keywords = ["neutrons", "quicknxs", "magnetic reflectivity"]
 readme = "README.md"
+
+dependencies = [
+    # Dependencies available from both PyPI and conda
+    "mr_reduction==2.5.0",
+    "anaconda-client",
+    "boa",
+    "codecov",
+    "conda-build",
+    "conda-verify",
+    "libarchive",
+    "libmamba",
+    "pre-commit",
+    "pylint",
+    "pytest",
+    "pytest-qt",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-xvfb",
+    "toml",
+    # Dependencies only available from PyPI
+    "check-wheel-contents",
+]
+
+[project.optional-dependencies]
+docs = ["sphinx", "sphinx_rtd_theme", "sphinx-qt-documentation", "versioningit"]
+
+[project.gui-scripts]
+quicknxs-gui = "quicknxs.gui:main"
 
 [project.urls]
 homepage = "https://github.com/neutrons/quicknxs"
 repository = "https://github.com/neutrons/quicknxs"
 issues = "https://github.com/neutrons/quicknxs/issues"
 
-[project.gui-scripts]
-quicknxs-gui = "quicknxs.gui:main"
+####################
+### Build config ###
+####################
 
 [build-system]
-requires = ["setuptools >= 47", "wheel", "toml", "versioningit"]
-build-backend = "setuptools.build_meta"
+build-backend = "hatchling.build"
+requires = ["hatchling", "versioningit"]
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.hatch.build]
+artifacts = ["*.yml", "*.yaml", "*.ini", "*.gx", "*.json", "*.ui"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/quicknxs"]
+
+[tool.hatch.build.hooks.versioningit-onbuild]
+source-file = "src/quicknxs/_version.py"
+build-file = "quicknxs/_version.py"
+replacement = '"{next_version}"'
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests*", "scripts*", "docs*", "notebooks"]
+
+###################
+### Pixi config ###
+###################
+
+[tool.pixi.workspace]
+channels = [
+    "conda-forge",
+    "neutrons",
+    "oncat",
+    # required by mr_reduction
+    "mantid-ornl",
+    "mantid",
+
+]
+platforms = ["linux-64", "osx-arm64"]
+[conda-pypi-map]
+"neutrons" = """
+{
+  "mr_reduction": "mr_reduction",
+}
+"""
+
+####################
+### versioningit ###
+####################
 
 [tool.versioningit.vcs]
 method = "git"
@@ -35,12 +107,9 @@ distance-dirty = "{next_version}.dev{distance}+d{build_date:%Y%m%d%H%M}"
 [tool.versioningit.write]
 file = "src/quicknxs/_version.py"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-exclude = ["tests*", "scripts*", "docs*", "notebooks"]
-
-[tool.setuptools.package-data]
-"*" = ["*.yml", "*.yaml", "*.ini", "*.gx", "*.json", "*.ui"]
+##########################
+### Pytest and CodeCov ###
+##########################
 
 [tool.coverage.run]
 source = ["src/quicknxs"]
@@ -60,6 +129,10 @@ norecursedirs = [
 ]
 markers = ["datarepo: mark a test as using reflection_ui-data repository"]
 qt_log_format = "{rec.when} {rec.type_name}: {rec.message}"
+
+############
+### Ruff ###
+############
 
 [tool.ruff]
 line-length = 120

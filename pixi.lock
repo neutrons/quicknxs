@@ -1,0 +1,11 @@
+version: 6
+environments:
+  default:
+    channels:
+    - url: https://conda.anaconda.org/neutrons/label/main/
+    - url: https://conda.anaconda.org/oncat/
+    - url: https://conda.anaconda.org/conda-forge/
+    - url: https://conda.anaconda.org/mantid-ornl/
+    - url: https://conda.anaconda.org/mantid/
+    packages: {}
+packages: []
