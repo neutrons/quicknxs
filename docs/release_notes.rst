@@ -14,6 +14,8 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 ..   - PR 172: Fix an issue where after a reduction the index of the active data did not match the GUI
 
+.. PR #171: Fixed removing tab index issue
+
 .. **Of interest to the Developer:**
 
 v4.5.0

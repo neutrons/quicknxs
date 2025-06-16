@@ -430,23 +430,35 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def addDataTable(self):
         """Add data tab for additional peaks/ROIs."""
-        next_tab_idx = self.data_tab_count + 1
-        self.ui.tabWidget.setTabVisible(next_tab_idx, True)
-        self.data_manager.add_additional_reduction_list(next_tab_idx)
-        self.file_handler.initialize_additional_reduction_table(next_tab_idx)
-        self.data_tab_count += 1
-        self.ui.removeTabButton.setEnabled(True)
-        if self.data_tab_count == self.max_data_tab_count:
-            self.ui.addTabButton.setEnabled(False)
+        self.ui.addTabButton.setEnabled(False)  # Disable the `addTabButton` at the beginning
+        try:
+            next_tab_idx = self.data_tab_count + 1
+            self.ui.tabWidget.setTabVisible(next_tab_idx, True)
+            self.data_manager.add_additional_reduction_list(next_tab_idx)
+            self.file_handler.initialize_additional_reduction_table(next_tab_idx)
+            self.data_tab_count += 1
+            self.ui.removeTabButton.setEnabled(True)
+            if self.data_tab_count == self.max_data_tab_count:
+                self.ui.addTabButton.setEnabled(False)
+        finally:
+            # Re-enable the `addTabButton` if tabs still remain and no exceptions occurred
+            if self.data_tab_count > self.min_data_tab_count and self.data_tab_count < self.max_data_tab_count:
+                self.ui.addTabButton.setEnabled(True)
 
     def removeDataTable(self):
-        """Remove last data tab for additional peaks/ROIs."""
-        self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
-        self.data_manager.remove_additional_reduction_list(self.data_tab_count)
-        self.data_tab_count -= 1
-        self.ui.addTabButton.setEnabled(True)
-        if self.data_tab_count == self.min_data_tab_count:
-            self.ui.removeTabButton.setEnabled(False)
+        """Remove last data tab for additional peaks/ROI:s"""
+        self.ui.removeTabButton.setEnabled(False)  # Disable the `removeTabButton` at the beginning
+        try:
+            self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
+            self.data_manager.remove_additional_reduction_list(self.data_tab_count)
+            self.data_tab_count -= 1
+            self.ui.addTabButton.setEnabled(True)
+            if self.data_tab_count == self.min_data_tab_count:
+                self.ui.removeTabButton.setEnabled(False)
+        finally:
+            # Re-enable the `removeTabButton` if tabs still remain and no exceptions occurred
+            if self.data_tab_count > self.min_data_tab_count:
+                self.ui.removeTabButton.setEnabled(True)
 
     def add_data_tab_by_index(self, tab_index: int):
         """Add/update a specific data tab."""
