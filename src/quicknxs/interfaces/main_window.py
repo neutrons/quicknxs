@@ -442,7 +442,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.ui.addTabButton.setEnabled(False)
         finally:
             # Re-enable the `addTabButton` if tabs still remain and no exceptions occurred
-            if self.data_tab_count > self.min_data_tab_count:
+            if self.data_tab_count > self.min_data_tab_count and self.data_tab_count < self.max_data_tab_count:
                 self.ui.addTabButton.setEnabled(True)
 
     def removeDataTable(self):
