@@ -4,33 +4,34 @@ description = "Magnetic Reflectivity Reduction"
 dynamic = ["version"]
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-keywords = ["neutrons", "quicknxs", "magnetic reflectivity"]
 readme = "README.md"
+keywords = ["neutrons", "quicknxs", "magnetic reflectivity"]
 
-dependencies = [
-    # Dependencies available from both PyPI and conda
-    "mr_reduction==2.5.0",
+# dependencies = [
+#     "mr_reduction==2.5.0",
+#     # "mr_reduction @ git+https://github.com/neutrons/MagnetismReflectometer/",
+#     "pre-commit",
+# ]
+
+[project.optional-dependencies]
+build = [
     "anaconda-client",
     "boa",
-    "codecov",
+    "check-wheel-contents",
     "conda-build",
     "conda-verify",
     "libarchive",
     "libmamba",
-    "pre-commit",
-    "pylint",
+]
+docs = ["sphinx", "sphinx_rtd_theme", "sphinx-qt-documentation", "versioningit"]
+test = [
+    "codecov",
     "pytest",
     "pytest-qt",
     "pytest-cov",
     "pytest-mock",
     "pytest-xvfb",
-    "toml",
-    # Dependencies only available from PyPI
-    "check-wheel-contents",
 ]
-
-[project.optional-dependencies]
-docs = ["sphinx", "sphinx_rtd_theme", "sphinx-qt-documentation", "versioningit"]
 
 [project.gui-scripts]
 quicknxs-gui = "quicknxs.gui:main"
@@ -71,6 +72,7 @@ exclude = ["tests*", "scripts*", "docs*", "notebooks"]
 ###################
 
 [tool.pixi.workspace]
+name = "quicknxs"
 channels = [
     "conda-forge",
     "neutrons",
@@ -78,15 +80,12 @@ channels = [
     # required by mr_reduction
     "mantid-ornl",
     "mantid",
-
 ]
 platforms = ["linux-64", "osx-arm64"]
-[conda-pypi-map]
-"neutrons" = """
-{
-  "mr_reduction": "mr_reduction",
-}
-"""
+
+[dependencies]
+mr_reduction = "==2.5.0"
+pre-commit = "*"
 
 ####################
 ### versioningit ###
