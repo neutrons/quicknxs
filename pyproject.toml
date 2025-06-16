@@ -7,22 +7,8 @@ license = { text = "Apache-2.0" }
 readme = "README.md"
 keywords = ["neutrons", "quicknxs", "magnetic reflectivity"]
 
-# dependencies = [
-#     "mr_reduction==2.5.0",
-#     # "mr_reduction @ git+https://github.com/neutrons/MagnetismReflectometer/",
-#     "pre-commit",
-# ]
-
 [project.optional-dependencies]
-build = [
-    "anaconda-client",
-    "boa",
-    "check-wheel-contents",
-    "conda-build",
-    "conda-verify",
-    "libarchive",
-    "libmamba",
-]
+build = ["anaconda-client", "check-wheel-contents", "conda-verify"]
 docs = ["sphinx", "sphinx_rtd_theme", "sphinx-qt-documentation", "versioningit"]
 test = [
     "codecov",
@@ -73,17 +59,11 @@ exclude = ["tests*", "scripts*", "docs*", "notebooks"]
 
 [tool.pixi.workspace]
 name = "quicknxs"
-channels = [
-    "conda-forge",
-    "neutrons",
-    "oncat",
-    # required by mr_reduction
-    "mantid-ornl",
-    "mantid",
-]
-platforms = ["linux-64", "osx-arm64"]
+# platforms = ["linux-64", "osx-arm64"]
+platforms = ["linux-64"]
+channels = ["conda-forge", "neutrons", "oncat", "mantid-ornl", "mantid"]
 
-[dependencies]
+[tool.pixi.dependencies]
 mr_reduction = "==2.5.0"
 pre-commit = "*"
 
