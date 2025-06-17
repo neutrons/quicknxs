@@ -4,10 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches: [qa, main]
-    tags: ['v*']
+    tags: ["v*"]
 
 jobs:
-
   linux:
     runs-on: ubuntu-22.04
     defaults:
@@ -20,11 +19,12 @@ jobs:
           fetch-depth: 100
           fetch-tags: true
           ref: ${{ github.ref }}
+
       - name: Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
           channels: neutrons/label/main,oncat,conda-forge,mantid-ornl,mantid/label/main
-          python-version: '3.10'
+          python-version: "3.10"
           miniconda-version: latest
           mamba-version: "*"
           environment-file: environment.yml
