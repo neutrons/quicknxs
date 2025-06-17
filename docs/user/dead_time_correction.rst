@@ -86,10 +86,10 @@ Example using ``SingleReadoutDeadTimeCorrection`` (requires :any:`test-data` fil
     import os
     import sys
     from pathlib import Path
-    from quicknxs.interfaces.data_handling import DeadTimeCorrection
+    from quicknxs.interfaces.data_handling import dead_time_correction
     from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
     # Load events
-    path = Path().resolve().parent / "test" / "data" / "quicknxs-data" / "REF_M_42112.nxs.h5"
+    path = Path().resolve() / "test" / "data" / "quicknxs-data" / "REF_M_42112.nxs.h5"
     path = path.as_posix()
     ws = api.LoadEventNexus(Filename=path, OutputWorkspace="raw_events")
     # Load error events
@@ -98,7 +98,7 @@ Example using ``SingleReadoutDeadTimeCorrection`` (requires :any:`test-data` fil
     tof_min = ws.getTofMin()
     tof_max = ws.getTofMax()
     corr_ws = mantid_algorithm_exec(
-        DeadTimeCorrection.SingleReadoutDeadTimeCorrection,
+        dead_time_correction.SingleReadoutDeadTimeCorrection,
         InputWorkspace=ws,
         InputErrorEventsWorkspace=err_ws,
         Paralyzable=False,
