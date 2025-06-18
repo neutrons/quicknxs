@@ -104,7 +104,6 @@ build = { features = ["build"], no-default-feature = true }
 [tool.pixi.feature.build.dependencies]
 anaconda-client = "*"
 check-wheel-contents = "*"
-# hatch = "*"
 versioningit = "*"
 
 [tool.pixi.feature.build.pypi-dependencies]
@@ -134,8 +133,8 @@ pytest-xvfb = "*"
 
 [tool.pixi.tasks]
 # Documentation
-build-docs = { cmd = 'sphinx-build -b html docs docs/_build', description = "Build documentation" }
-test-docs = { cmd = "sphinx-build -M doctest docs docs/_build", description = "Test building the documentation" }
+build-docs = { cmd = 'sphinx-build -b html docs docs/_build/html', description = "Build documentation" }
+test-docs = { cmd = "sphinx-build -M doctest docs docs/_build/html", description = "Test building the documentation" }
 # Testing
 test = { description = "Run the test suite", cmd = "pytest" }
 # Packaging

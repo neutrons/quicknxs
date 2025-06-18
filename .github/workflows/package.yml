@@ -1,4 +1,4 @@
-name: Conda Packaging and Deployment
+name: Packaging and Deployment
 
 on:
   workflow_dispatch:
