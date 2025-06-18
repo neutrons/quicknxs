@@ -14,9 +14,4 @@ build:
       - pixi install -e docs
     build:
       html:
-        - pixi run -e docs build-docs
-
-sphinx:
-  builder: html
-  configuration: docs/conf.py
-  fail_on_warning: true
+        - pixi run -e docs sphinx-build -b html docs docs/_build/html
