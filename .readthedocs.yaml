@@ -10,9 +10,8 @@ build:
       - asdf install pixi latest
       - asdf global pixi latest
     install:
-      # assuming you have an environment called "docs"
       - pixi install -e docs
-      - pixi run pip install .
     build:
       html:
+        - pixi run pip install .
         - pixi run -e docs sphinx-build -b html docs docs/_build/html
