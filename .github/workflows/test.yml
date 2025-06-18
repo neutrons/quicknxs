@@ -40,9 +40,7 @@ jobs:
           git lfs pull
 
       - name: Unit test with code coverage
-        run: |
-          pixi shell
-          xvfb-run -a pytest -vv --cov=src --cov-report=xml --cov-report=term
+        run: pixi run test -vv --cov=src --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
