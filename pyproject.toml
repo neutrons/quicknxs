@@ -10,6 +10,10 @@ license = { text = "Apache-2.0" }
 readme = "README.md"
 keywords = ["neutrons", "quicknxs", "magnetic reflectivity"]
 
+[project.optional-dependencies]
+docs = ["sphinx", "sphinx_rtd_theme", "sphinx-qt-documentation"]
+
+
 [project.urls]
 homepage = "https://github.com/neutrons/quicknxs"
 repository = "https://github.com/neutrons/quicknxs"
