@@ -145,7 +145,7 @@ conda-build = { description = "Build the conda package", depends-on = [
     "reset-version",
 ] }
 conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .conda package to anaconda.org", depends-on = [
-    "build-conda",
+    "conda-build",
 ] }
 # Misc
 audit-deps = { cmd = "pip-audit --local -s osv", description = "Audit the package dependencies for vulnerabilities" }
