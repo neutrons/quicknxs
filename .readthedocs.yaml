@@ -13,5 +13,5 @@ build:
       - pixi install -e docs
     build:
       html:
-        - pixi run pip install .
+        - pixi run -e docs pip install .
         - pixi run -e docs sphinx-build -b html docs docs/_build/html
