@@ -13,7 +13,6 @@ keywords = ["neutrons", "quicknxs", "magnetic reflectivity"]
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx_rtd_theme", "sphinx-qt-documentation"]
 
-
 [project.urls]
 homepage = "https://github.com/neutrons/quicknxs"
 repository = "https://github.com/neutrons/quicknxs"
@@ -123,9 +122,6 @@ versioningit = "*"
 [tool.pixi.feature.docs.dependencies]
 sphinx = "*"
 sphinx_rtd_theme = "*"
-
-[tool.pixi.feature.docs.pypi-dependencies]
-sphinx-qt-documentation = "*"
 
 [tool.pixi.feature.test.dependencies]
 codecov = "*"

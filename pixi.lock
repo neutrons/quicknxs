@@ -5219,8 +5219,12 @@ packages:
   timestamp: 1741964625094
 - pypi: ./
   name: quicknxs
-  version: 4.6.0.dev14
-  sha256: b472f94c1bdb946a8a5fc76e9931093c9ed28a11a2519935dac1279729bb572f
+  version: 4.6.0.dev16+d202506181927
+  sha256: 48797ed5416f2ddbe1a2d83871b006a611f6c810eea73024e27ec88717baf2c6
+  requires_dist:
+  - sphinx ; extra == 'docs'
+  - sphinx-qt-documentation ; extra == 'docs'
+  - sphinx-rtd-theme ; extra == 'docs'
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/rapidjson-1.1.0.post20240409-h3f2d84a_2.conda
