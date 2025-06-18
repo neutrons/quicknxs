@@ -99,7 +99,7 @@ default = { features = [
     "test",
     "build",
 ], solve-group = "default" }
-docs = { features = ["docs"], no-default-feature = true }
+docs = { features = ["dev", "docs"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
 
 [tool.pixi.feature.build.dependencies]
