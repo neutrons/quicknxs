@@ -59,7 +59,14 @@ file = "src/quicknxs/_version.py"
 [tool.pixi.workspace]
 name = "quicknxs"
 platforms = ["linux-64"]
-channels = ["conda-forge", "neutrons", "oncat", "mantid-ornl", "mantid"]
+channels = [
+    "conda-forge",
+    "neutrons",
+    "oncat",
+    "mantid-ornl",
+    "mantid",
+    "https://prefix.dev/pixi-build-backends",
+]
 # Required until the build feature becomes stable
 preview = ["pixi-build"]
 
@@ -69,6 +76,10 @@ version = "0.0.0"
 
 [tool.pixi.package.build]
 backend = { name = "pixi-build-python", version = "0.1.*" }
+
+[tool.pixi.package.host-dependencies]
+hatchling = "*"
+versioningit = "*"
 
 [tool.pixi.dependencies]
 mr_reduction = "==2.5.0"
@@ -87,6 +98,8 @@ build = { features = ["build"], no-default-feature = true }
 anaconda-client = "*"
 check-wheel-contents = "*"
 conda-verify = "*"
+hatch = "*"
+versioningit = "*"
 
 [tool.pixi.feature.build.pypi-dependencies]
 toml-cli = "*"
@@ -94,7 +107,6 @@ toml-cli = "*"
 [tool.pixi.feature.docs.dependencies]
 sphinx = "*"
 sphinx_rtd_theme = "*"
-versioningit = "*"
 
 [tool.pixi.feature.docs.pypi-dependencies]
 sphinx-qt-documentation = "*"
@@ -124,7 +136,7 @@ pypi-publish-test = { cmd = "twine upload --repository testpypi dist/*", descrip
 conda-build-command = { cmd = "pixi build", description = "Build the conda package command" }
 conda-build = { description = "Build the conda package", depends-on = [
     "sync-version",
-    "build-conda-command",
+    "conda-build-command",
     "reset-version",
 ] }
 conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .conda package to anaconda.org", depends-on = [
