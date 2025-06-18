@@ -210,7 +210,7 @@ class Instrument(object):
         Returns
         -------
         WorkspaceGroup:
-            A group workspace for each of the four different filter/analyzer conbinations
+            A group workspace for each of the four different filter/analyzer combinations
 
         Examples
         --------

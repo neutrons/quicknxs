@@ -95,7 +95,7 @@ class TestMainGui:
 
         # set up data objects for two files
         configuration = Configuration()
-        # make sure these global properties start as the defult
+        # make sure these global properties start as the default
         Configuration.wl_bandwidth = 3.2
         Configuration.use_constant_q = False
         Configuration.sample_size = 10

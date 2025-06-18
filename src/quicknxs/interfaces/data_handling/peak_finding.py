@@ -128,7 +128,7 @@ def _select_by_peak_threshold(x, peaks, tmin, tmax):
     .. versionadded:: 1.1.0
     """
     # Stack thresholds on both sides to make min / max operations easier:
-    # tmin is compared with the smaller, and tmax with the greater thresold to
+    # tmin is compared with the smaller, and tmax with the greater threshold to
     # each peak's side
     stacked_thresholds = np.vstack([x[peaks] - x[peaks - 1], x[peaks] - x[peaks + 1]])
     keep = np.ones(peaks.size, dtype=bool)

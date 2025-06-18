@@ -105,7 +105,7 @@ class CrossSectionData(object):
         self.cross_section_label = entry_name
         self.measurement_type = "polarized"
         self.configuration = copy.deepcopy(configuration)
-        self.number: str = ""  # can be singe number (e.g. '1234') or a composite (e.g '1234:1239+1245')
+        self.number: str = ""  # can be single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.q = None
         self._r = None
         self._dr = None
@@ -681,7 +681,7 @@ class NexusData(object):
             Reduction configuration
         """
         self.file_path = FilePath(file_path).path  # sort the paths if more than one
-        self.number: str = ""  # can be a singe number (e.g. '1234') or a composite (e.g '1234:1239+1245')
+        self.number: str = ""  # can be a single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.configuration = configuration
         self.cross_sections: Dict[str, CrossSectionData] = {}
         self.main_cross_section: str = None
