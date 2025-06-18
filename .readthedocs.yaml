@@ -15,3 +15,5 @@ build:
     build:
       html:
         - pixi run sphinx-build -b html docs docs/_build/html
+        - mkdir -p $READTHEDOCS_OUTPUT/html/
+        - cp -r docs/_build/html/** $READTHEDOCS_OUTPUT/html/
