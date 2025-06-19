@@ -1,6 +1,7 @@
 ########################
 ### Project Metadata ###
 ########################
+
 [project]
 name = "quicknxs"
 description = "Magnetic Reflectivity Reduction"
@@ -190,7 +191,7 @@ qt_log_format = "{rec.when} {rec.type_name}: {rec.message}"
 
 [tool.ruff]
 line-length = 120
-exclude = ["notebooks/*", "icons/*", "test/notebooks/*"]
+extend-exclude = ["notebooks/*", "icons/*", "test/notebooks/*"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
