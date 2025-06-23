@@ -99,8 +99,9 @@ jobs:
 
       - name: Install the package
         run: |
-          micromamba install --yes -c conda-forge conda-build
-          python -m conda_index /tmp/local-channel
+          # micromamba install --yes -c conda-forge conda-build
+          # python -m conda_index /tmp/local-channel
+          # micromamba install --yes -c /tmp/local-channel -c mantid-ornl -c conda-forge quicknxs
           micromamba install --yes -c /tmp/local-channel -c mantid-ornl -c conda-forge quicknxs
 
       - name: Verify the installation

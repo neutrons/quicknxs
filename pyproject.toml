@@ -87,7 +87,6 @@ versioningit = "*"
 
 [tool.pixi.dependencies]
 mr_reduction = "==2.5.0"
-conda-build = ">=24.5.1,<25"
 
 [tool.pixi.pypi-dependencies]
 quicknxs = { path = ".", editable = true }
