@@ -104,34 +104,34 @@ docs = { features = ["dev", "docs"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
 
 [tool.pixi.feature.build.dependencies]
-anaconda-client = "*"
-check-wheel-contents = "*"
-versioningit = "*"
+anaconda-client = ">=1.13.0"
+check-wheel-contents = ">=0.6.2"
+versioningit = ">=3.2.0"
 
 [tool.pixi.feature.build.pypi-dependencies]
 toml-cli = "*"
 
 [tool.pixi.feature.dev.dependencies]
-pip = "*"
-pip-audit = "*"
-pre-commit = "*"
-ruff = "*"
-versioningit = "*"
+pip = ">=25.1.1"
+pip-audit = ">=2.9.0"
+pre-commit = ">=4.2.0"
+ruff = ">=0.12.0"
+versioningit = ">=3.2.0"
 
 [tool.pixi.feature.docs.dependencies]
-sphinx = "*"
-sphinx_rtd_theme = "*"
+sphinx = ">=8.2.3"
+sphinx_rtd_theme = ">=3.0.1"
 
 [tool.pixi.feature.docs.pypi-dependencies]
 sphinx-qt-documentation = "*"
 
 [tool.pixi.feature.test.dependencies]
-codecov = "*"
-pytest = "*"
-pytest-qt = "*"
-pytest-cov = "*"
-pytest-mock = "*"
-pytest-xvfb = "*"
+codecov = ">=2.1.13"
+pytest = ">=8.4.1"
+pytest-qt = ">=4.4.0"
+pytest-cov = ">=6.2.1"
+pytest-mock = ">=3.14.1"
+pytest-xvfb = ">=3.1.1"
 
 [tool.pixi.tasks]
 # Documentation
