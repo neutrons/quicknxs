@@ -66,6 +66,12 @@ jobs:
       - name: Build Conda package
         run: pixi run conda-build
 
+      - name: upload conda package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-conda-package
+          path: quicknxs-*.conda
+
   conda-verify:
     needs: tests
     runs-on: ubuntu-24.04
