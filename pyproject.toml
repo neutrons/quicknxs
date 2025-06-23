@@ -106,6 +106,7 @@ build = { features = ["build"], no-default-feature = true }
 [tool.pixi.feature.build.dependencies]
 anaconda-client = ">=1.13.0"
 check-wheel-contents = ">=0.6.2"
+conda-build = ">=24.5.1,<25"
 versioningit = ">=3.2.0"
 
 [tool.pixi.feature.build.pypi-dependencies]
@@ -119,7 +120,7 @@ ruff = "*"
 versioningit = ">=3.2.0"
 
 [tool.pixi.feature.docs.dependencies]
-sphinx = "*"
+sphinx = ">=8"
 sphinx_rtd_theme = ">=3.0.1"
 
 [tool.pixi.feature.docs.pypi-dependencies]
