@@ -35,8 +35,8 @@ v4.6.0
 ------
 2025-06-24
 
-This releases add some fixes to the GUI: removing data tabs no longer causes an error (#171),
-a problem with plots after going the the Off-Specular tab is fixed (#172), and the metadata ROI
+This release add some fixes to the GUI: removing data tabs no longer causes an error (#171),
+a problem with plots after going to the Off-Specular tab is fixed (#172), and the metadata ROI
 information is now shown consistently (PR #173). QuickNXS has moved to using pixi for package
 management (#174).
 
