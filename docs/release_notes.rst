@@ -5,18 +5,40 @@ Release Notes
 =============
 Notes for major and minor releases. Notes for Patch releases are deferred.
 
-.. v4.6.0
-.. ------
-.. (date of release, format YYYY-MM-DD)
+..
+  Use the following template to add a new release note.
 
-.. **Of interest to the User**:
-.. - PR 173: Metadata ROI now globally set and used more consistently
-.. - PR 172: Fix an issue where after a reduction the index of the active data did not match the GUI
+  <Next Release>
+  --------------
+  (date of release, format YYYY-MM-DD)
 
-.. PR #171: Fixed removing tab index issue
+  **Of interest to the User**:
+  - PR #XYZ: one-liner description
 
-.. **Of interest to the Developer:**
-.. - PR 174: Convert from conda to pixi
+  **Of interest to the Developer:**
+  - PR #XYZ: one-liner description
+..
+
+..
+  4.7.0
+  -----
+  (date of release, format YYYY-MM-DD)
+
+  **Of interest to the User**:
+  - PR #XYZ: one-liner description
+
+  **Of interest to the Developer**:
+  - PR #XYZ: one-liner description
+..
+
+v4.6.0
+------
+2025-06-24
+
+This release add some fixes to the GUI: removing data tabs no longer causes an error (#171),
+a problem with plots after going to the Off-Specular tab is fixed (#172), and the metadata ROI
+information is now shown consistently (PR #173). QuickNXS has moved to using pixi for package
+management (#174).
 
 v4.5.0
 ------
