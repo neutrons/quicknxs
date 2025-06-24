@@ -12,26 +12,14 @@ Setup Local Development Environment
 
 To setup a local development environment, the developers should follow the steps below:
 
-* Install ``anaconda`` (``miniconda`` is recommended)
+* Install `pixi <https://pixi.sh/latest/installation/>`_
 * Clone the repository and make a feature branch based off ``next``.
-* Create a new virtual environment with ``conda env create`` which uses ``environment.yml``
+* Create a new virtual environment with ``pixi install``
+* Activate the virtual environment with ``pixi shell``
+* Activate the pre-commit hooks with ``pre-commit install``
 
-.. code-block:: sh
-
-   conda env create --file environment.yml
-
-* Activate the virtual environment with ``conda activate quicknxs``
-* Activate the pre-commit hooks
-
-.. code-block:: sh
-
-   pre-commit install
-
-
-The ``environment.yml`` contains all of the dependencies for both the developer and the build servers.
-Update file ``environment.yml`` if dependencies are added to the package.
-
-
+The ``pyproject.toml`` contains all of the dependencies for both the developer and the build servers.
+Update file ``pyproject.toml`` if dependencies are added to the package.
 
 
 .. _developing_with_pycharm:

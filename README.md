@@ -9,60 +9,46 @@
 
 # QuickNXS
 
-This app is a frontend for Magnetic Reflectivity Reduction.
+A PyQT GUI for Magnetic Reflectivity Reduction.
 
-# Install
+This project uses [Pixi](https://pixi.sh/) as the single tool for managing environments, dependencies, packaging, and task execution.
 
-## Install the development environment
+## Installation
 
-```bash
-conda env create -f environment.yml
-activate quicknxs
-```
+1. If you don't already have it, install [Pixi](https://pixi.sh/):
 
-## Install QuickNXS
+   ```bash
+   curl -fsSL https://pixi.sh/install.sh | bash
+   ```
 
-### Install via source
+2. Create the virtual environment
 
-```bash
-python -m pip install -e .
-```
+   ```bash
+   pixi install
+   ```
 
-This installs the code in [editable mode](https://pip.pypa.io/en/stable/cli/pip_install/#cmdoption-e>).
+3. Activate the virtual environment
 
-### Build the wheel
-
-Once QuickNXS is installed
-
-```bash
-python -m build --no-isolation --wheel
-```
-
-now you can install QuickNXS via the generated wheel on other system
-
-```bash
-python3 -m pip install quicknxs*.whl
-```
+   ```bash
+   pixi shell
+   ```
 
 ## Run
 
-To launch the QuickNXS GUI, run the following command:
+The GUI is now available as a command-line tool. You can run it directly either from the virtual environment or by using the `pixi` command:
 
 ```bash
+pixi shell
 quicknxs-gui
 ```
 
-When trying to run the GUI, you may see the following error:
+or simply:
+
 ```bash
-GLib-GIO-ERROR **: 13:35:06.773: Settings schema 'org.gnome.settings-daemon.plugins.xsettings' does not contain a key named 'antialiasing'
+pixi run quicknxs-gui
 ```
 
-In this case, try setting the `GDK_BACKEND` environment variable to `x11` before running the GUI:
-```bash
-GDK_BACKEND=x11 quicknxs-gui
-```
-
-## Test
+## Testing
 
 In order to run the tests, you will need to have cloned the [test data submodule](https://reflectivity-ui.readthedocs.io/en/latest/developer/environment.html#test-data), which requires `git-lfs` to be installed.
 Once you have `git-lfs` installed, you can clone the submodule with the following command:
@@ -74,5 +60,19 @@ git submodule update --init --recursive
 Then you can run the tests with the following command:
 
 ```bash
-pytest
+pixi run test
+```
+
+## Troubleshooting
+
+When trying to run the GUI, you may see the following error:
+
+```bash
+GLib-GIO-ERROR **: 13:35:06.773: Settings schema 'org.gnome.settings-daemon.plugins.xsettings' does not contain a key named 'antialiasing'
+```
+
+In this case, try setting the `GDK_BACKEND` environment variable to `x11` before running the GUI:
+
+```bash
+GDK_BACKEND=x11 quicknxs-gui
 ```

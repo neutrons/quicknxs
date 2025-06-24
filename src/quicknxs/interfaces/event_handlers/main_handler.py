@@ -1017,7 +1017,7 @@ class MainHandler(object):
     def update_direct_beam_table(self, idx: int, data: CrossSectionData) -> None:
         """Update a direct beam table entry with cross-section data.
 
-        Table colums:
+        Table columns:
             0: Run number - d.number
             1: x0         - d.configuration.peak_position
             2: xw         - d.configuration.peak_width

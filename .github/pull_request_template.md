@@ -1,7 +1,7 @@
 ## Description of work:
 
 Check all that apply:
-- [ ] added [release notes](https://reflectivity-ui.readthedocs.io/en/latest/releasenotes/index.html)
+- [ ] added [release notes](https://reflectivity-ui.readthedocs.io/en/latest/release_notes.html)
 (if not, provide an explanation in the work description)
 - [ ] updated documentation and checked that it looks correct in the [pull request preview](https://docs.readthedocs.com/platform/stable/pull-requests.html)
 - [ ] Source added/refactored

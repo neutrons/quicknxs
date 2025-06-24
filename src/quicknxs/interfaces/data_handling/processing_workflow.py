@@ -568,7 +568,7 @@ class ProcessingWorkflow(object):
         Note for my own integrity (MD):
            I don't think one should smooth data distributions and do any quantitative
            work with it following this process. The way this was implemented in the
-           previouse QuickNXS, replicated here, is equivalent to adding an extra resolution,
+           previous QuickNXS, replicated here, is equivalent to adding an extra resolution,
            which then would have to be properly taken into account when fitting.
            In addition, the process doesn't produce errors in intensity.
            It effectively only produces a pretty picture and should only be used as such.
