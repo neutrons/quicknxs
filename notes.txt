@@ -1,0 +1,103 @@
+Global
+
+Final Rebin
+Q Steps
+Normalize to unity when stitching
+Critical Q Cutoff
+Global Fit when stitching
+Polynomial Fit when stitching
+polynomial degree
+points outside overlap
+Constant q binning
+deadtime correction
+Lock direct beam yo yw to data run
+
+locals
+
+Y position 
+Y width 
+X position 
+X width 
+BG X position 
+BG X width 
+Scale 10^
+Cut Pts (1, 1)
+set direct pixel (checkbox and spinbox)
+set dangle0 (checkbox and spinbox)
+trusted angle (dangle, sampleAngle)
+final rebin 
+Q Steps
+
+--- seemingly not set in global config
+
+QX_VS_QZ
+KZI_VS_KZF
+DELTA_KZ_VS_QZ
+
+sample_size
+
+nbr_events_min
+# peakfinder options
+use_roi = True
+update_peak_range = False
+use_peak_finder = False
+use_low_res_finder = False
+use_roi_bck = False
+use_tight_bck = False
+bck_offset = 5
+force_bck_roi = True
+
+--- seemingly not set in per-run config
+
+tof_bins
+tof_range
+tof_bin_type
+count_threshold
+tof_overwrite
+
+metadata_roi_peak
+metadata_roi_bck
+
+subtract_background
+scaling factor or scaling error? need to check what Scale 10^ is used for
+
+# UI elements
+self.normalize_x_tof = False
+self.x_wl_map = False
+self.angle_map = False
+self.log_1d = True
+self.log_2d = True
+
+# Off-specular options
+self.off_spec_x_axis = Configuration.DELTA_KZ_VS_QZ
+self.off_spec_slice = False
+self.off_spec_qz_list = []
+self.off_spec_slice_qz_min = 0.05
+self.off_spec_slice_qz_max = 0.07
+self.off_spec_err_weight = False
+self.off_spec_nxbins = 450
+self.off_spec_nybins = 200
+# Off-specular smoothing
+self.apply_smoothing = False
+self.off_spec_sigmas = 3
+self.off_spec_sigmax = 0.0005
+self.off_spec_sigmay = 0.0005
+self.off_spec_x_min = -0.015
+self.off_spec_x_max = 0.015
+self.off_spec_y_min = 0.0
+self.off_spec_y_max = 0.15
+
+# GISANS options
+self.gisans_wl_min = 2.0
+self.gisans_wl_max = 8.0
+self.gisans_wl_npts = 2
+self.gisans_qy_npts = 50
+self.gisans_qz_npts = 50
+self.gisans_use_pf = False
+self.gisans_slice = False
+self.gisans_slice_qz_min = 0.015
+self.gisans_slice_qz_max = 0.035
+
+# Reduction options
+self.match_direct_beam = False
+self.direct_beam = None
