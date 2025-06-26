@@ -73,7 +73,7 @@ jobs:
           path: quicknxs-*.conda
 
   conda-verify:
-    needs: [tests, package]
+    needs: package
     runs-on: ubuntu-24.04
     defaults:
       run:
