@@ -107,4 +107,4 @@ jobs:
           micromamba install --yes -c /tmp/local-channel -c mantid-ornl -c conda-forge quicknxs
 
       - name: Verify the installation
-        run: python -c "import quicknxs"
+        run: python -c "import quicknxs; print(quicknxs.__version__)"
