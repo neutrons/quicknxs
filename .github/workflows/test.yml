@@ -107,4 +107,14 @@ jobs:
           micromamba install --yes -c /tmp/local-channel -c mantid-ornl -c conda-forge quicknxs
 
       - name: Verify the installation
-        run: python -c "import quicknxs; print(quicknxs.__version__)"
+        run: |
+          conda_version=$(micromamba list quicknxs | awk '$1 == "quicknxs" { print $2 }')
+          echo "Conda version: $conda_version"
+          python_version=$(python -c "import quicknxs; print(quicknxs.__version__)")
+          echo "Python version: $python_version"
+          if [ "$conda_version" != "$python_version" ]; then
+            echo "Version mismatch!"
+            exit 1
+          else
+            echo "Versions match."
+          fi
