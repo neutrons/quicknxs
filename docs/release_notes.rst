@@ -12,7 +12,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
   --------------
   (date of release, format YYYY-MM-DD)
 
-  **Of interest to the User**:
+  **Of interest to the User:**
   - PR #XYZ: one-liner description
 
   **Of interest to the Developer:**
@@ -20,16 +20,22 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 ..
 
 ..
-  4.7.0
+  4.8.0
   -----
   (date of release, format YYYY-MM-DD)
 
-  **Of interest to the User**:
+  **Of interest to the User:**
   - PR #XYZ: one-liner description
 
-  **Of interest to the Developer**:
-  - PR #XYZ: one-liner description
+  **Of interest to the Developer:**
+  - PR #180: MrRed version number updated and related dependencies were added
 ..
+
+4.7.0
+-----
+2025-07-08
+
+QuickNXS now uses Pixi for package builds and :ref:`developer environment<development_environment>` setup and tasks (#174).
 
 v4.6.0
 ------
@@ -37,8 +43,7 @@ v4.6.0
 
 This release add some fixes to the GUI: removing data tabs no longer causes an error (#171),
 a problem with plots after going to the Off-Specular tab is fixed (#172), and the metadata ROI
-information is now shown consistently (PR #173). QuickNXS has moved to using pixi for package
-management (#174).
+information is now shown consistently (PR #173).
 
 v4.5.0
 ------
