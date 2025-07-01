@@ -86,7 +86,7 @@ hatchling = "*"
 versioningit = "*"
 
 [tool.pixi.dependencies]
-mr_reduction = "==2.5.0"
+mr_reduction = "==2.8.0"
 
 [tool.pixi.pypi-dependencies]
 quicknxs = { path = ".", editable = true }
@@ -117,6 +117,9 @@ pip-audit = ">=2.9.0"
 pre-commit = ">=4.2.0"
 ruff = "*"
 versioningit = ">=3.2.0"
+pyqt = ">=5.15.9"
+qtpy = "*"
+matplotlib = ">=3.6.3"
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = ">=8"
