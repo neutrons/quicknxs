@@ -28,7 +28,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
   - PR #XYZ: one-liner description
 
   **Of interest to the Developer:**
-  - PR #XYZ: one-liner description
+  - PR #180: MrRed version number updated and related dependencies were added
 ..
 
 4.7.0
