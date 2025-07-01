@@ -48,9 +48,9 @@ default-tag = "4.0.0"
 method = "minor"
 
 [tool.versioningit.format]
-distance = "{version}.dev{distance}"
-dirty = "{version}.dev{distance}"
-distance-dirty = "{version}.dev{distance}"
+distance = "{next_version}.dev{distance}"
+dirty = "{version}"
+distance-dirty = "{next_version}.dev{distance}"
 
 [tool.versioningit.write]
 file = "src/quicknxs/_version.py"
