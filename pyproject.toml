@@ -48,7 +48,7 @@ default-tag = "4.0.0"
 method = "minor"
 
 [tool.versioningit.format]
-distance = "{next_version}.dev{distance}"
+distance = "{version}.dev{distance}"
 dirty = "{version}.dev{distance}"
 distance-dirty = "{version}.dev{distance}"
 
