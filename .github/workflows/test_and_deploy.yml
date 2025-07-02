@@ -132,6 +132,7 @@ jobs:
 
   testy-test:
     runs-on: ubuntu-24.04
+    needs: [build]
     steps:
       - name: Download conda package artifact
         uses: actions/download-artifact@v4
