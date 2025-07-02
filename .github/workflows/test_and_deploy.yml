@@ -127,6 +127,7 @@ jobs:
             exit 1
           else
             echo "Versions match."
+          fi
 
   publish:
     runs-on: ubuntu-latest
