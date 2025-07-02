@@ -119,7 +119,7 @@ jobs:
 
       - name: Verify the installation
         run: |
-          conda_version=$(micromamba list ${{ env.PKG_NAME }} | awk '$1 == "${{ env.PKG_NAME }}" { print $2 }')
+          conda_version=$(micromamba list "${{ env.PKG_NAME }}" | awk -v pkg="${{ env.PKG_NAME }}" '$1 == pkg { print $2 }')
           echo "Conda version: $conda_version"
           python_version=$(python -c "import ${{ env.PKG_NAME }}; print(${{ env.PKG_NAME }}.__version__)")
           echo "Python version: $python_version"
