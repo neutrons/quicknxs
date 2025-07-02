@@ -4,7 +4,7 @@
 
 [project]
 name = "quicknxs"
-description = "Magnetic Reflectivity Reduction"
+description = "GUI for Magnetic Reflectivity Reduction"
 dynamic = ["version"]
 requires-python = ">=3.10,<3.13"
 license = { text = "Apache-2.0" }
@@ -130,9 +130,9 @@ sphinx-qt-documentation = "*"
 [tool.pixi.feature.test.dependencies]
 codecov = ">=2.1.13"
 pytest = ">=8.4.1"
-pytest-qt = ">=4.4.0"
 pytest-cov = ">=6.2.1"
 pytest-mock = ">=3.14.1"
+pytest-qt = ">=4.4.0"
 pytest-xvfb = ">=3.1.1"
 
 [tool.pixi.tasks]
