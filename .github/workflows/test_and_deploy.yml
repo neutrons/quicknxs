@@ -60,7 +60,7 @@ jobs:
   ##############################
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -131,7 +131,7 @@ jobs:
           fi
 
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [tests, build, conda-verify]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
