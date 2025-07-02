@@ -4,7 +4,7 @@
 
 [project]
 name = "quicknxs"
-description = "Magnetic Reflectivity Reduction"
+description = "GUI for Magnetic Reflectivity Reduction"
 dynamic = ["version"]
 requires-python = ">=3.10,<3.13"
 license = { text = "Apache-2.0" }
@@ -36,7 +36,6 @@ artifacts = ["*.yml", "*.yaml", "*.ini", "*.gx", "*.json", "*.ui"]
 [tool.hatch.build.hooks.versioningit-onbuild]
 source-file = "src/quicknxs/_version.py"
 build-file = "quicknxs/_version.py"
-replacement = '"{next_version}"'
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/quicknxs"]
@@ -50,8 +49,8 @@ method = "minor"
 
 [tool.versioningit.format]
 distance = "{next_version}.dev{distance}"
-dirty = "{version}+d{build_date:%Y%m%d}"
-distance-dirty = "{next_version}.dev{distance}+d{build_date:%Y%m%d%H%M}"
+dirty = "{version}"
+distance-dirty = "{next_version}.dev{distance}"
 
 [tool.versioningit.write]
 file = "src/quicknxs/_version.py"
@@ -131,9 +130,9 @@ sphinx-qt-documentation = "*"
 [tool.pixi.feature.test.dependencies]
 codecov = ">=2.1.13"
 pytest = ">=8.4.1"
-pytest-qt = ">=4.4.0"
 pytest-cov = ">=6.2.1"
 pytest-mock = ">=3.14.1"
+pytest-qt = ">=4.4.0"
 pytest-xvfb = ">=3.1.1"
 
 [tool.pixi.tasks]
