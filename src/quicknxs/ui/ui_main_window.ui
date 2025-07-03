@@ -424,53 +424,77 @@
             <property name="verticalSpacing">
              <number>1</number>
             </property>
-            <item row="0" column="1">
-             <widget class="QCheckBox" name="final_rebin_checkbox_global">
+            <item row="0" column="3">
+             <widget class="QPushButton" name="propagate_binning_options_button">
               <property name="toolTip">
-               <string>Check for apply a final Q rebinning globally. This will be used instead of any per-run Q-Step values.</string>
+               <string>Apply the binning type with the given Q-step to all runs.</string>
               </property>
               <property name="text">
-               <string>Final rebin</string>
+               <string>Apply to all runs</string>
               </property>
-              <property name="checked">
-               <bool>true</bool>
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
               </property>
              </widget>
+            </item>
+            <item row="0" column="1">
+             <layout class="QVBoxLayout">
+              <item>
+               <widget class="QLabel" name="q_rebin_label_global">
+                <property name="toolTip">
+                 <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
+                </property>
+                <property name="text">
+                 <string>Binning type</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="q_rebin_label_global">
+                <property name="toolTip">
+                 <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
+                </property>
+                <property name="text">
+                 <string>Q Steps</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item row="0" column="2">
-             <widget class="QLabel" name="q_rebin_label_global">
-              <property name="toolTip">
-               <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
-              </property>
-              <property name="text">
-               <string>Q Steps</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="3">
-             <widget class="QDoubleSpinBox" name="q_rebin_spinbox_global">
-              <property name="toolTip">
-               <string>Step size in Q for rebinning. Negative number produce a logarithmic binning</string>
-              </property>
-              <property name="suffix">
-               <string> 1/A</string>
-              </property>
-              <property name="decimals">
-               <number>3</number>
-              </property>
-              <property name="minimum">
-               <double>-0.100000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>0.100000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.001000000000000</double>
-              </property>
-              <property name="value">
-               <double>-0.020000000000000</double>
-              </property>
-             </widget>
+             <layout class="QVBoxLayout">
+              <item>
+               <widget class="BinningTypeSelection" name="binning_type_selector_global">
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="q_rebin_spinbox_global">
+                <property name="toolTip">
+                 <string>Step size in Q for rebinning. Negative number produce a logarithmic binning</string>
+                </property>
+                <property name="suffix">
+                 <string> 1/A</string>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="minimum">
+                 <double>-0.100000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.001000000000000</double>
+                </property>
+                <property name="value">
+                 <double>-0.020000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item row="2" column="1" colspan="2">
              <widget class="QCheckBox" name="normalize_to_unity_checkbox">
@@ -565,16 +589,6 @@
               </property>
              </widget>
             </item>
-            <item row="8" column="1" colspan="2">
-             <widget class="QCheckBox" name="fanReflectivity">
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Evaluate Q for each X line of the reflectivity and combine these measurements.&lt;/p&gt;&lt;p&gt;Can be used with a large X-width of e.g. 15 for samples scattering to a large 2θ area.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="text">
-               <string>Constant-Q binning</string>
-              </property>
-             </widget>
-            </item>
             <item row="9" column="1">
              <widget class="QLabel" name="final_rebin_label_global">
               <property name="minimumSize">
@@ -642,7 +656,7 @@
               </property>
              </widget>
             </item>
-            <item row="11" column="1">
+            <item row="11" column="1" colspan="2">
              <widget class="DeadTimeEntryPoint" name="deadtime_entry">
               <property name="title">
                <string>Dead Time Correction</string>
@@ -1037,19 +1051,20 @@
              </widget>
             </item>
             <item row="11" column="1">
-             <widget class="QCheckBox" name="final_rebin_checkbox_run">
+             <widget class="QLabel" name="binning_type_selector_label_run">
               <property name="toolTip">
-               <string>Enable rebinning final reflectivity for this run only</string>
+               <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
               </property>
               <property name="text">
-               <string>Final Rebin</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
+               <string>Binning Type</string>
               </property>
              </widget>
             </item>
             <item row="11" column="2">
+             <widget class="BinningTypeSelection" name="binning_type_selector_run">
+             </widget>
+            </item>
+            <item row="12" column="1">
              <widget class="QLabel" name="q_rebin_label_run">
               <property name="toolTip">
                <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
@@ -1057,12 +1072,9 @@
               <property name="text">
                <string>Q Steps</string>
               </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
              </widget>
             </item>
-            <item row="11" column="3">
+            <item row="12" column="2">
              <widget class="QDoubleSpinBox" name="q_rebin_spinbox_run">
               <property name="toolTip">
                <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
@@ -1111,7 +1123,7 @@
            <zorder>set_dirpix_checkbox</zorder>
            <zorder>set_dangle0_checkbox</zorder>
            <zorder>dangle0Overwrite</zorder>
-           <zorder>final_rebin_checkbox_run</zorder>
+           <zorder>binning_type_selector_run</zorder>
            <zorder>q_rebin_label_run</zorder>
            <zorder>q_rebin_spinbox_run</zorder>
           </widget>
@@ -2982,7 +2994,15 @@
                       </column>
                       <column>
                        <property name="text">
-                        <string>Q-Steps</string>
+                        <string>Binning</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Type of binning used in the reflectometry reduction.</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Q Steps</string>
                        </property>
                       </column>
                      </widget>
@@ -3168,7 +3188,15 @@
                       </column>
                       <column>
                        <property name="text">
-                        <string>Q-Steps</string>
+                        <string>Binning</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Type of binning used in the reflectometry reduction.</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Q Steps</string>
                        </property>
                       </column>
                      </widget>
@@ -3354,7 +3382,15 @@
                       </column>
                       <column>
                        <property name="text">
-                        <string>Q-Steps</string>
+                        <string>Binning</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Type of binning used in the reflectometry reduction.</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Q Steps</string>
                        </property>
                       </column>
                      </widget>
@@ -3540,7 +3576,15 @@
                       </column>
                       <column>
                        <property name="text">
-                        <string>Q-Steps</string>
+                        <string>Binning</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Type of binning used in the reflectometry reduction.</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Q Steps</string>
                        </property>
                       </column>
                      </widget>
@@ -5812,6 +5856,12 @@
    <header>quicknxs/ui/deadtime_entry.h</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>BinningTypeSelection</class>
+   <extends>QComboBox</extends>
+   <header>quicknxs/ui/binningtype_combobox.h</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <tabstops>
   <tabstop>numberSearchEntry</tabstop>
@@ -5836,7 +5886,6 @@
   <tabstop>directPixelOverwrite</tabstop>
   <tabstop>trustDANGLE</tabstop>
   <tabstop>trustSANGLE</tabstop>
-  <tabstop>fanReflectivity</tabstop>
   <tabstop>show_colorbars</tabstop>
   <tabstop>color_selector</tabstop>
   <tabstop>logarithmic_colorscale</tabstop>
@@ -6487,6 +6536,22 @@
    </hints>
   </connection>
   <connection>
+   <sender>q_rebin_spinbox_run</sender>
+   <signal>editingFinished()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>changeRegionValues()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>342</x>
+     <y>747</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>543</x>
+     <y>416</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>normalizeXTof</sender>
    <signal>stateChanged(int)</signal>
    <receiver>MainWindow</receiver>
@@ -6595,6 +6660,22 @@
     <hint type="destinationlabel">
      <x>543</x>
      <y>454</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>propagate_binning_options_button</sender>
+   <signal>pressed()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>propagate_binning_options_to_runs()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>114</x>
+     <y>518</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>3</x>
+     <y>453</y>
     </hint>
    </hints>
   </connection>
@@ -7351,26 +7432,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>final_rebin_checkbox_global</sender>
-   <signal>stateChanged(int)</signal>
+   <sender>binning_type_selector_run</sender>
+   <signal>currentIndexChanged(int)</signal>
    <receiver>MainWindow</receiver>
-   <slot>toggleFinalRebinGlobal()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>59</x>
-     <y>579</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>536</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>final_rebin_checkbox_run</sender>
-   <signal>stateChanged(int)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>toggleFinalRebinRun()</slot>
+   <slot>changeRegionValues()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>110</x>
@@ -7434,8 +7499,6 @@
   <slot>stripOverlap()</slot>
   <slot>toggle_smoothing()</slot>
   <slot>toggleColorbars()</slot>
-  <slot>toggleFinalRebinGlobal()</slot>
-  <slot>toggleFinalRebinRun()</slot>
   <slot>update_offspec_qz_bin_width()</slot>
  </slots>
 </ui>

@@ -1,7 +1,7 @@
 import pytest
 from qtpy import QtCore, QtWidgets
 
-from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
@@ -114,15 +114,14 @@ class TestMainGui:
         conf1 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf1.do_final_rebin_global is False
-        assert conf1.final_rebin_step_global == -0.02
+        assert conf1.binning_type_global == BinningType.NONE
+        assert conf1.binning_q_step_global == -0.02
         assert conf1.normalize_to_unity is True
         assert conf1.total_reflectivity_q_cutoff == 0.01
         assert conf1.global_stitching is False
         assert conf1.polynomial_stitching is False
         assert conf1.polynomial_stitching_degree == 3
         assert conf1.polynomial_stitching_points == 3
-        assert conf1.use_constant_q is False
         assert conf1.sample_size == 10
         assert conf1.wl_bandwidth == 3.2
         assert conf1.lock_direct_beam_y is False
@@ -144,21 +143,20 @@ class TestMainGui:
         assert conf1.set_direct_angle_offset is False
         assert conf1.direct_angle_offset_overwrite == 0
         assert conf1.use_dangle is False
-        assert conf1.do_final_rebin_run is False
-        assert conf1.final_rebin_step_run == -0.02
+        assert conf1.binning_type_run == BinningType.NONE
+        assert conf1.binning_q_step_run == -0.02
 
         # set UI elements to non-default
 
         # global
-        window_main.ui.final_rebin_checkbox_global.setChecked(False)
-        window_main.ui.q_rebin_spinbox_global.setValue(-0.02)
+        window_main.ui.binning_type_selector_global.setCurrentIndex(1)
+        window_main.ui.q_rebin_spinbox_global.setValue(-0.01)
         window_main.ui.normalize_to_unity_checkbox.setChecked(False)
         window_main.ui.normalization_q_cutoff_spinbox.setValue(0.02)
         window_main.ui.global_fit_checkbox.setChecked(True)
         window_main.ui.polynomial_stitching_checkbox.setChecked(True)
         window_main.ui.polynomial_stitching_degree_spinbox.setValue(4)
         window_main.ui.polynomial_stitching_points_spinbox.setValue(5)
-        window_main.ui.fanReflectivity.setChecked(True)
         window_main.ui.sample_size_spinbox.setValue(12)
         window_main.ui.bandwidth_spinbox.setValue(2.3)
         window_main.ui.direct_beam_y_lock_checkbox.setChecked(True)
@@ -178,7 +176,7 @@ class TestMainGui:
         window_main.ui.set_dangle0_checkbox.setChecked(True)
         window_main.ui.dangle0Overwrite.setValue(2.0)
         window_main.ui.trustDANGLE.setChecked(True)
-        window_main.ui.final_rebin_checkbox_run.setChecked(True)
+        window_main.ui.binning_type_selector_run.setCurrentIndex(1)
         window_main.ui.q_rebin_spinbox_run.setValue(0.045)
 
         window_main.file_handler.get_configuration()  # to update configuration from UI
@@ -187,15 +185,14 @@ class TestMainGui:
         conf1 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf1.do_final_rebin_global is False
-        assert conf1.final_rebin_step_global == -0.02
+        assert conf1.binning_type_global == BinningType.NORMAL
+        assert conf1.binning_q_step_global == -0.01
         assert conf1.normalize_to_unity is False
         assert conf1.total_reflectivity_q_cutoff == 0.02
         assert conf1.global_stitching is True
         assert conf1.polynomial_stitching is True
         assert conf1.polynomial_stitching_degree == 4
         assert conf1.polynomial_stitching_points == 5
-        assert conf1.use_constant_q is True
         assert conf1.sample_size == 12
         assert conf1.wl_bandwidth == 2.3
         assert conf1.lock_direct_beam_y is True
@@ -217,12 +214,8 @@ class TestMainGui:
         assert conf1.set_direct_angle_offset is True
         assert conf1.direct_angle_offset_overwrite == 2.0
         assert conf1.use_dangle is True
-        assert conf1.do_final_rebin_run is True
-        assert conf1.final_rebin_step_run == 0.045
-
-        window_main.ui.final_rebin_checkbox_global.setChecked(True)
-        assert conf1.do_final_rebin_run is False
-        window_main.ui.final_rebin_checkbox_global.setChecked(False)
+        assert conf1.binning_type_run == BinningType.NORMAL
+        assert conf1.binning_q_step_run == 0.045
 
         # change selected data and check that global variables are carried over but not the per run ones
 
@@ -233,15 +226,14 @@ class TestMainGui:
         conf2 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf2.do_final_rebin_global is False
-        assert conf2.final_rebin_step_global == -0.02
+        assert conf2.binning_type_global == BinningType.NORMAL
+        assert conf2.binning_q_step_global == -0.01
         assert conf2.normalize_to_unity is False
         assert conf2.total_reflectivity_q_cutoff == 0.02
         assert conf2.global_stitching is True
         assert conf2.polynomial_stitching is True
         assert conf2.polynomial_stitching_degree == 4
         assert conf2.polynomial_stitching_points == 5
-        assert conf2.use_constant_q is True
         assert conf2.sample_size == 12
         assert conf2.wl_bandwidth == 2.3
         assert conf2.lock_direct_beam_y is True
@@ -336,9 +328,9 @@ class TestMainGui:
     @pytest.mark.datarepo
     def test_reduction_table_propagate_run(self, qtbot, data_server):
         """Test right-click action 'Propagate run'."""
+        Configuration.setup_default_values()
         window_main = MainWindow()
         qtbot.addWidget(window_main)
-        Configuration.setup_default_values()
 
         # add direct beam run
         window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
@@ -396,9 +388,9 @@ class TestMainGui:
             qtbot.keyClick(menu, QtCore.Qt.Key_Down)
             qtbot.keyClick(menu, QtCore.Qt.Key_Enter)
 
+        Configuration.setup_default_values()
         window_main = MainWindow()
         qtbot.addWidget(window_main)
-        Configuration.setup_default_values()
 
         # Add direct beam run
         window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))

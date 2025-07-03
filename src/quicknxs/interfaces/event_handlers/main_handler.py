@@ -17,7 +17,7 @@ from qtpy import QtCore, QtWidgets
 
 from quicknxs.config import Settings
 from quicknxs.config.gui import QColors
-from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
@@ -25,6 +25,7 @@ from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
 from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
+from quicknxs.ui.binningtype_combobox import BinningTypeSelection
 
 
 class MainHandler(object):
@@ -852,14 +853,19 @@ class MainHandler(object):
         if d.configuration.direct_beam is not None:
             direct_beam = d.configuration.direct_beam
         table_widget.setItem(idx, 12, QtWidgets.QTableWidgetItem(str(direct_beam)))
-        if d.configuration.do_final_rebin_run:
-            item = QtWidgets.QTableWidgetItem(str(d.configuration.final_rebin_step_run))
-        else:
-            item = QtWidgets.QTableWidgetItem("")
-        if d.configuration.do_final_rebin_global:
-            item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+        # Binning type column
+        combobox = BinningTypeSelection(on_change_handler=self.reduction_table_binning_type_changed, row=idx)
+        combobox.blockSignals(True)
+        combobox.setCurrentIndex(d.configuration.binning_type_run)
+        combobox.blockSignals(False)
+        table_widget.setCellWidget(idx, 13, combobox)
+        # Q steps column
+        item = QtWidgets.QTableWidgetItem(f"{d.configuration.binning_q_step_run:.3f}")
+        if d.configuration.binning_type_run == BinningType.NONE:
+            # indicate Q steps is not used
+            item.setForeground(QColors.dark_grey)
             item.setBackground(QColors.light_grey)
-        table_widget.setItem(idx, 13, item)
+        table_widget.setItem(idx, 14, item)
 
         self.main_window.auto_change_active = False
 
@@ -888,7 +894,13 @@ class MainHandler(object):
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 
     def reduction_table_changed(self, item: QtWidgets.QTableWidgetItem):
-        """Perform action upon change in data reduction list."""
+        """Perform action upon change in data reduction list.
+
+        Parameters
+        ----------
+        item : QtWidgets.QTableWidgetItem
+            The changed table item
+        """
         if self.main_window.auto_change_active:
             return
 
@@ -914,7 +926,8 @@ class MainHandler(object):
             "direct_pixel",
             "scattering_angle",
             "direct_beam",
-            "final_rebin_step_run",
+            "binning_type_run",
+            "binning_q_step_run",
         ]
 
         # Update settings from selected option
@@ -928,16 +941,49 @@ class MainHandler(object):
             except:
                 refl.set_parameter(keys[column], None)
                 item.setText("none")
-        elif column == 13:
+        elif column == 14:
             try:
                 new_value = round(float(item.text()), 3)
                 if -0.1 <= new_value <= 0.1:
                     refl.set_parameter(keys[column], new_value)
-                    refl.set_parameter("do_final_rebin_run", True)
             except:
                 refl.set_parameter(keys[column], None)
-                refl.set_parameter("do_final_rebin_run", False)
 
+        recalculate = False if column in [1, 2, 3] else True
+
+        # Recalculate and replot
+        self.reduction_table_cell_changed(refl, recalculate)
+
+    def reduction_table_binning_type_changed(self, combobox_index: int, row: int):
+        """Perform action upon change in binning type column in the UI reduction table.
+
+        Parameters
+        ----------
+        combobox_index : int
+            The selected index in the combobox
+        row : int
+            The row in the reduction table to update.
+        """
+        # update the configuration state
+        binning_type = BinningType(combobox_index)
+        nexus_data = self._data_manager.reduction_list[row]
+        nexus_data.set_parameter("binning_type_run", binning_type)
+
+        # recalculate and replot
+        self.reduction_table_cell_changed(nexus_data, recalculate=True)
+
+    def reduction_table_cell_changed(self, refl: NexusData, recalculate: bool = True):
+        """Perform action upon change in UI reduction table.
+
+        Updates the internal configuration state and recalculates the reflectivity.
+
+        Parameters
+        ----------
+        refl : NexusData
+            The data set to update.
+        recalculate : bool, optional
+            Whether to recalculate the reflectivity, by default True
+        """
         # Update calculated data
         refl.update_calculated_values()
 
@@ -954,7 +1000,7 @@ class MainHandler(object):
             self.update_direct_beam_table(idx, refl.cross_sections[cross_sections[0]])
 
         # Only recalculate if we need to, otherwise just replot
-        if column not in [1, 2, 3]:
+        if recalculate:
             try:
                 self._data_manager.calculate_reflectivity(nexus_data=refl)
             except:
@@ -1323,8 +1369,6 @@ class MainHandler(object):
 
         valid_change = valid_change or not configuration.subtract_background == self.ui.bgActive.isChecked()
 
-        valid_change = valid_change or not configuration.use_constant_q == self.ui.fanReflectivity.isChecked()
-
         valid_change = valid_change or not configuration.use_dangle == self.ui.trustDANGLE.isChecked()
 
         valid_change = valid_change or not configuration.set_direct_pixel == self.ui.set_dirpix_checkbox.isChecked()
@@ -1343,20 +1387,11 @@ class MainHandler(object):
                 valid_change or not configuration.direct_angle_offset_overwrite == self.ui.dangle0Overwrite.value()
             )
 
-        # Final rebin
         valid_change = (
-            valid_change or not configuration.do_final_rebin_global == self.ui.final_rebin_checkbox_global.isChecked()
+            valid_change or not configuration.binning_type_run == self.ui.binning_type_selector_run.currentIndex()
         )
 
-        valid_change = (
-            valid_change or not configuration.final_rebin_step_global == self.ui.q_rebin_spinbox_global.value()
-        )
-
-        valid_change = (
-            valid_change or not configuration.do_final_rebin_run == self.ui.final_rebin_checkbox_run.isChecked()
-        )
-
-        valid_change = valid_change or not configuration.final_rebin_step_run == self.ui.q_rebin_spinbox_run.value()
+        valid_change = valid_change or not configuration.binning_q_step_run == self.ui.q_rebin_spinbox_run.value()
 
         if valid_change:
             return 1
@@ -1395,8 +1430,8 @@ class MainHandler(object):
         configuration.bck_position = self.ui.bgCenter.value()
         configuration.bck_width = self.ui.bgWidth.value()
         configuration.match_direct_beam = self.ui.actionAutoNorm.isChecked()
-        configuration.do_final_rebin_run = self.ui.final_rebin_checkbox_run.isChecked()
-        configuration.final_rebin_step_run = self.ui.q_rebin_spinbox_run.value()
+        configuration.binning_type_run = self.ui.binning_type_selector_run.currentIndex()
+        configuration.binning_q_step_run = self.ui.q_rebin_spinbox_run.value()
 
         # Other reduction options
         configuration.subtract_background = self.ui.bgActive.isChecked()
@@ -1415,15 +1450,13 @@ class MainHandler(object):
         Configuration.polynomial_stitching_points = self.ui.polynomial_stitching_points_spinbox.value()
         Configuration.wl_bandwidth = self.ui.bandwidth_spinbox.value()
 
-        Configuration.use_constant_q = self.ui.fanReflectivity.isChecked()
         configuration.use_dangle = self.ui.trustDANGLE.isChecked()
         configuration.set_direct_pixel = self.ui.set_dirpix_checkbox.isChecked()
         configuration.set_direct_angle_offset = self.ui.set_dangle0_checkbox.isChecked()
         configuration.direct_pixel_overwrite = self.ui.directPixelOverwrite.value()
         configuration.direct_angle_offset_overwrite = self.ui.dangle0Overwrite.value()
         Configuration.sample_size = self.ui.sample_size_spinbox.value()
-        Configuration.do_final_rebin_global = self.ui.final_rebin_checkbox_global.isChecked()
-        Configuration.final_rebin_step_global = self.ui.q_rebin_spinbox_global.value()
+        Configuration.binning_q_step_global = self.ui.q_rebin_spinbox_global.value()
 
         Configuration.apply_deadtime = self.ui.deadtime_entry.applyCheckBox.isChecked()
 
@@ -1523,23 +1556,21 @@ class MainHandler(object):
         self.ui.polynomial_stitching_points_spinbox.setValue(configuration.polynomial_stitching_points)
         self.ui.bandwidth_spinbox.setValue(configuration.wl_bandwidth)
 
-        self.ui.fanReflectivity.setChecked(configuration.use_constant_q)
         self.ui.trustDANGLE.setChecked(configuration.use_dangle)
         self.ui.set_dirpix_checkbox.setChecked(configuration.set_direct_pixel)
         self.ui.set_dangle0_checkbox.setChecked(configuration.set_direct_angle_offset)
         self.ui.directPixelOverwrite.setValue(configuration.direct_pixel_overwrite)
         self.ui.dangle0Overwrite.setValue(configuration.direct_angle_offset_overwrite)
         self.ui.sample_size_spinbox.setValue(configuration.sample_size)
-        self.ui.final_rebin_checkbox_global.setChecked(configuration.do_final_rebin_global)
-        self.ui.q_rebin_spinbox_global.setValue(configuration.final_rebin_step_global)
+        self.ui.q_rebin_spinbox_global.setValue(configuration.binning_q_step_global)
 
         self.ui.deadtime_entry.applyCheckBox.setChecked(configuration.apply_deadtime)
 
         self.ui.direct_beam_y_lock_checkbox.setChecked(configuration.lock_direct_beam_y)
 
-        self.ui.final_rebin_checkbox_run.setChecked(configuration.do_final_rebin_run)
-        if configuration.do_final_rebin_run:
-            self.ui.q_rebin_spinbox_run.setValue(configuration.final_rebin_step_run)
+        self.ui.binning_type_selector_run.setCurrentIndex(configuration.binning_type_run)
+        if configuration.binning_q_step_run:
+            self.ui.q_rebin_spinbox_run.setValue(configuration.binning_q_step_run)
 
         # UI elements
         self.ui.normalizeXTof.setChecked(configuration.normalize_x_tof)
@@ -1763,40 +1794,35 @@ class MainHandler(object):
         self.main_window.update_gisans_viewer.connect(dialog.update_gisans)
         dialog.show()
 
-    def toggle_final_rebin_global(self, state: int):
-        """Toggle global rebin checkbox.
+    def propagate_binning_options_to_run_config(self):
+        """Enable the selected binning type with the given Q-step for all runs in the active data tab.
 
-        Ensure mutual exclusivity with the per-run rebin checkbox.
+        Note: This function updates the UI and internal configuration state while blocking all signals.
+        The caller is responsible for triggering recalculation and replotting.
         """
-        if state == QtCore.Qt.Checked:
-            self.ui.final_rebin_checkbox_run.blockSignals(True)
-            self.ui.final_rebin_checkbox_run.setChecked(False)
-            self.ui.final_rebin_checkbox_run.blockSignals(False)
+        bin_type_global = self.ui.binning_type_selector_global.currentIndex()
+        q_step_global = self.ui.q_rebin_spinbox_global.value()
 
-        # col_index = self.ui.reductionTable.get_column_index("Q-Steps")
-        col_index = 13
-        self.ui.reductionTable.blockSignals(True)
-        for row in range(self.ui.reductionTable.rowCount()):
-            item = self.ui.reductionTable.item(row, col_index)
-            if item is None:
-                item = QtWidgets.QTableWidgetItem("")
-            if item:
-                if state == QtCore.Qt.Checked:
-                    _item = QtWidgets.QTableWidgetItem(item.text())
-                    _item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
-                    _item.setBackground(QColors.light_grey)
-                    self.ui.reductionTable.setItem(row, col_index, _item)
-                else:
-                    _item = QtWidgets.QTableWidgetItem(item.text())
-                    _item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-                    _item.setBackground(QColors.white)
-                    self.ui.reductionTable.setItem(row, col_index, _item)
-        self.ui.reductionTable.blockSignals(False)
+        # loop over runs in the active data tab to update internal state and UI state
+        reduct_list = self._data_manager.reduction_list
+        for idx, nexus_data in enumerate(reduct_list):
+            active_cross_section_name: str = self._data_manager.active_cross_section.name
+            active_cross_section = nexus_data.cross_sections[active_cross_section_name]
+            # get the current configuration state
+            conf = active_cross_section.configuration
+            # update the run final rebin configuration state
+            conf.binning_type_run = bin_type_global
+            conf.binning_q_step_run = q_step_global
+            nexus_data.update_configuration(conf)
+            # update the UI reduction table to reflect the configuration state (signals are blocked)
+            self.update_reduction_table(self.reduction_table, idx, active_cross_section)
 
-    def toggle_final_rebin_run(self, state: int):
-        """Toggle per-run rebin checkbox.
+        # update the run Q step spinbox value
+        self.ui.q_rebin_spinbox_run.blockSignals(True)
+        self.ui.q_rebin_spinbox_run.setValue(q_step_global)
+        self.ui.q_rebin_spinbox_run.blockSignals(False)
 
-        Ensure mutual exclusivity with the global rebin checkbox.
-        """
-        if state == QtCore.Qt.Checked:
-            self.ui.final_rebin_checkbox_global.setChecked(False)
+        # update the run binning type combobox
+        self.ui.binning_type_selector_run.blockSignals(True)
+        self.ui.binning_type_selector_run.setCurrentIndex(bin_type_global)
+        self.ui.binning_type_selector_run.blockSignals(False)

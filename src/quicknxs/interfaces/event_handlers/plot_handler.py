@@ -337,22 +337,6 @@ class PlotHandler(object):
         self.plot_manager.xtof_bck2.set_ydata([bg_pos + bg_width / 2.0, bg_pos + bg_width / 2.0])
         self.ui.xtof_overview.draw()
 
-        # TODO: refactor this
-        # if self.ui.fanReflectivity.isChecked() and self.refl and not self.refl.options['extract_fan']:
-        #    old_aca = self.main_window.auto_change_active
-        #    self.main_window.auto_change_active = False
-        #    self.ui.rangeStart.setValue(self.cut_areas['fan'][0])
-        #    self.ui.rangeEnd.setValue(self.cut_areas['fan'][1])
-        #    self.main_window.auto_change_active = old_aca
-        # elif not self.ui.fanReflectivity.isChecked() and self.refl and self.refl.options['extract_fan']:
-        #    norm = self.get_direct_beam()
-        #    if norm in self.cut_areas:
-        #        old_aca = self.main_window.auto_change_active
-        #        self.main_window.auto_change_active = False
-        #        self.ui.rangeStart.setValue(self.cut_areas[norm][0])
-        #        self.ui.rangeEnd.setValue(self.cut_areas[norm][1])
-        #        self.main_window.auto_change_active = old_aca
-
     def change_offspec_colorscale(self):
         """Modify color scale."""
         plots: List[MPLWidget] = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]

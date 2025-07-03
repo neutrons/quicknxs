@@ -58,7 +58,7 @@ def stitching_config():
         "normalize_to_unity": False,
         "total_reflectivity_q_cutoff": 0.008,
         "do_final_rebin_global": False,
-        "final_rebin_step_global": -0.01,
+        "binning_q_step_global": -0.01,
         "match_direct_beam": True,
     }
     Configuration.setup_default_values()

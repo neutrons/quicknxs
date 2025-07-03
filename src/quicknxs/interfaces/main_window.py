@@ -564,15 +564,12 @@ class MainWindow(QtWidgets.QMainWindow):
         """Reload all previously loaded files upon change in loading configuration."""
         self.file_handler.reload_all_files()
 
-    def toggleFinalRebinRun(self, state):
-        """Signal handling."""
-        self.file_handler.toggle_final_rebin_run(state)
-        self.changeRegionValues()
-
-    def toggleFinalRebinGlobal(self, state):
-        """Signal handling."""
-        self.file_handler.toggle_final_rebin_global(state)
-        self.file_handler.get_configuration()
+    def propagate_binning_options_to_runs(self):
+        """Apply the binning options in the global reflectivity extraction panel to all runs."""
+        # update the internal configuration state
+        self.file_handler.propagate_binning_options_to_run_config()
+        # recalculate and replot reflectivity
+        self.global_reflectivity_config_changed()
 
     # Un-used UI signals
     def change_gisans_colorscale(self):

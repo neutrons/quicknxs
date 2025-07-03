@@ -1,12 +1,29 @@
 # pylint: disable=invalid-name, line-too-long, too-few-public-methods, too-many-instance-attributes, wrong-import-order, bare-except
 """Application configuration, including reduction options."""
 
+from enum import IntEnum
 from typing import List, Optional
 
 from quicknxs.interfaces.data_handling.instrument import Instrument
 
 # TODO: extract to file based parameter setting
 # TODO: add docstring for Configuration attributes
+
+
+class BinningType(IntEnum):
+    """Enum for binning types."""
+
+    NONE = 0
+    NORMAL = 1
+    CONST_Q = 2
+
+    def __str__(self):
+        """String representation of binning type for use in the UI."""
+        return {
+            BinningType.NONE: "None",
+            BinningType.NORMAL: "Normal",
+            BinningType.CONST_Q: "Const Q",
+        }[self]
 
 
 class Configuration(object):
@@ -33,11 +50,10 @@ class Configuration(object):
 
     ### Global variables
     sample_size = 10
-    use_constant_q = False
     wl_bandwidth = 3.2
-    # Final Q rebin global options
-    do_final_rebin_global = False
-    final_rebin_step_global = -0.02
+    # Binning Q step global option
+    binning_type_global = BinningType.NONE
+    binning_q_step_global = -0.02
     # Normalize to unity when stitching
     normalize_to_unity = True
     total_reflectivity_q_cutoff = 0.01
@@ -73,10 +89,9 @@ class Configuration(object):
         cls.KZI_VS_KZF = 1
         cls.DELTA_KZ_VS_QZ = 3
         cls.sample_size = 10
-        cls.use_constant_q = False
         cls.wl_bandwidth = 3.2
-        cls.do_final_rebin_global = False
-        cls.final_rebin_step_global = -0.02
+        cls.binning_type_global = BinningType.NONE
+        cls.binning_q_step_global = -0.02
         cls.normalize_to_unity = True
         cls.total_reflectivity_q_cutoff = 0.01
         cls.global_stitching = False
@@ -145,9 +160,9 @@ class Configuration(object):
         self.cut_first_n_points = 1
         self.cut_last_n_points = 1
 
-        # Final Rebin run options
-        self.do_final_rebin_run = False
-        self.final_rebin_step_run = -0.02
+        # Binning options
+        self.binning_type_run = BinningType.NONE
+        self.binning_q_step_run = -0.02
 
         # UI elements
         self.normalize_x_tof = False

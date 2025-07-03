@@ -7,11 +7,11 @@ Overview
 --------
 
 Binning is an essential process in reflectivity reduction within QuickNXS, organizing raw data into manageable intervals for accurate analysis.
-Several binning options are available at various steps of the data reduction process.
-An initial time-of-flight binning options is available to process the raw data, which is later converted into Q bins.
-A final Q rebinning is optionally available for user who want their reflectivity output in specific Q binning.
-This guide explains the available binning options
-in QuickNXS and how to configure them for the best results.
+There are two steps during which binning occurs:
+1. An initial time-of-flight binning step to process the raw event data, which is later converted into Q bins (mandatory).
+2. A final Q rebinning is optionally available for user who want their reflectivity output in specific Q binning.
+
+This guide explains the available binning options in QuickNXS and how to configure them.
 
 .. note:: All binning options are ultimately passed to the `MagnetismReflectometryReduction algorithm <https://docs.mantidproject.org/nightly/algorithms/MagnetismReflectometryReduction-v1.html>`_ in Mantid.
 
@@ -40,28 +40,33 @@ The following options allow users to fine-tune binning behavior:
       **Entering the Bin Width**
 
 
-**Final Rebin** (Checkbox, Per-Run or Global)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Final Rebin** (Checkbox, Per-Run)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    - **What It Does:** Controls whether the final reduced workspace (converted to Q-space) undergoes additional rebinning.
    - **How It Works:**
 
-     - When enabled, rebinning is performed using `Q Steps`, in units of 1/Å, as the bin width.
+     - When enabled, rebinning is performed using `Q Steps`, in units of 1/Å:
+
+       - If **positive**, bins are evenly spaced.
+       - If **negative**, bins are spaced logarithmically using a geometric progression.
+
      - This option is **only available** if `Constant-Q Binning` is **disabled**.
      - If `Constant-Q Binning` is enabled, it **takes priority** over `Final Rebin`.
-     - If `Final Rebin` is enabled **per-run**, the `Q Steps` values can be viewed and updated in the reduction data table under the `Q-Steps` column. If it is enabled globally, it takes priority over any per-run `Q Steps` values.
+     - If `Final Rebin` is enabled for a run, the `Q Steps` values can be viewed and updated in the reduction data table under the `Q-Steps` column.
+     - The button `Apply final rebin to runs` applies final rebin with the same `Q Steps` value for all runs in the active reduction data table.
 
-   - **How to Use It:** Check this box if you want to apply final rebinning.
+   - **How to Use It:** Check this box if you want to apply final rebinning for the active run, or use the button to apply final rebin for all runs.
 
    .. figure::
-      ../images/final_rebin_global.png
-      :alt: Final Rebin Global
+      ../images/final_rebin_button.png
+      :alt: Apply Final Rebin to All Runs
 
-      **Enabling Final Rebin Globally**
+      **Apply Final Rebin to All Runs in the Active Reduction Data Table**
 
    .. figure::
       ../images/final_rebin_per_run.png
-      :alt: Final Rebin Per-Run
+      :alt: Final Rebin Per-Run Checkbox
 
       **Enabling Final Rebin Per-Run**
 

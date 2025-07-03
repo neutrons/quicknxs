@@ -14,7 +14,7 @@ import mantid.simpleapi as api
 import numpy as np
 from mantid.dataobjects import Workspace2D
 
-from quicknxs.interfaces.configuration import Configuration, get_direct_beam_low_res_roi
+from quicknxs.interfaces.configuration import BinningType, Configuration, get_direct_beam_low_res_roi
 from quicknxs.interfaces.data_handling.data_info import DataInfo
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.gisans import GISANS
@@ -801,14 +801,13 @@ class NexusData(object):
 
         direct_beam_low_res_roi = get_direct_beam_low_res_roi(conf, direct_beam.configuration)
 
+        # Resolve binning options
         final_rebin = False
-        q_step = 0.0
-        if conf.do_final_rebin_global:
+        const_q_binning = False
+        if conf.binning_type_run == BinningType.NORMAL:
             final_rebin = True
-            q_step = conf.final_rebin_step_global
-        else:
-            final_rebin = conf.do_final_rebin_run
-            q_step = conf.final_rebin_step_run
+        elif conf.binning_type_run == BinningType.CONST_Q:
+            const_q_binning = True
 
         # The reduced data workspace may be a group or a single
         # workspace depending on the InputWorkspace parameter
@@ -829,7 +828,7 @@ class NexusData(object):
             CutTimeAxis=True,
             FinalRebin=final_rebin,
             QMin=0.001,
-            QStep=q_step,
+            QStep=conf.binning_q_step_run,
             RoundUpPixel=False,
             AngleOffset=angle_offset,
             UseWLTimeAxis=False,
@@ -837,7 +836,7 @@ class NexusData(object):
             UseSANGLE=not conf.use_dangle,
             TimeAxisRange=conf.tof_range,
             SpecularPixel=conf.peak_position,
-            ConstantQBinning=conf.use_constant_q,
+            ConstantQBinning=const_q_binning,
             ConstQTrim=0.1,
             CropFirstAndLastPoints=False,
             CleanupBadData=final_rebin,
