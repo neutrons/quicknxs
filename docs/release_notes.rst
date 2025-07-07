@@ -33,7 +33,7 @@ Notes for major and minor releases. Notes for Patch releases are deferred.
 
 4.7.0
 -----
-2025-07-08
+2025-07-15
 
 QuickNXS now uses Pixi for package builds and :ref:`developer environment<development_environment>` setup and tasks (#174).
 
