@@ -65,20 +65,21 @@ def _get_all_config_attributes(conf: Configuration):
     """Get all configuration attributes, including class and instance variables."""
     # Keys to exclude from output (UI-only or internal constants)
     EXCLUDE_KEYS = {
-        "normalize_x_tof",
+        "normalize_x_tof",  # UI options
         "x_wl_map",
         "angle_map",
         "log_1d",
-        "log_2d",  # UI options
-        "QX_VS_QZ",
+        "log_2d",
+        "QX_VS_QZ",  # Enum-style constants
         "KZI_VS_KZF",
-        "DELTA_KZ_VS_QZ",  # Enum-style constants
-        "count_threshold",
+        "DELTA_KZ_VS_QZ",
+        "count_threshold",  # Internal constants
         "tof_overwrite",
         "nbr_events_min",
-        "wl_bandwidth",  # Internal constants
+        "wl_bandwidth",
         "direct_pixel_overwrite",  # Writes from the run object
         "instrument",  # Instrument object, not a config option
+        "setup_default_values",  # Class method, not an instance variable
     }
 
     GISANS_KEYS = {
@@ -156,6 +157,13 @@ def _compute_column_width(labels: list[str]):
     for each in labels:
         label = CONFIG_LABELS.get(each, each)
         widths[each] = max(len(label), 8)
+
+    # Lists need longer labels
+    # these are [int, int]
+    for each in ["peak_roi", "bck_roi", "low_res_roi"]:
+        widths[each] = max(widths.get(each, 0), 12)
+    # this is [float, float]
+    widths["tof_range"] = 20
     return widths
 
 
@@ -166,8 +174,8 @@ def _write_section_header(fd: TextIO, title: str, options: List[str]):
     labels = " ".join(f"{CONFIG_LABELS.get(k, k):<{widths[k]}}" for k in options)
     fd.write(f"# {labels}\n")
 
-    format_parts = [f"{{{key}:<{widths[key]}}}" for key in options]
-    template = "# " + "  ".join(format_parts) + "\n"
+    format_parts = [f"{{{key}:<{widths[key] + 1}}}" for key in options]
+    template = "# " + "".join(format_parts) + "\n"
 
     return template
 
@@ -182,21 +190,7 @@ def _build_config_row_dict(
     include_gisans: bool = False,
     include_offspec: bool = False,
 ) -> Dict[str, str]:
-    """
-    Build a dictionary of string-formatted values for config output.
-
-    Parameters
-    ----------
-        config: Configuration instance
-        item: Pre-populated dict of special values (e.g., {"DB_ID": 1, "File": ...})
-        columns: List of all columns to output (e.g., from header)
-        include_gisans: Include GISANS config values
-        include_offspec: Include off-spec config values
-
-    Returns
-    -------
-        A dict of {column_name: string_value} ready for template.format(...)
-    """
+    """Build a dictionary of string-formatted values for config output."""
 
     all_config = _get_all_config_attributes(config)
     config_value_dict = {**all_config["instance"]}
@@ -214,6 +208,9 @@ def _build_config_row_dict(
             config_value_dict[key] = str(value)
         elif value is None:
             config_value_dict[key] = "None"
+        elif isinstance(value, list):
+            clean_list = [f"{float(v):g}" for v in value]
+            config_value_dict[key] = "[" + ", ".join(clean_list) + "]"
         else:
             config_value_dict[key] = str(value)
 
@@ -471,15 +468,7 @@ def write_reflectivity_data(
 
 
 def _assign_config_value(conf: Configuration, attr: str, value_str: str):
-    """
-    Assign a string value to a Configuration attribute with type inference.
-
-    Parameters
-    ----------
-        conf: Configuration object
-        attr: Attribute name (must exist on the object)
-        value_str: String value to convert and assign
-    """
+    """Assign a string value to a Configuration attribute with type inference."""
     if not hasattr(conf, attr):
         return  # silently ignore unknown attributes
 
