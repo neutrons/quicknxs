@@ -14,18 +14,18 @@ Lock direct beam yo yw to data run
 
 locals
 
-Y position 
-Y width 
-X position 
-X width 
-BG X position 
-BG X width 
+Y position
+Y width
+X position
+X width
+BG X position
+BG X width
 Scale 10^
 Cut Pts (1, 1)
 set direct pixel (checkbox and spinbox)
 set dangle0 (checkbox and spinbox)
 trusted angle (dangle, sampleAngle)
-final rebin 
+final rebin
 Q Steps
 
 --- seemingly not set in global config
