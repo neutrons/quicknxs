@@ -619,7 +619,7 @@ def read_reduced_file(file_path: str, configuration=None):
                         # conf.cut_last_n_points = 0
                     run_file = _find_h5_data(run_file)
                     run_file = determine_which_files_to_sum(run_file, data_file_indices)
-                    # assert False
+
                     if _in_section == 2:
                         data_runs.append([run_number, run_file, conf])
                     else:
