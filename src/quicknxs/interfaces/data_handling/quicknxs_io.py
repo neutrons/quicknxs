@@ -8,7 +8,7 @@ import math
 import os
 import time
 from pathlib import Path
-from typing import Dict, List, Union, Any
+from typing import Any, Dict, List, Union
 
 import mantid
 import mr_reduction
@@ -172,18 +172,20 @@ def _build_config_row_dict(
 
     return config_value_dict
 
-def _build_table(config_values: List[Dict[str, str]], columns: List[str], section_header: str, ljust: str = ''):
+
+def _build_table(config_values: List[Dict[str, str]], columns: List[str], section_header: str, ljust: str = ""):
     df = pd.DataFrame(config_values, columns=columns)
     if df.empty:
-        return ''
+        return ""
 
     if ljust:
         max_len = df[ljust].astype(str).map(len).max()
-        df_str = df.to_string(index=False, justify='left', formatters={ljust: lambda x: str(x).ljust(max_len)})
+        df_str = df.to_string(index=False, justify="left", formatters={ljust: lambda x: str(x).ljust(max_len)})
     else:
         df_str = df.to_string(index=False)
-    table = '\n'.join([f'# {line}' for line in df_str.splitlines() if line.strip()])
-    return f'# [{section_header}]\n' + table + '\n'
+    table = "\n".join([f"# {line}" for line in df_str.splitlines() if line.strip()])
+    return f"# [{section_header}]\n" + table + "\n"
+
 
 def write_reflectivity_header(
     peak_reduction_lists: Dict[int, List[NexusData]],
@@ -298,7 +300,7 @@ def write_reflectivity_header(
             include_offspec=include_offspec,
         )
         config_values.append(config_value_dict)
-    fd.write(_build_table(config_values, direct_beam_options, 'Direct Beam Runs'))
+    fd.write(_build_table(config_values, direct_beam_options, "Direct Beam Runs"))
 
     # Peak for reflectivity data
     fd.write("#\n")
@@ -317,7 +319,7 @@ def write_reflectivity_header(
             include_offspec=include_offspec,
         )
         config_values.append(config_value_dict)
-    fd.write(_build_table(config_values, dataset_options, 'Data Runs'))
+    fd.write(_build_table(config_values, dataset_options, "Data Runs"))
 
     # All peaks
     for peak_index, peak_reduction_list in peak_reduction_lists.items():
@@ -335,12 +337,19 @@ def write_reflectivity_header(
                 include_offspec=include_offspec,
             )
             config_values.append(config_value_dict)
-        fd.write(_build_table(config_values, dataset_options, f'Peak {peak_index} Runs'))
+        fd.write(_build_table(config_values, dataset_options, f"Peak {peak_index} Runs"))
 
     fd.write("#\n")
-    
+
     # Global Options
-    fd.write(_build_table(list(conf_options['global'].items()), columns=['name', 'value'], section_header='Global Options', ljust='name'))
+    fd.write(
+        _build_table(
+            list(conf_options["global"].items()),
+            columns=["name", "value"],
+            section_header="Global Options",
+            ljust="name",
+        )
+    )
 
     fd.write("#\n")
     fd.close()
