@@ -177,7 +177,7 @@ def _build_table(config_values: List[Dict[str, str]], columns: List[str], sectio
     df = pd.DataFrame(config_values, columns=columns)
     if df.empty:
         return ""
-
+    df.rename(columns=CONFIG_LABELS, inplace=True)
     if ljust:
         max_len = df[ljust].astype(str).map(len).max()
         df_str = df.to_string(index=False, justify="left", formatters={ljust: lambda x: str(x).ljust(max_len)})
