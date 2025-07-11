@@ -8,11 +8,12 @@ import math
 import os
 import time
 from pathlib import Path
-from typing import Dict, List, TextIO, Union
+from typing import Dict, List, Union, Any
 
 import mantid
 import mr_reduction
 import numpy as np
+import pandas as pd
 
 from quicknxs import __version__
 from quicknxs.interfaces.configuration import Configuration
@@ -152,41 +153,9 @@ def _get_all_config_attributes(conf: Configuration):
     }
 
 
-def _compute_column_width(labels: list[str]):
-    widths = {}
-    for each in labels:
-        label = CONFIG_LABELS.get(each, each)
-        widths[each] = max(len(label), 8)
-
-    # Lists need longer labels
-    # these are [int, int]
-    for each in ["peak_roi", "bck_roi", "low_res_roi"]:
-        widths[each] = max(widths.get(each, 0), 12)
-    # this is [float, float]
-    widths["tof_range"] = 20
-    return widths
-
-
-def _write_section_header(fd: TextIO, title: str, options: List[str]):
-    fd.write(f"# [{title}]\n")
-
-    widths = _compute_column_width(options)
-    labels = " ".join(f"{CONFIG_LABELS.get(k, k):<{widths[k]}}" for k in options)
-    fd.write(f"# {labels}\n")
-
-    format_parts = [f"{{{key}:<{widths[key] + 1}}}" for key in options]
-    template = "# " + "".join(format_parts) + "\n"
-
-    return template
-
-
-from typing import Any
-
-
 def _build_config_row_dict(
     config: Configuration,
     item: Dict[str, Any],
-    columns: list[str],
     include_gisans: bool = False,
     include_offspec: bool = False,
 ) -> Dict[str, str]:
@@ -201,21 +170,20 @@ def _build_config_row_dict(
 
     config_value_dict.update(item)
 
-    for key, value in config_value_dict.items():
-        if isinstance(value, float):
-            config_value_dict[key] = f"{value:g}"
-        elif isinstance(value, bool):
-            config_value_dict[key] = str(value)
-        elif value is None:
-            config_value_dict[key] = "None"
-        elif isinstance(value, list):
-            clean_list = [f"{float(v):g}" for v in value]
-            config_value_dict[key] = "[" + ", ".join(clean_list) + "]"
-        else:
-            config_value_dict[key] = str(value)
-
     return config_value_dict
 
+def _build_table(config_values: List[Dict[str, str]], columns: List[str], section_header: str, ljust: str = ''):
+    df = pd.DataFrame(config_values, columns=columns)
+    if df.empty:
+        return ''
+
+    if ljust:
+        max_len = df[ljust].astype(str).map(len).max()
+        df_str = df.to_string(index=False, justify='left', formatters={ljust: lambda x: str(x).ljust(max_len)})
+    else:
+        df_str = df.to_string(index=False)
+    table = '\n'.join([f'# {line}' for line in df_str.splitlines() if line.strip()])
+    return f'# [{section_header}]\n' + table + '\n'
 
 def write_reflectivity_header(
     peak_reduction_lists: Dict[int, List[NexusData]],
@@ -287,7 +255,6 @@ def write_reflectivity_header(
 
     direct_beam_options.extend(conf_instance_toks)
     direct_beam_options = _sort_keys_with_file_last(list(set(direct_beam_options)))
-    template = _write_section_header(fd, "Direct Beam Runs", direct_beam_options)
 
     # Get the list of cross-sections
     pol_list = list(reduction_list[0].cross_sections.keys())
@@ -296,6 +263,7 @@ def write_reflectivity_header(
         return
 
     # Direct beam section
+    config_values = []
     direct_beam_idx = 0
     for data_set in reduction_list:
         run_object = data_set.cross_sections[pol_list[0]].reflectivity_workspace.getRun()
@@ -326,17 +294,18 @@ def write_reflectivity_header(
         config_value_dict = _build_config_row_dict(
             config=direct_beam.cross_sections[db_pol].configuration,
             item=item,
-            columns=direct_beam_options,
             include_gisans=include_gisans,
             include_offspec=include_offspec,
         )
-        fd.write(template.format(**config_value_dict))
+        config_values.append(config_value_dict)
+    fd.write(_build_table(config_values, direct_beam_options, 'Direct Beam Runs'))
 
     # Peak for reflectivity data
     fd.write("#\n")
     dataset_options.extend(conf_instance_toks)
     dataset_options = _sort_keys_with_file_last(list(set(dataset_options)))
-    template = _write_section_header(fd, "Data Runs", dataset_options)
+
+    config_values = []
     direct_beam_idx = 0
     for data_set in reduction_list:
         cross_section_data = data_set.cross_sections[pol_list[0]]
@@ -344,49 +313,34 @@ def write_reflectivity_header(
         config_value_dict = _build_config_row_dict(
             config=cross_section_data.configuration,
             item=dataset_dict,
-            columns=dataset_options,
             include_gisans=include_gisans,
             include_offspec=include_offspec,
         )
-        fd.write(template.format(**config_value_dict))
+        config_values.append(config_value_dict)
+    fd.write(_build_table(config_values, dataset_options, 'Data Runs'))
 
     # All peaks
     for peak_index, peak_reduction_list in peak_reduction_lists.items():
         fd.write("#\n")
-        template = _write_section_header(fd, f"Peak {peak_index} Runs", dataset_options)
+
         direct_beam_idx = 0
+        config_values = []
         for data_set in peak_reduction_list:
             cross_section_data = data_set.cross_sections[pol_list[0]]
             dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx)
             config_value_dict = _build_config_row_dict(
                 config=cross_section_data.configuration,
                 item=dataset_dict,
-                columns=dataset_options,
                 include_gisans=include_gisans,
                 include_offspec=include_offspec,
             )
-            fd.write(template.format(**config_value_dict))
+            config_values.append(config_value_dict)
+        fd.write(_build_table(config_values, dataset_options, f'Peak {peak_index} Runs'))
 
     fd.write("#\n")
-    fd.write("# [Global Options]\n")
-    fd.write("# name                       value\n")
-    global_config = {**conf_options["global"]}
-
-    # longest label width
-    max_key_len = max(len(CONFIG_LABELS.get(k, k)) for k in global_config)
-
-    for key in sorted(global_config):
-        label = CONFIG_LABELS.get(key, key)
-        value = global_config[key]
-        if isinstance(value, float):
-            val_str = f"{value:>8g}"
-        elif isinstance(value, bool):
-            val_str = str(value)
-        elif value is None:
-            val_str = "None"
-        else:
-            val_str = str(value)
-        fd.write(f"# {label.ljust(max_key_len)} {val_str}\n")
+    
+    # Global Options
+    fd.write(_build_table(list(conf_options['global'].items()), columns=['name', 'value'], section_header='Global Options', ljust='name'))
 
     fd.write("#\n")
     fd.close()
