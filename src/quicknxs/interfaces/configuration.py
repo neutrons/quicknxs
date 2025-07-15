@@ -36,8 +36,8 @@ class Configuration(object):
     use_constant_q = False
     wl_bandwidth = 3.2
     # Final Q rebin global options
-    do_final_rebin_global = True
-    final_rebin_step_global = -0.01
+    do_final_rebin_global = False
+    final_rebin_step_global = -0.02
     # Normalize to unity when stitching
     normalize_to_unity = True
     total_reflectivity_q_cutoff = 0.01
@@ -75,8 +75,8 @@ class Configuration(object):
         cls.sample_size = 10
         cls.use_constant_q = False
         cls.wl_bandwidth = 3.2
-        cls.do_final_rebin_global = True
-        cls.final_rebin_step_global = -0.01
+        cls.do_final_rebin_global = False
+        cls.final_rebin_step_global = -0.02
         cls.normalize_to_unity = True
         cls.total_reflectivity_q_cutoff = 0.01
         cls.global_stitching = False
@@ -147,7 +147,7 @@ class Configuration(object):
 
         # Final Rebin run options
         self.do_final_rebin_run = False
-        self.final_rebin_step_run = -0.01
+        self.final_rebin_step_run = -0.02
 
         # UI elements
         self.normalize_x_tof = False

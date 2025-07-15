@@ -424,33 +424,26 @@
             <property name="verticalSpacing">
              <number>1</number>
             </property>
-            <item row="2" column="1" colspan="2">
-             <widget class="QCheckBox" name="normalize_to_unity_checkbox">
+            <item row="0" column="1">
+             <widget class="QCheckBox" name="final_rebin_checkbox_global">
               <property name="toolTip">
-               <string>Normalize the total reflectivity plateau to unity when stitching</string>
+               <string>Check for apply a final Q rebinning globally. This will be used instead of any per-run Q-Step values.</string>
               </property>
               <property name="text">
-               <string>Normalize to unity when stitching</string>
+               <string>Final rebin</string>
               </property>
               <property name="checked">
                <bool>true</bool>
               </property>
              </widget>
             </item>
-            <item row="11" column="1">
-             <widget class="DeadTimeEntryPoint" name="deadtime_entry">
-              <property name="title">
-               <string>Dead Time Correction</string>
+            <item row="0" column="2">
+             <widget class="QLabel" name="q_rebin_label_global">
+              <property name="toolTip">
+               <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
               </property>
-             </widget>
-            </item>
-            <item row="7" column="1" colspan="2">
-             <widget class="QLabel" name="polynomial_stitching_points_label">
               <property name="text">
-               <string>Points outside overlap</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               <string>Q Steps</string>
               </property>
              </widget>
             </item>
@@ -475,33 +468,30 @@
                <double>0.001000000000000</double>
               </property>
               <property name="value">
-               <double>-0.010000000000000</double>
+               <double>-0.020000000000000</double>
               </property>
              </widget>
             </item>
-            <item row="10" column="1">
-             <widget class="QLabel" name="bandwidth_label">
-              <property name="visible">
-               <bool>false</bool>
+            <item row="2" column="1" colspan="2">
+             <widget class="QCheckBox" name="normalize_to_unity_checkbox">
+              <property name="toolTip">
+               <string>Normalize the total reflectivity plateau to unity when stitching</string>
               </property>
               <property name="text">
-               <string>Bandwidth:</string>
+               <string>Normalize to unity when stitching</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
-            <item row="9" column="1">
-             <widget class="QLabel" name="final_rebin_label_global">
-              <property name="minimumSize">
-               <size>
-                <width>130</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="visible">
-               <bool>false</bool>
-              </property>
+            <item row="3" column="1" colspan="2">
+             <widget class="QLabel" name="normalization_q_cutoff_label">
               <property name="text">
-               <string>Sample size:</string>
+               <string>Critical Q cutoff</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -521,13 +511,83 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="1" colspan="2">
-             <widget class="QLabel" name="normalization_q_cutoff_label">
+            <item row="4" column="1" colspan="2">
+             <widget class="QCheckBox" name="global_fit_checkbox">
+              <property name="toolTip">
+               <string>Perform stitching fit using all cross-sections</string>
+              </property>
               <property name="text">
-               <string>Critical Q cutoff</string>
+               <string>Global fit when stitching</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1" colspan="2">
+             <widget class="QCheckBox" name="polynomial_stitching_checkbox">
+              <property name="toolTip">
+               <string>Use polynomial function to determine scaling factors</string>
+              </property>
+              <property name="text">
+               <string>Polynomial fit when stitching</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1" colspan="2">
+             <widget class="QLabel" name="polynomial_stitching_degree_label">
+              <property name="text">
+               <string>Polynomial degree</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="3">
+             <widget class="QSpinBox" name="polynomial_stitching_degree_spinbox">
+              <property name="value">
+               <number>3</number>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1" colspan="2">
+             <widget class="QLabel" name="polynomial_stitching_points_label">
+              <property name="text">
+               <string>Points outside overlap</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="3">
+             <widget class="QSpinBox" name="polynomial_stitching_points_spinbox">
+              <property name="value">
+               <number>3</number>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1" colspan="2">
+             <widget class="QCheckBox" name="fanReflectivity">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Evaluate Q for each X line of the reflectivity and combine these measurements.&lt;/p&gt;&lt;p&gt;Can be used with a large X-width of e.g. 15 for samples scattering to a large 2θ area.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Constant-Q binning</string>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="1">
+             <widget class="QLabel" name="final_rebin_label_global">
+              <property name="minimumSize">
+               <size>
+                <width>130</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Sample size:</string>
               </property>
              </widget>
             </item>
@@ -550,30 +610,13 @@
               </property>
              </widget>
             </item>
-            <item row="12" column="1" colspan="3">
-             <widget class="QCheckBox" name="direct_beam_y_lock_checkbox">
-              <property name="toolTip">
-               <string>The direct beam y0 and yw are taken from the data run instead of from the direct beam table</string>
+            <item row="10" column="1">
+             <widget class="QLabel" name="bandwidth_label">
+              <property name="visible">
+               <bool>false</bool>
               </property>
               <property name="text">
-               <string>Lock direct beam y0 and yw to data run</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="3">
-             <widget class="QSpinBox" name="polynomial_stitching_degree_spinbox">
-              <property name="value">
-               <number>3</number>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="1" colspan="2">
-             <widget class="QCheckBox" name="fanReflectivity">
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Evaluate Q for each X line of the reflectivity and combine these measurements.&lt;/p&gt;&lt;p&gt;Can be used with a large X-width of e.g. 15 for samples scattering to a large 2θ area.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="text">
-               <string>Constant-Q binning</string>
+               <string>Bandwidth:</string>
               </property>
              </widget>
             </item>
@@ -599,63 +642,20 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="q_rebin_label_global">
+            <item row="11" column="1">
+             <widget class="DeadTimeEntryPoint" name="deadtime_entry">
+              <property name="title">
+               <string>Dead Time Correction</string>
+              </property>
+             </widget>
+            </item>
+            <item row="12" column="1" colspan="3">
+             <widget class="QCheckBox" name="direct_beam_y_lock_checkbox">
               <property name="toolTip">
-               <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
+               <string>The direct beam y0 and yw are taken from the data run instead of from the direct beam table</string>
               </property>
               <property name="text">
-               <string>Q steps</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1" colspan="2">
-             <widget class="QCheckBox" name="polynomial_stitching_checkbox">
-              <property name="toolTip">
-               <string>Use polynomial function to determine scaling factors</string>
-              </property>
-              <property name="text">
-               <string>Polynomial fit when stitching</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="3">
-             <widget class="QSpinBox" name="polynomial_stitching_points_spinbox">
-              <property name="value">
-               <number>3</number>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="1" colspan="2">
-             <widget class="QLabel" name="polynomial_stitching_degree_label">
-              <property name="text">
-               <string>Polynomial degree</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1" colspan="2">
-             <widget class="QCheckBox" name="global_fit_checkbox">
-              <property name="toolTip">
-               <string>Perform stitching fit using all cross-sections</string>
-              </property>
-              <property name="text">
-               <string>Global fit when stitching</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QCheckBox" name="final_rebin_checkbox_global">
-              <property name="toolTip">
-               <string>Check for apply a final Q rebinning globally. This will be used instead of any per-run Q-Step values.</string>
-              </property>
-              <property name="text">
-               <string>Final rebin</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
+               <string>Lock direct beam y0 and yw to data run</string>
               </property>
              </widget>
             </item>
@@ -689,86 +689,48 @@
             <property name="verticalSpacing">
              <number>0</number>
             </property>
-            <item row="5" column="3">
-             <widget class="QSpinBox" name="rangeEnd">
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove points from the extracted intensity on the high Q side. &lt;/p&gt;&lt;p&gt;Uses the full ToF range available in the file, so it is possible it does not have any effect for lower values.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="maximum">
-               <number>200</number>
-              </property>
-              <property name="value">
-               <number>0</number>
-              </property>
-             </widget>
-            </item>
-            <item row="9" column="2">
-             <widget class="QRadioButton" name="trustDANGLE">
+            <item row="0" column="2">
+             <widget class="QLabel" name="position_column_label">
               <property name="minimumSize">
                <size>
-                <width>76</width>
-                <height>0</height>
+                <width>0</width>
+                <height>18</height>
                </size>
               </property>
               <property name="text">
-               <string>DANGLE</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="11" column="3">
-             <widget class="QDoubleSpinBox" name="q_rebin_spinbox_run">
-              <property name="toolTip">
-               <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
-              </property>
-              <property name="suffix">
-               <string> 1/A</string>
-              </property>
-              <property name="decimals">
-               <number>3</number>
-              </property>
-              <property name="minimum">
-               <double>-0.100000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>0.100000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.001000000000000</double>
-              </property>
-              <property name="value">
-               <double>-0.010000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="2">
-             <widget class="QLabel" name="refScale_label">
-              <property name="toolTip">
-               <string>Scaling factor for the reflectivity in powers of 10</string>
-              </property>
-              <property name="text">
-               <string>Scale 10^</string>
+               <string>Position</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               <set>Qt::AlignBottom|Qt::AlignHCenter</set>
               </property>
              </widget>
             </item>
-            <item row="2" column="2">
-             <widget class="QDoubleSpinBox" name="refXPos">
+            <item row="0" column="3">
+             <widget class="QLabel" name="width_column_label">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>18</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Width</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLabel" name="refYPos_label">
               <property name="toolTip">
-               <string>Center of region used for extraction</string>
+               <string>Y Pixel Window</string>
               </property>
-              <property name="decimals">
-               <number>1</number>
+              <property name="styleSheet">
+               <string notr="true">text-align: right;</string>
               </property>
-              <property name="maximum">
-               <double>400.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>128.000000000000000</double>
+              <property name="text">
+               <string>Y</string>
               </property>
              </widget>
             </item>
@@ -788,36 +750,128 @@
               </property>
              </widget>
             </item>
-            <item row="9" column="1">
-             <widget class="QLabel" name="trusted_angle_label">
-              <property name="minimumSize">
-               <size>
-                <width>82</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Trusted angle:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="2">
-             <widget class="QSpinBox" name="rangeStart">
+            <item row="1" column="3">
+             <widget class="QDoubleSpinBox" name="refYWidth">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove points from the extracted intensity on the low Q side. &lt;/p&gt;&lt;p&gt;Uses the full ToF range available in the file, so it is possible it does not have any effect for lower values.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>Width of region used for extraction</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>1.000000000000000</double>
               </property>
               <property name="maximum">
-               <number>200</number>
+               <double>400.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>6.000000000000000</double>
               </property>
              </widget>
             </item>
-            <item row="5" column="1">
-             <widget class="QLabel" name="cut_points_label">
+            <item row="2" column="1">
+             <widget class="QLabel" name="refXPos_label">
+              <property name="toolTip">
+               <string>X Pixel Window</string>
+              </property>
               <property name="styleSheet">
                <string notr="true">text-align: right;</string>
               </property>
               <property name="text">
-               <string>Cut Pts</string>
+               <string>X</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QDoubleSpinBox" name="refXPos">
+              <property name="toolTip">
+               <string>Center of region used for extraction</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <double>400.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>128.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QDoubleSpinBox" name="refXWidth">
+              <property name="toolTip">
+               <string>Width of region used for extraction</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>1.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>304.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>9.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QCheckBox" name="bgActive">
+              <property name="styleSheet">
+               <string notr="true">text-align: right;</string>
+              </property>
+              <property name="text">
+               <string>BG X</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <widget class="QDoubleSpinBox" name="bgCenter">
+              <property name="toolTip">
+               <string>Center of region used for extraction</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <double>400.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>2.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="3">
+             <widget class="QDoubleSpinBox" name="bgWidth">
+              <property name="toolTip">
+               <string>Width of region used for extraction</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <double>400.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>4.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="2">
+             <widget class="QLabel" name="refScale_label">
+              <property name="toolTip">
+               <string>Scaling factor for the reflectivity in powers of 10</string>
+              </property>
+              <property name="text">
+               <string>Scale 10^</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -840,6 +894,46 @@
               </property>
               <property name="value">
                <double>0.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLabel" name="cut_points_label">
+              <property name="styleSheet">
+               <string notr="true">text-align: right;</string>
+              </property>
+              <property name="text">
+               <string>Cut Pts</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="2">
+             <widget class="QSpinBox" name="rangeStart">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove points from the extracted intensity on the low Q side. &lt;/p&gt;&lt;p&gt;Uses the full ToF range available in the file, so it is possible it does not have any effect for lower values.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <number>200</number>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="3">
+             <widget class="QSpinBox" name="rangeEnd">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove points from the extracted intensity on the high Q side. &lt;/p&gt;&lt;p&gt;Uses the full ToF range available in the file, so it is possible it does not have any effect for lower values.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <number>200</number>
+              </property>
+              <property name="value">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QCheckBox" name="set_dirpix_checkbox">
+              <property name="text">
+               <string>Set Direct Pixel</string>
               </property>
              </widget>
             </item>
@@ -871,35 +965,10 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="2">
-             <widget class="QDoubleSpinBox" name="bgCenter">
-              <property name="toolTip">
-               <string>Center of region used for extraction</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <double>400.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>2.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="9" column="3">
-             <widget class="QRadioButton" name="trustSANGLE">
-              <property name="minimumSize">
-               <size>
-                <width>76</width>
-                <height>0</height>
-               </size>
-              </property>
+            <item row="8" column="1">
+             <widget class="QCheckBox" name="set_dangle0_checkbox">
               <property name="text">
-               <string>SampleAngle</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
+               <string>Set Dangle0</string>
               </property>
              </widget>
             </item>
@@ -922,19 +991,48 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="3">
-             <widget class="QLabel" name="width_column_label">
+            <item row="9" column="1">
+             <widget class="QLabel" name="trusted_angle_label">
               <property name="minimumSize">
                <size>
-                <width>0</width>
-                <height>18</height>
+                <width>82</width>
+                <height>0</height>
                </size>
               </property>
               <property name="text">
-               <string>Width</string>
+               <string>Trusted angle:</string>
               </property>
-              <property name="alignment">
-               <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+             </widget>
+            </item>
+            <item row="9" column="2">
+             <widget class="QRadioButton" name="trustDANGLE">
+              <property name="minimumSize">
+               <size>
+                <width>76</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>DANGLE</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="3">
+             <widget class="QRadioButton" name="trustSANGLE">
+              <property name="minimumSize">
+               <size>
+                <width>76</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>SampleAngle</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -951,65 +1049,6 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QLabel" name="refXPos_label">
-              <property name="toolTip">
-               <string>X Pixel Window</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">text-align: right;</string>
-              </property>
-              <property name="text">
-               <string>X</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QLabel" name="refYPos_label">
-              <property name="toolTip">
-               <string>Y Pixel Window</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">text-align: right;</string>
-              </property>
-              <property name="text">
-               <string>Y</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="1">
-             <widget class="QCheckBox" name="set_dirpix_checkbox">
-              <property name="text">
-               <string>Set Direct Pixel</string>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="1">
-             <widget class="QCheckBox" name="set_dangle0_checkbox">
-              <property name="text">
-               <string>Set Dangle0</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QDoubleSpinBox" name="refYWidth">
-              <property name="toolTip">
-               <string>Width of region used for extraction</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="minimum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>400.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>6.000000000000000</double>
-              </property>
-             </widget>
-            </item>
             <item row="11" column="2">
              <widget class="QLabel" name="q_rebin_label_run">
               <property name="toolTip">
@@ -1023,67 +1062,28 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
-             <widget class="QCheckBox" name="bgActive">
-              <property name="styleSheet">
-               <string notr="true">text-align: right;</string>
-              </property>
-              <property name="text">
-               <string>BG X</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="3">
-             <widget class="QDoubleSpinBox" name="refXWidth">
+            <item row="11" column="3">
+             <widget class="QDoubleSpinBox" name="q_rebin_spinbox_run">
               <property name="toolTip">
-               <string>Width of region used for extraction</string>
+               <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
+              </property>
+              <property name="suffix">
+               <string> 1/A</string>
               </property>
               <property name="decimals">
-               <number>1</number>
+               <number>3</number>
               </property>
               <property name="minimum">
-               <double>1.000000000000000</double>
+               <double>-0.100000000000000</double>
               </property>
               <property name="maximum">
-               <double>304.000000000000000</double>
+               <double>0.100000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.001000000000000</double>
               </property>
               <property name="value">
-               <double>9.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="3">
-             <widget class="QDoubleSpinBox" name="bgWidth">
-              <property name="toolTip">
-               <string>Width of region used for extraction</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <double>400.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>4.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="position_column_label">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>18</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Position</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+               <double>-0.020000000000000</double>
               </property>
              </widget>
             </item>

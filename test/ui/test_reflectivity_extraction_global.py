@@ -68,7 +68,7 @@ def test_global_checkboxes(qtbot, widget, config_param):
 @pytest.mark.parametrize(
     "widget, config_param, gold_value",
     [
-        ("q_rebin_spinbox_global", "final_rebin_step_global", -0.01),
+        ("q_rebin_spinbox_global", "final_rebin_step_global", -0.02),
         ("normalization_q_cutoff_spinbox", "total_reflectivity_q_cutoff", 0.02),
         ("polynomial_stitching_degree_spinbox", "polynomial_stitching_degree", 2),
         ("polynomial_stitching_points_spinbox", "polynomial_stitching_points", 5),
