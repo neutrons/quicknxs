@@ -142,7 +142,14 @@ class ProcessingWorkflow(object):
         base_name = base_name.replace("{peak}", f"peak{self.data_manager.active_reduction_list_index}")
         return os.path.join(self.output_options["output_directory"], base_name)
 
-    def write_quicknxs(self, output_data: Dict[str, np.ndarray], output_file_base: str, xs: Optional[list] = None):
+    def write_quicknxs(
+        self,
+        output_data: Dict[str, np.ndarray],
+        output_file_base: str,
+        xs: Optional[list] = None,
+        include_gisans: bool = False,
+        include_offspec: bool = False,
+    ):
         """Write QuickNXS output reflectivity file.
 
         Parameters
@@ -190,6 +197,8 @@ class ProcessingWorkflow(object):
                 self.data_manager.direct_beam_list,
                 state_output_path,
                 _pol_state,
+                include_gisans,
+                include_offspec,
             )
             quicknxs_io.write_reflectivity_data(state_output_path, output_data[pol_state], col_names, as_5col=five_cols)
             self.exported_data_files.append(state_output_path)
@@ -318,12 +327,14 @@ class ProcessingWorkflow(object):
             progress(90, "Writing data")
 
         output_file_base = self.get_file_name(run_list, process_type="GISANS")
-        self.write_quicknxs(data_dict, output_file_base, xs=data_dict["cross_sections"].keys())
+        self.write_quicknxs(data_dict, output_file_base, xs=data_dict["cross_sections"].keys(), include_gisans=True)
 
         # Write out slice data
         if slice_data_dict is not None and "cross_sections" in slice_data_dict:
             output_file_base = self.get_file_name(run_list, process_type="GISANSSlice")
-            self.write_quicknxs(slice_data_dict, output_file_base, xs=slice_data_dict["cross_sections"].keys())
+            self.write_quicknxs(
+                slice_data_dict, output_file_base, xs=slice_data_dict["cross_sections"].keys(), include_gisans=True
+            )
 
         if progress is not None:
             progress(100, "GISANS complete")
@@ -350,7 +361,7 @@ class ProcessingWorkflow(object):
         if raw:
             # QuickNXS format
             output_file_base = self.get_file_name(run_list, process_type="OffSpec")
-            self.write_quicknxs(output_data, output_file_base)
+            self.write_quicknxs(output_data, output_file_base, include_offspec=True)
 
         # Export binned result
         if binned:
@@ -359,11 +370,14 @@ class ProcessingWorkflow(object):
                 try:
                     smooth_output, slice_data_dict = self.smooth_offspec(output_data)
                     output_file_base = self.get_file_name(run_list, process_type="OffSpecSmooth")
-                    self.write_quicknxs(smooth_output, output_file_base)
+                    self.write_quicknxs(smooth_output, output_file_base, include_offspec=True)
                     if slice_data_dict is not None and "cross_sections" in slice_data_dict:
                         output_file_base = self.get_file_name(run_list, process_type="OffSpecSmoothSlice")
                         self.write_quicknxs(
-                            slice_data_dict, output_file_base, xs=slice_data_dict["cross_sections"].keys()
+                            slice_data_dict,
+                            output_file_base,
+                            xs=slice_data_dict["cross_sections"].keys(),
+                            include_offspec=True,
                         )
                     self.data_manager.cached_offspec = smooth_output
                 except:
@@ -374,10 +388,15 @@ class ProcessingWorkflow(object):
                 binned_data, slice_data_dict = self.get_rebinned_offspec_data()
                 # QuickNXS format ['smooth' is an odd name but we keep it for backward compatibility]
                 output_file_base = self.get_file_name(run_list, process_type="OffSpecBinned")
-                self.write_quicknxs(binned_data, output_file_base)
+                self.write_quicknxs(binned_data, output_file_base, include_offspec=True)
                 if slice_data_dict is not None and "cross_sections" in slice_data_dict:
                     output_file_base = self.get_file_name(run_list, process_type="OffSpecSlice")
-                    self.write_quicknxs(slice_data_dict, output_file_base, xs=slice_data_dict["cross_sections"].keys())
+                    self.write_quicknxs(
+                        slice_data_dict,
+                        output_file_base,
+                        xs=slice_data_dict["cross_sections"].keys(),
+                        include_offspec=True,
+                    )
                 self.data_manager.cached_offspec = binned_data
 
     def get_rebinned_offspec_data(self):

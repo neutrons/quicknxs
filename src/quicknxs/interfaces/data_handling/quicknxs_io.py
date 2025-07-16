@@ -19,6 +19,7 @@ from quicknxs import __version__
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 
+# Mapping of Configuration attributes to "common name" labels for the reduced file output.
 CONFIG_LABELS = {
     "scaling_factor": "scale",
     "scaling_error": "scale_err",
@@ -53,12 +54,13 @@ def _find_h5_data(filename: str):
         _new_filename = _new_filename.replace("_event.nxs", ".nxs.h5")
         _new_filename = _new_filename.replace("data", "nexus")
         if os.path.isfile(_new_filename):
-            logging.warning("Using %s" % _new_filename)
+            logging.warning(f"Using {_new_filename}")
             return _new_filename
     return filename
 
 
 def _sort_keys_with_file_last(keys: list[str]) -> list[str]:
+    """Put 'File' at the end of the list of keys since the values can be long."""
     return sorted([k for k in keys if k.lower() != "file"]) + ["File"]
 
 
@@ -174,6 +176,7 @@ def _build_config_row_dict(
 
 
 def _build_table(config_values: List[Dict[str, str]], columns: List[str], section_header: str, ljust: str = ""):
+    """Build a formatted table from configuration values."""
     df = pd.DataFrame(config_values, columns=columns)
     if df.empty:
         return ""
@@ -193,6 +196,8 @@ def write_reflectivity_header(
     direct_beam_list: List[NexusData],
     output_path: str,
     pol_state: str,
+    include_gisans: bool = False,
+    include_offspec: bool = False,
 ):
     """
     Write out reflectivity header in a format readable by QuickNXS.
@@ -233,8 +238,7 @@ def write_reflectivity_header(
         "DB_ID",
         "File",
     ]
-    include_gisans = "GISANS" in str(output_path)
-    include_offspec = "OffSpec" in str(output_path)
+
     fd = open(output_path, "w")
     fd.write("# Datafile created by QuickNXS %s\n" % __version__)
     fd.write("# Datafile created using mr_reduction %s\n" % mr_reduction.__version__)
@@ -458,7 +462,7 @@ def _assign_config_value(conf: Configuration, attr: str, value_str: str):
         else:
             value = value_str
         setattr(conf, attr, value)
-    except Exception as e:
+    except (AttributeError, ValueError, TypeError) as e:
         logging.error(f"Failed to assign config value: {attr} = {value_str} -> {e}")
 
 
@@ -467,6 +471,7 @@ def read_reduced_file(file_path: str, configuration=None):
     direct_beam_runs = []
     data_runs = []
     additional_peaks = []
+    config_properties = [name for name, _ in inspect.getmembers(Configuration, lambda o: isinstance(o, property))]
 
     def _get_tok(col_name: str, cols: List[str], toks: List) -> Union[int, None]:
         """Get the item in a list of index matching the column name."""
@@ -506,6 +511,9 @@ def read_reduced_file(file_path: str, configuration=None):
                 peak_index = int(line.split("[Peak ")[1].split(" Runs]")[0])
             elif "[Global Options]" in line:
                 _in_section = 4
+            elif "[Data]" in line:
+                _in_section = 0
+                continue
 
             # Process direct beam runs
             if _in_section == 1:
@@ -523,7 +531,7 @@ def read_reduced_file(file_path: str, configuration=None):
                     for label in cols:
                         attr = LABEL_TO_CONFIG.get(label, label)
                         value_str = _get_tok(label, cols, toks)
-                        if value_str is not None:
+                        if value_str is not None and attr not in config_properties:
                             _assign_config_value(conf, attr, value_str)
 
                     run_number = int(_get_tok("number", cols, toks))
@@ -562,7 +570,7 @@ def read_reduced_file(file_path: str, configuration=None):
                     for label in cols:
                         attr = LABEL_TO_CONFIG.get(label, label)
                         value_str = _get_tok(label, cols, toks)
-                        if value_str is not None:
+                        if value_str is not None and attr not in config_properties:
                             _assign_config_value(conf, attr, value_str)
                             if label == "scale_err":
                                 has_scaling_error = True
@@ -590,7 +598,7 @@ def read_reduced_file(file_path: str, configuration=None):
                 except ValueError:
                     logging.error("Unable to parse line '%s' in run file %s", line, run_file)
 
-            # Gloabal Config Options
+            # Global Config Options
             if _in_section == 4 and line.startswith("# "):
                 try:
                     label, value = line[2:].strip().split(" ", 1)

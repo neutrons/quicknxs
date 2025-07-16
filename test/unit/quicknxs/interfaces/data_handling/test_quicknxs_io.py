@@ -156,10 +156,16 @@ class TestDataWriter(object):
         assert has_scaling_error is True
 
 
+@pytest.fixture
+def config_teardown():
+    yield
+    Configuration.setup_default_values()
+
+
 class TestConfig:
     """Test reading and writing instance and class configuration options"""
 
-    def test_write_and_read_full_config(self, tmp_path, mock_nexus_data):
+    def test_write_and_read_full_config(self, tmp_path, mock_nexus_data, config_teardown):
         """Test writing and reading full configuration, including global and instance attributes."""
 
         # Modify instance-level config
@@ -191,7 +197,7 @@ class TestConfig:
         )
 
         # Read back from file
-        db_list, data_list, global_conf, _ = read_reduced_file(output_path)
+        _, data_list, _, _ = read_reduced_file(output_path)
 
         # === Assert instance values ===
         instance_conf = data_list[0][2]
@@ -199,6 +205,7 @@ class TestConfig:
         assert instance_conf.scaling_factor == 3.14
         assert instance_conf.cut_first_n_points == 5
         assert instance_conf.off_spec_slice_qz_min == 0.05
+        # These should not have changed
         assert instance_conf.gisans_qz_npts == 50
         assert instance_conf.off_spec_qz_list == []
 
@@ -218,7 +225,7 @@ class TestConfig:
         )
 
         # Read back GISANS-specific configuration
-        db_list, data_list, global_conf, _ = read_reduced_file(output_path)
+        _, data_list, _, _ = read_reduced_file(output_path)
         instance_conf = data_list[0][2]
         assert instance_conf.gisans_qz_npts == 77
 
@@ -233,7 +240,7 @@ class TestConfig:
         )
 
         # Read back OffSpec-specific configuration
-        db_list, data_list, global_conf, _ = read_reduced_file(output_path)
+        _, data_list, _, _ = read_reduced_file(output_path)
         instance_conf = data_list[0][2]
         assert instance_conf.off_spec_slice_qz_min == 0.05
         assert instance_conf.off_spec_qz_list == [0.05, 0.07]
