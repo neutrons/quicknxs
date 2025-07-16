@@ -34,7 +34,7 @@ class TestMainGui:
         """Test that selecting a cross-section radio button updates the active cross section."""
         # mock updating the plots
         mocker.patch("quicknxs.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
-        mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
+        mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_reflectivity_or_intensity", return_value=True)
         mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_projections", return_value=True)
 
         # create the SUT
@@ -87,7 +87,7 @@ class TestMainGui:
         """Test the global vs per run reduction variables."""
         # mock updating the plots
         mocker.patch("quicknxs.interfaces.main_window.MainWindow.plotActiveTab", return_value=True)
-        mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
+        mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_reflectivity_or_intensity", return_value=True)
         mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_projections", return_value=True)
 
         window_main = MainWindow()
@@ -308,7 +308,9 @@ class TestMainGui:
     @pytest.mark.datarepo
     def test_change_active_data_tab(self, mocker, qtbot, data_server):
         """Test that the internal state is updated when the active data tab is changed."""
-        mock_plot_refl = mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_refl", return_value=True)
+        mock_plot_refl = mocker.patch(
+            "quicknxs.interfaces.plotting.PlotManager.plot_reflectivity_or_intensity", return_value=True
+        )
 
         window_main = MainWindow()
         qtbot.addWidget(window_main)

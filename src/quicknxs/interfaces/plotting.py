@@ -578,59 +578,73 @@ class PlotManager(object):
         )
         widget.draw()
 
-    def plot_intensity(self, preserve_lim=False):
-        """Calculate and display the direct beam intensity from the current dataset."""
-        # hide the reflectivity plot or clear existing intensity plot
-        self.main_window.ui.refl_widget.hide()
-        self.main_window.ui.intensity.clear()
-
-        if self.main_window.data_manager.active_cross_section is None:
-            self._plot_message(self.main_window.ui.intensity, "No data")
-            return False
-
+    def _prepare_intensity_plot(self):
+        """Add the direct beam intensity from the current dataset to the reflectivity/intensity plot."""
         # format and plot tof data
 
         counts_normalized = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 2]
         counts_normalized_error = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 3]
 
         if self.main_window.ui.xLamda.isChecked():
-            self.main_window.ui.intensity.errorbar(
+            self.main_window.ui.refl.errorbar(
                 self.main_window.data_manager.active_cross_section.wavelength,
                 counts_normalized,
                 yerr=counts_normalized_error,
             )
-            self.main_window.ui.intensity.set_xlabel("$\\lambda{}$ [Å]")
+            self.main_window.ui.refl.set_xlabel("$\\lambda{}$ [Å]")
         else:
             # convert raw microsecond units to milliseconds to match xtof plot
             tof_ms = tof_ms = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 0] / 1000
 
-            self.main_window.ui.intensity.errorbar(
+            self.main_window.ui.refl.errorbar(
                 tof_ms,
                 counts_normalized,
                 yerr=counts_normalized_error,
             )
-            self.main_window.ui.intensity.set_xlabel("ToF [ms]")
+            self.main_window.ui.refl.set_xlabel("ToF [ms]")
 
         # y-label is counts in either case
-        self.main_window.ui.intensity.set_ylabel("Normalized ROI Counts")
+        self.main_window.ui.refl.set_ylabel("Normalized ROI Counts")
 
-        # draw and show
-        self.main_window.ui.intensity.draw()
-        self.main_window.ui.intensity_widget.show()
+    def plot_reflectivity_or_intensity(self):
+        """Plot reflectivity data or intensity, depending on the type of the active run.
 
-    def plot_refl(self, preserve_lim=False):
-        """Plot reflectivity data.
+        If the active run is a direct beam run, the intensity vs ToF (or wavelength) in the
+        region-of-interest (ROI) is plotted.
+        Otherwise, the reflectivity of all datasets is plotted.
 
-        Calculate and display the reflectivity from the current dataset
-        and any dataset stored. Intensities from direct beam
-        measurements can be used for normalization.
+        Returns
+        -------
+            True if the plot was successful, False otherwise
         """
-        self.main_window.ui.intensity_widget.hide()
         self.main_window.ui.refl.clear()
 
+        if self.main_window.data_manager.active_cross_section is None:
+            self._plot_message(self.main_window.ui.refl, "No data")
+            return False
+
+        if self.main_window.data_manager.active_cross_section.is_direct_beam:
+            is_plotted = self._prepare_intensity_plot()
+        else:
+            is_plotted = self._prepare_reflectivity_plot()
+
+        if is_plotted is not False:
+            if self.main_window.ui.logarithmic_y.isChecked():
+                self.main_window.ui.refl.set_yscale("log")
+            else:
+                self.main_window.ui.refl.set_yscale("linear")
+            self.main_window.ui.refl.legend()
+            self.main_window.ui.refl.toolbar.set_history_buttons()
+            self.main_window.ui.refl.draw()
+
+            self.main_window.ui.compare_widget.update_preview()
+
+        return is_plotted
+
+    def _prepare_reflectivity_plot(self):
+        """Add the reflectivity from the current dataset and any dataset stored to the reflectivity/intensity plot."""
         if (
-            self.main_window.data_manager.active_cross_section is None
-            or self.main_window.data_manager.active_cross_section.r is None
+            self.main_window.data_manager.active_cross_section.r is None
             or self.main_window.data_manager.active_cross_section.q is None
             or self.main_window.data_manager.active_cross_section.dr is None
         ):
@@ -695,18 +709,6 @@ class PlotManager(object):
             )
         self.main_window.ui.refl.canvas.ax.set_ylim((ymin * 0.9, ymax * 1.1))
         self.main_window.ui.refl.set_xlabel("Q$_z$ [Å$^{-1}$]")
-
-        if self.main_window.ui.logarithmic_y.isChecked():
-            self.main_window.ui.refl.set_yscale("log")
-        else:
-            self.main_window.ui.refl.set_yscale("linear")
-        self.main_window.ui.refl.legend()
-        self.main_window.ui.refl.toolbar.set_history_buttons()
-        self.main_window.ui.refl.draw()
-
-        self.main_window.ui.refl_widget.show()
-
-        self.main_window.ui.compare_widget.update_preview()
 
     def plot_gisans(self):
         """Create GISANS plots of the current dataset with Qy-Qz maps."""

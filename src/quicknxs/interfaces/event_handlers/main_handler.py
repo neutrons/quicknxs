@@ -185,10 +185,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
 
         self.main_window.file_loaded_signal.emit()
-        if self.main_window.data_manager.active_cross_section.is_direct_beam:
-            self.main_window.initiate_intensity_plot.emit(False)
-        else:
-            self.main_window.initiate_reflectivity_plot.emit(False)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
         self.cache_indicator.setText("Files loaded: %s" % (self._data_manager.get_cachesize()))
 
@@ -197,10 +194,7 @@ class MainHandler(object):
         self._set_data_manager_active_cross_section()
         self.update_cross_section_info()
         self.main_window.plotActiveTab()
-        if self.main_window.data_manager.active_cross_section.is_direct_beam:
-            self.main_window.initiate_intensity_plot.emit(False)
-        else:
-            self.main_window.initiate_reflectivity_plot.emit(False)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
         self.main_window.initiate_projection_plot.emit(False)
 
     def _set_data_manager_active_cross_section(self):
@@ -811,7 +805,7 @@ class MainHandler(object):
         self.ui.reductionTable.insertRow(idx)
         self.update_tables()
 
-        self.main_window.initiate_reflectivity_plot.emit(True)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(True)
         self.main_window.update_specular_viewer.emit()
         self.main_window.auto_change_active = False
         return True
@@ -882,8 +876,7 @@ class MainHandler(object):
         # remove additional data tabs
         self.main_window.reset_data_tabs()
 
-        if self.main_window.refl.isVisible():
-            self.main_window.initiate_reflectivity_plot.emit(False)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
 
     def remove_reflectivity(self):
         """Remove one item from the reduction list."""
@@ -892,7 +885,7 @@ class MainHandler(object):
             return
         self._data_manager.reduction_list.pop(index)
         self.reduction_table.removeRow(index)
-        self.main_window.initiate_reflectivity_plot.emit(False)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
 
     def reduction_table_changed(self, item: QtWidgets.QTableWidgetItem):
         """Perform action upon change in data reduction list."""
@@ -973,7 +966,7 @@ class MainHandler(object):
                 )
 
         self.main_window.plotActiveTab()
-        self.main_window.initiate_reflectivity_plot.emit(True)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(True)
         self.main_window.update_specular_viewer.emit()
 
     def add_direct_beam(self, silent=False):
@@ -995,7 +988,7 @@ class MainHandler(object):
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
         self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
-        self.main_window.initiate_intensity_plot.emit(False)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
         return True
 
     def remove_direct_beam(self):
@@ -1005,14 +998,14 @@ class MainHandler(object):
             return
         self._data_manager.direct_beam_list.pop(index)
         self.ui.directBeamTable.removeRow(index)
-        self.main_window.initiate_intensity_plot.emit(False)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
 
     def clear_direct_beams(self):
         """Remove all items from the direct beam list."""
         self._data_manager.clear_direct_beam_list()
         self.ui.directBeamTable.setRowCount(0)
         self.ui.direct_beam_list_label.setText("None")
-        self.main_window.initiate_intensity_plot.emit(False)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
 
     def update_direct_beam_table(self, idx: int, data: CrossSectionData) -> None:
         """Update a direct beam table entry with cross-section data.
@@ -1107,7 +1100,7 @@ class MainHandler(object):
             )
 
         self.main_window.plotActiveTab()
-        self.main_window.initiate_intensity_plot.emit(True)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(True)
         self.main_window.initiate_projection_plot.emit(True)
 
     def active_data_changed(self):
@@ -1628,7 +1621,7 @@ class MainHandler(object):
                     i, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor))
                 )
 
-            self.main_window.initiate_reflectivity_plot.emit(False)
+            self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
 
     def trim_data_to_normalization(self):
         """Cut the start and end of the active data set to 5% of its maximum intensity."""
@@ -1637,7 +1630,7 @@ class MainHandler(object):
             self.ui.rangeStart.setValue(trim_points[0])
             self.ui.rangeEnd.setValue(trim_points[1])
             self.update_tables()
-            self.main_window.initiate_reflectivity_plot.emit(False)
+            self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
         else:
             self.report_message("No direct beam found to trim data", pop_up=False)
 
@@ -1650,7 +1643,7 @@ class MainHandler(object):
             d = self._data_manager.reduction_list[i].cross_sections[xs]
             self.reduction_table.setItem(i, 3, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points)))
 
-        self.main_window.initiate_reflectivity_plot.emit(False)
+        self.main_window.initiate_reflectivity_or_intensity_plot.emit(False)
 
     def reload_all_files(self):
         """Reload all files upon change in loading configuration.
