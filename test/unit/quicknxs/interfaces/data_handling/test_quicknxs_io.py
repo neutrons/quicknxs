@@ -222,6 +222,7 @@ class TestConfig:
             direct_beam_list=[nexus],
             output_path=output_path,
             pol_state="On_Off",
+            include_gisans=True,
         )
 
         # Read back GISANS-specific configuration
@@ -237,6 +238,7 @@ class TestConfig:
             direct_beam_list=[nexus],
             output_path=output_path,
             pol_state="On_Off",
+            include_offspec=True,
         )
 
         # Read back OffSpec-specific configuration
