@@ -1,7 +1,6 @@
 ## Description of work:
 
 Check all that apply:
-- [ ] added [release notes](https://reflectivity-ui.readthedocs.io/en/latest/release_notes.html)
 (if not, provide an explanation in the work description)
 - [ ] updated documentation and checked that it looks correct in the [pull request preview](https://docs.readthedocs.com/platform/stable/pull-requests.html)
 - [ ] Source added/refactored
@@ -17,8 +16,6 @@ Check all that apply:
 ([instructions to set up the environment](https://reflectivity-ui.readthedocs.io/en/latest/developer/environment.html))
 
 # Check list for the reviewer
-- [ ] [release notes](https://reflectivity-ui.readthedocs.io/en/latest/releasenotes/index.html) updated,
-or an explanation is provided as to why release notes are unnecessary
 - [ ] best software practices
     + [ ] clearly named variables (better to be verbose in variable names)
     + [ ] code comments explaining the intent of code blocks

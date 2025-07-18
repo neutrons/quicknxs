@@ -94,20 +94,9 @@ class TestMainGui:
         qtbot.addWidget(window_main)
 
         # set up data objects for two files
+
+        Configuration.setup_default_values()
         configuration = Configuration()
-        # make sure these global properties start as the default
-        Configuration.wl_bandwidth = 3.2
-        Configuration.use_constant_q = False
-        Configuration.sample_size = 10
-        Configuration.do_final_rebin_global = True
-        Configuration.final_rebin_step_global = -0.01
-        Configuration.normalize_to_unity = True
-        Configuration.total_reflectivity_q_cutoff = 0.01
-        Configuration.global_stitching = False
-        Configuration.polynomial_stitching = False
-        Configuration.polynomial_stitching_degree = 3
-        Configuration.polynomial_stitching_points = 3
-        Configuration.lock_direct_beam_y = False
 
         cross_section_1 = CrossSectionData("On_Off", configuration)
         nexus_data1 = NexusData("filepath1", configuration)
@@ -125,8 +114,8 @@ class TestMainGui:
         conf1 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf1.do_final_rebin_global is True
-        assert conf1.final_rebin_step_global == -0.01
+        assert conf1.do_final_rebin_global is False
+        assert conf1.final_rebin_step_global == -0.02
         assert conf1.normalize_to_unity is True
         assert conf1.total_reflectivity_q_cutoff == 0.01
         assert conf1.global_stitching is False
@@ -156,7 +145,7 @@ class TestMainGui:
         assert conf1.direct_angle_offset_overwrite == 0
         assert conf1.use_dangle is False
         assert conf1.do_final_rebin_run is False
-        assert conf1.final_rebin_step_run == -0.01
+        assert conf1.final_rebin_step_run == -0.02
 
         # set UI elements to non-default
 

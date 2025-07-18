@@ -8,9 +8,8 @@ How to Make a Release
 
 Candidate and Production Releases
 ---------------------------------
-- Follow the `Software Maturity Model <https://ornl-neutrons.atlassian.net/wiki/spaces/NDPD/pages/23363585/Software+Maturity+Model>`_
+- Follow the `Software Release Process <https://ornl-neutrons.atlassian.net/wiki/x/AYBkAQ>`_
   for continuous versioning, as well as creating Candidate and Production releases.\
-- Right before a Major or Minor release, update the release notes file ``docs/release_notes.rst``.
 - Then create a new Release Candidate (rc) just to include these changes in the release.
 
 

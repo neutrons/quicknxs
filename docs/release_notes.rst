@@ -3,33 +3,9 @@
 
 Release Notes
 =============
-Notes for major and minor releases. Notes for Patch releases are deferred.
 
-..
-  Use the following template to add a new release note.
-
-  <Next Release>
-  --------------
-  (date of release, format YYYY-MM-DD)
-
-  **Of interest to the User:**
-  - PR #XYZ: one-liner description
-
-  **Of interest to the Developer:**
-  - PR #XYZ: one-liner description
-..
-
-..
-  4.8.0
-  -----
-  (date of release, format YYYY-MM-DD)
-
-  **Of interest to the User:**
-  - PR #XYZ: one-liner description
-
-  **Of interest to the Developer:**
-  - PR #180: MrRed version number updated and related dependencies were added
-..
+For release notes after `v4.7.0`,
+see the `GitHub release notes <https://github.com/neutrons/quicknxs/releases>`_.
 
 4.7.0
 -----
