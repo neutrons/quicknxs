@@ -1,3 +1,7 @@
+ci:
+  autofix_prs: true
+  skip: [pixi-lock-check]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -19,7 +23,10 @@ repos:
         exclude: "tests/cis_tests/.*"
       - id: ruff-format
         exclude: "tests/cis_tests/.*"
-  # - repo: https://github.com/codespell-project/codespell
-  #   rev: v2.3.0
-  #   hooks:
-  #     - id: codespell
+  - repo: local
+    hooks:
+      - id: pixi-lock-check
+        name: pixi-lock-check
+        entry: bash -c "PATH=$HOME/.pixi/bin:$PATH pixi lock --check"
+        stage: pre-push
+        language: system
