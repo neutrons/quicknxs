@@ -594,7 +594,7 @@ class PlotManager(object):
             self.main_window.ui.refl.set_xlabel("$\\lambda{}$ [Å]")
         else:
             # convert raw microsecond units to milliseconds to match xtof plot
-            tof_ms = tof_ms = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 0] / 1000
+            tof_ms = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 0] / 1000
 
             self.main_window.ui.refl.errorbar(
                 tof_ms,
@@ -624,11 +624,14 @@ class PlotManager(object):
             return False
 
         if self.main_window.data_manager.active_cross_section.is_direct_beam:
+            plot_title = "Intensity"
             is_plotted = self._prepare_intensity_plot()
         else:
+            plot_title = "Reflectivity"
             is_plotted = self._prepare_reflectivity_plot()
 
         if is_plotted is not False:
+            # draw plot
             if self.main_window.ui.logarithmic_y.isChecked():
                 self.main_window.ui.refl.set_yscale("log")
             else:
@@ -636,6 +639,9 @@ class PlotManager(object):
             self.main_window.ui.refl.legend()
             self.main_window.ui.refl.toolbar.set_history_buttons()
             self.main_window.ui.refl.draw()
+
+            # update plot title
+            self.main_window.ui.reflectivity_or_intensity_plot_title.setText(plot_title)
 
             self.main_window.ui.compare_widget.update_preview()
 
@@ -709,6 +715,7 @@ class PlotManager(object):
             )
         self.main_window.ui.refl.canvas.ax.set_ylim((ymin * 0.9, ymax * 1.1))
         self.main_window.ui.refl.set_xlabel("Q$_z$ [Å$^{-1}$]")
+        return True
 
     def plot_gisans(self):
         """Create GISANS plots of the current dataset with Qy-Qz maps."""
