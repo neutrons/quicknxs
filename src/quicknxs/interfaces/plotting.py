@@ -579,12 +579,7 @@ class PlotManager(object):
         widget.draw()
 
     def _prepare_intensity_plot(self):
-        """Add the direct beam intensity from the current dataset to the reflectivity/intensity plot.
-
-        Returns
-        -------
-            True if the plot preparation was successful
-        """
+        """Add the direct beam intensity from the current dataset to the reflectivity/intensity plot."""
         # format and plot tof data
 
         counts_normalized = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 2]
@@ -611,9 +606,6 @@ class PlotManager(object):
         # y-label is counts in either case
         self.main_window.ui.refl.set_ylabel("Normalized ROI Counts")
 
-        # plot prepared OK
-        return True
-
     def plot_reflectivity_or_intensity(self):
         """Plot reflectivity data or intensity, depending on the type of the active run.
 
@@ -633,12 +625,13 @@ class PlotManager(object):
 
         if self.main_window.data_manager.active_cross_section.is_direct_beam:
             plot_title = "Intensity"
-            is_plotted = self._prepare_intensity_plot()
+            self._prepare_intensity_plot()
+            is_plotted = True
         else:
             plot_title = "Reflectivity"
             is_plotted = self._prepare_reflectivity_plot()
 
-        if is_plotted is not False:
+        if is_plotted:
             # draw plot
             if self.main_window.ui.logarithmic_y.isChecked():
                 self.main_window.ui.refl.set_yscale("log")
