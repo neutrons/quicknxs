@@ -24,7 +24,7 @@ def assert_config_equal(conf_a, conf_b):
 @pytest.mark.parametrize(
     "filename", ["REF_M_42536+42537_peak1_Specular_On_Off.dat", "REF_M_42536+42537_peak1_Specular_Off_Off.dat"]
 )
-def test_reduced_file_matches_gui_config(filename, data_server, qtbot, monkeypatch):
+def test_reduced_file_matches_gui_config(filename, data_server, qtbot):
     file_path = data_server.path_to(filename)
     print(f"File path: {file_path}")
 
