@@ -1,8 +1,6 @@
-from copy import deepcopy
-
 import pytest
+from qtpy import QtWidgets
 
-from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.quicknxs_io import read_reduced_file
 from quicknxs.interfaces.main_window import MainWindow
 
@@ -11,6 +9,8 @@ def assert_config_equal(conf_a, conf_b):
     """Assert that two Configuration objects are equal."""
     for key in sorted(conf_a.__dict__):
         if key in ["instrument", "match_direct_beam", "tof_range"]:
+            continue
+        if key == "final_rebin_step_run" and not conf_a.do_final_rebin_run:
             continue
         val_a = getattr(conf_a, key)
         val_b = getattr(conf_b, key)
@@ -24,30 +24,22 @@ def assert_config_equal(conf_a, conf_b):
 @pytest.mark.parametrize(
     "filename", ["REF_M_42536+42537_peak1_Specular_On_Off.dat", "REF_M_42536+42537_peak1_Specular_Off_Off.dat"]
 )
-def test_reduced_file_matches_gui_config(filename, data_server, qtbot):
+def test_reduced_file_matches_gui_config(filename, data_server, qtbot, monkeypatch):
     file_path = data_server.path_to(filename)
-    print(f"File path: {file_path}")
 
     # Load the file via the GUI pipeline
     main_window = MainWindow()
     qtbot.addWidget(main_window)
-    config = deepcopy(Configuration())
-    Configuration.force_bck_roi = False
 
-    main_window.auto_change_active = True
+    monkeypatch.setattr(QtWidgets.QFileDialog, "getOpenFileName", lambda *args, **kwargs: (file_path, None))  # noqa: ARG005
 
-    main_window.data_manager.load_data_from_reduced_file(file_path, configuration=config)
-    if main_window.data_manager.active_cross_section is not None:
-        main_window.file_handler.populate_from_configuration(
-            main_window.data_manager.active_cross_section.configuration
-        )
-        main_window.file_handler.update_file_list(main_window.data_manager.current_file)
-        main_window.auto_change_active = False
+    main_window.file_handler.open_reduced_file_dialog()
+
     gui_conf = main_window.file_handler.get_configuration()
 
     # Load the expected config directly from the reduced file
     _, data, _, _ = read_reduced_file(file_path)
-    file_conf = data[1][2]
+    file_conf = data[0][2]
 
     assert_config_equal(gui_conf, file_conf)
     main_window.auto_change_active = False

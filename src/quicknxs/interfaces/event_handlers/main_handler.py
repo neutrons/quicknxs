@@ -1538,7 +1538,7 @@ class MainHandler(object):
         self.ui.direct_beam_y_lock_checkbox.setChecked(configuration.lock_direct_beam_y)
 
         self.ui.final_rebin_checkbox_run.setChecked(configuration.do_final_rebin_run)
-        if configuration.final_rebin_step_run:
+        if configuration.do_final_rebin_run:
             self.ui.q_rebin_spinbox_run.setValue(configuration.final_rebin_step_run)
 
         # UI elements
