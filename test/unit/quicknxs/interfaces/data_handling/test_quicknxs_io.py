@@ -176,6 +176,7 @@ class TestConfig:
         conf.off_spec_slice_qz_min = 0.05
         conf.gisans_qz_npts = 77
         conf.off_spec_qz_list = [0.05, 0.07]
+        conf.tof_range = [1123.9234, 1234.5678]
 
         # Modify global (class-level) config
         Configuration.use_constant_q = True
@@ -205,6 +206,7 @@ class TestConfig:
         assert instance_conf.scaling_factor == 3.14
         assert instance_conf.cut_first_n_points == 5
         assert instance_conf.off_spec_slice_qz_min == 0.05
+        assert instance_conf.tof_range == [1123.9234, 1234.5678]
         # These should not have changed
         assert instance_conf.gisans_qz_npts == 50
         assert instance_conf.off_spec_qz_list == []

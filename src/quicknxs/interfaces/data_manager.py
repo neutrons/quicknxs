@@ -950,7 +950,7 @@ class DataManager(object):
                 # find run in main reduction list and make a copy TODO: what if it is missing?
                 run_index = [i for i, data in enumerate(self.main_reduction_list) if data.number == str(r_id)][0]
                 self._nexus_data = copy.deepcopy(self.main_reduction_list[run_index])
-                configuration.direct_beam = None
+                conf.direct_beam = None
                 self.update_configuration(conf)
                 self.calculate_reflectivity()
                 self.add_active_to_reduction(peak_index)

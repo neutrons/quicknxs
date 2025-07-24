@@ -453,7 +453,7 @@ def _assign_config_value(conf: Configuration, attr: str, value_str: str):
                 value = float(value_str)
         elif value_str == "None":
             value = None
-        elif isinstance(current_value, list):
+        elif isinstance(current_value, list) or ("[" in value_str and "]" in value_str):
             value_str = value_str.replace("[", "").replace("]", "")
             if value_str == "":
                 value = []
@@ -565,7 +565,7 @@ def read_reduced_file(file_path: str, configuration=None):
                     if configuration is not None:
                         conf = copy.deepcopy(configuration)
                     else:
-                        conf = Configuration()
+                        conf = copy.deepcopy(Configuration())
 
                     for label in cols:
                         attr = LABEL_TO_CONFIG.get(label, label)
