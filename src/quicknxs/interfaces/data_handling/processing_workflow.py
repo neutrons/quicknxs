@@ -160,6 +160,10 @@ class ProcessingWorkflow(object):
             Template for output file paths
         xs:
             List of cross-sections available in the output_data
+        include_gisans:
+            Include GISANS specifc variables in the reduction output file
+        include_offspec:
+            Include Offspec specific variables in the reduction output file
         """
         # Get the column names
         units = output_data["units"]

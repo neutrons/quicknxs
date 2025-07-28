@@ -214,6 +214,10 @@ def write_reflectivity_header(
         Output file path
     pol_state:
         Descriptor for the polarization state
+    include_gisans:
+        Include GISANS specific variables
+    include_offspec:
+        Include Offspec specific variables
     """
     # Sanity check
     if active_list_index not in peak_reduction_lists or not peak_reduction_lists[active_list_index]:
