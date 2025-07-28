@@ -857,7 +857,7 @@ class DataManager(object):
         n_total = len(db_files) + len(data_files)
         if progress and n_total > 0:
             progress.set_value(1, message="Loaded %s" % os.path.basename(file_path), out_of=n_total)
-        self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, t_0)
+        self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, True, t_0)
         if progress and not has_scaling_error:
             progress.set_value(
                 1,
@@ -950,7 +950,7 @@ class DataManager(object):
                 # find run in main reduction list and make a copy TODO: what if it is missing?
                 run_index = [i for i, data in enumerate(self.main_reduction_list) if data.number == str(r_id)][0]
                 self._nexus_data = copy.deepcopy(self.main_reduction_list[run_index])
-                configuration.direct_beam = None
+                conf.direct_beam = None
                 self.update_configuration(conf)
                 self.calculate_reflectivity()
                 self.add_active_to_reduction(peak_index)

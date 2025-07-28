@@ -10,6 +10,8 @@ import pytest
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.quicknxs_io import (
+    _assign_config_value,
+    _sort_keys_with_file_last,
     read_reduced_file,
     write_reflectivity_data,
     write_reflectivity_header,
@@ -152,6 +154,128 @@ class TestDataWriter(object):
         assert len(data_list) == 2
         assert len(additional_peaks_list) == 2
         assert has_scaling_error is True
+
+
+@pytest.fixture
+def config_teardown():
+    yield
+    Configuration.setup_default_values()
+
+
+class TestConfig:
+    """Test reading and writing instance and class configuration options"""
+
+    def test_write_and_read_full_config(self, tmp_path, mock_nexus_data, config_teardown):
+        """Test writing and reading full configuration, including global and instance attributes."""
+
+        # Modify instance-level config
+        conf = Configuration()
+        Configuration.sample_size = 42
+        conf.scaling_factor = 3.14
+        conf.cut_first_n_points = 5
+        conf.off_spec_slice_qz_min = 0.05
+        conf.gisans_qz_npts = 77
+        conf.off_spec_qz_list = [0.05, 0.07]
+        conf.tof_range = [1123.9234, 1234.5678]
+
+        # Modify global (class-level) config
+        Configuration.use_constant_q = True
+        Configuration.final_rebin_step_global = -0.02
+        Configuration.normalize_to_unity = False
+
+        # Use mock NexusData object
+        nexus = mock_nexus_data(30001)
+        nexus.cross_sections["On_Off"].configuration = conf
+        nexus.cross_sections["Off_Off"].configuration = conf
+
+        output_path = tmp_path / "test_config_roundtrip.dat"
+        write_reflectivity_header(
+            {1: [nexus]},
+            active_list_index=1,
+            direct_beam_list=[nexus],
+            output_path=output_path,
+            pol_state="On_Off",
+        )
+
+        # Read back from file
+        _, data_list, _, _ = read_reduced_file(output_path)
+
+        # === Assert instance values ===
+        instance_conf = data_list[0][2]
+        assert instance_conf.sample_size == 42
+        assert instance_conf.scaling_factor == 3.14
+        assert instance_conf.cut_first_n_points == 5
+        assert instance_conf.off_spec_slice_qz_min == 0.05
+        assert instance_conf.tof_range == [1123.9234, 1234.5678]
+        # These should not have changed
+        assert instance_conf.gisans_qz_npts == 50
+        assert instance_conf.off_spec_qz_list == []
+
+        # === Assert global values ===
+        assert Configuration.use_constant_q is True
+        assert Configuration.final_rebin_step_global == -0.02
+        assert Configuration.normalize_to_unity is False
+
+        output_path = tmp_path / "GISANS_test_config_roundtrip.dat"
+        # Modify GISANS-specific configuration
+        write_reflectivity_header(
+            {1: [nexus]},
+            active_list_index=1,
+            direct_beam_list=[nexus],
+            output_path=output_path,
+            pol_state="On_Off",
+            include_gisans=True,
+        )
+
+        # Read back GISANS-specific configuration
+        _, data_list, _, _ = read_reduced_file(output_path)
+        instance_conf = data_list[0][2]
+        assert instance_conf.gisans_qz_npts == 77
+
+        output_path = tmp_path / "OffSpec_test_config_roundtrip.dat"
+        # Modify OffSpec-specific configuration
+        write_reflectivity_header(
+            {1: [nexus]},
+            active_list_index=1,
+            direct_beam_list=[nexus],
+            output_path=output_path,
+            pol_state="On_Off",
+            include_offspec=True,
+        )
+
+        # Read back OffSpec-specific configuration
+        _, data_list, _, _ = read_reduced_file(output_path)
+        instance_conf = data_list[0][2]
+        assert instance_conf.off_spec_slice_qz_min == 0.05
+        assert instance_conf.off_spec_qz_list == [0.05, 0.07]
+
+
+def test_assign_list_value():
+    conf = Configuration()
+    conf.off_spec_qz_list = []  # default empty
+    _assign_config_value(conf, "off_spec_qz_list", "[0.01, 0.02, 0.03]")
+    assert conf.off_spec_qz_list == [0.01, 0.02, 0.03]
+
+
+def test_fallback_int_to_float():
+    conf = Configuration()
+    conf.cut_first_n_points = 1  # int by default
+    _assign_config_value(conf, "cut_first_n_points", "3.0")
+    assert conf.cut_first_n_points == 3.0  # now float, not int
+
+
+def test_assign_unknown_key_ignored(caplog):
+    conf = Configuration()
+    _assign_config_value(conf, "nonexistent_option", "123")
+    assert not hasattr(conf, "nonexistent_option")
+    assert "nonexistent_option" not in conf.__dict__
+
+
+def test_sort_keys_with_file_last():
+    keys = ["x", "a", "File", "z"]
+    sorted_keys = _sort_keys_with_file_last(keys)
+    assert sorted_keys[-1] == "File"
+    assert set(sorted_keys[:-1]) == {"a", "x", "z"}
 
 
 if __name__ == "__main__":

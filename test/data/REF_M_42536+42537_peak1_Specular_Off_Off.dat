@@ -7,28 +7,28 @@
 #
 # [Direct Beam Runs]
 #    DB_ID        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width      dpix       tth    number      File
-#        1         0         0     179.5        19       144        46        39        56       180         0     42534  /SNS/REF_M/IPTS-31954/nexus/REF_M_42534.nxs.h5
-#        2         0         0     179.5        19       144        46        39        56       180         0     42534  /SNS/REF_M/IPTS-31954/nexus/REF_M_42534.nxs.h5
+#        1         0         0     179.5        19       144        46        39        56       180         0     42534  quicknxs-data/REF_M_42534.nxs.h5
+#        2         0         0     179.5        19       144        46        39        56       180         0     42534  quicknxs-data/REF_M_42534.nxs.h5
 #
 # [Data Runs]
 #    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File
-#        1         5        10     212.6        19     117.3      65.3        39        56     False       180    2.2255     42536         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42536.nxs.h5
-#   3.7201         5        10     214.9        22     121.8      56.3        39        56     False       180    4.1776     42537         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42537.nxs.h5
+#        1         5        10     212.6        19     117.3      65.3        39        56     False       180    2.2255     42536         1  quicknxs-data/REF_M_42536.nxs.h5
+#   3.7201         5        10     214.9        22     121.8      56.3        39        56     False       180    4.1776     42537         1  quicknxs-data/REF_M_42537.nxs.h5
 #
 # [Peak 1 Runs]
 #    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File
-#        1         5        10     212.6        19     117.3      65.3        39        56     False       180    2.2255     42536         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42536.nxs.h5
-#   3.7201         5        10     214.9        22     121.8      56.3        39        56     False       180    4.1776     42537         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42537.nxs.h5
+#        1         5        10     212.6        19     117.3      65.3        39        56     False       180    2.2255     42536         1  quicknxs-data/REF_M_42536.nxs.h5
+#   3.7201         5        10     214.9        22     121.8      56.3        39        56     False       180    4.1776     42537         1  quicknxs-data/REF_M_42537.nxs.h5
 #
 # [Peak 2 Runs]
 #    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File
-#  2.64241         5        10     186.9        22     147.1      40.4        39        56     False       180   1.68073     42536         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42536.nxs.h5
-#  2.64241         5        10     186.9        22     147.1      40.4        39        56     False       180    3.6887     42537         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42537.nxs.h5
+#  2.64241         5        10     186.9        22     147.1      40.4        39        56     False       180   1.68073     42536         1  quicknxs-data/REF_M_42536.nxs.h5
+#  2.64241         5        10     186.9        22     147.1      40.4        39        56     False       180    3.6887     42537         1  quicknxs-data/REF_M_42537.nxs.h5
 #
 # [Peak 3 Runs]
 #    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File
-#  2.64241         5        10     186.9        22     147.1      40.4        39        56     False       180   1.68073     42536         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42536.nxs.h5
-#  2.64241         5        10     186.9        22     147.1      40.4        39        56     False       180    3.6887     42537         1  /SNS/REF_M/IPTS-31954/nexus/REF_M_42537.nxs.h5
+#  2.64241         5        10     186.9        22     147.1      40.4        39        56     False       180   1.68073     42536         1  quicknxs-data/REF_M_42536.nxs.h5
+#  2.64241         5        10     186.9        22     147.1      40.4        39        56     False       180    3.6887     42537         1  quicknxs-data/REF_M_42537.nxs.h5
 #
 # [Global Options]
 # name           value

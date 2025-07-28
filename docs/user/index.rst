@@ -13,3 +13,4 @@ User Guide
    dead_time_correction
    peak_finder
    reduction
+   reduced_data
