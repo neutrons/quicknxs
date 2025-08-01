@@ -1,7 +1,7 @@
 .. _binning:
 
-Binning a Reduced Workspace in QuickNXS
-=======================================
+Binning
+=======
 
 Overview
 --------
@@ -14,8 +14,8 @@ An initial **time-of-flight binning** step processes the raw event data from the
 sample run and direct beam run to allow for normalization. This step is
 mandatory.
 
-There is an optional **Q binning** step, which happens when the reflectivity
-data is converted to Q-space.
+There is an optional **Q binning** step, which is the last thing that happens
+when the reflectivity curve is calculated.
 
 This guide explains the available binning options in QuickNXS and how to configure them.
 
@@ -119,7 +119,7 @@ To apply binning settings effectively, follow these steps:
    - If TOF min is ≤ 0, `Bin Width` will also be used as the TOF minimum.
    - The direct beam workspace is automatically rebinned to match this setting.
 
-1. **Apply Q Binning (Optional):**
+2. **Apply Q Binning (Optional):**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
    - Select the binning type and Q steps for each run, either in the reduction
