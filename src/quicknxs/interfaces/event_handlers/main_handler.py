@@ -992,6 +992,14 @@ class MainHandler(object):
             self.main_window.auto_change_active = True
             self.update_info()
             self.main_window.auto_change_active = False
+        elif not refl.is_direct_beam():
+            # If the changed data set is another data run, only need to update the UI reduction table,
+            # to take into account changes in one column affecting another column
+            table_widget = self.reduction_table
+            idx = self._data_manager.find_data_in_reduction_list(refl)
+            active_cross_section_name: str = self._data_manager.active_cross_section.name
+            active_cross_section = refl.cross_sections[active_cross_section_name]
+            self.update_reduction_table(table_widget, idx, active_cross_section)
 
         # Update the direct beam table if this data set is in it
         idx = self._data_manager.find_data_in_direct_beam_list(refl)

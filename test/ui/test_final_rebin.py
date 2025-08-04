@@ -1,3 +1,6 @@
+import pytest
+
+from quicknxs.config.gui import QColors
 from quicknxs.interfaces.configuration import BinningType
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
@@ -19,6 +22,8 @@ def _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=
     main_window.actionAddRefl.triggered.emit()
 
     if final_rebin_enabled:
+        main_window.ui.binning_type_selector_global.setCurrentIndex(1)
+        main_window.ui.q_rebin_spinbox_global.setValue(-0.010)
         main_window.ui.propagate_binning_options_button.click()
     # set the first data run to active
     main_window.reduction_cell_activated(0, 0)
@@ -71,7 +76,7 @@ def test_editing_run_rebin_spinbox_updates_reduction_table(qtbot):
     reduction_table = main_window.ui.reductionTable
     q_spinbox = main_window.ui.q_rebin_spinbox_run
 
-    _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=True)
+    _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=False)
 
     assert q_spinbox.value() == -0.020
     assert reduction_table.item(0, 14).text() == "-0.020"
@@ -101,7 +106,7 @@ def test_editing_run_binning_type_updates_reduction_table(qtbot):
     reduction_table = main_window.ui.reductionTable
     bin_type_combobox = main_window.ui.binning_type_selector_run
 
-    _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=True)
+    _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=False)
 
     assert bin_type_combobox.currentIndex() == BinningType.NONE
     assert reduction_table.cellWidget(0, 13).currentIndex() == BinningType.NONE
@@ -173,3 +178,27 @@ def test_changing_binning_type_triggers_replotting(qtbot, mocker):
 
     # Verify that the plot is redrawn
     assert mock_plot_refl.call_count == plot_refl_call_count + 1
+
+
+@pytest.mark.parametrize(
+    "binning_type, foreground",
+    [
+        (BinningType.NONE, QColors.dark_grey),
+        (BinningType.CONST_Q, QColors.black),
+    ],
+)
+def test_setting_binning_type_none_disables_q_steps(qtbot, binning_type, foreground):
+    """Test that the Q steps table entry is greyed out when the binning type is set to None."""
+    main_window = MainWindow()
+    qtbot.addWidget(main_window)
+    reduction_table = main_window.ui.reductionTable
+
+    _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=True)
+
+    # Test that Q steps cell color is updated when changing binning type for the *active* run
+    reduction_table.cellWidget(0, 13).setCurrentIndex(binning_type)
+    assert reduction_table.item(0, 14).foreground().color() == foreground
+
+    # Test that Q steps cell color is updated when changing binning type for the *non-active* run
+    reduction_table.cellWidget(1, 13).setCurrentIndex(binning_type)
+    assert reduction_table.item(1, 14).foreground().color() == foreground
