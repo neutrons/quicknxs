@@ -18,7 +18,14 @@ class BinningType(IntEnum):
     CONST_Q = 2
 
     def __str__(self):
-        """String representation of binning type for use in the UI."""
+        """
+        Return a user-friendly string representation of the binning type for UI display.
+
+        Returns
+        -------
+        str
+            The name of the binning type ("None", "Normal", or "Const Q").
+        """
         return {
             BinningType.NONE: "None",
             BinningType.NORMAL: "Normal",
