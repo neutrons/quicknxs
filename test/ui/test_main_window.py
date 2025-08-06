@@ -149,7 +149,7 @@ class TestMainGui:
         # set UI elements to non-default
 
         # global
-        window_main.ui.binning_type_selector_global.setCurrentIndex(1)
+        window_main.ui.binning_type_selector_global.setCurrentIndex(BinningType.NORMAL)
         window_main.ui.q_rebin_spinbox_global.setValue(-0.01)
         window_main.ui.normalize_to_unity_checkbox.setChecked(False)
         window_main.ui.normalization_q_cutoff_spinbox.setValue(0.02)
@@ -176,7 +176,7 @@ class TestMainGui:
         window_main.ui.set_dangle0_checkbox.setChecked(True)
         window_main.ui.dangle0Overwrite.setValue(2.0)
         window_main.ui.trustDANGLE.setChecked(True)
-        window_main.ui.binning_type_selector_run.setCurrentIndex(1)
+        window_main.ui.binning_type_selector_run.setCurrentIndex(BinningType.NORMAL)
         window_main.ui.q_rebin_spinbox_run.setValue(0.045)
 
         window_main.file_handler.get_configuration()  # to update configuration from UI

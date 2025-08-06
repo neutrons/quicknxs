@@ -1396,10 +1396,10 @@ class MainHandler(object):
             )
 
         valid_change = (
-            valid_change or not configuration.binning_type_run == self.ui.binning_type_selector_run.currentIndex()
+            valid_change or configuration.binning_type_run != self.ui.binning_type_selector_run.currentIndex()
         )
 
-        valid_change = valid_change or not configuration.binning_q_step_run == self.ui.q_rebin_spinbox_run.value()
+        valid_change = valid_change or  configuration.binning_q_step_run != self.ui.q_rebin_spinbox_run.value()
 
         if valid_change:
             return 1

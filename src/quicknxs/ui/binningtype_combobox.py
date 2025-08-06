@@ -12,7 +12,7 @@ class BinningTypeSelection(QComboBox):
         for binning_type in BinningType:
             self.addItem(str(binning_type))
 
-        self.setCurrentIndex(0)
+        self.setCurrentIndex(BinningType.None)
         self.setToolTip("Select the binning type used in the reflectometry reduction.")
 
         self.row = row
@@ -23,4 +23,16 @@ class BinningTypeSelection(QComboBox):
             self.currentIndexChanged.connect(self._on_index_change)
 
     def _on_index_change(self, index):
+        """
+        Handle the change of the combo box index.
+
+        Parameters
+        ----------
+        index : int
+            The new index selected in the combo box.
+
+        Behavior
+        --------
+        Calls the on_change_handler callback with the new index and the associated row.
+        """
         self.on_change_handler(index, self.row)
