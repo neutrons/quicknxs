@@ -88,3 +88,6 @@ napoleon_numpy_docstring = True
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+# include both class and __init__ docstrings
+autoclass_content = "both"

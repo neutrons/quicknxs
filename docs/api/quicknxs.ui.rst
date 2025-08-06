@@ -10,6 +10,14 @@ quicknxs.ui package
 Submodules
 ----------
 
+quicknxs.ui.binningtype\_combobox module
+------------------------------------------
+
+.. automodule:: quicknxs.ui.binningtype_combobox
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 quicknxs.ui.compare\_plots module
 ------------------------------------------
 

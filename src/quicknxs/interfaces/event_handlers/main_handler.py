@@ -22,6 +22,7 @@ from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnity
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
 from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.enums import DirectBeamTableColumn, ReductionTableColumn
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
 from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
@@ -831,41 +832,55 @@ class MainHandler(object):
             item.setBackground(QColors.white)
         # Set the item to be non-editable (bitwise AND with the negation of the editable flag)
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
-        table_widget.setItem(idx, 0, item)
-        table_widget.setItem(idx, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)))
-        table_widget.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(d.configuration.cut_first_n_points)))
-        table_widget.setItem(idx, 3, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points)))
+        table_widget.setItem(idx, ReductionTableColumn.RUN_NUMBER, item)
+        table_widget.setItem(
+            idx,
+            ReductionTableColumn.SCALE_FACTOR,
+            QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)),
+        )
+        table_widget.setItem(
+            idx, ReductionTableColumn.NUM_LEFT, QtWidgets.QTableWidgetItem(str(d.configuration.cut_first_n_points))
+        )
+        table_widget.setItem(
+            idx, ReductionTableColumn.NUM_RIGHT, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points))
+        )
         item = QtWidgets.QTableWidgetItem(str(d.configuration.peak_position))
         item.setBackground(QColors.dark_grey)
-        table_widget.setItem(idx, 4, item)
-        table_widget.setItem(idx, 5, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width)))
+        table_widget.setItem(idx, ReductionTableColumn.PEAK_POSITION, item)
+        table_widget.setItem(
+            idx, ReductionTableColumn.PEAK_WIDTH, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width))
+        )
         item = QtWidgets.QTableWidgetItem(str(d.configuration.low_res_position))
         item.setBackground(QColors.dark_grey)
-        table_widget.setItem(idx, 6, item)
-        table_widget.setItem(idx, 7, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width)))
+        table_widget.setItem(idx, ReductionTableColumn.LOW_RES_POSITION, item)
+        table_widget.setItem(
+            idx, ReductionTableColumn.LOW_RES_WIDTH, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width))
+        )
         item = QtWidgets.QTableWidgetItem(str(d.configuration.bck_position))
         item.setBackground(QColors.dark_grey)
-        table_widget.setItem(idx, 8, item)
-        table_widget.setItem(idx, 9, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width)))
-        table_widget.setItem(idx, 10, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
-        table_widget.setItem(idx, 11, QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle))
+        table_widget.setItem(idx, ReductionTableColumn.BCK_POSITION, item)
+        table_widget.setItem(
+            idx, ReductionTableColumn.BCK_WIDTH, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width))
+        )
+        table_widget.setItem(idx, ReductionTableColumn.DPIX, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
+        table_widget.setItem(idx, ReductionTableColumn.THETA, QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle))
         direct_beam = "none"
         if d.configuration.direct_beam is not None:
             direct_beam = d.configuration.direct_beam
-        table_widget.setItem(idx, 12, QtWidgets.QTableWidgetItem(str(direct_beam)))
+        table_widget.setItem(idx, ReductionTableColumn.DIRECT_BEAM, QtWidgets.QTableWidgetItem(str(direct_beam)))
         # Binning type column
         combobox = BinningTypeSelection(on_change_handler=self.reduction_table_binning_type_changed, row=idx)
         combobox.blockSignals(True)
         combobox.setCurrentIndex(d.configuration.binning_type_run)
         combobox.blockSignals(False)
-        table_widget.setCellWidget(idx, 13, combobox)
+        table_widget.setCellWidget(idx, ReductionTableColumn.BINNING_TYPE, combobox)
         # Q steps column
         item = QtWidgets.QTableWidgetItem(f"{d.configuration.binning_q_step_run:.3f}")
         if d.configuration.binning_type_run == BinningType.NONE:
             # indicate Q steps is not used
             item.setForeground(QColors.dark_grey)
             item.setBackground(QColors.light_grey)
-        table_widget.setItem(idx, 14, item)
+        table_widget.setItem(idx, ReductionTableColumn.Q_STEPS, item)
 
         self.main_window.auto_change_active = False
 
@@ -1082,23 +1097,29 @@ class MainHandler(object):
         else:
             item.setBackground(QColors.white)
 
-        self.ui.directBeamTable.setItem(idx, 0, item)
+        self.ui.directBeamTable.setItem(idx, DirectBeamTableColumn.RUN_NUMBER, item)
         item = QtWidgets.QTableWidgetItem(str(data.configuration.peak_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.directBeamTable.setItem(idx, 1, item)
-        self.ui.directBeamTable.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(data.configuration.peak_width)))
+        self.ui.directBeamTable.setItem(idx, DirectBeamTableColumn.PEAK_POSITION, item)
+        self.ui.directBeamTable.setItem(
+            idx, DirectBeamTableColumn.PEAK_WIDTH, QtWidgets.QTableWidgetItem(str(data.configuration.peak_width))
+        )
         item = QtWidgets.QTableWidgetItem(str(data.configuration.low_res_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.directBeamTable.setItem(idx, 3, item)
-        self.ui.directBeamTable.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(data.configuration.low_res_width)))
+        self.ui.directBeamTable.setItem(idx, DirectBeamTableColumn.LOW_RES_POSITION, item)
+        self.ui.directBeamTable.setItem(
+            idx, DirectBeamTableColumn.LOW_RES_WIDTH, QtWidgets.QTableWidgetItem(str(data.configuration.low_res_width))
+        )
         item = QtWidgets.QTableWidgetItem(str(data.configuration.bck_position))
         item.setBackground(QColors.dark_grey)
-        self.ui.directBeamTable.setItem(idx, 5, item)
-        self.ui.directBeamTable.setItem(idx, 6, QtWidgets.QTableWidgetItem(str(data.configuration.bck_width)))
+        self.ui.directBeamTable.setItem(idx, DirectBeamTableColumn.BCK_POSITION, item)
+        self.ui.directBeamTable.setItem(
+            idx, DirectBeamTableColumn.BCK_WIDTH, QtWidgets.QTableWidgetItem(str(data.configuration.bck_width))
+        )
         wl = "%s - %s" % (data.wavelength[0], data.wavelength[-1])
         item = QtWidgets.QTableWidgetItem(wl)
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
-        self.ui.directBeamTable.setItem(idx, 7, item)
+        self.ui.directBeamTable.setItem(idx, DirectBeamTableColumn.WAVELENGTH, item)
         self.main_window.auto_change_active = False
 
     def direct_beam_table_changed(self, item: QtWidgets.QTableWidgetItem):

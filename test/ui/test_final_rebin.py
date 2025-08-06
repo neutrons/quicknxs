@@ -2,6 +2,7 @@ import pytest
 
 from quicknxs.config.gui import QColors
 from quicknxs.interfaces.configuration import BinningType
+from quicknxs.interfaces.enums import ReductionTableColumn
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
 
@@ -47,10 +48,10 @@ def test_clicking_apply_binning_button_updates_reduction_table(qtbot):
     main_window.ui.propagate_binning_options_button.click()
 
     # Verify that the reduction table was updated
-    assert reduction_table1.cellWidget(0, 13).currentIndex() == BinningType.NORMAL
-    assert reduction_table1.cellWidget(1, 13).currentIndex() == BinningType.NORMAL
-    assert reduction_table1.item(0, 14).text() == "-0.010"
-    assert reduction_table1.item(1, 14).text() == "-0.010"
+    assert reduction_table1.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NORMAL
+    assert reduction_table1.cellWidget(1, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NORMAL
+    assert reduction_table1.item(0, ReductionTableColumn.Q_STEPS).text() == "-0.010"
+    assert reduction_table1.item(1, ReductionTableColumn.Q_STEPS).text() == "-0.010"
 
     # Verify that the active run panel was updated
     assert main_window.ui.binning_type_selector_run.currentIndex() == BinningType.NORMAL
@@ -60,10 +61,10 @@ def test_clicking_apply_binning_button_updates_reduction_table(qtbot):
     main_window.ui.tabWidget.setCurrentIndex(2)
 
     # Verify that the options were not applied to the second data tab
-    assert reduction_table2.cellWidget(0, 13).currentIndex() == BinningType.NONE
-    assert reduction_table2.cellWidget(1, 13).currentIndex() == BinningType.NONE
-    assert reduction_table2.item(0, 14).text() == "-0.020"
-    assert reduction_table2.item(1, 14).text() == "-0.020"
+    assert reduction_table2.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NONE
+    assert reduction_table2.cellWidget(1, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NONE
+    assert reduction_table2.item(0, ReductionTableColumn.Q_STEPS).text() == "-0.020"
+    assert reduction_table2.item(1, ReductionTableColumn.Q_STEPS).text() == "-0.020"
     assert main_window.ui.binning_type_selector_run.currentIndex() == BinningType.NONE
     assert main_window.ui.q_rebin_spinbox_run.value() == -0.020
 
@@ -79,24 +80,24 @@ def test_editing_run_rebin_spinbox_updates_reduction_table(qtbot):
     _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=False)
 
     assert q_spinbox.value() == -0.020
-    assert reduction_table.item(0, 14).text() == "-0.020"
-    assert reduction_table.item(1, 14).text() == "-0.020"
+    assert reduction_table.item(0, ReductionTableColumn.Q_STEPS).text() == "-0.020"
+    assert reduction_table.item(1, ReductionTableColumn.Q_STEPS).text() == "-0.020"
 
     # Spinbox update
     ui_utilities.setValue(q_spinbox, q_spinbox.value() + q_spinbox.singleStep(), editing_finished=True)
 
     # Verify that the table was updated. The first row is the "active" run that should have been updated
     assert q_spinbox.value() == -0.019
-    assert reduction_table.item(0, 14).text() == "-0.019"
-    assert reduction_table.item(1, 14).text() == "-0.020"
+    assert reduction_table.item(0, ReductionTableColumn.Q_STEPS).text() == "-0.019"
+    assert reduction_table.item(1, ReductionTableColumn.Q_STEPS).text() == "-0.020"
 
     # Reduction table update
-    ui_utilities.setText(reduction_table.item(0, 14), "-0.018", press_enter=False)
+    ui_utilities.setText(reduction_table.item(0, ReductionTableColumn.Q_STEPS), "-0.018", press_enter=False)
 
     # Verify that the spinbox was updated
     assert q_spinbox.value() == -0.018
-    assert reduction_table.item(0, 14).text() == "-0.018"
-    assert reduction_table.item(1, 14).text() == "-0.020"
+    assert reduction_table.item(0, ReductionTableColumn.Q_STEPS).text() == "-0.018"
+    assert reduction_table.item(1, ReductionTableColumn.Q_STEPS).text() == "-0.020"
 
 
 def test_editing_run_binning_type_updates_reduction_table(qtbot):
@@ -109,16 +110,16 @@ def test_editing_run_binning_type_updates_reduction_table(qtbot):
     _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=False)
 
     assert bin_type_combobox.currentIndex() == BinningType.NONE
-    assert reduction_table.cellWidget(0, 13).currentIndex() == BinningType.NONE
+    assert reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NONE
 
     # Update bin type in combobox in panel Reflectivity Extraction (Per Run)
     bin_type_combobox.setCurrentIndex(BinningType.NORMAL)
 
     # Verify that the table was updated. The first row is the "active" run that should have been updated
-    assert reduction_table.cellWidget(0, 13).currentIndex() == BinningType.NORMAL
+    assert reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NORMAL
 
     # Update bin type in reduction table column
-    reduction_table.cellWidget(0, 13).setCurrentIndex(BinningType.CONST_Q)
+    reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).setCurrentIndex(BinningType.CONST_Q)
 
     # Verify that the combobox in the run panel was updated
     assert bin_type_combobox.currentIndex() == BinningType.CONST_Q
@@ -196,9 +197,9 @@ def test_setting_binning_type_none_disables_q_steps(qtbot, binning_type, foregro
     _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=True)
 
     # Test that Q steps cell color is updated when changing binning type for the *active* run
-    reduction_table.cellWidget(0, 13).setCurrentIndex(binning_type)
-    assert reduction_table.item(0, 14).foreground().color() == foreground
+    reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).setCurrentIndex(binning_type)
+    assert reduction_table.item(0, ReductionTableColumn.Q_STEPS).foreground().color() == foreground
 
     # Test that Q steps cell color is updated when changing binning type for the *non-active* run
-    reduction_table.cellWidget(1, 13).setCurrentIndex(binning_type)
-    assert reduction_table.item(1, 14).foreground().color() == foreground
+    reduction_table.cellWidget(1, ReductionTableColumn.BINNING_TYPE).setCurrentIndex(binning_type)
+    assert reduction_table.item(1, ReductionTableColumn.Q_STEPS).foreground().color() == foreground

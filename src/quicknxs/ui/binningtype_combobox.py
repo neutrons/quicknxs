@@ -7,12 +7,26 @@ class BinningTypeSelection(QComboBox):
     """Combo box for binning types."""
 
     def __init__(self, on_change_handler=None, row=None, parent=None):
+        """
+        Initialize the BinningTypeSelection combo box.
+
+        Parameters
+        ----------
+        on_change_handler: Optional[Callable]
+            A function to be called when the selection changes.
+            It should accept two arguments: the new index and the row identifier.
+        row : Optional[int]
+            An identifier for the row associated with this combo box, useful when
+            the combo box is used in a table or list context.
+        parent : Optional[QWidget]
+            The parent widget.
+        """
         super().__init__(parent)
 
         for binning_type in BinningType:
             self.addItem(str(binning_type))
 
-        self.setCurrentIndex(BinningType.None)
+        self.setCurrentIndex(BinningType.NONE)
         self.setToolTip("Select the binning type used in the reflectometry reduction.")
 
         self.row = row
