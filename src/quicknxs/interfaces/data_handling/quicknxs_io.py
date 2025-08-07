@@ -31,10 +31,10 @@ CONFIG_LABELS = {
     "low_res_width": "y_width",
     "bck_position": "bg_pos",
     "bck_width": "bg_width",
-    "do_final_rebin_global": "g_final_rebin",
-    "final_rebin_step_global": "g_Qsteps",
-    "do_final_rebin_run": "r_final_rebin",
-    "final_rebin_step_run": "r_Qsteps",
+    "binning_type_global": "g_final_rebin",
+    "binning_q_step_global": "g_Qsteps",
+    "binning_type_run": "r_final_rebin",
+    "binning_q_step_run": "r_Qsteps",
     "tof_bins": "bin_width",
     "total_reflectivity_q_cutoff": "critical_q_cutoff",
     "direct_pixel_overwrite": "dpix",
@@ -579,8 +579,6 @@ def read_reduced_file(file_path: str, configuration=None):
                             if label == "scale_err":
                                 has_scaling_error = True
 
-                    fan = _get_tok("fan", cols, toks) or _get_tok("extract_fan", cols, toks)
-                    Configuration.use_constant_q = fan.lower() == "true"
                     DB_ID = int(_get_tok("DB_ID", cols, toks))
                     if DB_ID > 0 and len(direct_beam_runs) > DB_ID - 1:
                         conf.direct_beam = direct_beam_runs[DB_ID - 1][0]

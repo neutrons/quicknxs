@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QAction, QCheckBox, QDoubleSpinBox, QSpinBox, QWidget
+from qtpy import QtCore
+from qtpy.QtWidgets import QAction, QCheckBox, QDoubleSpinBox, QSpinBox, QWidget
 
-from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.configuration import BinningType, Configuration
+from quicknxs.ui.binningtype_combobox import BinningTypeSelection
 
 
 class ConfigurationHandler:
@@ -41,10 +42,14 @@ class ConfigurationHandler:
         def config_setter():
             if isinstance(qwidget, QCheckBox):
                 value = qwidget.checkState()
-                bool_value = value == Qt.CheckState.Checked
+                bool_value = value == QtCore.Qt.Checked
                 setattr(Configuration, config_name, bool_value)
             elif isinstance(qwidget, QAction):
                 value = qwidget.isChecked()
+                setattr(Configuration, config_name, value)
+            elif isinstance(qwidget, BinningTypeSelection):
+                combobox_idx = qwidget.currentIndex()
+                value = BinningType(combobox_idx)
                 setattr(Configuration, config_name, value)
             else:
                 value = qwidget.value()
@@ -81,15 +86,14 @@ class ConfigurationHandler:
             recalc_reflectivity: bool = False
 
         config_widgets = [
-            ConfigWidget("final_rebin_checkbox_global", "do_final_rebin", recalc_reflectivity=True),
-            ConfigWidget("q_rebin_spinbox_global", "final_rebin_step", recalc_reflectivity=True),
+            ConfigWidget("binning_type_selector_global", "binning_type_global"),
+            ConfigWidget("q_rebin_spinbox_global", "binning_q_step_global"),
             ConfigWidget("normalize_to_unity_checkbox", "normalize_to_unity"),
             ConfigWidget("normalization_q_cutoff_spinbox", "total_reflectivity_q_cutoff"),
             ConfigWidget("global_fit_checkbox", "global_stitching"),
             ConfigWidget("polynomial_stitching_degree_spinbox", "polynomial_stitching_degree"),
             ConfigWidget("polynomial_stitching_points_spinbox", "polynomial_stitching_points"),
             ConfigWidget("polynomial_stitching_checkbox", "polynomial_stitching"),
-            ConfigWidget("fanReflectivity", "use_constant_q", recalc_reflectivity=True),
             ConfigWidget("sample_size_spinbox", "sample_size"),
             ConfigWidget("bandwidth_spinbox", "wl_bandwidth"),
             ConfigWidget("direct_beam_y_lock_checkbox", "lock_direct_beam_y", recalc_reflectivity=True),
@@ -112,6 +116,8 @@ class ConfigurationHandler:
                 signal_name = "stateChanged"
             elif isinstance(qwidget, QAction):
                 signal_name = "toggled"
+            elif isinstance(qwidget, BinningTypeSelection):
+                signal_name = "currentIndexChanged"
             else:
                 raise ValueError(f"{type(qwidget)} not supported by ConfigurationHandler")
             signal = getattr(qwidget, signal_name)

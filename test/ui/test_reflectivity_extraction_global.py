@@ -44,11 +44,9 @@ def _assert_configuration_float_value(main_window, param_name, gold_value):
 @pytest.mark.parametrize(
     "widget, config_param",
     [
-        ("final_rebin_checkbox_global", "do_final_rebin_global"),
         ("normalize_to_unity_checkbox", "normalize_to_unity"),
         ("global_fit_checkbox", "global_stitching"),
         ("polynomial_stitching_checkbox", "polynomial_stitching"),
-        ("fanReflectivity", "use_constant_q"),
         ("direct_beam_y_lock_checkbox", "lock_direct_beam_y"),
     ],
 )
@@ -68,7 +66,7 @@ def test_global_checkboxes(qtbot, widget, config_param):
 @pytest.mark.parametrize(
     "widget, config_param, gold_value",
     [
-        ("q_rebin_spinbox_global", "final_rebin_step_global", -0.02),
+        ("q_rebin_spinbox_global", "binning_q_step_global", -0.02),
         ("normalization_q_cutoff_spinbox", "total_reflectivity_q_cutoff", 0.02),
         ("polynomial_stitching_degree_spinbox", "polynomial_stitching_degree", 2),
         ("polynomial_stitching_points_spinbox", "polynomial_stitching_points", 5),
@@ -117,19 +115,20 @@ def test_reflectivity_recalculated_on_config_change(mocker, qtbot):
 
     number_runs = 2 * number_data_tabs
 
-    # test toggling `fanReflectivity`
+    # test toggling `direct_beam_y_lock_checkbox`
     prev_call_count = mock_calculate_reflectivity.call_count
-    main_window.ui.fanReflectivity.nextCheckState()
+    checkbox = main_window.ui.direct_beam_y_lock_checkbox
+    checkbox.setChecked(True)
     assert mock_calculate_reflectivity.call_count == prev_call_count + number_runs
 
-    # test toggling `final_rebin_checkbox`
+    # test changing `binning_type_selector_run` - should only recalculate reflectivity for the current run
     prev_call_count = mock_calculate_reflectivity.call_count
-    main_window.ui.final_rebin_checkbox_global.nextCheckState()
-    assert mock_calculate_reflectivity.call_count == prev_call_count + number_runs
+    main_window.ui.binning_type_selector_run.setCurrentIndex(1)
+    assert mock_calculate_reflectivity.call_count == prev_call_count + 1
 
-    # test editing `q_rebin_spinbox`
+    # test editing `final_rebin_checkbox_run` - should only recalculate reflectivity for the current run
     prev_call_count = mock_calculate_reflectivity.call_count
-    q_spinbox = main_window.ui.q_rebin_spinbox_global
+    q_spinbox = main_window.ui.q_rebin_spinbox_run
     q_delta = q_spinbox.singleStep() if q_spinbox.value() < 0 else -q_spinbox.singleStep()
     ui_utilities.setValue(q_spinbox, q_spinbox.value() + q_delta, editing_finished=True)
-    assert mock_calculate_reflectivity.call_count == prev_call_count + number_runs
+    assert mock_calculate_reflectivity.call_count == prev_call_count + 1
