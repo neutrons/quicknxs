@@ -73,22 +73,44 @@ channels = [
 # Required until the build feature becomes stable
 preview = ["pixi-build"]
 
+# Dependency tables
+
+[tool.pixi.dependencies]
+mr_reduction = "==2.11.0"
+pyqt = ">=5.15.9"
+qtpy = "*"
+matplotlib = ">=3.6.3"
+
+[tool.pixi.pypi-dependencies]
+quicknxs = { path = ".", editable = true }
+
+# Pixi build configuration
+
+[tool.pixi.package.build-dependencies]
+hatchling = "*"
+versioningit = "*"
+
+# Conda packages (no PyPi) to be enumerated within the conda package to be built.
+[tool.pixi.package.host-dependencies]
+hatchling = "*"
+versioningit = "*"
+mr_reduction = "==2.11.0"
+pyqt = ">=5.15.9"
+qtpy = "*"
+matplotlib = ">=3.6.3"
+
+[tool.pixi.package.run-dependencies]
+mr_reduction = "==2.11.0"
+pyqt = ">=5.15.9"
+qtpy = "*"
+matplotlib = ">=3.6.3"
+
 [tool.pixi.package]
 name = "quicknxs"
 version = "0.0.0"
 
 [tool.pixi.package.build]
-backend = { name = "pixi-build-python", version = "0.1.*" }
-
-[tool.pixi.package.host-dependencies]
-hatchling = "*"
-versioningit = "*"
-
-[tool.pixi.dependencies]
-mr_reduction = "==2.8.0"
-
-[tool.pixi.pypi-dependencies]
-quicknxs = { path = ".", editable = true }
+backend = { name = "pixi-build-python", version = "0.3.*" }
 
 # Environments and features
 
@@ -99,8 +121,6 @@ default = { features = [
     "test",
     "build",
 ], solve-group = "default" }
-docs = { features = ["dev", "docs"], no-default-feature = true }
-build = { features = ["build"], no-default-feature = true }
 
 [tool.pixi.feature.build.dependencies]
 anaconda-client = ">=1.13.0"
@@ -116,9 +136,6 @@ pip-audit = ">=2.9.0"
 pre-commit = ">=4.2.0"
 ruff = "*"
 versioningit = ">=3.2.0"
-pyqt = ">=5.15.9"
-qtpy = "*"
-matplotlib = ">=3.6.3"
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = ">=8"
