@@ -80,7 +80,7 @@ jobs:
           cp *.conda /tmp/local-channel/linux-64
 
       - name: Verify Conda Package
-        uses: neutrons/conda-verify@main
+        uses: neutrons/conda-verify@v0.1.2
         with:
           python-version: "3.11"
           local-channel: /tmp/local-channel
