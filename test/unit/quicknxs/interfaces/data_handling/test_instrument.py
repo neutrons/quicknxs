@@ -7,7 +7,7 @@ from mantid.kernel import Direction
 from mantid.simpleapi import CreateSingleValuedWorkspace
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
+from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError, mantid_algorithm_exec
 
 
 @pytest.mark.datarepo
@@ -95,6 +95,18 @@ def test_load_data_nbr_events_min(data_server):
     conf.apply_deadtime = True
     ws_list = conf.instrument.load_data(file_path, conf)
     assert len(ws_list) == 2
+
+
+@pytest.mark.datarepo
+def test_load_data_insufficient_event_count(data_server):
+    """Test load data with too few events"""
+    Configuration.setup_default_values()
+
+    conf = Configuration()
+    file_path = data_server.path_to("REF_M_43670")
+
+    with pytest.raises(InsufficientEventCountError):
+        conf.instrument.load_data(file_path, conf)
 
 
 @pytest.mark.parametrize(

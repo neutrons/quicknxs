@@ -172,6 +172,12 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
     return pruned_list
 
 
+class InsufficientEventCountError(Exception):
+    """Exception raised when the number of events in the workspace is too low"""
+
+    pass
+
+
 class Instrument(object):
     """Instrument class. Holds the data handling that is unique to a specific instrument."""
 
@@ -268,6 +274,11 @@ class Instrument(object):
         -------
         List[EventWorkspace]
             List of cross-section workspaces
+
+        Raises
+        ------
+        InsufficientEventCountError
+            If the data file does not contain enough events
         """
         temp_ws_root_name = "".join(random.sample(string.ascii_letters, 12))  # random string of 12 characters
         use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG
@@ -314,6 +325,8 @@ class Instrument(object):
 
         # Remove workspaces with too few events
         _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
+        if len(_path_xs_list) == 0:
+            raise InsufficientEventCountError(f"Too few events in: {file_path}")
 
         # Dead-time correction only applies to post-epics data
         if configuration is not None and configuration.apply_deadtime and not is_pre_epics:
@@ -388,6 +401,11 @@ class Instrument(object):
         -------
         List[EventWorkspace]:
             A list of EventWorkspaces, one for each cross-section
+
+        Raises
+        ------
+        InsufficientEventCountError
+            If the data file does not contain enough events
         """
         fp_instance = FilePath(file_path)
         ws_root_name = fp_instance.run_numbers(string_representation="short")

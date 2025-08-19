@@ -14,6 +14,7 @@ from qtpy import QtCore, QtWidgets
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
@@ -255,6 +256,21 @@ def test_reduction_table(qtbot):
     assert handler.reduction_table == main_data_table_widget
     data_tab_widget.setCurrentIndex(2)
     assert handler.reduction_table == second_data_table_widget
+
+
+def test_open_file_insufficient_event_count_error(mocker, qtbot):
+    mocker.patch("quicknxs.interfaces.data_manager.DataManager.load", side_effect=InsufficientEventCountError)
+    mocker.patch("os.path.isfile", return_value=True)
+    mock_report_message = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler.report_message")
+
+    main_window = MainWindow()
+    qtbot.addWidget(main_window)
+    handler = MainHandler(main_window)
+
+    handler.open_file("test/file/path")
+
+    assert mock_report_message.call_count == 2
+    assert "Error loading file(s)" in mock_report_message.call_args[0][0]
 
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@ from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
 from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.enums import DirectBeamTableColumn, ReductionTableColumn
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
@@ -149,6 +150,7 @@ class MainHandler(object):
                 return
 
         t_0 = time.time()
+        prog = None
         self.main_window.auto_change_active = True
         try:
             self.report_message(f"Loading file(s) {file_path}")
@@ -156,14 +158,18 @@ class MainHandler(object):
             configuration = self.get_configuration()
             self._data_manager.load(file_path, configuration, force=force, progress=prog)
             self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
-        except RuntimeError as run_err:
-            # FIXME - need to find out what kind of error it could have
+        except InsufficientEventCountError as run_err:
             self.report_message(
-                f"Error loading file(s) {self._data_manager.current_file_name} due to {run_err}",
+                f"Error loading file(s) {self._data_manager.current_file_name} due to:\n{run_err}",
                 detailed_message=str(traceback.format_exc()),
-                pop_up=False,
+                pop_up=True,
                 is_error=True,
             )
+            self.main_window.auto_change_active = False
+            # reset progress bar
+            if prog is not None:
+                prog.reset()
+            return
 
         if not silent:
             self.file_loaded()
