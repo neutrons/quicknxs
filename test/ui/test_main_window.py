@@ -3,7 +3,7 @@ from qtpy import QtCore, QtWidgets
 
 from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
-from quicknxs.interfaces.main_window import MainWindow
+from quicknxs.interfaces.main_window import MainWindow, disabled_widget
 from test.ui import ui_utilities
 
 
@@ -420,6 +420,60 @@ class TestMainGui:
         # check that the run was removed from the tables
         assert len(window_main.data_manager.reduction_list) == 0
         assert len(window_main.data_manager.direct_beam_list) == 0
+
+
+class TestDisabledWidget:
+    """Tests for the disabled_widget context manager."""
+
+    def test_enabled_widget_reenabled(self, qtbot):
+        """Test that an enabled widget is disabled inside the context and enabled after the context."""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+        widget = window_main.ui.mainToolbar
+
+        with disabled_widget(widget):
+            assert not widget.isEnabled()
+
+        assert widget.isEnabled()
+
+    def test_disabled_widget_redisabled(self, qtbot):
+        """Test that a disabled widget is still disabled after the context."""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+        widget = window_main.ui.mainToolbar
+
+        widget.setEnabled(False)
+        with disabled_widget(widget):
+            assert not widget.isEnabled()
+
+        assert not widget.isEnabled()
+
+    def test_disabled_widget_enabled_after_exception(self, qtbot):
+        """Test that a widget is reenabled after an exception is raised inside the context."""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+        widget = window_main.ui.mainToolbar
+
+        with pytest.raises(ValueError):
+            with disabled_widget(widget):
+                assert not widget.isEnabled()
+                raise ValueError("bad value")
+
+        assert widget.isEnabled()
+
+    def test_nested_contexts(self, qtbot):
+        """Test that nested contexts work as expected."""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+        widget = window_main.ui.mainToolbar
+
+        with disabled_widget(widget):
+            assert not widget.isEnabled()
+            with disabled_widget(widget):
+                assert not widget.isEnabled()
+            assert not widget.isEnabled()
+
+        assert widget.isEnabled()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+from contextlib import contextmanager
 
 from qtpy import QtCore, QtWidgets
 
@@ -15,6 +16,21 @@ from quicknxs.interfaces.plotting import PlotManager
 from quicknxs.interfaces.reduction_dialog import ReductionDialog
 from quicknxs.interfaces.smooth_dialog import SmoothDialog
 from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
+
+
+@contextmanager
+def disabled_widget(widget: QtWidgets.QWidget):
+    """
+    Temporarily disable a widget for the duration of the context.
+
+    Restores the enabled state of the widget when the context exits.
+    """
+    prev_enabled = widget.isEnabled()
+    widget.setEnabled(False)
+    try:
+        yield
+    finally:
+        widget.setEnabled(prev_enabled)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -171,7 +187,10 @@ class MainWindow(QtWidgets.QMainWindow):
         item = self.ui.file_list.currentItem()  # type: QListWidgetItem
         name = str(item.text())  # e.g 'REF_M_38199.nxs.h5' or 'REF_M_38198.nxs.h5+REF_M_38199.nxs.h5'
         filepath = FilePath.join(self.data_manager.current_directory, name)
-        self.file_handler.open_file(filepath)
+
+        # disable adding file to reduction or direct beam list before it has been successfully loaded
+        with disabled_widget(self.ui.mainToolbar):
+            self.file_handler.open_file(filepath)
 
     def reload_file(self):
         """Reload the file that is currently selected form the list."""
