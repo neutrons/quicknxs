@@ -421,8 +421,12 @@ class TestMainGui:
         assert len(window_main.data_manager.reduction_list) == 0
         assert len(window_main.data_manager.direct_beam_list) == 0
 
-    def test_disabled_widget_enabled(self, qtbot):
-        """Test context manager disabled_widget"""
+
+class TestDisabledWidget:
+    """Tests for the disabled_widget context manager."""
+
+    def test_enabled_widget_reenabled(self, qtbot):
+        """Test that an enabled widget is disabled inside the context and enabled after the context."""
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         widget = window_main.ui.mainToolbar
@@ -432,8 +436,20 @@ class TestMainGui:
 
         assert widget.isEnabled()
 
+    def test_disabled_widget_redisabled(self, qtbot):
+        """Test that a disabled widget is still disabled after the context."""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+        widget = window_main.ui.mainToolbar
+
+        widget.setEnabled(False)
+        with disabled_widget(widget):
+            assert not widget.isEnabled()
+
+        assert not widget.isEnabled()
+
     def test_disabled_widget_enabled_after_exception(self, qtbot):
-        """Test context manager disabled_widget"""
+        """Test that a widget is reenabled after an exception is raised inside the context."""
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         widget = window_main.ui.mainToolbar
@@ -442,6 +458,20 @@ class TestMainGui:
             with disabled_widget(widget):
                 assert not widget.isEnabled()
                 raise ValueError("bad value")
+
+        assert widget.isEnabled()
+
+    def test_nested_contexts(self, qtbot):
+        """Test that nested contexts work as expected."""
+        window_main = MainWindow()
+        qtbot.addWidget(window_main)
+        widget = window_main.ui.mainToolbar
+
+        with disabled_widget(widget):
+            assert not widget.isEnabled()
+            with disabled_widget(widget):
+                assert not widget.isEnabled()
+            assert not widget.isEnabled()
 
         assert widget.isEnabled()
 

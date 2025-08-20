@@ -19,12 +19,18 @@ from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
 
 
 @contextmanager
-def disabled_widget(widget: QtWidgets):
+def disabled_widget(widget: QtWidgets.QWidget):
+    """
+    Temporarily disable a widget for the duration of the context.
+
+    Restores the enabled state of the widget when the context exits.
+    """
+    prev_enabled = widget.isEnabled()
     widget.setEnabled(False)
     try:
         yield
     finally:
-        widget.setEnabled(True)
+        widget.setEnabled(prev_enabled)
 
 
 class MainWindow(QtWidgets.QMainWindow):

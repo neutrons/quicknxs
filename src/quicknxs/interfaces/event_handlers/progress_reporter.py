@@ -90,4 +90,8 @@ class ProgressReporter(object):
 
     def reset(self):
         """Reset the progress bar to show no progress"""
-        self.progress_bar.reset()
+        self.value = 0
+        for st in self.sub_tasks:
+            st.value = 0
+        if self.progress_bar is not None:
+            self.progress_bar.reset()

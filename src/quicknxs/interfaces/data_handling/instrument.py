@@ -326,7 +326,9 @@ class Instrument(object):
         # Remove workspaces with too few events
         _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
         if len(_path_xs_list) == 0:
-            raise InsufficientEventCountError(f"Too few events in: {file_path}")
+            raise InsufficientEventCountError(
+                f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
+            )
 
         # Dead-time correction only applies to post-epics data
         if configuration is not None and configuration.apply_deadtime and not is_pre_epics:
