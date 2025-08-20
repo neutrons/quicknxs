@@ -258,8 +258,15 @@ def test_reduction_table(qtbot):
     assert handler.reduction_table == second_data_table_widget
 
 
-def test_open_file_insufficient_event_count_error(mocker, qtbot):
-    mocker.patch("quicknxs.interfaces.data_manager.DataManager.load", side_effect=InsufficientEventCountError)
+@pytest.mark.parametrize(
+    "error_type",
+    [
+        (InsufficientEventCountError),
+        (RuntimeError),
+    ],
+)
+def test_open_file_insufficient_event_count_error(error_type, mocker, qtbot):
+    mocker.patch("quicknxs.interfaces.data_manager.DataManager.load", side_effect=error_type)
     mocker.patch("os.path.isfile", return_value=True)
     mock_report_message = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler.report_message")
 

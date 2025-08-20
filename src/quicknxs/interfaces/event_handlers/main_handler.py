@@ -158,7 +158,7 @@ class MainHandler(object):
             configuration = self.get_configuration()
             self._data_manager.load(file_path, configuration, force=force, progress=prog)
             self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
-        except InsufficientEventCountError as run_err:
+        except (RuntimeError, InsufficientEventCountError) as run_err:
             self.report_message(
                 f"Error loading file(s) {self._data_manager.current_file_name} due to:\n{run_err}",
                 detailed_message=str(traceback.format_exc()),
