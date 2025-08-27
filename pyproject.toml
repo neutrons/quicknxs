@@ -76,10 +76,10 @@ preview = ["pixi-build"]
 # Dependency tables
 
 [tool.pixi.dependencies]
-mr_reduction = ">=2.11.0,<3"
-pyqt = ">=5.15.11,<6"
-qtpy = ">=2.4.3,<3"
-matplotlib = ">=3.9.4,<4"
+mr_reduction = "==2.11.0"
+pyqt = ">=5.15.9"
+qtpy = "*"
+matplotlib = ">=3.6.3"
 
 [tool.pixi.pypi-dependencies]
 quicknxs = { path = ".", editable = true }
