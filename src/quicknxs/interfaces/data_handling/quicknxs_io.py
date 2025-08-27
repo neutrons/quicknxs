@@ -626,6 +626,7 @@ def determine_which_files_to_sum(run_file, data_file_indices):
     else:
         runs = str.split(str.split(data_file_indices)[-1], ",")
 
+    outfile = run_file
     for run in runs:
         numors = str.split(run, ":")
         if len(numors) > 1 and (str.split(run, ":")[0] in run_file):
