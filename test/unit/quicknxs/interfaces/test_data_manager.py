@@ -120,6 +120,24 @@ class TestDataManagerTest(object):
         assert len(manager.peak_reduction_lists[1]) == 2
         assert manager.active_reduction_list_index == 1
 
+    @pytest.mark.datarepo
+    def test_reduce_spec(self, mocker, data_manager_with_data_factory):
+        """Test function reduce_spec."""
+        mock_nexus_reflectivity = mocker.patch(
+            "quicknxs.interfaces.data_handling.data_set.NexusData.calculate_reflectivity", return_value=True
+        )
+
+        manager = data_manager_with_data_factory()
+
+        manager.reduce_spec()
+        # assert that the reflectivity was recalculated for the two reflected runs
+        mock_nexus_reflectivity.call_count == 2
+        mock_nexus_reflectivity.reset_mock()
+
+        manager.reduce_spec(direct_beam="42099")
+        # assert that the reflectivity was recalculated for only one run, which matches the direct beam
+        mock_nexus_reflectivity.call_count == 1
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

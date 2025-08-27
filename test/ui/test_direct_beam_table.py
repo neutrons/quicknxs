@@ -63,5 +63,33 @@ def test_table_connections(qtbot, data_server):
     assert main_window.ui.refXWidth.value() == float(table.item(0, 2).text())
 
 
+@pytest.mark.datarepo
+def test_table_peak_position_change_triggers_plot_update(mocker, main_window_with_data_factory):
+    """Test that changing the peak position in the direct beam table triggers a plot update."""
+    # Mock plotting
+    mock_plot_refl = mocker.patch(
+        "quicknxs.interfaces.plotting.PlotManager.plot_reflectivity_or_intensity", return_value=True
+    )
+
+    main_window = main_window_with_data_factory()
+    table: QtWidgets.QTableWidget = main_window.ui.directBeamTable
+
+    reduction_list = main_window.data_manager.reduction_list
+    mock_refl_run_with_db_42099 = mocker.patch.object(reduction_list[0], "calculate_reflectivity")
+    mock_refl_run_with_db_42100 = mocker.patch.object(reduction_list[1], "calculate_reflectivity")
+
+    # Get call count before
+    plot_refl_call_count = mock_plot_refl.call_count
+
+    # Update peak position in the direct beam table
+    assert table.item(0, 0).text() == "42100"
+    table.item(0, 1).setText("102.0")
+
+    # Verify that the reflected run was updated and that the plot function was called
+    mock_refl_run_with_db_42099.assert_not_called()
+    mock_refl_run_with_db_42100.assert_called_once()
+    assert mock_plot_refl.call_count == plot_refl_call_count + 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
