@@ -498,7 +498,7 @@ class DataManager(object):
         """Return the direct beam data object for the active data."""
         return self._find_direct_beam(self._nexus_data)
 
-    def is_same_run(self, run_number_a, run_number_b):
+    def is_same_run(self, run_number_a: str | int, run_number_b: str | int) -> bool:
         """
         Returns True if two run numbers are considered the same.
 
@@ -533,7 +533,7 @@ class DataManager(object):
         ----------
         nexus_data : NexusData
             NexusData run object
-        direct_beam : str
+        direct_beam : str | int
             Direct beam run number
         """
         run_direct_beam = self._find_direct_beam(nexus_data)
@@ -571,6 +571,7 @@ class DataManager(object):
                         if len(keys) > 1:
                             logging.error("More than one cross-section for the direct beam, using the first one")
                         direct_beam = direct_beam_item.cross_sections[keys[0]]
+                        break
             if direct_beam is None:
                 logging.error("The specified direct beam is not available: skipping")
 
@@ -628,7 +629,7 @@ class DataManager(object):
                 return False
         return True
 
-    def reduce_spec(self, direct_beam: Optional[str] = None):
+    def reduce_spec(self, direct_beam: Optional[str | int] = None):
         """
         Calculate reflectivity for all runs in all reduction lists.
 
@@ -636,7 +637,7 @@ class DataManager(object):
 
         Parameters
         ----------
-        updated_direct_beam : Optional[str]
+        direct_beam : Optional[str | int]
             Direct beam run number
         """
         for reduct_list in self.peak_reduction_lists.values():

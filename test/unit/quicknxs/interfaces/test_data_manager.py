@@ -123,20 +123,19 @@ class TestDataManagerTest(object):
     @pytest.mark.datarepo
     def test_reduce_spec(self, mocker, data_manager_with_data_factory):
         """Test function reduce_spec."""
-        mock_nexus_reflectivity = mocker.patch(
-            "quicknxs.interfaces.data_handling.data_set.NexusData.calculate_reflectivity", return_value=True
-        )
-
         manager = data_manager_with_data_factory()
+        spy_calc_refl_run1 = mocker.spy(manager.reduction_list[0], "calculate_reflectivity")
+        spy_calc_refl_run2 = mocker.spy(manager.reduction_list[1], "calculate_reflectivity")
 
         manager.reduce_spec()
         # assert that the reflectivity was recalculated for the two reflected runs
-        mock_nexus_reflectivity.call_count == 2
-        mock_nexus_reflectivity.reset_mock()
+        assert spy_calc_refl_run1.call_count == 1
+        assert spy_calc_refl_run2.call_count == 1
 
         manager.reduce_spec(direct_beam="42099")
         # assert that the reflectivity was recalculated for only one run, which matches the direct beam
-        mock_nexus_reflectivity.call_count == 1
+        assert spy_calc_refl_run1.call_count == 2
+        assert spy_calc_refl_run2.call_count == 1
 
 
 if __name__ == "__main__":
