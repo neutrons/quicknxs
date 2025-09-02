@@ -1169,9 +1169,9 @@ class MainHandler(object):
             self.update_info()
             self.main_window.auto_change_active = False
 
-        # Recalculate reflectivity
+        # Recalculate reflectivity for runs with this direct beam
         try:
-            self._data_manager.calculate_reflectivity(nexus_data=data)
+            self._data_manager.reduce_spec(direct_beam=data.number)
         except:
             self.report_message(
                 "Could not compute reflectivity for %s" % self._data_manager.current_file_name,

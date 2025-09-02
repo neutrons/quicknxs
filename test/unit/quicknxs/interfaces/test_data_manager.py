@@ -120,6 +120,23 @@ class TestDataManagerTest(object):
         assert len(manager.peak_reduction_lists[1]) == 2
         assert manager.active_reduction_list_index == 1
 
+    @pytest.mark.datarepo
+    def test_reduce_spec(self, mocker, data_manager_with_data_factory):
+        """Test function reduce_spec."""
+        manager = data_manager_with_data_factory()
+        spy_calc_refl_run1 = mocker.spy(manager.reduction_list[0], "calculate_reflectivity")
+        spy_calc_refl_run2 = mocker.spy(manager.reduction_list[1], "calculate_reflectivity")
+
+        manager.reduce_spec()
+        # assert that the reflectivity was recalculated for the two reflected runs
+        assert spy_calc_refl_run1.call_count == 1
+        assert spy_calc_refl_run2.call_count == 1
+
+        manager.reduce_spec(direct_beam="42099")
+        # assert that the reflectivity was recalculated for only one run, which matches the direct beam
+        assert spy_calc_refl_run1.call_count == 2
+        assert spy_calc_refl_run2.call_count == 1
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

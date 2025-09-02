@@ -10,8 +10,12 @@ from pathlib import Path
 import pytest
 from PyQt5.QtCore import QSettings
 
+from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.filepath import RunNumbers
 from quicknxs.interfaces.data_handling.instrument import Instrument
+from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.main_window import MainWindow
+from test.ui import ui_utilities
 
 pytest_plugins = ["mantid.fixtures"]
 
@@ -106,3 +110,73 @@ def data_server(DATA_DIR):
             return file_list
 
     return _DataServe()
+
+
+@pytest.fixture
+def main_window_with_data_factory(qtbot):
+    """Test fixture that returns a main window with data loaded into it.
+
+    Create as a factory to be able to do setup e.g. mock functions before instantiating the main window.
+    """
+
+    def _create():
+        Configuration.setup_default_values()
+        main_window = MainWindow()
+        qtbot.addWidget(main_window)
+
+        # load file list
+        ui_utilities.setText(main_window.numberSearchEntry, str(42100), press_enter=True)
+
+        # add two direct beams
+        ui_utilities.set_current_file_by_run_number(main_window, 42100)
+        main_window.actionAddDirectBeam.triggered.emit()
+        ui_utilities.set_current_file_by_run_number(main_window, 42099)
+        main_window.actionAddDirectBeam.triggered.emit()
+
+        # add two data runs
+        ui_utilities.set_current_file_by_run_number(main_window, 42112)
+        main_window.actionAddRefl.triggered.emit()
+        ui_utilities.set_current_file_by_run_number(main_window, 42113)
+        main_window.actionAddRefl.triggered.emit()
+
+        # set the first data run as the active run in the UI
+        main_window.reduction_cell_activated(0, 0)
+
+        return main_window
+
+    return _create
+
+
+@pytest.fixture
+def data_manager_with_data_factory(data_server):
+    """Test fixture that returns a data manager with data loaded into it.
+
+    Create as a factory to be able to do setup e.g. mock functions before instantiating the data manager.
+    """
+
+    def _create():
+        Configuration.setup_default_values()
+
+        manager = DataManager(data_server.directory)
+
+        # Add direct beams
+        manager.load(data_server.path_to("REF_M_42099"), Configuration())
+        manager.add_active_to_direct_beam_list()
+        manager.load(data_server.path_to("REF_M_42100"), Configuration())
+        manager.add_active_to_direct_beam_list()
+
+        # Add reflected runs, direct beams should be automatically matched
+        conf1 = Configuration()
+        conf1.match_direct_beam = True
+        manager.load(data_server.path_to("REF_M_42112"), conf1)
+        manager.add_active_to_reduction()
+        assert manager.get_active_direct_beam().number == "42099"
+        conf2 = Configuration()
+        conf2.match_direct_beam = True
+        manager.load(data_server.path_to("REF_M_42113"), conf2)
+        manager.add_active_to_reduction()
+        assert manager.get_active_direct_beam().number == "42100"
+
+        return manager
+
+    return _create

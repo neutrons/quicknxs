@@ -498,6 +498,47 @@ class DataManager(object):
         """Return the direct beam data object for the active data."""
         return self._find_direct_beam(self._nexus_data)
 
+    def is_same_run(self, run_number_a: str | int, run_number_b: str | int) -> bool:
+        """
+        Returns True if two run numbers are considered the same.
+
+        Tries to compare the run numbers as integers if possible;
+        falls back to comparing them as-is (e.g., strings).
+
+        Parameters
+        ----------
+        run_number_a : str or int
+            The first run number.
+        run_number_b : str or int
+            The second run number.
+
+        Returns
+        -------
+        bool
+            True if the run numbers are equal (after normalization), False otherwise.
+        """
+
+        def normalize(run):
+            try:
+                return int(run)
+            except (ValueError, TypeError):
+                return run
+
+        return normalize(run_number_a) == normalize(run_number_b)
+
+    def is_direct_beam_for_run(self, nexus_data: NexusData, direct_beam_run: str):
+        """Check if the direct beam is the configured direct beam for the given run.
+
+        Parameters
+        ----------
+        nexus_data : NexusData
+            NexusData run object
+        direct_beam : str | int
+            Direct beam run number
+        """
+        run_direct_beam = self._find_direct_beam(nexus_data)
+        return run_direct_beam is not None and self.is_same_run(run_direct_beam.number, direct_beam_run)
+
     def _find_direct_beam(self, nexus_data: Union[NexusData, CrossSectionData]) -> Optional[CrossSectionData]:
         """Attempt to find a direct beam data set for a given reflectivity data set.
 
@@ -522,23 +563,15 @@ class DataManager(object):
             raise TypeError("nexus_data must be a NexusData or CrossSectionData object")
 
         if data_xs.configuration is not None and data_xs.configuration.direct_beam is not None:
-            for item in self.direct_beam_list:
-                # convert _run_number to int if it can be
-                try:
-                    _run_number = int(data_xs.configuration.direct_beam)
-                except (ValueError, TypeError):
-                    _run_number = data_xs.configuration.direct_beam
-                # convert item.number to int if it can be
-                try:
-                    item_number = int(item.number)
-                except (ValueError, TypeError):
-                    item_number = item.number
-                if item_number == _run_number:
-                    keys = list(item.cross_sections.keys())
+            data_xs_direct_beam = data_xs.configuration.direct_beam
+            for direct_beam_item in self.direct_beam_list:
+                if self.is_same_run(direct_beam_item.number, data_xs_direct_beam):
+                    keys = list(direct_beam_item.cross_sections.keys())
                     if len(keys) >= 1:
                         if len(keys) > 1:
                             logging.error("More than one cross-section for the direct beam, using the first one")
-                        direct_beam = item.cross_sections[keys[0]]
+                        direct_beam = direct_beam_item.cross_sections[keys[0]]
+                        break
             if direct_beam is None:
                 logging.error("The specified direct beam is not available: skipping")
 
@@ -596,10 +629,21 @@ class DataManager(object):
                 return False
         return True
 
-    def reduce_spec(self):
-        """Calculate reflectivity for all runs in all reduction lists."""
+    def reduce_spec(self, direct_beam: Optional[str | int] = None):
+        """
+        Calculate reflectivity for all runs in all reduction lists.
+
+        If a direct beam is given, only calculate reflectivity for the runs using the given direct beam.
+
+        Parameters
+        ----------
+        direct_beam : Optional[str | int]
+            Direct beam run number
+        """
         for reduct_list in self.peak_reduction_lists.values():
             for nexus_data in reduct_list:
+                if direct_beam is not None and not self.is_direct_beam_for_run(nexus_data, direct_beam):
+                    continue
                 try:
                     self.calculate_reflectivity(nexus_data=nexus_data)
                 except:
