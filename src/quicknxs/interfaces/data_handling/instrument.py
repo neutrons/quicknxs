@@ -294,6 +294,7 @@ class Instrument(object):
             )
         else:
             event_ws = api.LoadEventNexus(Filename=file_path, OutputWorkspace="raw_events")
+            metadata = event_ws.getRun()
             # If the meta data is corrupted and we are missing analyzer/polarizer data, use the simple filtering.
             polarizer = event_ws.getRun().getProperty("Polarizer").value[0]
             analyzer = event_ws.getRun().getProperty("Analyzer").value[0]
@@ -318,8 +319,8 @@ class Instrument(object):
                     InputWorkspace=event_ws,
                     PolState=self.pol_state,
                     AnaState=self.ana_state,
-                    PolVeto=self.pol_veto,
-                    AnaVeto=self.ana_veto,
+                    PolVeto=self.pol_veto if self.pol_veto in metadata else "",  # safeguard against missing log
+                    AnaVeto=self.ana_veto if self.ana_veto in metadata else "",
                     CrossSectionWorkspaces=f"{temp_ws_root_name}_entry",
                 )
 
@@ -334,6 +335,7 @@ class Instrument(object):
         if configuration is not None and configuration.apply_deadtime and not is_pre_epics:
             # Load error events from the bank_error_events entry
             err_ws = api.LoadErrorEventsNexus(file_path)
+            metadata = err_ws.getRun()
             # Split error events by cross-section for compatibility with normal events
             if use_slow_flipper_log:
                 _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_ws_root_name + "_err")
@@ -347,8 +349,8 @@ class Instrument(object):
                     InputWorkspace=err_ws,
                     PolState=self.pol_state,
                     AnaState=self.ana_state,
-                    PolVeto=self.pol_veto,
-                    AnaVeto=self.ana_veto,
+                    PolVeto=self.pol_veto if self.pol_veto in metadata else "",  # safeguard against missing log
+                    AnaVeto=self.ana_veto if self.ana_veto in metadata else "",
                     CrossSectionWorkspaces="%s_err_entry" % temp_ws_root_name + "_err",
                 )
 
