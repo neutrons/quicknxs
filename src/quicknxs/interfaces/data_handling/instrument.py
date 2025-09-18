@@ -296,8 +296,8 @@ class Instrument(object):
             event_ws = api.LoadEventNexus(Filename=file_path, OutputWorkspace="raw_events")
             metadata = event_ws.getRun()
             # If the meta data is corrupted and we are missing analyzer/polarizer data, use the simple filtering.
-            polarizer = event_ws.getRun().getProperty("Polarizer").value[0]
-            analyzer = event_ws.getRun().getProperty("Analyzer").value[0]
+            polarizer = metadata.getProperty("Polarizer").value[0]
+            analyzer = metadata.getProperty("Analyzer").value[0]
             if (polarizer > 0 and self.pol_state not in event_ws.getRun()) or (
                 analyzer > 0 and self.ana_state not in event_ws.getRun()
             ):
