@@ -91,7 +91,7 @@ jobs:
           python-version: "3.11"
           local-channel: /tmp/local-channel
           package-name: ${{ env.PKG_NAME }}
-          extra-channels: mantid-ornl mantid neutrons oncat
+          extra-channels: conda-forge neutrons mantid oncat
           extra-commands: |
             python -c "import mr_reduction"
             python -c "import mantid"
