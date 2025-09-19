@@ -65,9 +65,8 @@ platforms = ["linux-64"]
 channels = [
     "conda-forge",
     "neutrons",
-    "oncat",
-    "mantid-ornl",
     "mantid",
+    "oncat",
     "https://prefix.dev/pixi-build-backends",
 ]
 # Required until the build feature becomes stable
@@ -76,8 +75,8 @@ preview = ["pixi-build"]
 # Dependency tables
 
 [tool.pixi.dependencies]
-mr_reduction = "==2.11.0"
-pyqt = ">=5.15.9"
+mr_reduction = "==2.13.0"  # requires mantid >=6.13.0,<6.14.0
+pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.6.3"
 
@@ -90,18 +89,15 @@ quicknxs = { path = ".", editable = true }
 hatchling = "*"
 versioningit = "*"
 
-# Conda packages (no PyPi) to be enumerated within the conda package to be built.
+# Conda packages (no PyPi)
 [tool.pixi.package.host-dependencies]
+python = ">=3.11,<3.12"
 hatchling = "*"
 versioningit = "*"
-mr_reduction = "==2.11.0"
-pyqt = ">=5.15.9"
-qtpy = "*"
-matplotlib = ">=3.6.3"
 
 [tool.pixi.package.run-dependencies]
-mr_reduction = "==2.11.0"
-pyqt = ">=5.15.9"
+mr_reduction = "==2.13.0"  # requires mantid >=6.13.0,<6.14.0
+pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.6.3"
 
