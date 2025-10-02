@@ -135,9 +135,9 @@ def _prepare_workspace_for_stitching(
         p_n = n_total - cross_section.configuration.cut_last_n_points
 
         # remove leading/trailing indices where cross_section._r is masked
-        while p_0 < p_n and cross_section._r[p_0] is np.ma.masked:
+        while p_0 < p_n and np.ma.is_masked(cross_section._r[p_0]):
             p_0 += 1
-        while p_n > p_0 and cross_section._r[p_n - 1] is np.ma.masked:
+        while p_n > p_0 and np.ma.is_masked(cross_section._r[p_n - 1]):
             p_n -= 1
         if p_n <= p_0:
             continue
