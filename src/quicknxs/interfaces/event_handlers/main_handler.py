@@ -70,8 +70,11 @@ class MainHandler(object):
         self.log_level = QtWidgets.QComboBox(self.ui.statusbar)
         self.log_level.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
         self.log_level.setCurrentText(self.get_log_level())
-        self.log_level.setToolTip("Set the logging level\nDefault log level can be set with environment variable QUICKNXS_LOGLEVEL")
+        self.log_level.setToolTip(
+            "Set the logging level\nDefault log level can be set with environment variable QUICKNXS_LOGLEVEL"
+        )
         self.log_level.currentTextChanged.connect(self.change_log_level)
+
         self.ui.statusbar.addWidget(QtWidgets.QLabel("Log Level:"))
         self.ui.statusbar.addWidget(self.log_level)
 

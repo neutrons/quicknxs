@@ -13,10 +13,8 @@ import logging
 import logging.handlers
 import sys
 
-print("HERE")
 # Log Level as environment variable
 log_level = os.environ.get("QUICKNXS_LOGLEVEL", "INFO").upper()
-print('OS LOG_LEVEL', log_level)
 if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
     log_level = "INFO"
 
