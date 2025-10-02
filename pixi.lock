@@ -4046,7 +4046,7 @@ packages:
 - pypi: ./
   name: quicknxs
   version: 4.12.0.dev2
-  sha256: fb0f59cc7966747ea89ce836822c847afa217dd52409a5bd8ccd5428ee3a1c1e
+  sha256: 16a33cb0723c024f867e66a41c10cf4676fad77f03232b2471b9a6aa0e753d9c
   requires_python: '>=3.10,<3.13'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/rapidjson-1.1.0.post20240409-h3f2d84a_2.conda
