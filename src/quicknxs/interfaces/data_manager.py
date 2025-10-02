@@ -229,7 +229,7 @@ class DataManager(object):
                 return i
         return None
 
-    def find_data_in_direct_beam_list(self, nexus_data: NexusData) -> Optional[int]:
+    def find_data_in_direct_beam_list(self, nexus_data: NexusData | None) -> Optional[int]:
         """Look for the given data in the direct beam list.
 
         Returns
