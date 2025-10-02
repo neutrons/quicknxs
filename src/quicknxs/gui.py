@@ -13,18 +13,30 @@ import logging
 import logging.handlers
 import sys
 
+print("HERE")
+# Log Level as environment variable
+log_level = os.environ.get("QUICKNXS_LOGLEVEL", "INFO").upper()
+print('OS LOG_LEVEL', log_level)
+if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
+    log_level = "INFO"
+
 # Set log level
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(log_level)
 
 # Formatter
 ft = logging.Formatter("%(levelname)s:%(asctime)-15s %(message)s")
 # Create a log file handler
 fh = logging.handlers.TimedRotatingFileHandler(
-    os.path.join(os.path.expanduser("~"), "refred_m.log"), when="midnight", backupCount=15
+    os.path.join(os.path.expanduser("~"), "quicknxs.log"), when="midnight", backupCount=15
 )
-fh.setLevel(logging.INFO)
+fh.setLevel(log_level)
 fh.setFormatter(ft)
 logging.getLogger().addHandler(fh)
+
+sh = logging.StreamHandler(sys.stdout)
+sh.setLevel(log_level)
+sh.setFormatter(ft)
+logging.getLogger().addHandler(sh)
 
 
 def no_abort_excepthook(exc_type, value, tback):
