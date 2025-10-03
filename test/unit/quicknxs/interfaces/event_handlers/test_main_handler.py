@@ -282,26 +282,25 @@ def test_open_file_insufficient_event_count_error(error_type, mocker, qtbot):
     assert "Error loading file(s)" in mock_report_message.call_args[0][0]
 
 
-def test_logging_default_level():
+def test_logging_default_level(monkeypatch):
     """Test that the default logging level is INFO if the environment variable is not set or invalid."""
-    if "QUICKNXS_LOGLEVEL" in os.environ:
-        del os.environ["QUICKNXS_LOGLEVEL"]
+    monkeypatch.delenv("QUICKNXS_LOGLEVEL", raising=False)
 
     import quicknxs.gui  # noqa
 
     assert logging.getLogger().getEffectiveLevel() == logging.INFO
 
 
-def test_logging_level_environment_variable():
+def test_logging_level_environment_variable(monkeypatch):
     """Test that the logging level is set according to the environment variable."""
-    os.environ["QUICKNXS_LOGLEVEL"] = "DEBUG"
+    monkeypatch.setenv("QUICKNXS_LOGLEVEL", "DEBUG")
     import quicknxs.gui as gui_module
 
     importlib.reload(gui_module)
 
     assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
 
-    os.environ["QUICKNXS_LOGLEVEL"] = "INVALID_LEVEL"
+    monkeypatch.setenv("QUICKNXS_LOGLEVEL", "INVALID_LEVEL")
     importlib.reload(gui_module)
 
     assert logging.getLogger().getEffectiveLevel() == logging.INFO
@@ -322,9 +321,9 @@ def test_logging_handlers():
     assert file_handler.backupCount == 15
 
 
-def test_logging_changes_from_gui(qtbot):
+def test_logging_changes_from_gui(qtbot, monkeypatch):
     """Test that changing the log level from the GUI updates the logging level."""
-    os.environ["QUICKNXS_LOGLEVEL"] = "WARNING"
+    monkeypatch.setenv("QUICKNXS_LOGLEVEL", "WARNING")
     import quicknxs.gui as gui_module
 
     importlib.reload(gui_module)
