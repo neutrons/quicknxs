@@ -68,7 +68,8 @@ class MainHandler(object):
 
         # Log Level dropdown in statusbar
         self.log_level = QtWidgets.QComboBox(self.ui.statusbar)
-        self.log_level.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+        self.LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        self.log_level.addItems(self.LOG_LEVELS)
         self.log_level.setCurrentText(self.get_log_level())
         self.log_level.setToolTip(
             "Set the logging level\nDefault log level can be set with environment variable QUICKNXS_LOGLEVEL"
@@ -1882,7 +1883,7 @@ class MainHandler(object):
     def change_log_level(self, level: str):
         """Update all handlers + root logger to new level."""
         lvl = level.upper()
-        if lvl not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
+        if lvl not in (self.LOG_LEVELS):
             lvl = "INFO"
         root = logging.getLogger()
         root.setLevel(lvl)

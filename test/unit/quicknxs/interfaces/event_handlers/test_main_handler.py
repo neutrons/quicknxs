@@ -1,5 +1,7 @@
 # package imports
 # standard imports
+import importlib
+import logging
 import os
 import sys
 
@@ -278,6 +280,67 @@ def test_open_file_insufficient_event_count_error(error_type, mocker, qtbot):
 
     assert mock_report_message.call_count == 2
     assert "Error loading file(s)" in mock_report_message.call_args[0][0]
+
+
+def test_logging_default_level():
+    """Test that the default logging level is INFO if the environment variable is not set or invalid."""
+    if "QUICKNXS_LOGLEVEL" in os.environ:
+        del os.environ["QUICKNXS_LOGLEVEL"]
+
+    import quicknxs.gui  # noqa
+
+    assert logging.getLogger().getEffectiveLevel() == logging.INFO
+
+
+def test_logging_level_environment_variable():
+    """Test that the logging level is set according to the environment variable."""
+    os.environ["QUICKNXS_LOGLEVEL"] = "DEBUG"
+    import quicknxs.gui as gui_module
+
+    importlib.reload(gui_module)
+
+    assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
+
+    os.environ["QUICKNXS_LOGLEVEL"] = "INVALID_LEVEL"
+    importlib.reload(gui_module)
+
+    assert logging.getLogger().getEffectiveLevel() == logging.INFO
+
+
+def test_logging_handlers():
+    """Test that the logging handlers are set up correctly."""
+    logger = logging.getLogger()
+    handlers = logger.handlers
+
+    # Check that there are two handlers: one for file and one for console
+    assert any(isinstance(h, logging.handlers.TimedRotatingFileHandler) for h in handlers)
+    assert any(isinstance(h, logging.StreamHandler) for h in handlers)
+
+    # Check that the file handler is set to rotate at midnight and keep 15 backups
+    file_handler = next(h for h in handlers if isinstance(h, logging.handlers.TimedRotatingFileHandler))
+    assert file_handler.when == "MIDNIGHT"
+    assert file_handler.backupCount == 15
+
+
+def test_logging_changes_from_gui(qtbot):
+    """Test that changing the log level from the GUI updates the logging level."""
+    os.environ["QUICKNXS_LOGLEVEL"] = "WARNING"
+    import quicknxs.gui as gui_module
+
+    importlib.reload(gui_module)
+
+    main_window = MainWindow()
+    handler = MainHandler(main_window)
+    qtbot.addWidget(main_window)
+
+    # Initial log level should be WARNING
+    assert handler.get_log_level() == "WARNING"
+    assert logging.getLogger().getEffectiveLevel() == logging.WARNING
+
+    # Change log level to DEBUG using the handler method
+    handler.change_log_level("DEBUG")
+    assert handler.get_log_level() == "DEBUG"
+    assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
 
 
 if __name__ == "__main__":
