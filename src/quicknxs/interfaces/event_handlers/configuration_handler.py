@@ -101,8 +101,7 @@ class ConfigurationHandler:
             ConfigWidget("actionAutoXROI", "use_peak_finder"),
             ConfigWidget("actionAutoYROI", "use_low_res_finder"),
             ConfigWidget("use_roi_checkbox", "use_roi"),
-            ConfigWidget("use_bck_roi_checkbox", "use_roi_bck"),
-            ConfigWidget("use_bck_roi_checkbox", "force_bck_roi"),
+            ConfigWidget("use_bck_roi_checkbox", "use_metadata_bck_roi"),
             ConfigWidget("use_side_bck_checkbox", "use_tight_bck"),
             ConfigWidget("side_bck_width", "bck_offset"),
         ]

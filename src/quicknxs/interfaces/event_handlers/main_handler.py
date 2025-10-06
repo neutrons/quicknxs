@@ -1463,10 +1463,9 @@ class MainHandler(object):
         # Peak finder options
         Configuration.use_roi = self.ui.use_roi_checkbox.isChecked()
         Configuration.update_peak_range = self.ui.fit_within_roi_checkbox.isChecked()
-        Configuration.use_roi_bck = self.ui.use_bck_roi_checkbox.isChecked()
         Configuration.use_peak_finder = self.ui.actionAutoXROI.isChecked()
         Configuration.use_low_res_finder = self.ui.actionAutoYROI.isChecked()
-        Configuration.force_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
+        Configuration.use_metadata_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
         Configuration.use_tight_bck = self.ui.use_side_bck_checkbox.isChecked()
         Configuration.bck_offset = self.ui.side_bck_width.value()
 
@@ -1567,7 +1566,7 @@ class MainHandler(object):
 
         # Peak finder settings
         self.ui.use_roi_checkbox.setChecked(configuration.use_roi)
-        self.ui.use_bck_roi_checkbox.setChecked(configuration.use_roi_bck)
+        self.ui.use_bck_roi_checkbox.setChecked(configuration.use_metadata_bck_roi)
         self.ui.fit_within_roi_checkbox.setChecked(configuration.update_peak_range)
         self.ui.actionAutoXROI.setChecked(False if configuration.use_roi else configuration.use_peak_finder)
         self.ui.actionAutoYROI.setChecked(False if configuration.use_roi else configuration.use_low_res_finder)
