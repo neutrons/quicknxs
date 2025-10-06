@@ -39,8 +39,7 @@ def test_peak_finder_settings_persist(data_server, qtbot):
         """Assert that the peak finder config is as expected."""
         config = main_window.file_handler.get_configuration()
         assert config.use_roi is False
-        assert config.use_roi_bck is True
-        assert config.force_bck_roi is True
+        assert config.use_metadata_bck_roi is True
         assert config.update_peak_range is True
         assert config.use_tight_bck is True
         assert config.bck_offset == 10
