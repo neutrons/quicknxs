@@ -4,7 +4,7 @@ import mantid.simpleapi as api
 import numpy as np
 import pytest
 
-from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.configuration import Configuration, BinningType
 from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
@@ -126,6 +126,18 @@ class TestDataManipulation(object):
         assert scaling_factors == pytest.approx([1.0, 0.1809, 0.1556], abs=0.001)
         assert scaling_errors == pytest.approx([0.0, 0.003, 0.005], abs=0.001)
 
+    @pytest.mark.datarepo
+    def test_stitch_reflectivity_const_q(self, data_server, mocker_file_open, stitching_config):
+        stitching_config.binning_type_global = BinningType.CONST_Q
+        stitching_config.binning_q_step_global = 0.002
+        manager = DataManager(data_server.directory)
+        manager.load_data_from_reduced_file(data_server.directory, stitching_config)
+        if len(manager.reduction_list) < 1:
+            raise IOError("Files missing.")
+        scaling_factors, scaling_errors = stitch_reflectivity(manager.reduction_list, "Off_On", False, 0.008)
+        assert scaling_factors == pytest.approx([1.0, 0.1809, 0.1556], abs=0.001)
+        assert scaling_errors == pytest.approx([0.0, 0.003, 0.005], abs=0.001)
+
     @pytest.mark.parametrize(
         "normalize_to_unity, global_fit, polynom_degree, expected_scaling_factors, expected_scaling_errors",
         [
@@ -139,7 +151,7 @@ class TestDataManipulation(object):
             (True, True, 3, [0.2, 0.48, 1.2], [0.02, 0.07, 0.2]),
         ],
     )
-    def test_smart_stitch_parameters(
+    def test_stitch_parameters(
         self,
         stitching_reduction_list,
         normalize_to_unity,
@@ -216,7 +228,7 @@ class TestDataManipulation(object):
             _get_polynomial_fit_stitching_scaling_factor(ws1, ws2, 5, 3)
         assert "Levenberg-Marquardt minimizer failed to initialize" in str(error_info.value)
 
-    def test_smart_stitch_normalize_to_unity_error(self, stitching_reduction_list):
+    def test_stitch_normalize_to_unity_error(self, stitching_reduction_list):
         """Test that error is raised when the normalize to unity Q cutoff is too low."""
         q_cutoff = 0.5
         with pytest.raises(NormalizeToUnityQCutoffError):

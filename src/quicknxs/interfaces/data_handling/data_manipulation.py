@@ -140,7 +140,7 @@ def _prepare_workspace_for_stitching(
         while p_n > p_0 and np.ma.is_masked(cross_section._r[p_n - 1]):
             p_n -= 1
         if p_n <= p_0:
-            continue
+            raise ValueError(f"No valid data points in cross-section {xs}")
 
         ws_xs = api.CreateWorkspace(
             DataX=cross_section.q[p_0:p_n],
@@ -382,7 +382,9 @@ def stitch_reflectivity(
         # High-Q data set
         ws = _prepare_workspace_for_stitching(reduction_list[i + 1].cross_sections, xs, global_fit, "high_q_workspace")
 
-        # Determine overlap from whichever workspaces after removing leading/trailing zeroes
+        # Determine overlap between workspaces after removing leading/trailing zeroes
+        # Note: Stitch1D can find the overlap automatically, but it fails if the second workspace x_min is smaller
+        # than the first workspace x_min, which can arise especially with constant-Q binning
         start_overlap = max(_previous_ws.readX(0)[0], ws.readX(0)[0])
         end_overlap = min(_previous_ws.readX(0)[-1], ws.readX(0)[-1])
 
