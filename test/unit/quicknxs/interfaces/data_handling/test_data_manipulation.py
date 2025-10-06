@@ -4,7 +4,7 @@ import mantid.simpleapi as api
 import numpy as np
 import pytest
 
-from quicknxs.interfaces.configuration import Configuration, BinningType
+from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
