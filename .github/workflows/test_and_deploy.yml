@@ -82,8 +82,8 @@ jobs:
       - name: Build conda package
         run: |
           pixi run conda-build
-          mkdir -p /tmp/local-channel/noarch
-          cp *.conda /tmp/local-channel/noarch/
+          mkdir -p /tmp/local-channel/linux-64
+          cp *.conda /tmp/local-channel/linux-64
           # extract version from the package file name "quicknxs-<version>-<build>.conda"
           echo "PKG_VERSION=$(ls *.conda | cut -d'-' -f2)" >> $GITHUB_ENV
 
