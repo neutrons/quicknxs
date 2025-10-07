@@ -127,29 +127,18 @@ class TestDataManipulation(object):
         assert scaling_errors == pytest.approx([0.0, 0.003, 0.005], abs=0.001)
 
     @pytest.mark.datarepo
-    def test_stitch_reflectivity_const_q(self, data_server, mocker_file_open):  # , stitching_config):
+    def test_stitch_reflectivity_const_q(self, data_server, mocker_file_open, stitching_config):
         """Test stitching with constant Q binning."""
-        Configuration.setup_default_values()
-        config = Configuration()
-        settings_override = {
-            "normalize_to_unity": True,
-            "binning_type_run": BinningType.CONST_Q,
-            "binning_q_step_run": 0.01,
-            "use_peak_finder": True,
-            "use_low_res_finder": True,
-            "cut_first_n_points": 1,
-            "cut_last_n_points": 1,
-        }
-        for key in settings_override:
-            setattr(config, key, settings_override[key])
+        stitching_config.binning_type_run = BinningType.CONST_Q
+        stitching_config.binning_q_step_run = -0.01
 
         manager = DataManager(data_server.directory)
-        manager.load_data_from_reduced_file(data_server.directory, config)
+        manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
             raise IOError("Files missing.")
-        scaling_factors, scaling_errors = stitch_reflectivity(manager.reduction_list, "Off_On", False)
-        # assert scaling_factors == pytest.approx([1.0, 0.1809, 0.1556], abs=0.001)
-        # assert scaling_errors == pytest.approx([0.0, 0.003, 0.005], abs=0.001)
+        scaling_factors, scaling_errors = stitch_reflectivity(manager.reduction_list, "Off_On", False, 0.008)
+        assert scaling_factors == pytest.approx([0.137, 0.028, 0.072], abs=0.001)
+        assert scaling_errors == pytest.approx([0.0, 0.003, 0.021], abs=0.001)
 
     @pytest.mark.parametrize(
         "normalize_to_unity, global_fit, polynom_degree, expected_scaling_factors, expected_scaling_errors",
