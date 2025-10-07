@@ -127,7 +127,7 @@ class TestDataManipulation(object):
         assert scaling_errors == pytest.approx([0.0, 0.003, 0.005], abs=0.001)
 
     @pytest.mark.datarepo
-    def test_stitch_reflectivity_const_q(self, data_server, mocker_file_open):#, stitching_config):
+    def test_stitch_reflectivity_const_q(self, data_server, mocker_file_open):  # , stitching_config):
         """Test stitching with constant Q binning."""
         Configuration.setup_default_values()
         config = Configuration()
@@ -138,7 +138,7 @@ class TestDataManipulation(object):
             "use_peak_finder": True,
             "use_low_res_finder": True,
             "cut_first_n_points": 1,
-            "cut_last_n_points": 1
+            "cut_last_n_points": 1,
         }
         for key in settings_override:
             setattr(config, key, settings_override[key])
