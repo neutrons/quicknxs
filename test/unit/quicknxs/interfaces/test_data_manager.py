@@ -31,6 +31,7 @@ class TestDataManagerTest(object):
 
         q_range = manager._nexus_data.get_q_range()
         assert q_range[0:2] == pytest.approx([0.034, 0.068], abs=0.05)
+
         assert manager.add_active_to_direct_beam_list() == False
         assert manager.remove_active_from_direct_beam_list() == -1
 
@@ -41,10 +42,10 @@ class TestDataManagerTest(object):
         manager.strip_overlap()
 
         dm.generate_script(manager.reduction_list, manager.reduction_states[0])
-        dm.stitch_reflectivity(manager.reduction_list)
+        dm.stitch_reflectivity(manager.reduction_list, q_cutoff=0.033)
         dm.merge_reflectivity(manager.reduction_list, manager.reduction_states[0])
         dm.get_scaled_workspaces(manager.reduction_list, manager.reduction_states[0])
-        dm.stitch_reflectivity(manager.reduction_list)
+        dm.stitch_reflectivity(manager.reduction_list, q_cutoff=0.033)
 
     @pytest.mark.skip(reason="WIP")
     def test_add_ordermanager(self, data_server):

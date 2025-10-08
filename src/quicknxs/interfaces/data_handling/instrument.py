@@ -181,18 +181,18 @@ class InsufficientEventCountError(Exception):
 class Instrument(object):
     """Instrument class. Holds the data handling that is unique to a specific instrument."""
 
-    n_x_pixel = 304
-    n_y_pixel = 256
-    huber_x_cut = 6.5
-    peak_range_offset = 50
-    tolerance = 0.05
-    pixel_width = 0.0007
-    instrument_name = "REF_M"
-    instrument_dir = "/SNS/REF_M"
-    file_search_template = "/SNS/REF_M/*/nexus/REF_M_%s"
-    legacy_search_template = "/SNS/REF_M/*/data/REF_M_%s"
+    n_x_pixel: int = 304
+    n_y_pixel: int = 256
+    huber_x_cut: float = 6.5
+    peak_range_offset: int = 50
+    tolerance: float = 0.05
+    pixel_width: float = 0.0007
+    instrument_name: str = "REF_M"
+    instrument_dir: str = "/SNS/REF_M"
+    file_search_template: str = "/SNS/REF_M/*/nexus/REF_M_%s"
+    legacy_search_template: str = "/SNS/REF_M/*/data/REF_M_%s"
     # Option to use the slow flipper logs rather than the Analyzer/Polarizer logs
-    USE_SLOW_FLIPPER_LOG = False
+    USE_SLOW_FLIPPER_LOG: bool = False
 
     def __init__(self):
         # Filtering

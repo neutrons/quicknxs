@@ -229,7 +229,7 @@ class DataManager(object):
                 return i
         return None
 
-    def find_data_in_direct_beam_list(self, nexus_data: NexusData) -> Optional[int]:
+    def find_data_in_direct_beam_list(self, nexus_data: NexusData | None) -> Optional[int]:
         """Look for the given data in the direct beam list.
 
         Returns
@@ -797,7 +797,7 @@ class DataManager(object):
         poly_points:
             number of additional points on each end of the overlap region to include in the fit
         """
-        data_manipulation.smart_stitch_reflectivity(
+        data_manipulation.stitch_reflectivity(
             self.reduction_list,
             self.active_cross_section.name,
             normalize_to_unity,

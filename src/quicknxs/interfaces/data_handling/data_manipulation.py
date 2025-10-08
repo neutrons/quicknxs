@@ -106,76 +106,9 @@ def generate_script(reduction_list: List[NexusData], pol_state: str):
     return script
 
 
-def stitch_reflectivity(
-    reduction_list: List[NexusData],
-    xs: Optional[str] = None,
-    normalize_to_unity: bool = True,
-    q_cutoff: float = 0.01,
-):
-    """Stitch and normalize data sets.
-
-    Parameters
-    ----------
-    reduction_list:
-        List of NexusData objects to stitch
-    xs:
-        Name of the cross-section to use
-    normalize_to_unity:
-        if True, the specular ridge will be normalized to 1
-    q_cutoff:
-        Used if normalize_to_unity = True, data with q < q_cutoff are part of the specular ridge
-    """
-    if not reduction_list:
-        return []
-
-    # Select the cross-section we will use to determine the scaling factors
-    if xs is None:
-        xs = list(reduction_list[0].cross_sections.keys())[0]
-
-    # First, determine the overall scaling factor as needed
-    scaling_factor = 1.0
-    if normalize_to_unity:
-        idx_list = reduction_list[0].cross_sections[xs].q < q_cutoff
-        total = 0
-        weights = 0
-        for i in range(len(reduction_list[0].cross_sections[xs]._r)):
-            if idx_list[i]:
-                w = 1.0 / float(reduction_list[0].cross_sections[xs]._dr[i]) ** 2
-                total += w * float(reduction_list[0].cross_sections[xs]._r[i])
-                weights += w
-        if weights > 0 and total > 0:
-            scaling_factor = weights / total
-        reduction_list[0].set_parameter("scaling_factor", scaling_factor)
-    else:
-        scaling_factor = reduction_list[0].cross_sections[xs].configuration.scaling_factor
-
-    # Stitch the data sets together
-    _previous_ws = None
-    running_scale = scaling_factor
-    scaling_factors = [running_scale]
-
-    for i in range(len(reduction_list)):
-        n_total = len(reduction_list[i].cross_sections[xs].q)
-        p_0 = reduction_list[i].cross_sections[xs].configuration.cut_first_n_points
-        p_n = n_total - reduction_list[i].cross_sections[xs].configuration.cut_last_n_points
-        ws = api.CreateWorkspace(
-            DataX=reduction_list[i].cross_sections[xs].q[p_0:p_n],
-            DataY=reduction_list[i].cross_sections[xs]._r[p_0:p_n],
-            DataE=reduction_list[i].cross_sections[xs]._dr[p_0:p_n],
-        )
-        ws.setDistribution(True)
-        ws = api.ConvertToHistogram(ws)
-        if _previous_ws is not None:
-            _, scale = api.Stitch1D(_previous_ws, ws)
-            running_scale *= scale
-            scaling_factors.append(running_scale)
-            reduction_list[i].set_parameter("scaling_factor", running_scale)
-        _previous_ws = api.CloneWorkspace(ws)
-
-    return scaling_factors
-
-
-def _prepare_workspace_for_stitching(cross_sections: dict, xs_input: str, global_fit: bool, ws_name: str):
+def _prepare_workspace_for_stitching(
+    cross_sections: dict, xs_input: str, global_fit: bool, ws_name: str
+) -> MatrixWorkspace:
     """Create a workspace from a CrossSectionData object that we can call Stitch1D on.
 
     Parameters
@@ -200,6 +133,15 @@ def _prepare_workspace_for_stitching(cross_sections: dict, xs_input: str, global
         n_total = len(cross_section.q)
         p_0 = cross_section.configuration.cut_first_n_points
         p_n = n_total - cross_section.configuration.cut_last_n_points
+
+        # remove leading/trailing indices where cross_section._r is masked
+        while p_0 < p_n and np.ma.is_masked(cross_section._r[p_0]):
+            p_0 += 1
+        while p_n > p_0 and np.ma.is_masked(cross_section._r[p_n - 1]):
+            p_n -= 1
+        if p_n <= p_0:
+            raise ValueError(f"No valid data points in cross-section {xs}")
+
         ws_xs = api.CreateWorkspace(
             DataX=cross_section.q[p_0:p_n],
             DataY=cross_section._r[p_0:p_n],
@@ -349,7 +291,7 @@ def _get_polynomial_fit_stitching_scaling_factor(
     return output
 
 
-def smart_stitch_reflectivity(
+def stitch_reflectivity(
     reduction_list: List[NexusData],
     xs: Optional[str] = None,
     normalize_to_unity: bool = True,
@@ -440,12 +382,24 @@ def smart_stitch_reflectivity(
         # High-Q data set
         ws = _prepare_workspace_for_stitching(reduction_list[i + 1].cross_sections, xs, global_fit, "high_q_workspace")
 
+        # Determine overlap between workspaces after removing leading/trailing zeroes
+        # Note: Stitch1D can find the overlap automatically, but it fails if the second workspace x_min is smaller
+        # than the first workspace x_min, which can arise especially with constant-Q binning
+        start_overlap = max(_previous_ws.readX(0)[0], ws.readX(0)[0])
+        end_overlap = min(_previous_ws.readX(0)[-1], ws.readX(0)[-1])
+
         if isinstance(poly_degree, int) and poly_degree > 0:
             output_poly = _get_polynomial_fit_stitching_scaling_factor(_previous_ws, ws, poly_degree, poly_points)
             scale = output_poly["scale_factor_value"]
             scale_error = output_poly["scale_factor_error"]
         else:
-            _, scale = api.Stitch1D(_previous_ws, ws, OutputScalingWorkspace="ws_stitching_scale")
+            _, scale = api.Stitch1D(
+                _previous_ws,
+                ws,
+                StartOverlap=start_overlap,
+                EndOverlap=end_overlap,
+                OutputScalingWorkspace="ws_stitching_scale",
+            )
             scale_error = api.mtd["ws_stitching_scale"].readE(0)[0]
 
         # Calculate the error in the product of two scaling factors, f1 * f2, as \sqrt{(df2 * f1)^2 + (df1 * f2)^2}
