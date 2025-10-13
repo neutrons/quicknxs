@@ -66,6 +66,19 @@ class MainHandler(object):
 
         self.status_bar_handler = StatusBarHandler(self.ui.statusbar)
 
+        # Log Level dropdown in statusbar
+        self.log_level = QtWidgets.QComboBox(self.ui.statusbar)
+        self.LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        self.log_level.addItems(self.LOG_LEVELS)
+        self.log_level.setCurrentText(self.get_log_level())
+        self.log_level.setToolTip(
+            "Set the logging level\nDefault log level can be set with environment variable QUICKNXS_LOGLEVEL"
+        )
+        self.log_level.currentTextChanged.connect(self.change_log_level)
+
+        self.ui.statusbar.addWidget(QtWidgets.QLabel("Log Level:"))
+        self.ui.statusbar.addWidget(self.log_level)
+
     @property
     def reduction_table(self):
         """
@@ -1861,3 +1874,18 @@ class MainHandler(object):
         self.ui.binning_type_selector_run.blockSignals(True)
         self.ui.binning_type_selector_run.setCurrentIndex(bin_type_global)
         self.ui.binning_type_selector_run.blockSignals(False)
+
+    def get_log_level(self):
+        """Return current root logger level as a string for GUI dropdown."""
+        level = logging.getLogger().getEffectiveLevel()
+        return logging.getLevelName(level)
+
+    def change_log_level(self, level: str):
+        """Update all handlers + root logger to new level."""
+        lvl = level.upper()
+        if lvl not in (self.LOG_LEVELS):
+            lvl = "INFO"
+        root = logging.getLogger()
+        root.setLevel(lvl)
+        for handler in root.handlers:
+            handler.setLevel(lvl)

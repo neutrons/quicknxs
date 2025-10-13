@@ -4045,7 +4045,7 @@ packages:
   timestamp: 1743692373820
 - pypi: ./
   name: quicknxs
-  version: 4.12.0.dev2
+  version: 4.12.0.dev6
   sha256: fb0f59cc7966747ea89ce836822c847afa217dd52409a5bd8ccd5428ee3a1c1e
   requires_python: '>=3.10,<3.13'
   editable: true
