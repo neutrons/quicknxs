@@ -487,7 +487,7 @@ class Instrument(object):
         """Return a Euclidean squared-distance between slit widths in scattered, direct beams"""
         scatter_slit_array = (scattering.slit1_width, scattering.slit2_width, scattering.slit3_width)
         direct_slit_array = (direct_beam.slit1_width, direct_beam.slit2_width, direct_beam.slit3_width)
-        return sum([(scatter - direct)**2 for scatter, direct in zip(scatter_slit_array, direct_slit_array)])
+        return sum([(scatter - direct) ** 2 for scatter, direct in zip(scatter_slit_array, direct_slit_array)])
 
     @classmethod
     def get_info(cls, workspace, data_object):
