@@ -721,7 +721,7 @@ class DataManager(object):
                 if active_instrument.direct_beam_match(active_xs, xs, skip_slits=True):
                     closeness[item_number] = active_instrument.direct_beam_distance(active_xs, xs)
                 else:
-                    closeness[item_number] = 1.e16
+                    closeness[item_number] = 1.0e16
 
         if len(self.direct_beam_list) > 0:
             closest = min(closeness.items(), key=lambda item: item[1])[0]
