@@ -1,4 +1,5 @@
 import copy
+from unittest import mock
 
 import mantid.simpleapi as api
 import numpy as np
@@ -303,6 +304,45 @@ class TestDataManipulation(object):
         metadata = extract_metadata(fp)
         assert metadata.mid_q == expected["mid_q"]
         assert metadata.is_direct_beam == expected["is_direct_beam"]
+
+    def make_mock_xs(self, number, wavelength, slitwidth):
+        return mock.Mock(
+            number = number,
+            lambda_center = wavelength,
+            slit1_width = slitwidth[0],
+            slit2_width = slitwidth[1],
+            slit3_width = slitwidth[2],
+        )
+
+    def make_mock_run(self, number, wavelength, slitwidth):
+        return mock.Mock(
+            number = number,
+            cross_sections = {"Off_Off": self.make_mock_xs(number, wavelength, slitwidth)},
+        )
+
+    def test_find_best_direct_beam(self):
+        # make a mock run
+        lam = 5.3
+        active_config = Configuration()
+        scatter = self.make_mock_xs(5, lam, (1., 1., 1.))
+        scatter.configuration = active_config
+        # make some mock direct beam runs
+        # 1. match on lambda, near match on slits -- accepted
+        # 2. mismatch on lambda, exact match on slits -- rejected
+        # 4. match on lambda, further match on slits, closer run -- rejected
+        beam1 = self.make_mock_run(1, lam, (0.9, 1.1, 0.9))
+        beam2 = self.make_mock_run(2, lam + 1.0, (1., 1., 1.))
+        beam3 = self.make_mock_run(4, lam , (0.8, 1.1, 0.9))
+
+        # make the mock data manager
+        manager = DataManager("mock_dir")
+        manager.direct_beam_list = [beam1, beam2, beam3]
+        manager.active_cross_section = scatter
+        manager._nexus_data = mock.Mock(set_parameter = mock.Mock())
+
+        # run the function -- should set with beam1
+        manager.find_best_direct_beam()
+        manager._nexus_data.set_parameter.assert_called_once_with('direct_beam', beam1.number)
 
 
 if __name__ == "__main__":
