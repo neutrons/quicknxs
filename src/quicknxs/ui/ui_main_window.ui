@@ -2973,7 +2973,7 @@
                         <string>DPix</string>
                        </property>
                        <property name="toolTip">
-                        <string>DirectPixel</string>
+                        <string>Direct Pixel</string>
                        </property>
                       </column>
                       <column>

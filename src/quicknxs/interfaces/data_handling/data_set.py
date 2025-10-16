@@ -737,6 +737,7 @@ class NexusData(object):
                         has_changed = True
         except:
             logging.error("Could not set parameter %s %s", param, value)
+        logging.info("\n\nSet parameter %s %s", param, value)
         return has_changed
 
     def calculate_reflectivity(
