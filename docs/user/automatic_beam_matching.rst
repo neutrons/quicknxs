@@ -3,7 +3,7 @@
 Automatic Beam Matching
 =======================
 
-QuickNXS can automatically match direct beams to loaded runs.  
+QuickNXS can automatically match direct beams to loaded runs.
 For this to work, the direct beam candidates must already be loaded.
 The algorithm selects a best match based on wavelength :math:`\lambda` and the three horizontal slit widths.
 
@@ -37,6 +37,5 @@ The match is made with the direct beam run with the lowest parameter distance th
 
     Located on the left side underneath the list of possible run numbers.
 
-    In case a match is not automatically found, or a new direct beam is loaded after a run, 
+    In case a match is not automatically found, or a new direct beam is loaded after a run,
     pressing this button will re-match the active (plotted) run with the best direct beam.
-
