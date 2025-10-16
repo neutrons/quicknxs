@@ -16,19 +16,17 @@ Firstly, wavelengths between direct beam and reflectometry run are checked if th
 If the wavelengths match, then a parameter distance is computed with the three horizontal slit widths:
 
 .. math::
-    :label: parameter-distance
-
     d = \sqrt{(a_1 - b_1)^2 + (a_2 - b_2)^2 + (a_3 - b_3)^2}
 
-where :math:`d` is the distance, :math:`a_i` represents the :math:`i`th slit width of the scattered run, 
-and :math:`b_i` is the :math:`i`th slit width of the direct beam run.
+where :math:`d` is the distance, :math:`a_i` represents the :math:`i` th slit width of the scattered run, 
+and :math:`b_i` is the :math:`i` th slit width of the direct beam run.
 
 The match is made with the direct beam run with the lowest parameter distance that *also* matches the wavelength within tolerance.
 
 - A: Automatically match direct beams
 
     .. figure::
-        ../images/auto_select_normalization.png
+        ../images/select_auto_normalization.png
         :alt: Auto select normalization
 
     Under Tools.  
