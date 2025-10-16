@@ -164,6 +164,4 @@ def test_direct_beam_distance():
         slit2_width=3.0,
         slit3_width=3.0,
     )
-    conf = Configuration()
-    instrument = conf.instrument
     assert instrument.direct_beam_distance(scattering, direct_beam) == 12.0
