@@ -1216,7 +1216,7 @@
             <item row="3" column="0">
              <widget class="QLabel" name="roi_used_label">
               <property name="text">
-               <string>Was metadata ROI used?</string>
+               <string>Was metadata peak ROI used?</string>
               </property>
              </widget>
             </item>
@@ -5547,7 +5547,7 @@
     <string>Automatic Peak Finder (X-axis)</string>
    </property>
    <property name="toolTip">
-    <string>Find the reflected peak automatically when loading a new file (unavailable when &quot;Use Metadata ROI&quot; is selected)</string>
+    <string>Find the reflected peak automatically when loading a new file (unavailable when &quot;Use metadata peak ROI&quot; is selected)</string>
    </property>
   </action>
   <action name="actionAutoYROI">
