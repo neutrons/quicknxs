@@ -44,7 +44,7 @@ class DataInfo(object):
         # Options to override the ROI
         self.forced_peak_roi = configuration.peak_roi
         self.forced_low_res_roi = configuration.low_res_roi
-        self.force_bck_roi = configuration.force_bck_roi
+        self.use_metadata_bck_roi = configuration.use_metadata_bck_roi
         self.forced_bck_roi = configuration.bck_roi
         self.use_peak_finder = configuration.use_peak_finder
         self.use_low_res_finder = configuration.use_low_res_finder
@@ -57,9 +57,6 @@ class DataInfo(object):
         # Use the ROI rather than finding the ranges
         self.use_roi = configuration.use_roi
         self.use_roi_actual = False
-
-        # Use the 2nd ROI as the background, if available
-        self.use_roi_bck = configuration.use_roi_bck
 
         # Use background as a region on each side of the peak
         self.use_tight_bck = configuration.use_tight_bck
@@ -196,7 +193,7 @@ class DataInfo(object):
         self.roi_low_res = roi_low_res
         self.metadata_peak2 = peak2
 
-        if self.force_bck_roi == True:
+        if self.use_metadata_bck_roi == True:
             self.background = peak2
             self.roi_background = peak2
 
