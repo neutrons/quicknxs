@@ -14,3 +14,4 @@ User Guide
    peak_finder
    reduction
    reduced_data
+   automatic_beam_matching
