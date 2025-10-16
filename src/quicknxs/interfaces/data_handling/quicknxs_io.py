@@ -38,6 +38,7 @@ CONFIG_LABELS = {
     "tof_bins": "bin_width",
     "total_reflectivity_q_cutoff": "critical_q_cutoff",
     "direct_pixel_overwrite": "dpix",
+    "use_metadata_bck_roi": "force_bck_roi",  # Legacy name
 }
 
 LABEL_TO_CONFIG = {v: k for k, v in CONFIG_LABELS.items()}

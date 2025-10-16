@@ -401,8 +401,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>394</width>
-             <height>291</height>
+             <width>368</width>
+             <height>278</height>
             </rect>
            </property>
            <attribute name="label">
@@ -426,16 +426,16 @@
             </property>
             <item row="0" column="3">
              <widget class="QPushButton" name="propagate_binning_options_button">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
               <property name="toolTip">
                <string>Apply the binning type with the given Q-step to all runs.</string>
               </property>
               <property name="text">
                <string>Apply to all runs</string>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
               </property>
              </widget>
             </item>
@@ -466,8 +466,7 @@
             <item row="0" column="2">
              <layout class="QVBoxLayout">
               <item>
-               <widget class="BinningTypeSelection" name="binning_type_selector_global">
-               </widget>
+               <widget class="BinningTypeSelection" name="binning_type_selector_global"/>
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="q_rebin_spinbox_global">
@@ -680,8 +679,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>394</width>
-             <height>272</height>
+             <width>319</width>
+             <height>278</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1061,8 +1060,7 @@
              </widget>
             </item>
             <item row="11" column="2">
-             <widget class="BinningTypeSelection" name="binning_type_selector_run">
-             </widget>
+             <widget class="BinningTypeSelection" name="binning_type_selector_run"/>
             </item>
             <item row="12" column="1">
              <widget class="QLabel" name="q_rebin_label_run">
@@ -1100,6 +1098,7 @@
              </widget>
             </item>
            </layout>
+           <zorder>binning_type_selector_label_run</zorder>
            <zorder>refYPos</zorder>
            <zorder>refYPos_label</zorder>
            <zorder>width_column_label</zorder>
@@ -1132,8 +1131,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>394</width>
-             <height>158</height>
+             <width>410</width>
+             <height>127</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1157,14 +1156,14 @@
             </property>
             <item row="0" column="0">
              <widget class="QCheckBox" name="use_roi_checkbox">
-              <property name="text">
-               <string>Use metadata ROI</string>
-              </property>
               <property name="toolTip">
                <string>
                Attempt to use the ROI in the data file to determine the reflected peak position. If this ROI is invalid, the system will try to find an appropriate region to use.
                Note: selecting this option will disable the use of automatic peak and Y-limit finding.
                </string>
+              </property>
+              <property name="text">
+               <string>Use metadata peak ROI</string>
               </property>
               <property name="checked">
                <bool>false</bool>
@@ -1173,11 +1172,11 @@
             </item>
             <item row="0" column="1">
              <widget class="QCheckBox" name="use_bck_roi_checkbox">
-              <property name="text">
-               <string>Use alternate bkgd ROI</string>
-              </property>
               <property name="toolTip">
                <string>A second ROI is available in the data file and can be used to define the background. Check this box if you want to use the 2nd ROI for your background, otherwise a default region will be used.</string>
+              </property>
+              <property name="text">
+               <string>Use metadata bkgd ROI</string>
               </property>
               <property name="checked">
                <bool>false</bool>
@@ -1186,11 +1185,11 @@
             </item>
             <item row="1" column="0" colspan="2">
              <widget class="QCheckBox" name="fit_within_roi_checkbox">
-              <property name="text">
-               <string>Fit peak within ROI</string>
-              </property>
               <property name="toolTip">
                <string>Once the reflected peak ROI is selected, you can try to fine tune this ROI by fitting for a peak within that region and updating the ROI according to the location found. Check this box if you want to find a peak within the ROI and redefine the ROI afterwards.</string>
+              </property>
+              <property name="text">
+               <string>Fit peak within ROI</string>
               </property>
               <property name="checked">
                <bool>false</bool>
@@ -1199,11 +1198,11 @@
             </item>
             <item row="2" column="0">
              <widget class="QCheckBox" name="use_side_bck_checkbox">
-              <property name="text">
-               <string>Use side background</string>
-              </property>
               <property name="toolTip">
                <string>As an alternative to using the 2nd ROI, you can use a region around the reflected peak to estimate the background. Check the following box if you want to use the region on each side of the peak to estimate your background.</string>
+              </property>
+              <property name="text">
+               <string>Use side background</string>
               </property>
              </widget>
             </item>
@@ -1217,17 +1216,17 @@
             <item row="3" column="0">
              <widget class="QLabel" name="roi_used_label">
               <property name="text">
-               <string>Was metadata ROI used?</string>
+               <string>Was metadata peak ROI used?</string>
               </property>
              </widget>
             </item>
             <item row="3" column="1">
              <widget class="QLabel" name="roi_used_value">
-              <property name="text">
-               <string>Unknown</string>
-              </property>
               <property name="toolTip">
                <string>Indicate whether the peak ROI was actually used when loading the data.</string>
+              </property>
+              <property name="text">
+               <string>Unknown</string>
               </property>
              </widget>
             </item>
@@ -2419,7 +2418,6 @@
                     </property>
                     <property name="font">
                      <font>
-                      <weight>75</weight>
                       <bold>true</bold>
                      </font>
                     </property>
@@ -5316,7 +5314,7 @@
      <x>0</x>
      <y>0</y>
      <width>2096</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuReduction">
@@ -5549,7 +5547,7 @@
     <string>Automatic Peak Finder (X-axis)</string>
    </property>
    <property name="toolTip">
-    <string>Find the reflected peak automatically when loading a new file (unavailable when "Use Metadata ROI" is selected)</string>
+    <string>Find the reflected peak automatically when loading a new file (unavailable when &quot;Use metadata peak ROI&quot; is selected)</string>
    </property>
   </action>
   <action name="actionAutoYROI">
@@ -5567,7 +5565,7 @@
     <string>Automatic Y Limits</string>
    </property>
    <property name="toolTip">
-    <string>Try to find the Y region of the beam automatically (unavailable when "Use Metadata ROI" is selected)</string>
+    <string>Try to find the Y region of the beam automatically (unavailable when &quot;Use Metadata peak ROI&quot; is selected)</string>
    </property>
   </action>
   <action name="actionClear_Overwrite">
@@ -5987,9 +5985,19 @@
   </connection>
   <connection>
    <sender>use_roi_checkbox</sender>
-    <signal>stateChanged(int)</signal>
-    <receiver>MainWindow</receiver>
-    <slot>handle_roi_checkbox()</slot>
+   <signal>stateChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>handle_roi_checkbox()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
   </connection>
   <connection>
    <sender>actionNormalizeScaling</sender>
