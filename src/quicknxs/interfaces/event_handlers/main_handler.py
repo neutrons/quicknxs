@@ -886,7 +886,9 @@ class MainHandler(object):
             idx, ReductionTableColumn.BCK_WIDTH, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width))
         )
         table_widget.setItem(idx, ReductionTableColumn.DPIX, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
-        table_widget.setItem(idx, ReductionTableColumn.THETA, QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle))
+        item = QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle)
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
+        table_widget.setItem(idx, ReductionTableColumn.THETA, item)
         direct_beam = "none"
         if d.configuration.direct_beam is not None:
             direct_beam = d.configuration.direct_beam
