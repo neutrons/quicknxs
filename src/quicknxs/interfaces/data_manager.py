@@ -705,35 +705,28 @@ class DataManager(object):
         # Select the first run number if the active cross section is derived from more than one run
         active_cross_section_number = RunNumbers(self.active_cross_section.number).numbers[0]
         closest = None
+
+        # for each run in the beamline, compute a closeness score
+        # if the wavelengths do not match within tolerance, this is some overlarge value
+        # if the wavelengths do match, compute a euclidean difference of their slit widths
+        # pick the run with a matching wavelength and lowest euclidean slit difference
+        active_xs = self.active_cross_section
+        active_instrument = active_xs.configuration.instrument
+        closeness = {}
         for item in self.direct_beam_list:
             item_number = int(item.number)
             xs_keys = list(item.cross_sections.keys())
             if len(xs_keys) > 0:
-                xs = item.cross_sections[list(item.cross_sections.keys())[0]]
-                if self.active_cross_section.configuration.instrument.direct_beam_match(self.active_cross_section, xs):
-                    if closest is None:
-                        closest = item_number
-                    elif abs(item_number - active_cross_section_number) < abs(closest - active_cross_section_number):
-                        closest = item_number
+                xs = item.cross_sections[xs_keys[0]]
+                if active_instrument.direct_beam_match(active_xs, xs, skip_slits=True):
+                    closeness[item_number] = active_instrument.direct_beam_distance(active_xs, xs)
+                else:
+                    closeness[item_number] = 1.0e16
 
-        if closest is None:
-            # If we didn't find a direct beam, try with just the wavelength
-            for item in self.direct_beam_list:
-                item_number = int(item.number)
-                xs_keys = list(item.cross_sections.keys())
-                if len(xs_keys) > 0:
-                    xs = item.cross_sections[list(item.cross_sections.keys())[0]]
-                    if self.active_cross_section.configuration.instrument.direct_beam_match(
-                        self.active_cross_section, xs, skip_slits=True
-                    ):
-                        if closest is None:
-                            closest = item_number
-                        elif abs(item_number - active_cross_section_number) < abs(
-                            closest - active_cross_section_number
-                        ):
-                            closest = item_number
+        if len(self.direct_beam_list) > 0:
+            closest = min(closeness.items(), key=lambda item: item[1])[0]
+
         if closest is not None:
-            # return self._nexus_data.set_parameter("normalization", closest)
             return self._nexus_data.set_parameter("direct_beam", closest)
         return False
 
