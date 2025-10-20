@@ -106,7 +106,7 @@ name = "quicknxs"
 version = "0.0.0"
 
 [tool.pixi.package.build]
-backend = { name = "pixi-build-python", version = "0.3.*" }
+backend = { name = "pixi-build-python", version = "0.4.*" }
 
 # Environments and features
 
