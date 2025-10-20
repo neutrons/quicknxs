@@ -194,8 +194,6 @@ class MainHandler(object):
         self.main_window.auto_change_active = True
         self._set_data_manager_active_cross_section()
 
-        assert self._data_manager.data_sets is not None, "DataManager.data_sets is None after loading a file"
-        # self.ui.directPixelOverwrite.setValue(configuration.direct_pixel_overwrite)
         cross_sections = list(self._data_manager.data_sets.keys())
         for i, xs in enumerate(cross_sections):
             getattr(self.ui, "selectedCrossSection%i" % i).show()
