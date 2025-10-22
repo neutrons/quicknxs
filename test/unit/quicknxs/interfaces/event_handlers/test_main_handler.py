@@ -17,6 +17,7 @@ from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
+from quicknxs.interfaces.enums import ReductionTableColumn
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
@@ -258,6 +259,44 @@ def test_reduction_table(qtbot):
     assert handler.reduction_table == main_data_table_widget
     data_tab_widget.setCurrentIndex(2)
     assert handler.reduction_table == second_data_table_widget
+
+
+@pytest.mark.datarepo
+def test_reduction_table_dpix(qtbot):
+    """Test that changing the DPIX column in the reduction table updates configuration.direct_pixel_overwrite."""
+    main_window = MainWindow()
+    data_manager = main_window.data_manager
+    qtbot.addWidget(main_window)
+
+    # Load a data file and add it to the reduction table
+    ui_utilities.setText(main_window.numberSearchEntry, str(40785), press_enter=True)
+    ui_utilities.set_current_file_by_run_number(main_window, 40785)
+    main_window.actionAddRefl.triggered.emit()
+
+    # Verify the run was added to the reduction table
+    assert main_window.ui.reductionTable.rowCount() == 1
+    assert len(data_manager.reduction_list) == 1
+
+    # Get the nexus data from the reduction list
+    nexus_data = data_manager.reduction_list[0]
+    active_cross_section_name = data_manager.active_cross_section.name
+    active_cross_section = nexus_data.cross_sections[active_cross_section_name]
+
+    # check the "Set Direct Pixel" checkbox
+    if not main_window.ui.set_dirpix_checkbox.isChecked():
+        main_window.ui.set_dirpix_checkbox.click()
+
+    # Set a new value in the DPIX column
+    initial_dpix = active_cross_section.configuration.direct_pixel_overwrite
+    new_dpix_value = initial_dpix + 10.5
+    main_window.ui.reductionTable.item(0, ReductionTableColumn.DPIX).setText(str(new_dpix_value))
+
+    # Verify that the configuration was updated
+    assert active_cross_section.configuration.direct_pixel_overwrite == new_dpix_value
+
+    # Verify the value propagates to all cross sections in the nexus data
+    for xs in nexus_data.cross_sections.values():
+        assert xs.configuration.direct_pixel_overwrite == new_dpix_value
 
 
 @pytest.mark.parametrize(
