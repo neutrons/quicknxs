@@ -265,7 +265,6 @@ def test_reduction_table(qtbot):
 def test_reduction_table_dpix(qtbot):
     """Test that changing the DPIX column in the reduction table updates configuration.direct_pixel_overwrite."""
     main_window = MainWindow()
-    handler = MainHandler(main_window)
     data_manager = main_window.data_manager
     qtbot.addWidget(main_window)
 
@@ -287,27 +286,17 @@ def test_reduction_table_dpix(qtbot):
     if not main_window.ui.set_dirpix_checkbox.isChecked():
         main_window.ui.set_dirpix_checkbox.click()
 
-    # Get the initial direct_pixel_overwrite value
+    # Set a new value in the DPIX column
     initial_dpix = active_cross_section.configuration.direct_pixel_overwrite
-
-    # Create a new table item with a different value
     new_dpix_value = initial_dpix + 10.5
-    dpix_item = QtWidgets.QTableWidgetItem(str(new_dpix_value))
-
-    # Simulate changing the DPIX column (column 10)
-    main_window.ui.reductionTable.setItem(0, ReductionTableColumn.DPIX, dpix_item)
-
-    # Fetch the item from the table after setting it
-    item_from_table = main_window.ui.reductionTable.item(0, ReductionTableColumn.DPIX)
-    main_window.auto_change_active = False
-    handler.reduction_table_changed(item_from_table)
+    main_window.ui.reductionTable.item(0, ReductionTableColumn.DPIX).setText(str(new_dpix_value))
 
     # Verify that the configuration was updated
     assert active_cross_section.configuration.direct_pixel_overwrite == new_dpix_value
 
-    # Verify the value persists in the nexus_data configuration
-    updated_cross_section = nexus_data.cross_sections[active_cross_section_name]
-    assert updated_cross_section.configuration.direct_pixel_overwrite == new_dpix_value
+    # Verify the value propagates to all cross sections in the nexus data
+    for xs in nexus_data.cross_sections.values():
+        assert xs.configuration.direct_pixel_overwrite == new_dpix_value
 
 
 @pytest.mark.parametrize(
