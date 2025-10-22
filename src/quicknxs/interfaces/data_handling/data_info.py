@@ -249,7 +249,7 @@ class DataInfo(object):
         self.peak_position = (peak[1] + peak[0]) / 2.0
         self.peak_range = [int(max(0, peak[0])), int(min(peak[1], NX_PIXELS))]
         self.low_res_range = [int(max(0, low_res[0])), int(min(low_res[1], NY_PIXELS))]
-        self.background = [int(max(0, bck_range[0])), int(min(bck_range[1], NY_PIXELS))]
+        self.background = [int(max(0, bck_range[0])), int(min(bck_range[1], NX_PIXELS))]
 
         # Computed scattering angle
         self.calculated_scattering_angle = api.MRGetTheta(ws, SpecularPixel=self.peak_position)
