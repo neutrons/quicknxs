@@ -1006,6 +1006,9 @@ class NexusData(object):
                 _max_counts = cross_section.total_counts
                 _max_xs = name
 
+            # Set direct_pixel_overwrite to the value read from the file
+            cross_section.configuration.direct_pixel_overwrite = cross_section.direct_pixel
+
         # Now that we know which cross section has the most data,
         # use that one to get the reduction parameters
         self.main_cross_section = _max_xs

@@ -1,5 +1,7 @@
 # package imports
 # standard imports
+import importlib
+import logging
 import os
 import sys
 
@@ -15,6 +17,7 @@ from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
+from quicknxs.interfaces.enums import ReductionTableColumn
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
@@ -258,6 +261,44 @@ def test_reduction_table(qtbot):
     assert handler.reduction_table == second_data_table_widget
 
 
+@pytest.mark.datarepo
+def test_reduction_table_dpix(qtbot):
+    """Test that changing the DPIX column in the reduction table updates configuration.direct_pixel_overwrite."""
+    main_window = MainWindow()
+    data_manager = main_window.data_manager
+    qtbot.addWidget(main_window)
+
+    # Load a data file and add it to the reduction table
+    ui_utilities.setText(main_window.numberSearchEntry, str(40785), press_enter=True)
+    ui_utilities.set_current_file_by_run_number(main_window, 40785)
+    main_window.actionAddRefl.triggered.emit()
+
+    # Verify the run was added to the reduction table
+    assert main_window.ui.reductionTable.rowCount() == 1
+    assert len(data_manager.reduction_list) == 1
+
+    # Get the nexus data from the reduction list
+    nexus_data = data_manager.reduction_list[0]
+    active_cross_section_name = data_manager.active_cross_section.name
+    active_cross_section = nexus_data.cross_sections[active_cross_section_name]
+
+    # check the "Set Direct Pixel" checkbox
+    if not main_window.ui.set_dirpix_checkbox.isChecked():
+        main_window.ui.set_dirpix_checkbox.click()
+
+    # Set a new value in the DPIX column
+    initial_dpix = active_cross_section.configuration.direct_pixel_overwrite
+    new_dpix_value = initial_dpix + 10.5
+    main_window.ui.reductionTable.item(0, ReductionTableColumn.DPIX).setText(str(new_dpix_value))
+
+    # Verify that the configuration was updated
+    assert active_cross_section.configuration.direct_pixel_overwrite == new_dpix_value
+
+    # Verify the value propagates to all cross sections in the nexus data
+    for xs in nexus_data.cross_sections.values():
+        assert xs.configuration.direct_pixel_overwrite == new_dpix_value
+
+
 @pytest.mark.parametrize(
     "error_type",
     [
@@ -278,6 +319,66 @@ def test_open_file_insufficient_event_count_error(error_type, mocker, qtbot):
 
     assert mock_report_message.call_count == 2
     assert "Error loading file(s)" in mock_report_message.call_args[0][0]
+
+
+def test_logging_default_level(monkeypatch):
+    """Test that the default logging level is INFO if the environment variable is not set or invalid."""
+    monkeypatch.delenv("QUICKNXS_LOGLEVEL", raising=False)
+
+    import quicknxs.gui  # noqa
+
+    assert logging.getLogger().getEffectiveLevel() == logging.INFO
+
+
+def test_logging_level_environment_variable(monkeypatch):
+    """Test that the logging level is set according to the environment variable."""
+    monkeypatch.setenv("QUICKNXS_LOGLEVEL", "DEBUG")
+    import quicknxs.gui as gui_module
+
+    importlib.reload(gui_module)
+
+    assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
+
+    monkeypatch.setenv("QUICKNXS_LOGLEVEL", "INVALID_LEVEL")
+    importlib.reload(gui_module)
+
+    assert logging.getLogger().getEffectiveLevel() == logging.INFO
+
+
+def test_logging_handlers():
+    """Test that the logging handlers are set up correctly."""
+    logger = logging.getLogger()
+    handlers = logger.handlers
+
+    # Check that there are two handlers: one for file and one for console
+    assert any(isinstance(h, logging.handlers.TimedRotatingFileHandler) for h in handlers)
+    assert any(isinstance(h, logging.StreamHandler) for h in handlers)
+
+    # Check that the file handler is set to rotate at midnight and keep 15 backups
+    file_handler = next(h for h in handlers if isinstance(h, logging.handlers.TimedRotatingFileHandler))
+    assert file_handler.when == "MIDNIGHT"
+    assert file_handler.backupCount == 15
+
+
+def test_logging_changes_from_gui(qtbot, monkeypatch):
+    """Test that changing the log level from the GUI updates the logging level."""
+    monkeypatch.setenv("QUICKNXS_LOGLEVEL", "WARNING")
+    import quicknxs.gui as gui_module
+
+    importlib.reload(gui_module)
+
+    main_window = MainWindow()
+    handler = MainHandler(main_window)
+    qtbot.addWidget(main_window)
+
+    # Initial log level should be WARNING
+    assert handler.get_log_level() == "WARNING"
+    assert logging.getLogger().getEffectiveLevel() == logging.WARNING
+
+    # Change log level to DEBUG using the handler method
+    handler.change_log_level("DEBUG")
+    assert handler.get_log_level() == "DEBUG"
+    assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
 
 
 if __name__ == "__main__":

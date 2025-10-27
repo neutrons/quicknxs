@@ -1,4 +1,6 @@
 # package imports
+from unittest import mock
+
 import pytest
 
 # 3rd party imports
@@ -126,3 +128,40 @@ def test_load_unpolarized_data(data_server, apply_deadtime):
     assert len(ws_list) == 1
     run = ws_list[0].getRun()
     assert "cross_section_id" in run
+
+
+def test_direct_beam_distance():
+    # get an instrument
+    conf = Configuration()
+    instrument = conf.instrument
+
+    # use scattering as reference
+    scattering = mock.Mock(
+        slit1_width=1.0,
+        slit2_width=1.0,
+        slit3_width=1.0,
+    )
+
+    # in same location, should be zero distance
+    direct_beam = mock.Mock(
+        slit1_width=1.0,
+        slit2_width=1.0,
+        slit3_width=1.0,
+    )
+    assert instrument.direct_beam_distance(scattering, direct_beam) == 0.0
+
+    # beam (2-1)^2 + (2-1)^2 + (2-1)^2 = 3
+    direct_beam = mock.Mock(
+        slit1_width=2.0,
+        slit2_width=2.0,
+        slit3_width=2.0,
+    )
+    assert instrument.direct_beam_distance(scattering, direct_beam) == 3.0
+
+    # beam (3-1)^2 + (3-1)^2 + (3-1)^2 = 4 + 4 + 4 = 12
+    direct_beam = mock.Mock(
+        slit1_width=3.0,
+        slit2_width=3.0,
+        slit3_width=3.0,
+    )
+    assert instrument.direct_beam_distance(scattering, direct_beam) == 12.0

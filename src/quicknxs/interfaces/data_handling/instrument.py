@@ -181,18 +181,18 @@ class InsufficientEventCountError(Exception):
 class Instrument(object):
     """Instrument class. Holds the data handling that is unique to a specific instrument."""
 
-    n_x_pixel = 304
-    n_y_pixel = 256
-    huber_x_cut = 6.5
-    peak_range_offset = 50
-    tolerance = 0.05
-    pixel_width = 0.0007
-    instrument_name = "REF_M"
-    instrument_dir = "/SNS/REF_M"
-    file_search_template = "/SNS/REF_M/*/nexus/REF_M_%s"
-    legacy_search_template = "/SNS/REF_M/*/data/REF_M_%s"
+    n_x_pixel: int = 304
+    n_y_pixel: int = 256
+    huber_x_cut: float = 6.5
+    peak_range_offset: int = 50
+    tolerance: float = 0.05
+    pixel_width: float = 0.0007
+    instrument_name: str = "REF_M"
+    instrument_dir: str = "/SNS/REF_M"
+    file_search_template: str = "/SNS/REF_M/*/nexus/REF_M_%s"
+    legacy_search_template: str = "/SNS/REF_M/*/data/REF_M_%s"
     # Option to use the slow flipper logs rather than the Analyzer/Polarizer logs
-    USE_SLOW_FLIPPER_LOG = False
+    USE_SLOW_FLIPPER_LOG: bool = False
 
     def __init__(self):
         # Filtering
@@ -482,6 +482,12 @@ class Instrument(object):
         ):
             return True
         return False
+
+    def direct_beam_distance(self, scattering, direct_beam):
+        """Return a Euclidean squared-distance between slit widths in scattered, direct beams"""
+        scatter_slit_array = (scattering.slit1_width, scattering.slit2_width, scattering.slit3_width)
+        direct_slit_array = (direct_beam.slit1_width, direct_beam.slit2_width, direct_beam.slit3_width)
+        return sum([(scatter - direct) ** 2 for scatter, direct in zip(scatter_slit_array, direct_slit_array)])
 
     @classmethod
     def get_info(cls, workspace, data_object):

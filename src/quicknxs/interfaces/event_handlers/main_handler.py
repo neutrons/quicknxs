@@ -66,6 +66,19 @@ class MainHandler(object):
 
         self.status_bar_handler = StatusBarHandler(self.ui.statusbar)
 
+        # Log Level dropdown in statusbar
+        self.log_level = QtWidgets.QComboBox(self.ui.statusbar)
+        self.LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        self.log_level.addItems(self.LOG_LEVELS)
+        self.log_level.setCurrentText(self.get_log_level())
+        self.log_level.setToolTip(
+            "Set the logging level\nDefault log level can be set with environment variable QUICKNXS_LOGLEVEL"
+        )
+        self.log_level.currentTextChanged.connect(self.change_log_level)
+
+        self.ui.statusbar.addWidget(QtWidgets.QLabel("Log Level:"))
+        self.ui.statusbar.addWidget(self.log_level)
+
     @property
     def reduction_table(self):
         """
@@ -185,13 +198,15 @@ class MainHandler(object):
         for i, xs in enumerate(cross_sections):
             getattr(self.ui, "selectedCrossSection%i" % i).show()
             good_label = xs.replace("_", "-")
-            if not good_label == self._data_manager.data_sets[xs].cross_section_label:
-                good_label = "%s: %s" % (good_label, self._data_manager.data_sets[xs].cross_section_label)
+            cross_section_label = self._data_manager.data_sets[xs].cross_section_label
+            if good_label != cross_section_label:
+                good_label = f"{good_label}: {cross_section_label}"
             getattr(self.ui, "selectedCrossSection%i" % i).setText(good_label)
         for i in range(len(cross_sections), 12):
             getattr(self.ui, "selectedCrossSection%i" % i).hide()
         self.main_window.auto_change_active = False
 
+        # Emit signals to update the UI and plots
         self.main_window.file_loaded_signal.emit()
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
         self.main_window.initiate_projection_plot.emit(False)
@@ -869,7 +884,9 @@ class MainHandler(object):
             idx, ReductionTableColumn.BCK_WIDTH, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width))
         )
         table_widget.setItem(idx, ReductionTableColumn.DPIX, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
-        table_widget.setItem(idx, ReductionTableColumn.THETA, QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle))
+        item = QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle)
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
+        table_widget.setItem(idx, ReductionTableColumn.THETA, item)
         direct_beam = "none"
         if d.configuration.direct_beam is not None:
             direct_beam = d.configuration.direct_beam
@@ -933,23 +950,26 @@ class MainHandler(object):
         # TODO: If we changed the normalization run, make sure it's in the list
         # of direct beams we know about.
 
-        keys = [
-            "number",
-            "scaling_factor",
-            "cut_first_n_points",
-            "cut_last_n_points",
-            "peak_position",
-            "peak_width",
-            "low_res_position",
-            "low_res_width",
-            "bck_position",
-            "bck_width",
-            "direct_pixel",
-            "scattering_angle",
-            "direct_beam",
-            "binning_type_run",
-            "binning_q_step_run",
-        ]
+        keys = {
+            # 0: "number",              # run number, not editable
+            1: "scaling_factor",
+            2: "cut_first_n_points",
+            3: "cut_last_n_points",
+            4: "peak_position",
+            5: "peak_width",
+            6: "low_res_position",
+            7: "low_res_width",
+            8: "bck_position",
+            9: "bck_width",
+            10: "direct_pixel_overwrite",
+            # 11: "scattering_angle",
+            12: "direct_beam",
+            # 13: "binning_type_run",    # handled by combobox
+            14: "binning_q_step_run",
+        }
+
+        if column not in keys:
+            return
 
         # Update settings from selected option
         if column in [1, 4, 5, 6, 7, 8, 9, 10]:
@@ -1439,6 +1459,12 @@ class MainHandler(object):
 
         Retrieve the reduction options either from the active cross section,
         or from the current settings in the graphical interface.
+
+        Note that some options are global (static members of Configuration class),
+        while others are per-cross-section (members of Configuration instance).
+        This is because some options are applied to all cross-sections
+        (e.g. whether to use a ROI or not), while others are specific to each cross-section
+        (e.g. the peak position and width).
         """
         if self._data_manager.active_cross_section is not None:
             configuration = self._data_manager.active_cross_section.configuration
@@ -1450,10 +1476,9 @@ class MainHandler(object):
         # Peak finder options
         Configuration.use_roi = self.ui.use_roi_checkbox.isChecked()
         Configuration.update_peak_range = self.ui.fit_within_roi_checkbox.isChecked()
-        Configuration.use_roi_bck = self.ui.use_bck_roi_checkbox.isChecked()
         Configuration.use_peak_finder = self.ui.actionAutoXROI.isChecked()
         Configuration.use_low_res_finder = self.ui.actionAutoYROI.isChecked()
-        Configuration.force_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
+        Configuration.use_metadata_bck_roi = self.ui.use_bck_roi_checkbox.isChecked()
         Configuration.use_tight_bck = self.ui.use_side_bck_checkbox.isChecked()
         Configuration.bck_offset = self.ui.side_bck_width.value()
 
@@ -1554,7 +1579,7 @@ class MainHandler(object):
 
         # Peak finder settings
         self.ui.use_roi_checkbox.setChecked(configuration.use_roi)
-        self.ui.use_bck_roi_checkbox.setChecked(configuration.use_roi_bck)
+        self.ui.use_bck_roi_checkbox.setChecked(configuration.use_metadata_bck_roi)
         self.ui.fit_within_roi_checkbox.setChecked(configuration.update_peak_range)
         self.ui.actionAutoXROI.setChecked(False if configuration.use_roi else configuration.use_peak_finder)
         self.ui.actionAutoYROI.setChecked(False if configuration.use_roi else configuration.use_low_res_finder)
@@ -1861,3 +1886,18 @@ class MainHandler(object):
         self.ui.binning_type_selector_run.blockSignals(True)
         self.ui.binning_type_selector_run.setCurrentIndex(bin_type_global)
         self.ui.binning_type_selector_run.blockSignals(False)
+
+    def get_log_level(self):
+        """Return current root logger level as a string for GUI dropdown."""
+        level = logging.getLogger().getEffectiveLevel()
+        return logging.getLevelName(level)
+
+    def change_log_level(self, level: str):
+        """Update all handlers + root logger to new level."""
+        lvl = level.upper()
+        if lvl not in (self.LOG_LEVELS):
+            lvl = "INFO"
+        root = logging.getLogger()
+        root.setLevel(lvl)
+        for handler in root.handlers:
+            handler.setLevel(lvl)

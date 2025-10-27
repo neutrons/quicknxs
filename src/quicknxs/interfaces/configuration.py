@@ -84,10 +84,9 @@ class Configuration(object):
     update_peak_range = False
     use_peak_finder = False
     use_low_res_finder = False
-    use_roi_bck = False
     use_tight_bck = False
     bck_offset = 5
-    force_bck_roi = True
+    use_metadata_bck_roi = True
 
     @classmethod
     def setup_default_values(cls):
@@ -115,10 +114,9 @@ class Configuration(object):
         cls.update_peak_range = False
         cls.use_peak_finder = False
         cls.use_low_res_finder = False
-        cls.use_roi_bck = False
         cls.use_tight_bck = False
         cls.bck_offset = 5
-        cls.force_bck_roi = True
+        cls.use_metadata_bck_roi = True
 
     def __init__(self):
         self.instrument = Instrument()

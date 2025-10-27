@@ -1,17 +1,18 @@
 import copy
+from unittest import mock
 
 import mantid.simpleapi as api
 import numpy as np
 import pytest
 
-from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
     extract_metadata,
     generate_short_script,
-    smart_stitch_reflectivity,
+    stitch_reflectivity,
 )
 from quicknxs.interfaces.data_handling.data_set import NexusData
 from quicknxs.interfaces.data_manager import DataManager
@@ -117,14 +118,28 @@ class TestDataManipulation(object):
     """Main test class for data manipulation functions."""
 
     @pytest.mark.datarepo
-    def test_smart_stitch_reflectivity(self, data_server, mocker_file_open, stitching_config):
+    def test_stitch_reflectivity(self, data_server, mocker_file_open, stitching_config):
         manager = DataManager(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
             raise IOError("Files missing.")
-        scaling_factors, scaling_errors = smart_stitch_reflectivity(manager.reduction_list, "Off_On", False, 0.008)
+        scaling_factors, scaling_errors = stitch_reflectivity(manager.reduction_list, "Off_On", False, 0.008)
         assert scaling_factors == pytest.approx([1.0, 0.1809, 0.1556], abs=0.001)
         assert scaling_errors == pytest.approx([0.0, 0.003, 0.005], abs=0.001)
+
+    @pytest.mark.datarepo
+    def test_stitch_reflectivity_const_q(self, data_server, mocker_file_open, stitching_config):
+        """Test stitching with constant Q binning."""
+        stitching_config.binning_type_run = BinningType.CONST_Q
+        stitching_config.binning_q_step_run = -0.01
+
+        manager = DataManager(data_server.directory)
+        manager.load_data_from_reduced_file(data_server.directory, stitching_config)
+        if len(manager.reduction_list) < 1:
+            raise IOError("Files missing.")
+        scaling_factors, scaling_errors = stitch_reflectivity(manager.reduction_list, "Off_On", False, 0.008)
+        assert scaling_factors == pytest.approx([0.137, 0.028, 0.072], abs=0.001)
+        assert scaling_errors == pytest.approx([0.0, 0.003, 0.021], abs=0.001)
 
     @pytest.mark.parametrize(
         "normalize_to_unity, global_fit, polynom_degree, expected_scaling_factors, expected_scaling_errors",
@@ -139,7 +154,7 @@ class TestDataManipulation(object):
             (True, True, 3, [0.2, 0.48, 1.2], [0.02, 0.07, 0.2]),
         ],
     )
-    def test_smart_stitch_parameters(
+    def test_stitch_parameters(
         self,
         stitching_reduction_list,
         normalize_to_unity,
@@ -148,13 +163,13 @@ class TestDataManipulation(object):
         expected_scaling_factors,
         expected_scaling_errors,
     ):
-        """Test all combinations of the smart_stitch_reflectivity parameters `normalize_to_unity` and `global_fit`.
+        """Test all combinations of the stitch_reflectivity parameters `normalize_to_unity` and `global_fit`.
 
         The fixture stitching_reduction_list has three runs with two cross-sections each: `On_On` and `On_Off`.
         When `global_fit` is True, both cross-sections are used to calculate the scaling factors.
         """
         q_cutoff = 1.5
-        scaling_factors, scaling_errors = smart_stitch_reflectivity(
+        scaling_factors, scaling_errors = stitch_reflectivity(
             stitching_reduction_list, "On_On", normalize_to_unity, q_cutoff, global_fit, polynom_degree
         )
         assert scaling_factors == pytest.approx(expected_scaling_factors, abs=0.001)
@@ -216,11 +231,11 @@ class TestDataManipulation(object):
             _get_polynomial_fit_stitching_scaling_factor(ws1, ws2, 5, 3)
         assert "Levenberg-Marquardt minimizer failed to initialize" in str(error_info.value)
 
-    def test_smart_stitch_normalize_to_unity_error(self, stitching_reduction_list):
+    def test_stitch_normalize_to_unity_error(self, stitching_reduction_list):
         """Test that error is raised when the normalize to unity Q cutoff is too low."""
         q_cutoff = 0.5
         with pytest.raises(NormalizeToUnityQCutoffError):
-            smart_stitch_reflectivity(stitching_reduction_list, "On_On", True, q_cutoff)
+            stitch_reflectivity(stitching_reduction_list, "On_On", True, q_cutoff)
 
     def test_generate_short_script(self, mocker):
         ws1 = mocker.MagicMock()
@@ -289,6 +304,45 @@ class TestDataManipulation(object):
         metadata = extract_metadata(fp)
         assert metadata.mid_q == expected["mid_q"]
         assert metadata.is_direct_beam == expected["is_direct_beam"]
+
+    def make_mock_xs(self, number, wavelength, slitwidth):
+        return mock.Mock(
+            number=number,
+            lambda_center=wavelength,
+            slit1_width=slitwidth[0],
+            slit2_width=slitwidth[1],
+            slit3_width=slitwidth[2],
+        )
+
+    def make_mock_run(self, number, wavelength, slitwidth):
+        return mock.Mock(
+            number=number,
+            cross_sections={"Off_Off": self.make_mock_xs(number, wavelength, slitwidth)},
+        )
+
+    def test_find_best_direct_beam(self):
+        # make a mock run
+        lam = 5.3
+        active_config = Configuration()
+        scatter = self.make_mock_xs(5, lam, (1.0, 1.0, 1.0))
+        scatter.configuration = active_config
+        # make some mock direct beam runs
+        # 1. match on lambda, near match on slits -- accepted
+        # 2. mismatch on lambda, exact match on slits -- rejected
+        # 4. match on lambda, further match on slits, closer run -- rejected
+        beam1 = self.make_mock_run(1, lam, (0.9, 1.1, 0.9))
+        beam2 = self.make_mock_run(2, lam + 1.0, (1.0, 1.0, 1.0))
+        beam3 = self.make_mock_run(4, lam, (0.8, 1.1, 0.9))
+
+        # make the mock data manager
+        manager = DataManager("mock_dir")
+        manager.direct_beam_list = [beam1, beam2, beam3]
+        manager.active_cross_section = scatter
+        manager._nexus_data = mock.Mock(set_parameter=mock.Mock())
+
+        # run the function -- should set with beam1
+        manager.find_best_direct_beam()
+        manager._nexus_data.set_parameter.assert_called_once_with("direct_beam", beam1.number)
 
 
 if __name__ == "__main__":
