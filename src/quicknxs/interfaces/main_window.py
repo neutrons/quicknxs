@@ -316,31 +316,34 @@ class MainWindow(QtWidgets.QMainWindow):
         self.initiate_reflectivity_or_intensity_plot.emit()
         self.update_specular_viewer.emit()
 
+    def set_active_reduction_data(self, checked: bool, row: int):
+        """Select a data set (when checking the active box in the normalization/reduction table)."""
+        if not checked:
+            return
+        self.data_manager.set_active_data_from_reduction_list(row)
+        self.file_loaded()
+        self.file_handler.active_data_changed()
+
     def reductionTableChanged(self, item):
         """Perform action upon change in data reduction list."""
         self.file_handler.reduction_table_changed(item)
-
-    def reduction_cell_activated(self, row: int, col: int):
-        """Select a data set when the user double-clicks on a run number (col 0) in the reduction table."""
-        if col == 0:
-            self.data_manager.set_active_data_from_reduction_list(row)
-            self.file_loaded()
-            self.file_handler.active_data_changed()
 
     def reduction_table_right_click(self, pos: QtCore.QPoint):
         """Handle right-click on the reduction table."""
         self.file_handler.reduction_table_right_click(pos, True)
 
+    def set_active_direct_beam(self, checked: bool, row: int):
+        """Select a data set when the user double-clicks on a run number (col 0) in the direct beam table."""
+        if not checked:
+            return
+        self.data_manager.set_active_data_from_direct_beam_list(row)
+        self.file_loaded()
+        # TODO: why is this commented out?
+        # self.file_handler.active_data_changed()
+
     def direct_beam_table_right_click(self, pos: QtCore.QPoint):
         """Handle right-click on the direct beam table."""
         self.file_handler.reduction_table_right_click(pos, False)
-
-    def direct_beam_cell_activated(self, row: int, col: int):
-        """Select a data set when the user double-clicks on a run number (col 0) in the direct beam table."""
-        if col == 0:
-            self.data_manager.set_active_data_from_direct_beam_list(row)
-            self.file_loaded()
-            # self.file_handler.active_data_changed()
 
     def replotProjections(self):
         """Signal handling to replot the projections."""

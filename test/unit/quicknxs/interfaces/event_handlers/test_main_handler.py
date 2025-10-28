@@ -170,7 +170,7 @@ def test_reload_all_files(qtbot):
     main_window.actionAddRefl.triggered.emit()
 
     # Select/plot the first data run
-    main_window.reduction_cell_activated(selected_row, 0)
+    main_window.set_active_reduction_data(True, selected_row)
 
     # Test that reloading all files does not change the active run
     assert main_window.ui.reductionTable.rowCount() == 2
@@ -204,7 +204,7 @@ def test_reload_all_files_two_data_tabs(qtbot):
     main_window.addDataTable()
 
     # Select/plot the first data run
-    main_window.reduction_cell_activated(selected_row, 0)
+    main_window.set_active_reduction_data(True, selected_row)
 
     # Test that reloading all files does not change the active run and data tab
     assert main_window.ui.reductionTable.rowCount() == 2

@@ -833,7 +833,7 @@ class MainHandler(object):
         self.main_window.auto_change_active = False
         return True
 
-    def update_reduction_table(self, table_widget: QtWidgets.QTableWidget, idx: int, d: CrossSectionData):
+    def update_reduction_table(self, table_widget: QtWidgets.QTableWidget, idx: int, data: CrossSectionData):
         """Update the reduction table.
 
         Parameters
@@ -842,12 +842,24 @@ class MainHandler(object):
             Table widget of the table to update
         idx:
             Row to update
-        d:
+        data:
             Cross-section data
         """
         self.main_window.auto_change_active = True
-        item = QtWidgets.QTableWidgetItem(str(d.number))
-        if d == self._data_manager.active_cross_section:
+
+        # radio button for active data (layout inside a widget to center it)
+        radio_widget = QtWidgets.QWidget()
+        radio_layout = QtWidgets.QHBoxLayout(radio_widget)
+        radio_layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
+        radio_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        radio_button = QtWidgets.QRadioButton()
+        radio_button.setChecked(data == self._data_manager.active_cross_section)
+        radio_button.toggled.connect(lambda checked: self.main_window.set_active_reduction_data(checked, idx))
+        radio_layout.addWidget(radio_button)
+        table_widget.setCellWidget(idx, ReductionTableColumn.ACTIVE, radio_widget)
+
+        item = QtWidgets.QTableWidgetItem(str(data.number))
+        if data == self._data_manager.active_cross_section:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
@@ -857,49 +869,49 @@ class MainHandler(object):
         table_widget.setItem(
             idx,
             ReductionTableColumn.SCALE_FACTOR,
-            QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)),
+            QtWidgets.QTableWidgetItem("%.4f" % (data.configuration.scaling_factor)),
         )
         table_widget.setItem(
-            idx, ReductionTableColumn.NUM_LEFT, QtWidgets.QTableWidgetItem(str(d.configuration.cut_first_n_points))
+            idx, ReductionTableColumn.NUM_LEFT, QtWidgets.QTableWidgetItem(str(data.configuration.cut_first_n_points))
         )
         table_widget.setItem(
-            idx, ReductionTableColumn.NUM_RIGHT, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points))
+            idx, ReductionTableColumn.NUM_RIGHT, QtWidgets.QTableWidgetItem(str(data.configuration.cut_last_n_points))
         )
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.peak_position))
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.peak_position))
         item.setBackground(QColors.dark_grey)
         table_widget.setItem(idx, ReductionTableColumn.PEAK_POSITION, item)
         table_widget.setItem(
-            idx, ReductionTableColumn.PEAK_WIDTH, QtWidgets.QTableWidgetItem(str(d.configuration.peak_width))
+            idx, ReductionTableColumn.PEAK_WIDTH, QtWidgets.QTableWidgetItem(str(data.configuration.peak_width))
         )
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.low_res_position))
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.low_res_position))
         item.setBackground(QColors.dark_grey)
         table_widget.setItem(idx, ReductionTableColumn.LOW_RES_POSITION, item)
         table_widget.setItem(
-            idx, ReductionTableColumn.LOW_RES_WIDTH, QtWidgets.QTableWidgetItem(str(d.configuration.low_res_width))
+            idx, ReductionTableColumn.LOW_RES_WIDTH, QtWidgets.QTableWidgetItem(str(data.configuration.low_res_width))
         )
-        item = QtWidgets.QTableWidgetItem(str(d.configuration.bck_position))
+        item = QtWidgets.QTableWidgetItem(str(data.configuration.bck_position))
         item.setBackground(QColors.dark_grey)
         table_widget.setItem(idx, ReductionTableColumn.BCK_POSITION, item)
         table_widget.setItem(
-            idx, ReductionTableColumn.BCK_WIDTH, QtWidgets.QTableWidgetItem(str(d.configuration.bck_width))
+            idx, ReductionTableColumn.BCK_WIDTH, QtWidgets.QTableWidgetItem(str(data.configuration.bck_width))
         )
-        table_widget.setItem(idx, ReductionTableColumn.DPIX, QtWidgets.QTableWidgetItem(str(d.direct_pixel)))
-        item = QtWidgets.QTableWidgetItem("%.4f" % d.scattering_angle)
+        table_widget.setItem(idx, ReductionTableColumn.DPIX, QtWidgets.QTableWidgetItem(str(data.direct_pixel)))
+        item = QtWidgets.QTableWidgetItem("%.4f" % data.scattering_angle)
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         table_widget.setItem(idx, ReductionTableColumn.THETA, item)
         direct_beam = "none"
-        if d.configuration.direct_beam is not None:
-            direct_beam = d.configuration.direct_beam
+        if data.configuration.direct_beam is not None:
+            direct_beam = data.configuration.direct_beam
         table_widget.setItem(idx, ReductionTableColumn.DIRECT_BEAM, QtWidgets.QTableWidgetItem(str(direct_beam)))
         # Binning type column
         combobox = BinningTypeSelection(on_change_handler=self.reduction_table_binning_type_changed, row=idx)
         combobox.blockSignals(True)
-        combobox.setCurrentIndex(d.configuration.binning_type_run)
+        combobox.setCurrentIndex(data.configuration.binning_type_run)
         combobox.blockSignals(False)
         table_widget.setCellWidget(idx, ReductionTableColumn.BINNING_TYPE, combobox)
         # Q steps column
-        item = QtWidgets.QTableWidgetItem(f"{d.configuration.binning_q_step_run:.3f}")
-        if d.configuration.binning_type_run == BinningType.NONE:
+        item = QtWidgets.QTableWidgetItem(f"{data.configuration.binning_q_step_run:.3f}")
+        if data.configuration.binning_type_run == BinningType.NONE:
             # indicate Q steps is not used
             item.setForeground(QColors.dark_grey)
             item.setBackground(QColors.light_grey)
@@ -944,6 +956,7 @@ class MainHandler(object):
 
         entry = item.row()
         column = item.column()
+        column = ReductionTableColumn(column)
 
         refl = self._data_manager.reduction_list[entry]
 
@@ -951,44 +964,58 @@ class MainHandler(object):
         # of direct beams we know about.
 
         keys = {
-            # 0: "number",              # run number, not editable
-            1: "scaling_factor",
-            2: "cut_first_n_points",
-            3: "cut_last_n_points",
-            4: "peak_position",
-            5: "peak_width",
-            6: "low_res_position",
-            7: "low_res_width",
-            8: "bck_position",
-            9: "bck_width",
-            10: "direct_pixel_overwrite",
-            # 11: "scattering_angle",
-            12: "direct_beam",
-            # 13: "binning_type_run",    # handled by combobox
-            14: "binning_q_step_run",
+            # ReductionTableColumn.ACTIVE: "active",
+            # ReductionTableColumn.RUN_NUMBER: "number",  ## run number, not editable
+            ReductionTableColumn.SCALE_FACTOR: "scaling_factor",
+            ReductionTableColumn.NUM_LEFT: "cut_first_n_points",
+            ReductionTableColumn.NUM_RIGHT: "cut_last_n_points",
+            ReductionTableColumn.PEAK_POSITION: "peak_position",
+            ReductionTableColumn.PEAK_WIDTH: "peak_width",
+            ReductionTableColumn.LOW_RES_POSITION: "low_res_position",
+            ReductionTableColumn.LOW_RES_WIDTH: "low_res_width",
+            ReductionTableColumn.BCK_POSITION: "bck_position",
+            ReductionTableColumn.BCK_WIDTH: "bck_width",
+            ReductionTableColumn.DPIX: "direct_pixel_overwrite",
+            # ReductionTableColumn.THETA: "scattering_angle",
+            ReductionTableColumn.DIRECT_BEAM: "direct_beam",
+            # ReductionTableColumn.BINNING_TYPE: "binning_type_run",  ## handled by combobox
+            ReductionTableColumn.Q_STEPS: "binning_q_step_run",
         }
 
         if column not in keys:
             return
 
-        # Update settings from selected option
-        if column in [1, 4, 5, 6, 7, 8, 9, 10]:
-            refl.set_parameter(keys[column], float(item.text()))
-        elif column in [2, 3]:
-            refl.set_parameter(keys[column], int(item.text()))
-        elif column == 12:
-            try:
-                refl.set_parameter(keys[column], item.text())
-            except:
-                refl.set_parameter(keys[column], None)
-                item.setText("none")
-        elif column == 14:
-            try:
-                new_value = round(float(item.text()), 3)
-                if -0.1 <= new_value <= 0.1:
-                    refl.set_parameter(keys[column], new_value)
-            except:
-                refl.set_parameter(keys[column], None)
+        # Update settings from selected option using match/case
+        match column:
+            case (
+                ReductionTableColumn.SCALE_FACTOR
+                | ReductionTableColumn.PEAK_POSITION
+                | ReductionTableColumn.PEAK_WIDTH
+                | ReductionTableColumn.LOW_RES_POSITION
+                | ReductionTableColumn.LOW_RES_WIDTH
+                | ReductionTableColumn.BCK_POSITION
+                | ReductionTableColumn.BCK_WIDTH
+                | ReductionTableColumn.DPIX
+            ):
+                refl.set_parameter(keys[column], float(item.text()))
+
+            case ReductionTableColumn.NUM_LEFT | ReductionTableColumn.NUM_RIGHT:
+                refl.set_parameter(keys[column], int(item.text()))
+
+            case ReductionTableColumn.DIRECT_BEAM:
+                try:
+                    refl.set_parameter(keys[column], item.text())
+                except:
+                    refl.set_parameter(keys[column], None)
+                    item.setText("none")
+
+            case ReductionTableColumn.Q_STEPS:
+                try:
+                    new_value = round(float(item.text()), 3)
+                    if -0.1 <= new_value <= 0.1:
+                        refl.set_parameter(keys[column], new_value)
+                except:
+                    refl.set_parameter(keys[column], None)
 
         recalculate = False if column in [1, 2, 3] else True
 
@@ -1105,17 +1132,26 @@ class MainHandler(object):
     def update_direct_beam_table(self, idx: int, data: CrossSectionData) -> None:
         """Update a direct beam table entry with cross-section data.
 
-        Table columns:
-            0: Run number - d.number
-            1: x0         - d.configuration.peak_position
-            2: xw         - d.configuration.peak_width
-            3: y0         - d.configuration.low_res_position
-            4: yw         - d.configuration.low_res_width
-            5: bg0        - d.configuration.bck_position
-            6: bgw        - d.configuration.bck_width
-            7: lambda     - d.wavelength
+        Parameters
+        ----------
+        idx:
+            Row to update
+        data:
+            Cross-section data
         """
         self.main_window.auto_change_active = True
+
+        # radio button for active data (layout inside a widget to center it)
+        radio_widget = QtWidgets.QWidget()
+        radio_layout = QtWidgets.QHBoxLayout(radio_widget)
+        radio_layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
+        radio_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        radio_button = QtWidgets.QRadioButton()
+        radio_button.setChecked(data == self._data_manager.active_cross_section)
+        radio_button.toggled.connect(lambda checked: self.main_window.set_active_direct_beam(checked, idx))
+        radio_layout.addWidget(radio_button)
+        self.ui.directBeamTable.setCellWidget(idx, DirectBeamTableColumn.ACTIVE, radio_widget)
+
         item = QtWidgets.QTableWidgetItem(str(data.number))
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         if data == self._data_manager.active_cross_section:
@@ -1155,30 +1191,34 @@ class MainHandler(object):
 
         data = self._data_manager.direct_beam_list[item.row()]
 
-        # col 0 and 7 are not editable
-        col_mapping = {
-            1: "peak_position",
-            2: "peak_width",
-            3: "low_res_position",
-            4: "low_res_width",
-            5: "bck_position",
-            6: "bck_width",
+        keys = {
+            # DirectBeamTableColumn.ACTIVE: "active",
+            # DirectBeamTableColumn.RUN_NUMBER: "number",  ## run number, not editable
+            DirectBeamTableColumn.PEAK_POSITION: "peak_position",
+            DirectBeamTableColumn.PEAK_WIDTH: "peak_width",
+            DirectBeamTableColumn.LOW_RES_POSITION: "low_res_position",
+            DirectBeamTableColumn.LOW_RES_WIDTH: "low_res_width",
+            DirectBeamTableColumn.BCK_POSITION: "bck_position",
+            DirectBeamTableColumn.BCK_WIDTH: "bck_width",
+            # DirectBeamTableColumn.WAVELENGTH: "wavelength",  ## not editable
         }
 
-        col = item.column()
-        if col in col_mapping:
-            try:
-                data.set_parameter(col_mapping[col], float(item.text()))
-            except ValueError:
-                self.report_message(
-                    f"Invalid value for {col_mapping[col]}:\n\t{item.text()}\nPlease enter a valid number.",
-                    pop_up=True,
-                    is_error=True,
-                )
-                # Reset to old value if conversion fails
-                old_value = getattr(self._data_manager.active_cross_section.configuration, col_mapping[col])
-                item.setText(str(old_value))
-                return
+        col = DirectBeamTableColumn(item.column())
+        if col not in keys:
+            return
+
+        try:
+            data.set_parameter(keys[col], float(item.text()))
+        except ValueError:
+            self.report_message(
+                f"Invalid value for {keys[col]}:\n\t{item.text()}\nPlease enter a valid number.",
+                pop_up=True,
+                is_error=True,
+            )
+            # Reset to old value if conversion fails
+            old_value = getattr(self._data_manager.active_cross_section.configuration, keys[col])
+            item.setText(str(old_value))
+            return
 
         # Update calculated data
         data.update_calculated_values()
@@ -1211,21 +1251,34 @@ class MainHandler(object):
         self.main_window.auto_change_active = True
         idx = self._data_manager.find_active_data_id()
         for i in range(self.reduction_table.rowCount()):
-            item = self.reduction_table.item(i, 0)
-            if item is not None:
+            # Highlight the active data row, un-highlight the others
+            run_num = self.reduction_table.item(i, ReductionTableColumn.RUN_NUMBER)
+            if run_num is not None:
                 if i == idx:
-                    item.setBackground(QColors.yellow)
+                    run_num.setBackground(QColors.yellow)
                 else:
-                    item.setBackground(QColors.white)
+                    run_num.setBackground(QColors.white)
+            # Set the radio button states
+            active_cell = self.reduction_table.cellWidget(i, ReductionTableColumn.ACTIVE)
+            if active_cell is not None:
+                radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                radio_button.setChecked(i == idx)
 
         idx = self._data_manager.find_active_direct_beam_id()
         for i in range(self.ui.directBeamTable.rowCount()):
-            item = self.ui.directBeamTable.item(i, 0)
+            # Highlight the active data row, un-highlight the others
+            item = self.ui.directBeamTable.item(i, DirectBeamTableColumn.RUN_NUMBER)
             if item is not None:
                 if i == idx:
                     item.setBackground(QColors.yellow)
                 else:
                     item.setBackground(QColors.white)
+            # Set the radio button states
+            active_cell = self.ui.directBeamTable.cellWidget(i, DirectBeamTableColumn.ACTIVE)
+            if active_cell is not None:
+                radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                radio_button.setChecked(i == idx)
+
         self.main_window.auto_change_active = False
 
     def reduction_table_right_click(self, pos: QtCore.QPoint, is_reduction_table: bool = True):
