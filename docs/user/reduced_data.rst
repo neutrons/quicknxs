@@ -23,63 +23,9 @@ The output file consists of several parts:
 Example
 -------
 
-.. code-block::
-
-    # Datafile created by QuickNXS 4.5.0
-    # Datafile created using mr_reduction 2.2.0
-    # Datafile created using Mantid 6.12.0
-    # Date: 2025-07-16 09:17:38
-    # Type: Specular
-    # Input file indices: 42112,42113
-    # Extracted states: +-
-    #
-    # [Direct Beam Runs]
-    #  DB_ID  P0  PN  bck_position  bck_roi  bck_width  cut_first_n_points  cut_last_n_points  direct_angle_offset_overwrite direct_beam  do_final_rebin_run  dpix  final_rebin_step_run  low_res_position low_res_roi  low_res_width  match_direct_beam metadata_roi_bck metadata_roi_peak number  peak_position   peak_roi  peak_width  scaling_error  scaling_factor  set_direct_angle_offset  set_direct_pixel  subtract_background  tof_bin_type  tof_bins                                tof_range  tth  use_dangle                                           File
-    #      1   0   0          30.0 [20, 40]       20.0                   1                  1                            0.0        None               False 194.0                 -0.01             167.0  [127, 207]           80.0               True           [0, 0]        [225, 246]  42099          235.5 [225, 246]        21.0            0.0             1.0                    False             False                 True             0       400 [11413.560217325685, 45388.809236341694]    0       False /SNS/REF_M/IPTS-30794/nexus/REF_M_42099.nxs.h5
-    #
-    # [Data Runs]
-    #  DB_ID  bck_position  bck_roi  bck_width  cut_first_n_points  cut_last_n_points  direct_angle_offset_overwrite  direct_beam  do_final_rebin_run  dpix   fan  final_rebin_step_run  low_res_position low_res_roi  low_res_width  match_direct_beam metadata_roi_bck metadata_roi_peak number  peak_position   peak_roi  peak_width  scaling_error  scaling_factor  set_direct_angle_offset  set_direct_pixel  subtract_background  tof_bin_type  tof_bins                                tof_range      tth  use_dangle                                           File
-    #      0          30.0 [20, 40]       20.0                   1                  1                            0.0          NaN               False 194.0 False                 -0.01             167.0  [127, 207]           80.0               True           [0, 0]        [163, 184]  42112          173.5 [163, 184]        21.0            0.0             1.0                    False             False                 True             0       400 [11413.560217325685, 45388.809236341694] 0.137407       False /SNS/REF_M/IPTS-30794/nexus/REF_M_42112.nxs.h5
-    #      1          30.0 [20, 40]       20.0                   1                  1                            0.0      42099.0               False 194.0 False                 -0.01             167.0  [127, 207]           80.0               True           [0, 0]        [132, 152]  42113          142.0 [132, 152]        20.0            0.0             1.0                    False             False                 True             0       400 [11413.560217325685, 45388.809236341694] 0.379784       False /SNS/REF_M/IPTS-30794/nexus/REF_M_42113.nxs.h5
-    #
-    # [Peak 1 Runs]
-    #  DB_ID  bck_position  bck_roi  bck_width  cut_first_n_points  cut_last_n_points  direct_angle_offset_overwrite  direct_beam  do_final_rebin_run  dpix   fan  final_rebin_step_run  low_res_position low_res_roi  low_res_width  match_direct_beam metadata_roi_bck metadata_roi_peak number  peak_position   peak_roi  peak_width  scaling_error  scaling_factor  set_direct_angle_offset  set_direct_pixel  subtract_background  tof_bin_type  tof_bins                                tof_range      tth  use_dangle                                           File
-    #      0          30.0 [20, 40]       20.0                   1                  1                            0.0          NaN               False 194.0 False                 -0.01             167.0  [127, 207]           80.0               True           [0, 0]        [163, 184]  42112          173.5 [163, 184]        21.0            0.0             1.0                    False             False                 True             0       400 [11413.560217325685, 45388.809236341694] 0.137407       False /SNS/REF_M/IPTS-30794/nexus/REF_M_42112.nxs.h5
-    #      1          30.0 [20, 40]       20.0                   1                  1                            0.0      42099.0               False 194.0 False                 -0.01             167.0  [127, 207]           80.0               True           [0, 0]        [132, 152]  42113          142.0 [132, 152]        20.0            0.0             1.0                    False             False                 True             0       400 [11413.560217325685, 45388.809236341694] 0.379784       False /SNS/REF_M/IPTS-30794/nexus/REF_M_42113.nxs.h5
-    #
-    # [Global Options]
-    # name                        value
-    # sample_size                  10.0
-    # use_constant_q              False
-    # do_final_rebin_global        True
-    # final_rebin_step_global     -0.01
-    # normalize_to_unity           True
-    # total_reflectivity_q_cutoff  0.01
-    # global_stitching            False
-    # polynomial_stitching        False
-    # polynomial_stitching_degree     3
-    # polynomial_stitching_points     3
-    # apply_deadtime              False
-    # paralyzable_deadtime         True
-    # deadtime_value                4.2
-    # deadtime_tof_step             100
-    # lock_direct_beam_y          False
-    # use_roi                      True
-    # update_peak_range           False
-    # use_peak_finder             False
-    # use_low_res_finder          False
-    # use_roi_bck                 False
-    # use_tight_bck               False
-    # bck_offset                      5
-    # force_bck_roi               False
-    #
-    # [Data]
-    #     Qz [1/A]	    R [a.u.]	   dR [a.u.]	   dQz [1/A]	 theta [rad]
-    6.460453e-03      	3.887723e-02      	1.326615e-02      	5.000970e-04      	4.322784e-03
-    6.525057e-03      	4.349224e-02      	1.335389e-02      	5.051001e-04      	4.322784e-03
-    6.590308e-03      	6.469506e-02      	1.598737e-02      	5.101532e-04      	4.322784e-03
-    6.656211e-03      	7.656998e-02      	1.793673e-02      	5.152570e-04      	4.322784e-03
-    ...
+.. include:: ./example_reduced_data.dat
+    :literal:
+    :end-line: 50
 
 
 Section Details
