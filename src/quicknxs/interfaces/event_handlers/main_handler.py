@@ -27,6 +27,7 @@ from quicknxs.interfaces.enums import DirectBeamTableColumn, ReductionTableColum
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
 from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
+from quicknxs.ui.active_radio_button import ActiveDataRadioButton
 from quicknxs.ui.binningtype_combobox import BinningTypeSelection
 
 
@@ -42,6 +43,13 @@ class MainHandler(object):
         self.ui = main_window.ui
         self.main_window = main_window
         self._data_manager: DataManager = main_window.data_manager
+
+        # Create button groups for radio buttons to ensure mutual exclusivity
+        self.reduction_table_button_groups = {}  # key: tab_index, value: QButtonGroup
+        self.direct_beam_button_group = QtWidgets.QButtonGroup(self.main_window)
+
+        # Initialize button group for the main reduction table
+        self.reduction_table_button_groups[self.MAIN_DATA_TAB_INDEX] = QtWidgets.QButtonGroup(self.main_window)
 
         # Update file list when changes are made
         self._path_watcher = QtCore.QFileSystemWatcher([self._data_manager.current_directory], self.main_window)
@@ -633,6 +641,10 @@ class MainHandler(object):
         tab_index: int
             Index of the additional tab/peak
         """
+        # Create a new button group for this reduction table
+        if tab_index not in self.reduction_table_button_groups:
+            self.reduction_table_button_groups[tab_index] = QtWidgets.QButtonGroup(self.main_window)
+
         if self._data_manager.main_reduction_list:
             table_widget = self.get_reduction_table_by_index(tab_index)
             table_widget.setRowCount(len(self._data_manager.main_reduction_list))
@@ -847,15 +859,16 @@ class MainHandler(object):
         """
         self.main_window.auto_change_active = True
 
+        # Get the current tab index to use the correct button group
+        current_tab_index = self.ui.tabWidget.currentIndex()
+        if current_tab_index not in self.reduction_table_button_groups:
+            self.reduction_table_button_groups[current_tab_index] = QtWidgets.QButtonGroup(self.main_window)
+
+        button_group = self.reduction_table_button_groups[current_tab_index]
+
         # radio button for active data (layout inside a widget to center it)
-        radio_widget = QtWidgets.QWidget()
-        radio_layout = QtWidgets.QHBoxLayout(radio_widget)
-        radio_layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
-        radio_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        radio_button = QtWidgets.QRadioButton()
-        radio_button.setChecked(data == self._data_manager.active_cross_section)
-        radio_button.toggled.connect(lambda checked: self.main_window.set_active_reduction_data(checked, idx))
-        radio_layout.addWidget(radio_button)
+        radio_widget = ActiveDataRadioButton(self, is_active=(data == self._data_manager.active_cross_section), idx=idx)
+        button_group.addButton(radio_widget.radio_button)
         table_widget.setCellWidget(idx, ReductionTableColumn.ACTIVE, radio_widget)
 
         item = QtWidgets.QTableWidgetItem(str(data.number))
@@ -1142,14 +1155,10 @@ class MainHandler(object):
         self.main_window.auto_change_active = True
 
         # radio button for active data (layout inside a widget to center it)
-        radio_widget = QtWidgets.QWidget()
-        radio_layout = QtWidgets.QHBoxLayout(radio_widget)
-        radio_layout.setContentsMargins(0, 0, 0, 0)  # Remove extra margins
-        radio_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        radio_button = QtWidgets.QRadioButton()
-        radio_button.setChecked(data == self._data_manager.active_cross_section)
-        radio_button.toggled.connect(lambda checked: self.main_window.set_active_direct_beam(checked, idx))
-        radio_layout.addWidget(radio_button)
+        radio_widget = ActiveDataRadioButton(
+            self, is_active=(data == self._data_manager.active_cross_section), idx=idx, is_direct_beam=True
+        )
+        self.direct_beam_button_group.addButton(radio_widget.radio_button)
         self.ui.directBeamTable.setCellWidget(idx, DirectBeamTableColumn.ACTIVE, radio_widget)
 
         item = QtWidgets.QTableWidgetItem(str(data.number))
