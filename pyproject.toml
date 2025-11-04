@@ -166,7 +166,8 @@ conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .c
 ] }
 # Misc
 # ignore pillow error because it is only used by anaconda-client v1.13.0
-audit-deps = { cmd = "pip-audit --local --ignore-vuln=GHSA-4xh5-x5gv-qwph", description = "Audit the package dependencies for vulnerabilities" }
+# ignore brotli, used by multiple external dependencies
+audit-deps = { cmd = "pip-audit --local --ignore-vuln=GHSA-4xh5-x5gv-qwph --ignore-vuln=GHSA-2qfp-q593-8484", description = "Audit the package dependencies for vulnerabilities" }
 clean = { cmd = 'rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__ **/_version.py', description = "Clean up various caches and build artifacts" }
 clean-conda = { cmd = "rm -f *.conda", description = "Clean the local .conda build artifacts" }
 clean-docs = { cmd = "rm -rf docs/_build", description = "Clean up documentation build artifacts" }

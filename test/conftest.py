@@ -140,7 +140,7 @@ def main_window_with_data_factory(qtbot):
         main_window.actionAddRefl.triggered.emit()
 
         # set the first data run as the active run in the UI
-        main_window.reduction_cell_activated(0, 0)
+        main_window.set_active_reduction_data(True, 0)
 
         return main_window
 

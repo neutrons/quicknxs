@@ -76,7 +76,7 @@ def test_peak_finder_settings_persist(data_server, qtbot):
     _assert_peak_finder_settings()
 
     # Select a different run
-    main_window.reduction_cell_activated(1, 0)
+    main_window.set_active_reduction_data(True, 1)
     _assert_peak_finder_settings()
     _assert_peak_finder_config()
 

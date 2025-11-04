@@ -28,9 +28,9 @@ def test_plot_reflectivity_or_intensity(qtbot):
     _populate_reduction_and_direct_beam_tables(main_window)
 
     # select a sample run
-    main_window.reduction_cell_activated(0, 0)
+    main_window.set_active_reduction_data(True, 0)
     assert main_window.ui.reflectivity_or_intensity_plot_title.text() == "Reflectivity"
 
     # select a direct beam run
-    main_window.direct_beam_cell_activated(0, 0)
+    main_window.set_active_direct_beam(True, 0)
     assert main_window.ui.reflectivity_or_intensity_plot_title.text() == "Intensity"

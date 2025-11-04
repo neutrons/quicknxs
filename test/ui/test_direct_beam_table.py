@@ -2,6 +2,7 @@ import pytest
 from qtpy import QtWidgets
 
 from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.enums import DirectBeamTableColumn as DBTableCols
 from quicknxs.interfaces.main_window import MainWindow
 
 
@@ -19,9 +20,9 @@ def test_table_data(qtbot, data_server):
     # check that the direct beam table is populated with the correct data
     table = window_main.ui.directBeamTable
     assert table.rowCount() == 1
-    assert table.item(0, 0).text() == "42099"
-    assert table.item(0, 1).text() == "235.5"
-    assert table.item(0, 2).text() == "21.0"
+    assert table.item(0, DBTableCols.RUN_NUMBER).text() == "42099"
+    assert table.item(0, DBTableCols.PEAK_POSITION).text() == "235.5"
+    assert table.item(0, DBTableCols.PEAK_WIDTH).text() == "21.0"
 
 
 @pytest.mark.datarepo
@@ -46,21 +47,21 @@ def test_table_connections(qtbot, data_server):
     assert table is not None
     assert table.rowCount() == 1
 
-    assert main_window.ui.refXPos.value() == float(table.item(0, 1).text())
-    assert main_window.ui.refXWidth.value() == float(table.item(0, 2).text())
+    assert main_window.ui.refXPos.value() == float(table.item(0, DBTableCols.PEAK_POSITION).text())
+    assert main_window.ui.refXWidth.value() == float(table.item(0, DBTableCols.PEAK_WIDTH).text())
 
     # Change the reference position and width in the table
-    table.item(0, 1).setText("100")
-    table.item(0, 2).setText("50")
-    assert main_window.ui.refXPos.value() == float(table.item(0, 1).text())
-    assert main_window.ui.refXWidth.value() == float(table.item(0, 2).text())
+    table.item(0, DBTableCols.PEAK_POSITION).setText("100")
+    table.item(0, DBTableCols.PEAK_WIDTH).setText("50")
+    assert main_window.ui.refXPos.value() == float(table.item(0, DBTableCols.PEAK_POSITION).text())
+    assert main_window.ui.refXWidth.value() == float(table.item(0, DBTableCols.PEAK_WIDTH).text())
 
     # Change the reference position and width in the main window
     main_window.ui.refXPos.setValue(200)
     main_window.ui.refXWidth.setValue(100)
     main_window.file_handler.update_info()
-    assert main_window.ui.refXPos.value() == float(table.item(0, 1).text())
-    assert main_window.ui.refXWidth.value() == float(table.item(0, 2).text())
+    assert main_window.ui.refXPos.value() == float(table.item(0, DBTableCols.PEAK_POSITION).text())
+    assert main_window.ui.refXWidth.value() == float(table.item(0, DBTableCols.PEAK_WIDTH).text())
 
 
 @pytest.mark.datarepo
@@ -82,8 +83,8 @@ def test_table_peak_position_change_triggers_plot_update(mocker, main_window_wit
     plot_refl_call_count = mock_plot_refl.call_count
 
     # Update peak position in the direct beam table
-    assert table.item(0, 0).text() == "42100"
-    table.item(0, 1).setText("102.0")
+    assert table.item(0, DBTableCols.RUN_NUMBER).text() == "42100"
+    table.item(0, DBTableCols.PEAK_POSITION).setText("102.0")
 
     # Verify that the reflected run was updated and that the plot function was called
     mock_refl_run_with_db_42099.assert_not_called()

@@ -4,31 +4,33 @@ from enum import IntEnum
 class ReductionTableColumn(IntEnum):
     """Column indices in the reduction table."""
 
-    RUN_NUMBER = 0
-    SCALE_FACTOR = 1
-    NUM_LEFT = 2
-    NUM_RIGHT = 3
-    PEAK_POSITION = 4
-    PEAK_WIDTH = 5
-    LOW_RES_POSITION = 6
-    LOW_RES_WIDTH = 7
-    BCK_POSITION = 8
-    BCK_WIDTH = 9
-    DPIX = 10
-    THETA = 11
-    DIRECT_BEAM = 12
-    BINNING_TYPE = 13
-    Q_STEPS = 14
+    ACTIVE = 0
+    RUN_NUMBER = 1
+    SCALE_FACTOR = 2
+    NUM_LEFT = 3
+    NUM_RIGHT = 4
+    PEAK_POSITION = 5
+    PEAK_WIDTH = 6
+    LOW_RES_POSITION = 7
+    LOW_RES_WIDTH = 8
+    BCK_POSITION = 9
+    BCK_WIDTH = 10
+    DPIX = 11
+    THETA = 12
+    DIRECT_BEAM = 13
+    BINNING_TYPE = 14
+    Q_STEPS = 15
 
 
 class DirectBeamTableColumn(IntEnum):
     """Column indices in the normalization table."""
 
-    RUN_NUMBER = 0
-    PEAK_POSITION = 1
-    PEAK_WIDTH = 2
-    LOW_RES_POSITION = 3
-    LOW_RES_WIDTH = 4
-    BCK_POSITION = 5
-    BCK_WIDTH = 6
-    WAVELENGTH = 7
+    ACTIVE = 0
+    RUN_NUMBER = 1
+    PEAK_POSITION = 2
+    PEAK_WIDTH = 3
+    LOW_RES_POSITION = 4
+    LOW_RES_WIDTH = 5
+    BCK_POSITION = 6
+    BCK_WIDTH = 7
+    WAVELENGTH = 8

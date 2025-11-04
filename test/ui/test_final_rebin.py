@@ -27,7 +27,7 @@ def _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=
         main_window.ui.q_rebin_spinbox_global.setValue(-0.010)
         main_window.ui.propagate_binning_options_button.click()
     # set the first data run to active
-    main_window.reduction_cell_activated(0, 0)
+    main_window.set_active_reduction_data(True, 0)
 
 
 def test_clicking_apply_binning_button_updates_reduction_table(qtbot):
