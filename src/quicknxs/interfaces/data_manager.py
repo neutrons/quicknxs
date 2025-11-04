@@ -68,6 +68,11 @@ class DataManager(object):
 
         self.direct_beam_list: List[NexusData] = []
 
+        # Track the last selected row index for each reduction table tab and the direct beam tab
+        # This allows us to maintain the selection when switching between tabs
+        self.last_selected_reduction_row: Dict[int, int] = {}  # key: tab index, value: row index
+        self.last_selected_direct_beam_row: int = 0
+
         # List of cross-sections common to all reduced data sets
         self.reduction_states: List[str] = []
 
@@ -129,6 +134,8 @@ class DataManager(object):
         if index < len(self.reduction_list):
             self._nexus_data = self.reduction_list[index]
             self.set_active_cross_section(0)
+            # Track the last selected row for this reduction table
+            self.last_selected_reduction_row[self.active_reduction_list_index] = index
 
     def set_active_data_from_direct_beam_list(self, index: int):
         """Set a data set in the direct beam list as the active data set according to its index.
@@ -139,6 +146,8 @@ class DataManager(object):
         if index < len(self.direct_beam_list):
             self._nexus_data = self.direct_beam_list[index]
             self.set_active_cross_section(0)
+            # Track the last selected row for the direct beam table
+            self.last_selected_direct_beam_row = index
 
     def set_active_cross_section(self, index: int) -> bool:
         """Set the current cross section to the specified index, or zero if it doesn't exist."""
@@ -1067,13 +1076,42 @@ class DataManager(object):
         tab_index: int
             Index of the peak in `self.peak_reduction_lists`
         """
-        active_data_idx = self.find_active_data_id()
         self.set_active_reduction_list_index(tab_index)
-        # keep same selected run if available in the other reduction table
+
+        # Try to restore the last selected row for this tab
+        if tab_index in self.last_selected_reduction_row:
+            last_row = self.last_selected_reduction_row[tab_index]
+            if last_row < len(self.reduction_list):
+                self.set_active_data_from_reduction_list(last_row)
+                return
+
+        # Otherwise, try to keep same row index as current active data
+        active_data_idx = self.find_active_data_id()
         if active_data_idx and active_data_idx < len(self.reduction_list):
             self.set_active_data_from_reduction_list(active_data_idx)
         else:
+            # Default to first row
             self.set_active_data_from_reduction_list(0)
+
+    def update_active_direct_beam(self):
+        """Updates the active direct beam when switching to the direct beam tab.
+
+        Tries to maintain the previously selected direct beam row index if available,
+        otherwise defaults to the first direct beam.
+        """
+        # If the current active data is already in the direct beam list, keep it
+        active_direct_beam_idx = self.find_active_direct_beam_id()
+        if active_direct_beam_idx is not None:
+            # Update the tracked index to match current selection
+            self.last_selected_direct_beam_row = active_direct_beam_idx
+            return
+
+        # Try to restore the last selected direct beam row
+        if self.last_selected_direct_beam_row < len(self.direct_beam_list):
+            self.set_active_data_from_direct_beam_list(self.last_selected_direct_beam_row)
+        elif self.direct_beam_list:
+            # Default to first direct beam if last selection is out of range
+            self.set_active_data_from_direct_beam_list(0)
 
     def clear_reduction_lists(self):
         """Resets to one empty reduction list."""
