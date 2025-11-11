@@ -351,11 +351,35 @@ class DataManager(object):
         return False
 
     def add_active_to_direct_beam_list(self):
-        """Add active data set to the direct beam list."""
-        if self._nexus_data not in self.direct_beam_list and self._nexus_data.is_direct_beam():
-            self.direct_beam_list.append(self._nexus_data)
-            return True
-        return False
+        """Add active data set to the direct beam list.
+
+        This method allows adding any run to the direct beam list, even if it wasn't originally
+        acquired as a direct beam (i.e., when the PV data_type != 1). This is useful for
+        calibration and other runs started with "Start RUN" command in EPICS, which don't add
+        the "Direct Beam" PV-tag.
+
+        Returns
+        -------
+        int
+            2 if the run was added and is a true direct beam (data_type == 1)
+            1 if the run was added but is NOT a true direct beam (data_type != 1)
+            0 if the run was not added (already in the list)
+        """
+        if self._nexus_data in self.direct_beam_list:
+            return 0
+
+        is_true_direct_beam = self._nexus_data.is_direct_beam()
+        self.direct_beam_list.append(self._nexus_data)
+
+        if not is_true_direct_beam:
+            logging.warning(
+                "Run %s was added to the direct beam list but is not labeled as a direct beam "
+                "(data_type PV != 1). This run may have been started with 'Start RUN' command.",
+                self._nexus_data.number,
+            )
+            return 1
+
+        return 2
 
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list."""

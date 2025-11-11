@@ -1112,10 +1112,24 @@ class MainHandler(object):
             self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        if not self._data_manager.add_active_to_direct_beam_list():
+        add_result = self._data_manager.add_active_to_direct_beam_list()
+
+        if add_result == 0:
+            # Run was not added (already in the list)
             if not silent:
-                self.report_message("(Add direct beam) Data incompatible or already in the list.", pop_up=True)
+                self.report_message("(Add direct beam) Data already in the list.", pop_up=True)
             return False
+        elif add_result == 1:
+            # Run was added but is not a true direct beam
+            if not silent:
+                self.report_message(
+                    f"Run {self._data_manager._nexus_data.number} added to direct beam list.\n\n"
+                    "Note: This run is not labeled as a direct beam in the metadata "
+                    "(data_type PV ≠ 1). This may occur for runs started with 'Start RUN' "
+                    "command in EPICS.",
+                    pop_up=False,
+                )
+        # else: add_result == 2, run was added and is a true direct beam (no warning needed)
 
         self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
         self.update_tables()
