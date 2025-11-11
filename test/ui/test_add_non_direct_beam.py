@@ -34,10 +34,14 @@ def test_add_non_direct_beam_run_shows_warning(qtbot, data_server, mocker):
     assert table.item(0, DBTableCols.RUN_NUMBER).text() == "42112"
 
     # Verify that a warning message was shown (non-blocking, so pop_up=False)
-    mock_report.assert_called_once()
-    call_args = mock_report.call_args
-    assert "42112" in call_args[0][0]  # Run number in message
-    assert "not labeled as a direct beam" in call_args[0][0]
+    # report_message is called multiple times (for file loading too), so check for the warning call
+    warning_calls = [call for call in mock_report.call_args_list if "not labeled as a direct beam" in str(call)]
+    assert len(warning_calls) == 1
+    # Check the warning message content
+    warning_call = warning_calls[0]
+    assert "42112" in warning_call[0][0]  # Run number in message
+    assert "data_type PV" in warning_call[0][0]
+    assert warning_call.kwargs.get("pop_up") == False  # Should be non-blocking
     assert call_args[1].get("pop_up") is False  # Non-blocking warning
 
 
@@ -65,8 +69,10 @@ def test_add_true_direct_beam_run_no_warning(qtbot, data_server, mocker):
     assert table.rowCount() == 1
     assert table.item(0, DBTableCols.RUN_NUMBER).text() == "42099"
 
-    # Verify that NO warning message was shown
-    mock_report.assert_not_called()
+    # Verify that NO warning about non-direct-beam was shown
+    # report_message is called for file loading, but not for the direct beam warning
+    warning_calls = [call for call in mock_report.call_args_list if "not labeled as a direct beam" in str(call)]
+    assert len(warning_calls) == 0  # No warning for true direct beam
 
 
 @pytest.mark.datarepo

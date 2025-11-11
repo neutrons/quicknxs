@@ -120,8 +120,9 @@ class TestDirectBeamFeature:
         # Verify both are in the list
         assert len(manager.direct_beam_list) == 2
         assert manager.direct_beam_list[0].is_direct_beam() == True
-        assert manager.direct_beam_list[1].is_direct_beam() == False @ pytest.mark.datarepo
+        assert manager.direct_beam_list[1].is_direct_beam() == False
 
+    @pytest.mark.datarepo
     def test_remove_non_direct_beam_from_list(self, data_server, setup_method):
         """Test that a non-direct-beam run can be removed from the direct beam list."""
         manager = DataManager(data_server.directory)
