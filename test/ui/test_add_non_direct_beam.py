@@ -23,7 +23,7 @@ def test_add_non_direct_beam_run_shows_warning(qtbot, data_server, mocker):
     window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
 
     # Verify it's not a direct beam
-    assert window_main.data_manager._nexus_data.is_direct_beam() is False
+    assert window_main.data_manager._nexus_data.is_direct_beam() == False
 
     # Add it to the direct beam table
     window_main.actionAddDirectBeam.triggered.emit()
@@ -55,7 +55,7 @@ def test_add_true_direct_beam_run_no_warning(qtbot, data_server, mocker):
     window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
 
     # Verify it IS a direct beam
-    assert window_main.data_manager._nexus_data.is_direct_beam() is True
+    assert window_main.data_manager._nexus_data.is_direct_beam() == True
 
     # Add it to the direct beam table
     window_main.actionAddDirectBeam.triggered.emit()
