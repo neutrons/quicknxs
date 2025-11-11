@@ -42,7 +42,6 @@ def test_add_non_direct_beam_run_shows_warning(qtbot, data_server, mocker):
     assert "42112" in warning_call[0][0]  # Run number in message
     assert "data_type PV" in warning_call[0][0]
     assert warning_call.kwargs.get("pop_up") == False  # Should be non-blocking
-    assert call_args[1].get("pop_up") is False  # Non-blocking warning
 
 
 @pytest.mark.datarepo
