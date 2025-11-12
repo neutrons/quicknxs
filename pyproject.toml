@@ -75,7 +75,7 @@ preview = ["pixi-build"]
 # Dependency tables
 
 [tool.pixi.dependencies]
-mr_reduction = "==2.13.0"  # requires mantid >=6.13.0,<6.14.0
+mr_reduction = "==2.15.0"  # requires mantid >=6.13.0,<6.14.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.6.3"
@@ -96,7 +96,7 @@ hatchling = "*"
 versioningit = "*"
 
 [tool.pixi.package.run-dependencies]
-mr_reduction = "==2.13.0"  # requires mantid >=6.13.0,<6.14.0
+mr_reduction = "==2.15.0"  # requires mantid >=6.13.0,<6.14.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.6.3"
