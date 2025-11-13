@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING, List, Optional
 
 import mantid.simpleapi as api
 import numpy as np
-from mantid.api import PythonAlgorithm, WorkspaceGroup
+from mantid.api import WorkspaceGroup
 from mantid.dataobjects import EventWorkspace
+from mr_reduction.dead_time_correction import apply_dead_time_correction
 
-from quicknxs.interfaces.data_handling import dead_time_correction
 from quicknxs.interfaces.data_handling.filepath import FilePath
 
 if TYPE_CHECKING:
@@ -64,87 +64,6 @@ def get_cross_section_label(ws, entry_name):
         return entry_name
     else:
         return "%s%s" % (pol_label, ana_label)
-
-
-def mantid_algorithm_exec(algorithm_class: PythonAlgorithm, **kwargs) -> Optional[EventWorkspace]:
-    """Helper function for executing a Mantid-style algorithm.
-
-    Parameters
-    ----------
-    algorithm_class:
-        The algorithm class to execute
-    **kwargs:
-        Keyword arguments to set the algorithm properties.
-
-    Returns
-    -------
-    Workspace or None:
-        If ``OutputWorkspace`` is passed as a keyword argument,
-        the value of the algorithm property ``OutputWorkspace`` will be returned
-    """
-    algorithm_instance = algorithm_class()
-    assert hasattr(algorithm_instance, "PyInit"), f"{algorithm_class} is not a Mantid Python algorithm"
-    algorithm_instance.PyInit()
-    for name, value in kwargs.items():
-        algorithm_instance.setProperty(name, value)
-    algorithm_instance.PyExec()
-    if "OutputWorkspace" in kwargs:
-        return algorithm_instance.getProperty("OutputWorkspace").value
-
-
-def get_dead_time_correction(
-    ws: EventWorkspace, configuration: "Configuration", error_ws: Optional[EventWorkspace] = None
-):
-    """Compute dead time correction to be applied to the reflectivity curve.
-
-    The method will also try to load the error events from each of the
-    data files to ensure that we properly estimate the dead time correction.
-
-    Parameters
-    ----------
-    ws:
-        Workspace with raw data to compute correction for
-    configuration:
-        Reduction parameters
-    error_ws:
-        Workspace with error events
-    """
-    tof_min = ws.getTofMin()
-    tof_max = ws.getTofMax()
-
-    corr_ws = mantid_algorithm_exec(
-        dead_time_correction.SingleReadoutDeadTimeCorrection,
-        InputWorkspace=ws,
-        InputErrorEventsWorkspace=error_ws,
-        Paralyzable=configuration.paralyzable_deadtime,
-        DeadTime=configuration.deadtime_value,
-        TOFStep=configuration.deadtime_tof_step,
-        TOFRange=[tof_min, tof_max],
-        OutputWorkspace="corr",
-    )
-    corr_ws = api.Rebin(corr_ws, [tof_min, 10, tof_max])
-    return corr_ws
-
-
-def apply_dead_time_correction(
-    ws: EventWorkspace, configuration: "Configuration", error_ws: Optional[EventWorkspace] = None
-) -> EventWorkspace:
-    """Apply dead time correction, and ensure that it is done only once per workspace.
-
-    Parameters
-    ----------
-    ws:
-        Workspace with raw data to compute correction for
-    configuration:
-        Reduction parameters
-    error_ws:
-        Workspace with error events
-    """
-    if "dead_time_applied" not in ws.getRun():
-        corr_ws = get_dead_time_correction(ws, configuration, error_ws=error_ws)
-        ws = api.Multiply(ws, corr_ws, OutputWorkspace=str(ws))
-        api.AddSampleLog(Workspace=ws, LogName="dead_time_applied", LogText="1", LogType="Number")
-    return ws
 
 
 def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
@@ -364,11 +283,22 @@ class Instrument(object):
                     for err_ws in _err_list:
                         if err_ws.getRun()["cross_section_id"].value == xs_name:
                             is_found = True
-                            _ws = apply_dead_time_correction(ws, configuration, error_ws=err_ws)
+                            _ws = apply_dead_time_correction(
+                                ws,
+                                configuration.paralyzable_deadtime,
+                                configuration.deadtime_value,
+                                configuration.deadtime_tof_step,
+                                error_ws=err_ws,
+                            )
                             path_xs_list.append(_ws)
                     if not is_found:
                         print("Could not find error events for [%s]" % xs_name)
-                        _ws = apply_dead_time_correction(ws, configuration, error_ws=None)
+                        _ws = apply_dead_time_correction(
+                            ws,
+                            configuration.paralyzable_deadtime,
+                            configuration.deadtime_value,
+                            configuration.deadtime_tof_step,
+                        )
                         path_xs_list.append(_ws)
         else:
             path_xs_list = [ws for ws in _path_xs_list if not ws.getRun()["cross_section_id"].value == "unfiltered"]

@@ -86,8 +86,8 @@ Example using ``SingleReadoutDeadTimeCorrection`` (requires :any:`test-data` fil
     import os
     import sys
     from pathlib import Path
-    from quicknxs.interfaces.data_handling import dead_time_correction
-    from quicknxs.interfaces.data_handling.instrument import mantid_algorithm_exec
+    from mr_reduction import dead_time_correction
+    from mr_reduction.mantid_algorithm_utils import mantid_algorithm_exec
     # Load events
     path = Path().resolve() / "test" / "data" / "quicknxs-data" / "REF_M_42112.nxs.h5"
     path = path.as_posix()
