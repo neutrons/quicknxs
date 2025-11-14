@@ -1,9 +1,9 @@
 """Unit tests for the ability to add non-direct-beam runs to the direct beam list."""
 
-# local imports
 # 3rd-party imports
 import pytest
 
+# local imports
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.instrument import Instrument
 from quicknxs.interfaces.data_manager import DataManager
@@ -48,7 +48,7 @@ class TestDirectBeamFeature:
         manager.load(data_server.path_to("REF_M_42099"), Configuration())
 
         # Verify it IS a direct beam
-        assert manager._nexus_data.is_direct_beam() == True
+        assert manager._nexus_data.is_direct_beam()
 
         # Should be able to add it to the direct beam list
         # Return value: 2 = added and is a true direct beam
@@ -81,7 +81,7 @@ class TestDirectBeamFeature:
         """Test that a non-direct-beam run can be used for normalization."""
         manager = DataManager(data_server.directory)
 
-        # Load a direct beam run and add it to the list (using a scattering run as DB)
+        # Load a scattering run and add it to the direct beam list
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
         manager.add_active_to_direct_beam_list()
 
@@ -92,15 +92,8 @@ class TestDirectBeamFeature:
         # Set the "direct beam" for this run (even though it's not a true DB)
         manager._nexus_data.set_parameter("direct_beam", "42112")
 
-        # Calculate reflectivity - this should work without errors
-        try:
-            manager.calculate_reflectivity()
-            success = True
-        except Exception as e:
-            success = False
-            pytest.fail(f"Reflectivity calculation failed: {e}")
-
-        assert success
+        # Try to calculate reflectivity - this should work without errors
+        manager.calculate_reflectivity()
 
     @pytest.mark.datarepo
     def test_mixed_direct_beam_list(self, data_server, setup_method):
@@ -119,8 +112,8 @@ class TestDirectBeamFeature:
 
         # Verify both are in the list
         assert len(manager.direct_beam_list) == 2
-        assert manager.direct_beam_list[0].is_direct_beam() == True
-        assert manager.direct_beam_list[1].is_direct_beam() == False
+        assert manager.direct_beam_list[0].is_direct_beam()
+        assert not manager.direct_beam_list[1].is_direct_beam()
 
     @pytest.mark.datarepo
     def test_remove_non_direct_beam_from_list(self, data_server, setup_method):

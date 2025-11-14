@@ -1,11 +1,12 @@
 """Unit tests for the ability to add non-direct-beam runs to the direct beam list (using mocks)."""
 
-# local imports
-# 3rd-party imports
+# standard library imports
 from unittest import mock
 
+# 3rd-party imports
 import pytest
 
+# local imports
 from quicknxs.interfaces.data_handling.data_set import NexusData
 from quicknxs.interfaces.data_manager import DataManager
 

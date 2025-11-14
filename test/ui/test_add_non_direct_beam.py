@@ -1,9 +1,9 @@
-"""UI integration tests for adding non-direct-beam runs to the direct beam table."""
+"""UI tests for adding non-direct-beam runs to the direct beam table."""
 
-# local imports
 # 3rd-party imports
 import pytest
 
+# local imports
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.enums import DirectBeamTableColumn as DBTableCols
 from quicknxs.interfaces.main_window import MainWindow
@@ -23,7 +23,7 @@ def test_add_non_direct_beam_run_shows_warning(qtbot, data_server, mocker):
     window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
 
     # Verify it's not a direct beam
-    assert window_main.data_manager._nexus_data.is_direct_beam() == False
+    assert not window_main.data_manager._nexus_data.is_direct_beam()
 
     # Add it to the direct beam table
     window_main.actionAddDirectBeam.triggered.emit()
@@ -58,7 +58,7 @@ def test_add_true_direct_beam_run_no_warning(qtbot, data_server, mocker):
     window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
 
     # Verify it IS a direct beam
-    assert window_main.data_manager._nexus_data.is_direct_beam() == True
+    assert window_main.data_manager._nexus_data.is_direct_beam()
 
     # Add it to the direct beam table
     window_main.actionAddDirectBeam.triggered.emit()
@@ -93,14 +93,7 @@ def test_non_direct_beam_can_normalize_scattering_data(qtbot, data_server):
     window_main.data_manager._nexus_data.set_parameter("direct_beam", "42112")
 
     # Calculate reflectivity - this should work without errors
-    try:
-        window_main.data_manager.calculate_reflectivity()
-        success = True
-    except Exception as e:
-        success = False
-        pytest.fail(f"Reflectivity calculation failed: {e}")
-
-    assert success
+    window_main.data_manager.calculate_reflectivity()
 
     # Verify the reduction list has the correct direct beam set
     run_in_reduction = window_main.data_manager.reduction_list[0]
