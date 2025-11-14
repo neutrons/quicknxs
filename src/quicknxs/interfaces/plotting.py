@@ -609,7 +609,8 @@ class PlotManager(object):
     def plot_reflectivity_or_intensity(self):
         """Plot reflectivity data or intensity, depending on the type of the active run.
 
-        If the active run is a direct beam run, the intensity vs ToF (or wavelength) in the
+        If the active run is a direct beam run (either natively labeled as direct beam
+        or added to the direct beam table), the intensity vs ToF (or wavelength) in the
         region-of-interest (ROI) is plotted.
         Otherwise, the reflectivity of all datasets is plotted.
 
@@ -623,7 +624,11 @@ class PlotManager(object):
             self._plot_message(self.main_window.ui.refl, "No data")
             return False
 
-        if self.main_window.data_manager.active_cross_section.is_direct_beam:
+        # Check if active data is in the direct beam list or is natively a direct beam
+        is_in_direct_beam_list = self.main_window.data_manager.find_active_direct_beam_id() is not None
+        is_native_direct_beam = self.main_window.data_manager.active_cross_section.is_direct_beam
+
+        if is_in_direct_beam_list or is_native_direct_beam:
             plot_title = "Intensity"
             self._prepare_intensity_plot()
             is_plotted = True

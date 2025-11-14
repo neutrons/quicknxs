@@ -136,5 +136,56 @@ def test_add_duplicate_non_direct_beam_shows_error(qtbot, data_server, mocker):
     assert window_main.ui.directBeamTable.rowCount() == 1
 
 
+@pytest.mark.datarepo
+def test_non_direct_beam_displays_intensity_plot(qtbot, data_server):
+    """Test that a non-direct-beam run in the direct beam table displays an Intensity plot."""
+    window_main = MainWindow()
+    qtbot.addWidget(window_main)
+    Configuration.setup_default_values()
+
+    # Load a scattering run (not a direct beam) - REF_M_42113
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+
+    # Verify it's not a direct beam
+    assert not window_main.data_manager._nexus_data.is_direct_beam()
+
+    # Add it to the direct beam table
+    window_main.actionAddDirectBeam.triggered.emit()
+
+    # Click the radio button to make it active (simulate selecting it in the direct beam table)
+    window_main.set_active_direct_beam(True, 0)
+
+    # Check the plot title
+    plot_title = window_main.ui.reflectivity_or_intensity_plot_title.text()
+    assert plot_title == "Intensity", f"Expected 'Intensity' plot but got '{plot_title}'"
+
+    # Also verify that the active data is indeed in the direct beam list
+    assert window_main.data_manager.find_active_direct_beam_id() is not None
+
+
+@pytest.mark.datarepo
+def test_true_direct_beam_displays_intensity_plot(qtbot, data_server):
+    """Test that a true direct beam run displays an Intensity plot (baseline behavior)."""
+    window_main = MainWindow()
+    qtbot.addWidget(window_main)
+    Configuration.setup_default_values()
+
+    # Load a true direct beam run - REF_M_42099
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
+
+    # Verify it IS a direct beam
+    assert window_main.data_manager._nexus_data.is_direct_beam()
+
+    # Add it to the direct beam table
+    window_main.actionAddDirectBeam.triggered.emit()
+
+    # Click the radio button to make it active
+    window_main.set_active_direct_beam(True, 0)
+
+    # Check the plot title
+    plot_title = window_main.ui.reflectivity_or_intensity_plot_title.text()
+    assert plot_title == "Intensity", f"Expected 'Intensity' plot but got '{plot_title}'"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
