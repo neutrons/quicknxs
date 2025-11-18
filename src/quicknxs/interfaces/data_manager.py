@@ -73,6 +73,10 @@ class DataManager(object):
         self.last_selected_reduction_row: Dict[int, int] = {}  # key: tab index, value: row index
         self.last_selected_direct_beam_row: int = 0
 
+        # Track whether the active data was selected from the direct beam table (True)
+        # or from the reduction/data table (False). This affects plot display behavior.
+        self.active_from_direct_beam_table: bool = False
+
         # List of cross-sections common to all reduced data sets
         self.reduction_states: List[str] = []
 
@@ -136,6 +140,8 @@ class DataManager(object):
             self.set_active_cross_section(0)
             # Track the last selected row for this reduction table
             self.last_selected_reduction_row[self.active_reduction_list_index] = index
+            # Mark that the active data was selected from the reduction table (not direct beam table)
+            self.active_from_direct_beam_table = False
 
     def set_active_data_from_direct_beam_list(self, index: int):
         """Set a data set in the direct beam list as the active data set according to its index.
@@ -148,6 +154,8 @@ class DataManager(object):
             self.set_active_cross_section(0)
             # Track the last selected row for the direct beam table
             self.last_selected_direct_beam_row = index
+            # Mark that the active data was selected from the direct beam table
+            self.active_from_direct_beam_table = True
 
     def set_active_cross_section(self, index: int) -> bool:
         """Set the current cross section to the specified index, or zero if it doesn't exist."""

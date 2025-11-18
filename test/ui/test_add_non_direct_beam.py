@@ -187,5 +187,36 @@ def test_true_direct_beam_displays_intensity_plot(qtbot, data_server):
     assert plot_title == "Intensity", f"Expected 'Intensity' plot but got '{plot_title}'"
 
 
+@pytest.mark.datarepo
+def test_run_in_both_tables_shows_correct_plot_by_context(qtbot, data_server):
+    """Test that a run in both tables shows different plots depending on which table it's selected from."""
+    window_main = MainWindow()
+    qtbot.addWidget(window_main)
+    Configuration.setup_default_values()
+
+    # Load a scattering run - REF_M_42113
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+
+    # Add it to the direct beam table
+    window_main.actionAddDirectBeam.triggered.emit()
+
+    # Also add it to the reduction/data table
+    window_main.actionAddRefl.triggered.emit()
+
+    # Select from direct beam table - should show "Intensity"
+    window_main.set_active_direct_beam(True, 0)
+    plot_title = window_main.ui.reflectivity_or_intensity_plot_title.text()
+    assert plot_title == "Intensity", (
+        f"When selected from Direct Beam table, expected 'Intensity' but got '{plot_title}'"
+    )
+
+    # Select from reduction/data table - should show "Reflectivity"
+    window_main.set_active_reduction_data(True, 0)
+    plot_title = window_main.ui.reflectivity_or_intensity_plot_title.text()
+    assert plot_title == "Reflectivity", (
+        f"When selected from Data table, expected 'Reflectivity' but got '{plot_title}'"
+    )
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
