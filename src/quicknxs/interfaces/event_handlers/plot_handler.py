@@ -92,7 +92,6 @@ class PlotHandler(object):
         # self.ui.y_project.canvas.mpl_connect('motion_notify_event', self.plot_pick_y)
         self.ui.y_project.canvas.mpl_connect("button_press_event", self.plot_pick_y)
         self.ui.y_project.canvas.mpl_connect("button_release_event", self.plot_release)
-        # self.ui.refl.canvas.mpl_connect('scroll_event', self.scale_on_plot)
         self.ui.xy_overview.canvas.mpl_connect("button_press_event", self.plot_pick_xy)
         # self.ui.xy_overview.canvas.mpl_connect('motion_notify_event', self.plot_pick_xy)
         self.ui.xy_overview.canvas.mpl_connect("button_release_event", self.plot_release)
@@ -279,23 +278,6 @@ class PlotHandler(object):
             self.ui.refXWidth.setValue(abs(xpos - event.ydata) * 2.0)
         self.main_window.auto_change_active = False
         self.change_region_values()
-
-    @slow_down_events
-    def scale_on_plot(self, event: MouseEvent):
-        """Scale the reflectivity on the plot with the mouse wheel."""
-        steps = event.step
-        xpos = event.xdata
-        if xpos is None:
-            return
-        for i, refl in enumerate(self.data_manager.reduction_list):
-            _, q_max = refl.get_q_range()
-            if q_max > xpos:
-                Ival = refl.configuration.scaling_factor
-                if self.control_down:
-                    Inew = Ival * 10 ** (0.05 * steps)
-                else:
-                    Inew = Ival * 10 ** (0.01 * steps)
-                self.ui.reductionTable.setItem(i, 1, QtWidgets.QTableWidgetItem("%.4f" % (Inew)))
 
     def change_region_values(self):
         """Called when the reflectivity extraction region has been changed.

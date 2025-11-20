@@ -1771,7 +1771,9 @@ class MainHandler(object):
                 xs = self._data_manager.active_cross_section.name
                 d = self._data_manager.reduction_list[i].cross_sections[xs]
                 self.reduction_table.setItem(
-                    i, 1, QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor))
+                    i,
+                    ReductionTableColumn.SCALE_FACTOR,
+                    QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)),
                 )
 
             self.main_window.initiate_reflectivity_or_intensity_plot.emit()
@@ -1794,7 +1796,9 @@ class MainHandler(object):
         for i in range(len(self._data_manager.reduction_list)):
             xs = self._data_manager.active_cross_section.name
             d = self._data_manager.reduction_list[i].cross_sections[xs]
-            self.reduction_table.setItem(i, 3, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points)))
+            self.reduction_table.setItem(
+                i, ReductionTableColumn.NUM_RIGHT, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points))
+            )
 
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 
