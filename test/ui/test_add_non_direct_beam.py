@@ -218,5 +218,76 @@ def test_run_in_both_tables_shows_correct_plot_by_context(qtbot, data_server):
     )
 
 
+@pytest.mark.datarepo
+def test_only_one_radio_button_selected_in_reduction_table(qtbot, data_server):
+    """Test that only one radio button can be selected at a time in the reduction table."""
+    window_main = MainWindow()
+    qtbot.addWidget(window_main)
+    Configuration.setup_default_values()
+
+    # Load and add first run to reduction table
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
+    window_main.actionAddRefl.triggered.emit()
+
+    # Load and add second run to reduction table
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+    window_main.actionAddRefl.triggered.emit()
+
+    # Get the reduction table
+    table = window_main.ui.reductionTable
+
+    # Count how many radio buttons are checked
+    checked_count = 0
+    for row in range(table.rowCount()):
+        widget = table.cellWidget(row, 0)  # Active column is column 0
+        if widget and hasattr(widget, "radio_button"):
+            if widget.radio_button.isChecked():
+                checked_count += 1
+
+    assert checked_count == 1, f"Expected exactly 1 radio button to be checked, but found {checked_count}"
+
+
+@pytest.mark.datarepo
+def test_radio_button_exclusivity_with_dual_table_runs(qtbot, data_server):
+    """Test Marie's scenario: run in both tables, switching between them."""
+    window_main = MainWindow()
+    qtbot.addWidget(window_main)
+    Configuration.setup_default_values()
+
+    # Load 42112 and add to both Direct Beam and Data tables
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
+    window_main.actionAddDirectBeam.triggered.emit()
+    window_main.actionAddRefl.triggered.emit()
+
+    # Load 42113 and add to Data table
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+    window_main.actionAddRefl.triggered.emit()
+
+    # Now switch between selecting from direct beam and reduction tables
+    # Select 42112 from direct beam table
+    window_main.set_active_direct_beam(True, 0)
+
+    # Select 42113 from reduction table (row 1)
+    window_main.set_active_reduction_data(True, 1)
+
+    # Select 42112 from reduction table (row 0)
+    window_main.set_active_reduction_data(True, 0)
+
+    # Check that only ONE radio button is checked in the reduction table
+    table = window_main.ui.reductionTable
+    checked_count = 0
+    checked_rows = []
+    for row in range(table.rowCount()):
+        widget = table.cellWidget(row, 0)
+        if widget and hasattr(widget, "radio_button"):
+            if widget.radio_button.isChecked():
+                checked_count += 1
+                checked_rows.append(row)
+
+    assert checked_count == 1, (
+        f"Expected exactly 1 radio button in reduction table, but found {checked_count} checked at rows {checked_rows}"
+    )
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -612,6 +612,15 @@ class MainHandler(object):
                 self._data_manager.set_active_reduction_list_index(ipeak)
                 self.main_window.add_data_tab_by_index(ipeak)
                 table_widget = self.get_reduction_table_by_index(ipeak)
+
+                # Clear and recreate the button group for this tab to avoid duplicate checked buttons
+                if ipeak in self.reduction_table_button_groups:
+                    old_group = self.reduction_table_button_groups[ipeak]
+                    # Remove all buttons from the old group
+                    for button in old_group.buttons():
+                        old_group.removeButton(button)
+                self.reduction_table_button_groups[ipeak] = QtWidgets.QButtonGroup(self.main_window)
+
                 table_widget.setRowCount(len(self._data_manager.reduction_list))
                 for idx, _ in enumerate(self._data_manager.reduction_list):
                     self._data_manager.set_active_data_from_reduction_list(idx)
