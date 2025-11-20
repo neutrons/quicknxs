@@ -1310,6 +1310,16 @@ class MainHandler(object):
                 if active_cell is not None:
                     radio_button = active_cell.findChild(QtWidgets.QRadioButton)
                     radio_button.setChecked(i == idx)
+
+            # IMPORTANT: Uncheck all radio buttons in the direct beam table
+            # Block signals to prevent triggering cascading events
+            for i in range(self.ui.directBeamTable.rowCount()):
+                active_cell = self.ui.directBeamTable.cellWidget(i, DirectBeamTableColumn.ACTIVE)
+                if active_cell is not None:
+                    radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                    radio_button.blockSignals(True)
+                    radio_button.setChecked(False)
+                    radio_button.blockSignals(False)
         else:
             # Update direct beam table
             idx = self._data_manager.find_active_direct_beam_id()
@@ -1326,6 +1336,16 @@ class MainHandler(object):
                 if active_cell is not None:
                     radio_button = active_cell.findChild(QtWidgets.QRadioButton)
                     radio_button.setChecked(i == idx)
+
+            # IMPORTANT: Uncheck all radio buttons in the reduction table
+            # Block signals to prevent triggering cascading events
+            for i in range(self.reduction_table.rowCount()):
+                active_cell = self.reduction_table.cellWidget(i, ReductionTableColumn.ACTIVE)
+                if active_cell is not None:
+                    radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                    radio_button.blockSignals(True)
+                    radio_button.setChecked(False)
+                    radio_button.blockSignals(False)
 
         self.main_window.auto_change_active = False
 

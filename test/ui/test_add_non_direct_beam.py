@@ -2,6 +2,7 @@
 
 # 3rd-party imports
 import pytest
+from qtpy import QtWidgets
 
 # local imports
 from quicknxs.interfaces.configuration import Configuration
@@ -287,6 +288,169 @@ def test_radio_button_exclusivity_with_dual_table_runs(qtbot, data_server):
     assert checked_count == 1, (
         f"Expected exactly 1 radio button in reduction table, but found {checked_count} checked at rows {checked_rows}"
     )
+
+
+@pytest.mark.datarepo
+def test_non_direct_beam_saved_and_loaded(qtbot, data_server, tmp_path):
+    """Test that non-direct beam runs are properly saved to and loaded from reduced files."""
+    window_main = MainWindow()
+    qtbot.addWidget(window_main)
+    Configuration.setup_default_values()
+
+    # Load run 42112 and add it as direct beam (not a true direct beam)
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
+    window_main.actionAddDirectBeam.triggered.emit()
+
+    # Load run 42113 and add it to the reduction table
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+    window_main.actionAddRefl.triggered.emit()
+
+    # Reduce the data
+    from quicknxs.interfaces.data_handling.processing_workflow import DEFAULT_OPTIONS, ProcessingWorkflow
+
+    output_dir = str(tmp_path)
+    output_options = DEFAULT_OPTIONS.copy()
+    output_options.update(
+        {
+            "export_dir": output_dir,
+            "output_directory": output_dir,
+            "format_5cols": True,
+            "format_numpy": False,
+        }
+    )
+
+    workflow = ProcessingWorkflow(window_main.data_manager, output_options)
+    workflow.execute()
+
+    # Find the saved .dat file
+    import glob
+
+    dat_files = glob.glob(f"{output_dir}/*_Off_Off.dat")
+    assert len(dat_files) > 0, "No reduced data file was created"
+
+    saved_file = dat_files[0]
+
+    # Read the file and check for the direct beam entry
+    with open(saved_file, "r") as f:
+        content = f.read()
+
+    # Check that the direct beam section exists and contains our run
+    assert "[Direct Beam Runs]" in content, "Direct Beam Runs section not found in saved file"
+
+    # Debug: print the [Direct Beam Runs] section
+    lines = content.split("\n")
+    in_direct_beam_section = False
+    db_section_lines = []
+    for line in lines:
+        if "[Direct Beam Runs]" in line:
+            in_direct_beam_section = True
+            db_section_lines.append(line)
+        elif line.startswith("[") and in_direct_beam_section:
+            # We've moved to a different section
+            break
+        elif in_direct_beam_section:
+            db_section_lines.append(line)
+
+    # The direct beam section should not be empty (should have at least header + data)
+    assert len(db_section_lines) > 2, "Direct Beam Runs section is empty or only has headers. Content:\n" + "\n".join(
+        db_section_lines[:10]
+    )
+
+    # Verify run 42112 is in the direct beam section
+    # Note: The header sections are all commented with # by design
+    found_42112 = any("42112" in line for line in db_section_lines)
+    assert found_42112, "Run 42112 not found in [Direct Beam Runs] section. Section content:\n" + "\n".join(
+        db_section_lines[:20]
+    )
+
+    # Now test LOADING the file back to verify it can be restored
+    new_window = MainWindow()
+    qtbot.addWidget(new_window)
+    Configuration.setup_default_values()
+
+    # Load the reduced file - this should restore both the direct beam and data runs
+    from quicknxs.interfaces.data_handling.processing_workflow import ProgressReporter
+
+    new_window.data_manager.load_data_from_reduced_file(saved_file, Configuration(), ProgressReporter())
+
+    # Verify the direct beam list was loaded and contains run 42112
+    assert len(new_window.data_manager.direct_beam_list) > 0, "Direct beam list is empty after loading"
+    db_numbers = [str(db.number) for db in new_window.data_manager.direct_beam_list]
+    assert "42112" in db_numbers, f"Run 42112 not in direct beam list after loading. Found: {db_numbers}"
+
+    # Verify the reduction list was loaded and contains run 42113
+    assert len(new_window.data_manager.reduction_list) > 0, "Reduction list is empty after loading"
+    refl_numbers = [str(r.number) for r in new_window.data_manager.reduction_list]
+    assert "42113" in refl_numbers, f"Run 42113 not in reduction list after loading. Found: {refl_numbers}"
+
+
+@pytest.mark.datarepo
+def test_marie_workflow_tab_switching_radio_buttons(qtbot, data_server):
+    """Test Marie's exact workflow: switch between tabs and verify only one radio button is checked.
+
+    This reproduces Marie's bug report: clicking between Direct Beam and Data tabs and changing
+    which run is "Active" should not result in two radio buttons being checked.
+    """
+    window_main = MainWindow()
+    qtbot.addWidget(window_main)
+    Configuration.setup_default_values()
+
+    # Load run 42112 and add to both tables
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
+    window_main.actionAddDirectBeam.triggered.emit()
+    window_main.actionAddRefl.triggered.emit()
+
+    # Load run 42113 and add to both tables
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+    window_main.actionAddDirectBeam.triggered.emit()
+    window_main.actionAddRefl.triggered.emit()
+
+    # Simulate Marie's workflow: click between tabs and change active run
+    for _ in range(5):  # Do this multiple times to exercise the bug
+        # Select from Direct Beam table
+        window_main.set_active_direct_beam(True, 0)
+
+        # Count checked radio buttons in BOTH tables
+        db_checked = sum(
+            1
+            for i in range(window_main.ui.directBeamTable.rowCount())
+            if window_main.ui.directBeamTable.cellWidget(i, 0)
+            and window_main.ui.directBeamTable.cellWidget(i, 0).findChild(QtWidgets.QRadioButton).isChecked()
+        )
+        data_checked = sum(
+            1
+            for i in range(window_main.file_handler.reduction_table.rowCount())
+            if window_main.file_handler.reduction_table.cellWidget(i, 0)
+            and window_main.file_handler.reduction_table.cellWidget(i, 0).findChild(QtWidgets.QRadioButton).isChecked()
+        )
+
+        # Only ONE total radio button should be checked across both tables
+        total_checked = db_checked + data_checked
+        assert total_checked == 1, (
+            f"Expected 1 checked radio button total, but found {total_checked} (DB: {db_checked}, Data: {data_checked})"
+        )
+
+        # Now select from Data table
+        window_main.set_active_reduction_data(True, 1)
+
+        # Count again
+        db_checked = sum(
+            1
+            for i in range(window_main.ui.directBeamTable.rowCount())
+            if window_main.ui.directBeamTable.cellWidget(i, 0)
+            and window_main.ui.directBeamTable.cellWidget(i, 0).findChild(QtWidgets.QRadioButton).isChecked()
+        )
+        data_checked = sum(
+            1
+            for i in range(window_main.file_handler.reduction_table.rowCount())
+            if window_main.file_handler.reduction_table.cellWidget(i, 0)
+            and window_main.file_handler.reduction_table.cellWidget(i, 0).findChild(QtWidgets.QRadioButton).isChecked()
+        )
+
+        total_checked = db_checked + data_checked
+        assert total_checked == 1, (
+            f"Expected 1 checked radio button total, but found {total_checked} (DB: {db_checked}, Data: {data_checked})"
+        )
 
 
 if __name__ == "__main__":
