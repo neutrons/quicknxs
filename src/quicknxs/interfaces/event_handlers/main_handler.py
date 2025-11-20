@@ -604,9 +604,10 @@ class MainHandler(object):
 
             # Update UI direct beam table
             self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
-            for idx, _ in enumerate(self._data_manager.direct_beam_list):
-                self._data_manager.set_active_data_from_direct_beam_list(idx)
-                self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
+            # Populate table WITHOUT changing active data during the loop
+            for idx, data in enumerate(self._data_manager.direct_beam_list):
+                cross_section = data.cross_sections[list(data.cross_sections.keys())[0]]
+                self.update_direct_beam_table(idx, cross_section)
             # Update UI data table(s) with the loaded data
             for ipeak, _ in self._data_manager.peak_reduction_lists.items():
                 self._data_manager.set_active_reduction_list_index(ipeak)
@@ -622,9 +623,10 @@ class MainHandler(object):
                 self.reduction_table_button_groups[ipeak] = QtWidgets.QButtonGroup(self.main_window)
 
                 table_widget.setRowCount(len(self._data_manager.reduction_list))
-                for idx, _ in enumerate(self._data_manager.reduction_list):
-                    self._data_manager.set_active_data_from_reduction_list(idx)
-                    self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
+                # Populate table WITHOUT changing active data during the loop
+                for idx, data in enumerate(self._data_manager.reduction_list):
+                    cross_section = data.cross_sections[list(data.cross_sections.keys())[0]]
+                    self.update_reduction_table(table_widget, idx, cross_section)
 
             # Set the first reduction table and its first run as the active (plotted) data
             self._data_manager.set_active_reduction_list_index(self._data_manager.MAIN_REDUCTION_LIST_INDEX)
