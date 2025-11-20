@@ -610,7 +610,7 @@ class DataManager(object):
                     keys = list(direct_beam_item.cross_sections.keys())
                     if len(keys) >= 1:
                         if len(keys) > 1:
-                            logging.error("More than one cross-section for the direct beam, using the first one")
+                            logging.info("More than one cross-section for the direct beam, using the first one")
                         direct_beam = direct_beam_item.cross_sections[keys[0]]
                         break
             if direct_beam is None:
