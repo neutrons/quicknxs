@@ -1309,7 +1309,10 @@ class MainHandler(object):
                 active_cell = self.reduction_table.cellWidget(i, ReductionTableColumn.ACTIVE)
                 if active_cell is not None:
                     radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                    # Block signals while setting state to prevent cascading events
+                    radio_button.blockSignals(True)
                     radio_button.setChecked(i == idx)
+                    radio_button.blockSignals(False)
 
             # IMPORTANT: Uncheck all radio buttons in the direct beam table
             # Block signals to prevent triggering cascading events
@@ -1335,7 +1338,10 @@ class MainHandler(object):
                 active_cell = self.ui.directBeamTable.cellWidget(i, DirectBeamTableColumn.ACTIVE)
                 if active_cell is not None:
                     radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                    # Block signals while setting state to prevent cascading events
+                    radio_button.blockSignals(True)
                     radio_button.setChecked(i == idx)
+                    radio_button.blockSignals(False)
 
             # IMPORTANT: Uncheck all radio buttons in the reduction table
             # Block signals to prevent triggering cascading events
