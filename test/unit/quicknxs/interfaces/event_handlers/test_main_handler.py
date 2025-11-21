@@ -381,5 +381,37 @@ def test_logging_changes_from_gui(qtbot, monkeypatch):
     assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
 
 
+@pytest.mark.datarepo
+def test_stitch_reflectivity_updates_reduction_table(mocker, qtbot):
+    """Test that stitch_reflectivity updates the reduction table scale factor column"""
+    scale0 = 2.1111
+    scale1 = 5.4444
+
+    def _mock_stitch_data_sets(*args, **kwargs):
+        # simulate stitching updating the scale factors
+        data_manager.reduction_list[0].set_parameter("scaling_factor", scale0)
+        data_manager.reduction_list[1].set_parameter("scaling_factor", scale1)
+
+    mocker.patch("quicknxs.interfaces.plotting.PlotManager.plot_reflectivity_or_intensity", return_value=True)
+    mocker.patch("quicknxs.interfaces.data_manager.DataManager.stitch_data_sets", new=_mock_stitch_data_sets)
+
+    main_window = MainWindow()
+    handler = MainHandler(main_window)
+    data_manager = main_window.data_manager
+    qtbot.addWidget(main_window)
+
+    # Add two data runs
+    ui_utilities.setText(main_window.numberSearchEntry, str(42112), press_enter=True)
+    ui_utilities.set_current_file_by_run_number(main_window, 42112)
+    main_window.actionAddRefl.triggered.emit()
+    ui_utilities.set_current_file_by_run_number(main_window, 42113)
+    main_window.actionAddRefl.triggered.emit()
+
+    handler.stitch_reflectivity()
+
+    assert handler.reduction_table.item(0, ReductionTableColumn.SCALE_FACTOR).text() == str(scale0)
+    assert handler.reduction_table.item(1, ReductionTableColumn.SCALE_FACTOR).text() == str(scale1)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
