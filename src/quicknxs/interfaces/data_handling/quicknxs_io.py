@@ -273,24 +273,40 @@ def write_reflectivity_header(
         logging.error("No data found in run %s", reduction_list[0].number)
         return
 
-    # Direct beam section
+    # Direct beam section - save ALL direct beams in the list
     config_values = []
-    direct_beam_idx = 0
-    for data_set in reduction_list:
-        run_object = data_set.cross_sections[pol_list[0]].reflectivity_workspace.getRun()
-        normalization_run = run_object.getProperty("normalization_run").value
-        if normalization_run == "None":
-            continue
-        direct_beam = None
-        for db_i in direct_beam_list:
-            if str(db_i.number) == str(normalization_run):
-                direct_beam = db_i
-        if direct_beam is None:
-            continue
+    normalization_run_to_db_id = {}  # Map normalization run number to DB_ID
+
+    # Iterate through ALL direct beams in the direct_beam_list
+    for direct_beam_idx, direct_beam in enumerate(direct_beam_list, start=1):
         db_pol = list(direct_beam.cross_sections.keys())[0]
-        direct_beam_idx += 1
-        dpix = run_object.getProperty("normalization_dirpix").value
-        filename = run_object.getProperty("normalization_file_path").value
+        run_number = str(direct_beam.number)
+
+        # Store the mapping for later use when writing data runs
+        normalization_run_to_db_id[run_number] = direct_beam_idx
+
+        # Get direct pixel and filename from the first data run that uses this direct beam
+        # If no data run uses it, get it from the direct beam itself
+        dpix = None
+        filename = None
+        for data_set in reduction_list:
+            run_object = data_set.cross_sections[pol_list[0]].reflectivity_workspace.getRun()
+            normalization_run = run_object.getProperty("normalization_run").value
+            if str(normalization_run) == run_number:
+                dpix = run_object.getProperty("normalization_dirpix").value
+                filename = run_object.getProperty("normalization_file_path").value
+                break
+
+        # If this direct beam isn't used by any data run, use default values
+        if dpix is None:
+            dpix = direct_beam.cross_sections[db_pol].direct_pixel
+        if filename is None:
+            # Get filename from the direct beam's workspace
+            ws = direct_beam.cross_sections[db_pol].reflectivity_workspace
+            if ws:
+                filename = ws.getRun().getProperty("Filename").value
+            else:
+                filename = f"REF_M_{run_number}.nxs.h5"  # fallback
 
         item = dict(
             DB_ID=direct_beam_idx,
@@ -298,7 +314,7 @@ def write_reflectivity_header(
             P0=0,
             PN=0,
             dpix=dpix,
-            number=normalization_run,
+            number=run_number,
             File=filename,
         )
 
@@ -309,6 +325,7 @@ def write_reflectivity_header(
             include_offspec=include_offspec,
         )
         config_values.append(config_value_dict)
+
     fd.write(_build_table(config_values, direct_beam_options, "Direct Beam Runs"))
 
     # Peak for reflectivity data
@@ -317,10 +334,9 @@ def write_reflectivity_header(
     dataset_options = _sort_keys_with_file_last(list(set(dataset_options)))
 
     config_values = []
-    direct_beam_idx = 0
     for data_set in reduction_list:
         cross_section_data = data_set.cross_sections[pol_list[0]]
-        dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx)
+        dataset_dict = _get_cross_section_config_values(cross_section_data, normalization_run_to_db_id)
         config_value_dict = _build_config_row_dict(
             config=cross_section_data.configuration,
             item=dataset_dict,
@@ -334,11 +350,10 @@ def write_reflectivity_header(
     for peak_index, peak_reduction_list in peak_reduction_lists.items():
         fd.write("#\n")
 
-        direct_beam_idx = 0
         config_values = []
         for data_set in peak_reduction_list:
             cross_section_data = data_set.cross_sections[pol_list[0]]
-            dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx)
+            dataset_dict = _get_cross_section_config_values(cross_section_data, normalization_run_to_db_id)
             config_value_dict = _build_config_row_dict(
                 config=cross_section_data.configuration,
                 item=dataset_dict,
@@ -364,8 +379,23 @@ def write_reflectivity_header(
     fd.close()
 
 
-def _get_cross_section_config_values(cross_section_data: CrossSectionData, direct_beam_idx: int) -> Dict[str, str]:
-    """Get dict of cross-section data configuration to write to QuickNXS file."""
+def _get_cross_section_config_values(
+    cross_section_data: CrossSectionData, normalization_run_to_db_id: Dict[str, int]
+) -> Dict[str, str]:
+    """Get dict of cross-section data configuration to write to QuickNXS file.
+
+    Parameters
+    ----------
+    cross_section_data : CrossSectionData
+        The cross-section data to extract config values from
+    normalization_run_to_db_id : Dict[str, int]
+        Mapping from normalization run number (as string) to DB_ID
+
+    Returns
+    -------
+    Dict[str, str]
+        Dictionary of configuration values
+    """
     ws = cross_section_data.reflectivity_workspace
     run_object = ws.getRun()
     dpix = run_object.getProperty("DIRPIX").getStatistics().mean
@@ -388,8 +418,8 @@ def _get_cross_section_config_values(cross_section_data: CrossSectionData, direc
     if normalization_run == "None":
         db_id = 0
     else:
-        direct_beam_idx += 1
-        db_id = direct_beam_idx
+        # Look up the DB_ID from the mapping
+        db_id = normalization_run_to_db_id.get(normalization_run, 0)
 
     item = dict(
         DB_ID=db_id,
