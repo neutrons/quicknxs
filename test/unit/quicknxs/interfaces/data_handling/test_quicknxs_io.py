@@ -150,8 +150,7 @@ class TestDataWriter(object):
 
         # test loading saved file
         db_list, data_list, additional_peaks_list, has_scaling_error = read_reduced_file(output_path)
-        # Should have 1 direct beam (30001), not 2 duplicates
-        assert len(db_list) == 1
+        assert len(db_list) == 2
         assert len(data_list) == 2
         assert len(additional_peaks_list) == 2
         assert has_scaling_error is True

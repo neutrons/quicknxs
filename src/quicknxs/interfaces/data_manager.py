@@ -767,7 +767,7 @@ class DataManager(object):
                 else:
                     closeness[item_number] = 1.0e16
 
-        if len(self.direct_beam_list) > 0:
+        if len(self.direct_beam_list) > 0 and len(closeness) > 0:
             closest = min(closeness.items(), key=lambda item: item[1])[0]
 
         if closest is not None:
