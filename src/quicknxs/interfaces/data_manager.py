@@ -756,9 +756,6 @@ class DataManager(object):
         closeness = {}
         for item in self.direct_beam_list:
             item_number = int(item.number)
-            # Skip if this direct beam is the same as the active data run (can't use itself)
-            if item_number == active_cross_section_number:
-                continue
             xs_keys = list(item.cross_sections.keys())
             if len(xs_keys) > 0:
                 xs = item.cross_sections[xs_keys[0]]
@@ -767,7 +764,7 @@ class DataManager(object):
                 else:
                     closeness[item_number] = 1.0e16
 
-        if len(self.direct_beam_list) > 0 and len(closeness) > 0:
+        if len(self.direct_beam_list) > 0:
             closest = min(closeness.items(), key=lambda item: item[1])[0]
 
         if closest is not None:
