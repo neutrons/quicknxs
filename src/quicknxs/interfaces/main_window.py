@@ -388,7 +388,41 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.clear_direct_beams()
 
     def match_direct_beam_clicked(self):
-        """Find the best direct beam run for the activate data set and compute the reflectivity as needed."""
+        """Find the best direct beam run for the activate data set and compute the reflectivity as needed.
+
+        If the active run is not in the direct beam list and would be the best match for itself,
+        it will be automatically added to the direct beam list before matching.
+        """
+        # Check if active run should be added to direct beam list
+        # This handles the case where a user clicks "Match Direct Beam" on a run that should use itself as direct beam
+        if self.data_manager._nexus_data not in self.data_manager.direct_beam_list:
+            # Check if the active run would match itself
+            active_xs = self.data_manager.active_cross_section
+            active_instrument = active_xs.configuration.instrument
+
+            # If there are no other direct beams, add the active run
+            if len(self.data_manager.direct_beam_list) == 0:
+                self.file_handler.add_direct_beam(silent=True)
+            elif active_instrument.direct_beam_match(active_xs, active_xs, skip_slits=True):
+                # Check if the active run matches itself better than any existing direct beam
+                self_distance = active_instrument.direct_beam_distance(active_xs, active_xs)
+                add_self = True
+
+                for item in self.data_manager.direct_beam_list:
+                    xs_keys = list(item.cross_sections.keys())
+                    if len(xs_keys) > 0:
+                        xs = item.cross_sections[xs_keys[0]]
+                        if active_instrument.direct_beam_match(active_xs, xs, skip_slits=True):
+                            other_distance = active_instrument.direct_beam_distance(active_xs, xs)
+                            # If another direct beam is closer (better match), don't add self
+                            if other_distance <= self_distance:
+                                add_self = False
+                                break
+
+                # If active run is the best match for itself, add it to direct beam list
+                if add_self:
+                    self.file_handler.add_direct_beam(silent=True)
+
         if self.data_manager.find_best_direct_beam():
             self.file_handler.update_tables()
             self.file_handler.update_calculated_data()
