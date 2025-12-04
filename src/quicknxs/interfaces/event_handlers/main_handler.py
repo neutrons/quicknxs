@@ -604,22 +604,35 @@ class MainHandler(object):
 
             # Update UI direct beam table
             self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
-            for idx, _ in enumerate(self._data_manager.direct_beam_list):
-                self._data_manager.set_active_data_from_direct_beam_list(idx)
-                self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
+            # Populate table WITHOUT changing active data during the loop
+            for idx, data in enumerate(self._data_manager.direct_beam_list):
+                cross_section = data.cross_sections[list(data.cross_sections.keys())[0]]
+                self.update_direct_beam_table(idx, cross_section)
             # Update UI data table(s) with the loaded data
             for ipeak, _ in self._data_manager.peak_reduction_lists.items():
                 self._data_manager.set_active_reduction_list_index(ipeak)
                 self.main_window.add_data_tab_by_index(ipeak)
                 table_widget = self.get_reduction_table_by_index(ipeak)
+
+                # Clear and recreate the button group for this tab to avoid duplicate checked buttons
+                if ipeak in self.reduction_table_button_groups:
+                    old_group = self.reduction_table_button_groups[ipeak]
+                    # Remove all buttons from the old group
+                    for button in old_group.buttons():
+                        old_group.removeButton(button)
+                self.reduction_table_button_groups[ipeak] = QtWidgets.QButtonGroup(self.main_window)
+
                 table_widget.setRowCount(len(self._data_manager.reduction_list))
-                for idx, _ in enumerate(self._data_manager.reduction_list):
-                    self._data_manager.set_active_data_from_reduction_list(idx)
-                    self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
+                # Populate table WITHOUT changing active data during the loop
+                for idx, data in enumerate(self._data_manager.reduction_list):
+                    cross_section = data.cross_sections[list(data.cross_sections.keys())[0]]
+                    self.update_reduction_table(table_widget, idx, cross_section)
 
             # Set the first reduction table and its first run as the active (plotted) data
+            # BUT only if we're not currently viewing from the direct beam table
             self._data_manager.set_active_reduction_list_index(self._data_manager.MAIN_REDUCTION_LIST_INDEX)
-            self._data_manager.set_active_data_from_reduction_list(0)
+            if not self._data_manager.active_from_direct_beam_table and self._data_manager.reduction_list:
+                self._data_manager.set_active_data_from_reduction_list(0)
 
             direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
             self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
@@ -867,12 +880,17 @@ class MainHandler(object):
         button_group = self.reduction_table_button_groups[current_tab_index]
 
         # radio button for active data (layout inside a widget to center it)
-        radio_widget = ActiveDataRadioButton(self, is_active=(data == self._data_manager.active_cross_section), idx=idx)
+        # Only mark as active if this data is the active cross section AND
+        # the active data was selected from a reduction table (not the direct beam table)
+        is_active = (
+            data == self._data_manager.active_cross_section and not self._data_manager.active_from_direct_beam_table
+        )
+        radio_widget = ActiveDataRadioButton(self, is_active=is_active, idx=idx)
         button_group.addButton(radio_widget.radio_button)
         table_widget.setCellWidget(idx, ReductionTableColumn.ACTIVE, radio_widget)
 
         item = QtWidgets.QTableWidgetItem(str(data.number))
-        if data == self._data_manager.active_cross_section:
+        if is_active:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
@@ -1112,10 +1130,24 @@ class MainHandler(object):
             self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        if not self._data_manager.add_active_to_direct_beam_list():
+        add_result = self._data_manager.add_active_to_direct_beam_list()
+
+        if add_result == 0:
+            # Run was not added (already in the list)
             if not silent:
-                self.report_message("(Add direct beam) Data incompatible or already in the list.", pop_up=True)
+                self.report_message("(Add direct beam) Data already in the list.", pop_up=True)
             return False
+        elif add_result == 1:
+            # Run was added but is not a true direct beam
+            if not silent:
+                self.report_message(
+                    f"Run {self._data_manager._nexus_data.number} added to direct beam list.\n\n"
+                    "Note: This run is not labeled as a direct beam in the metadata "
+                    "(data_type PV ≠ 1). This may occur for runs started with 'Start RUN' "
+                    "command in EPICS.",
+                    pop_up=False,
+                )
+        # else: add_result == 2, run was added and is a true direct beam (no warning needed)
 
         self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
         self.update_tables()
@@ -1155,15 +1187,16 @@ class MainHandler(object):
         self.main_window.auto_change_active = True
 
         # radio button for active data (layout inside a widget to center it)
-        radio_widget = ActiveDataRadioButton(
-            self, is_active=(data == self._data_manager.active_cross_section), idx=idx, is_direct_beam=True
-        )
+        # Only mark as active if this data is the active cross section AND
+        # the active data was selected from the direct beam table (not a reduction table)
+        is_active = data == self._data_manager.active_cross_section and self._data_manager.active_from_direct_beam_table
+        radio_widget = ActiveDataRadioButton(self, is_active=is_active, idx=idx, is_direct_beam=True)
         self.direct_beam_button_group.addButton(radio_widget.radio_button)
         self.ui.directBeamTable.setCellWidget(idx, DirectBeamTableColumn.ACTIVE, radio_widget)
 
         item = QtWidgets.QTableWidgetItem(str(data.number))
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
-        if data == self._data_manager.active_cross_section:
+        if is_active:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
@@ -1258,35 +1291,67 @@ class MainHandler(object):
         # If we update an entry, it's because that data is currently active.
         # Highlight it and un-highlight the other ones.
         self.main_window.auto_change_active = True
-        idx = self._data_manager.find_active_data_id()
-        for i in range(self.reduction_table.rowCount()):
-            # Highlight the active data row, un-highlight the others
-            run_num = self.reduction_table.item(i, ReductionTableColumn.RUN_NUMBER)
-            if run_num is not None:
-                if i == idx:
-                    run_num.setBackground(QColors.yellow)
-                else:
-                    run_num.setBackground(QColors.white)
-            # Set the radio button states
-            active_cell = self.reduction_table.cellWidget(i, ReductionTableColumn.ACTIVE)
-            if active_cell is not None:
-                radio_button = active_cell.findChild(QtWidgets.QRadioButton)
-                radio_button.setChecked(i == idx)
 
-        idx = self._data_manager.find_active_direct_beam_id()
-        for i in range(self.ui.directBeamTable.rowCount()):
-            # Highlight the active data row, un-highlight the others
-            item = self.ui.directBeamTable.item(i, DirectBeamTableColumn.RUN_NUMBER)
-            if item is not None:
-                if i == idx:
-                    item.setBackground(QColors.yellow)
-                else:
-                    item.setBackground(QColors.white)
-            # Set the radio button states
-            active_cell = self.ui.directBeamTable.cellWidget(i, DirectBeamTableColumn.ACTIVE)
-            if active_cell is not None:
-                radio_button = active_cell.findChild(QtWidgets.QRadioButton)
-                radio_button.setChecked(i == idx)
+        # Only set radio buttons in the table that matches the current context
+        # This prevents both tables from having checked radio buttons when a run is in both
+        if not self._data_manager.active_from_direct_beam_table:
+            # Update reduction table
+            idx = self._data_manager.find_active_data_id()
+            for i in range(self.reduction_table.rowCount()):
+                # Highlight the active data row, un-highlight the others
+                run_num = self.reduction_table.item(i, ReductionTableColumn.RUN_NUMBER)
+                if run_num is not None:
+                    if i == idx:
+                        run_num.setBackground(QColors.yellow)
+                    else:
+                        run_num.setBackground(QColors.white)
+                # Set the radio button states
+                active_cell = self.reduction_table.cellWidget(i, ReductionTableColumn.ACTIVE)
+                if active_cell is not None:
+                    radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                    # Block signals while setting state to prevent cascading events
+                    radio_button.blockSignals(True)
+                    radio_button.setChecked(i == idx)
+                    radio_button.blockSignals(False)
+
+            # IMPORTANT: Uncheck all radio buttons in the direct beam table
+            # Block signals to prevent triggering cascading events
+            for i in range(self.ui.directBeamTable.rowCount()):
+                active_cell = self.ui.directBeamTable.cellWidget(i, DirectBeamTableColumn.ACTIVE)
+                if active_cell is not None:
+                    radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                    radio_button.blockSignals(True)
+                    radio_button.setChecked(False)
+                    radio_button.blockSignals(False)
+        else:
+            # Update direct beam table
+            idx = self._data_manager.find_active_direct_beam_id()
+            for i in range(self.ui.directBeamTable.rowCount()):
+                # Highlight the active data row, un-highlight the others
+                item = self.ui.directBeamTable.item(i, DirectBeamTableColumn.RUN_NUMBER)
+                if item is not None:
+                    if i == idx:
+                        item.setBackground(QColors.yellow)
+                    else:
+                        item.setBackground(QColors.white)
+                # Set the radio button states
+                active_cell = self.ui.directBeamTable.cellWidget(i, DirectBeamTableColumn.ACTIVE)
+                if active_cell is not None:
+                    radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                    # Block signals while setting state to prevent cascading events
+                    radio_button.blockSignals(True)
+                    radio_button.setChecked(i == idx)
+                    radio_button.blockSignals(False)
+
+            # IMPORTANT: Uncheck all radio buttons in the reduction table
+            # Block signals to prevent triggering cascading events
+            for i in range(self.reduction_table.rowCount()):
+                active_cell = self.reduction_table.cellWidget(i, ReductionTableColumn.ACTIVE)
+                if active_cell is not None:
+                    radio_button = active_cell.findChild(QtWidgets.QRadioButton)
+                    radio_button.blockSignals(True)
+                    radio_button.setChecked(False)
+                    radio_button.blockSignals(False)
 
         self.main_window.auto_change_active = False
 
@@ -1796,9 +1861,7 @@ class MainHandler(object):
         for i in range(len(self._data_manager.reduction_list)):
             xs = self._data_manager.active_cross_section.name
             d = self._data_manager.reduction_list[i].cross_sections[xs]
-            self.reduction_table.setItem(
-                i, ReductionTableColumn.NUM_RIGHT, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points))
-            )
+            self.reduction_table.setItem(i, 3, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points)))
 
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 

@@ -73,6 +73,10 @@ class DataManager(object):
         self.last_selected_reduction_row: Dict[int, int] = {}  # key: tab index, value: row index
         self.last_selected_direct_beam_row: int = 0
 
+        # Track whether the active data was selected from the direct beam table (True)
+        # or from the reduction/data table (False). This affects plot display behavior.
+        self.active_from_direct_beam_table: bool = False
+
         # List of cross-sections common to all reduced data sets
         self.reduction_states: List[str] = []
 
@@ -136,6 +140,8 @@ class DataManager(object):
             self.set_active_cross_section(0)
             # Track the last selected row for this reduction table
             self.last_selected_reduction_row[self.active_reduction_list_index] = index
+            # Mark that the active data was selected from the reduction table (not direct beam table)
+            self.active_from_direct_beam_table = False
 
     def set_active_data_from_direct_beam_list(self, index: int):
         """Set a data set in the direct beam list as the active data set according to its index.
@@ -148,6 +154,8 @@ class DataManager(object):
             self.set_active_cross_section(0)
             # Track the last selected row for the direct beam table
             self.last_selected_direct_beam_row = index
+            # Mark that the active data was selected from the direct beam table
+            self.active_from_direct_beam_table = True
 
     def set_active_cross_section(self, index: int) -> bool:
         """Set the current cross section to the specified index, or zero if it doesn't exist."""
@@ -351,11 +359,35 @@ class DataManager(object):
         return False
 
     def add_active_to_direct_beam_list(self):
-        """Add active data set to the direct beam list."""
-        if self._nexus_data not in self.direct_beam_list and self._nexus_data.is_direct_beam():
-            self.direct_beam_list.append(self._nexus_data)
-            return True
-        return False
+        """Add active data set to the direct beam list.
+
+        This method allows adding any run to the direct beam list, even if it wasn't originally
+        acquired as a direct beam (i.e., when the PV data_type != 1). This is useful for
+        calibration and other runs started with "Start RUN" command in EPICS, which don't add
+        the "Direct Beam" PV-tag.
+
+        Returns
+        -------
+        int
+            2 if the run was added and is a true direct beam (data_type == 1)
+            1 if the run was added but is NOT a true direct beam (data_type != 1)
+            0 if the run was not added (already in the list)
+        """
+        if self._nexus_data in self.direct_beam_list:
+            return 0
+
+        is_true_direct_beam = self._nexus_data.is_direct_beam()
+        self.direct_beam_list.append(self._nexus_data)
+
+        if not is_true_direct_beam:
+            logging.warning(
+                "Run %s was added to the direct beam list but is not labeled as a direct beam "
+                "(data_type PV != 1). This run may have been started with 'Start RUN' command.",
+                self._nexus_data.number,
+            )
+            return 1
+
+        return 2
 
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list."""
@@ -578,7 +610,7 @@ class DataManager(object):
                     keys = list(direct_beam_item.cross_sections.keys())
                     if len(keys) >= 1:
                         if len(keys) > 1:
-                            logging.error("More than one cross-section for the direct beam, using the first one")
+                            logging.info("More than one cross-section for the direct beam, using the first one")
                         direct_beam = direct_beam_item.cross_sections[keys[0]]
                         break
             if direct_beam is None:
