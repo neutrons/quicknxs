@@ -150,7 +150,9 @@ class TestDataWriter(object):
 
         # test loading saved file
         db_list, data_list, additional_peaks_list, has_scaling_error = read_reduced_file(output_path)
-        assert len(db_list) == 2
+        # After deduplication fix, direct beam 30001 should only appear once even though
+        # both data runs (30002 and 30003) use it
+        assert len(db_list) == 1
         assert len(data_list) == 2
         assert len(additional_peaks_list) == 2
         assert has_scaling_error is True
