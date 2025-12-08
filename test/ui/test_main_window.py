@@ -26,9 +26,9 @@ class TestMainGui:
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         window_main.global_fit_checkbox.setChecked(True)
-        assert window_main.file_handler.get_configuration().global_stitching is True
+        assert window_main.file_handler.get_configuration_from_ui().global_stitching is True
         window_main.global_fit_checkbox.setChecked(False)
-        assert window_main.file_handler.get_configuration().global_stitching is False
+        assert window_main.file_handler.get_configuration_from_ui().global_stitching is False
 
     def test_active_cross_section(self, mocker, qtbot):
         """Test that selecting a cross-section radio button updates the active cross section."""
@@ -42,7 +42,7 @@ class TestMainGui:
         qtbot.addWidget(window_main)
 
         # set up data objects for two cross sections
-        configuration = window_main.file_handler.get_configuration()
+        configuration = window_main.file_handler.get_configuration_from_ui()
         cross_section_0 = CrossSectionData("On_Off", configuration)
         cross_section_1 = CrossSectionData("On_On", configuration)
         nexus_data = NexusData("filepath", configuration)
@@ -179,7 +179,7 @@ class TestMainGui:
         window_main.ui.binning_type_selector_run.setCurrentIndex(BinningType.NORMAL)
         window_main.ui.q_rebin_spinbox_run.setValue(0.045)
 
-        window_main.file_handler.get_configuration()  # to update configuration from UI
+        window_main.file_handler.get_configuration_from_ui()  # to update configuration from UI
 
         # check that the current config has been updated for both global and per run
         conf1 = window_main.data_manager.active_cross_section.configuration

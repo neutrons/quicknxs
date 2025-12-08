@@ -105,7 +105,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """Close UI event."""
-        self.file_handler.get_configuration()
+        self.file_handler.get_configuration_from_ui()
         event.accept()
 
     def keyPressEvent(self, event):
@@ -286,7 +286,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         change_type = self.file_handler.check_region_values_changed()
         if change_type >= 0:
-            configuration = self.file_handler.get_configuration()
+            configuration = self.file_handler.get_configuration_from_ui()
 
             if self.data_manager.active_cross_section is not None:
                 active_only = not self.ui.action_use_common_ranges.isChecked()
@@ -364,7 +364,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     ### Direct beam table management
 
-    # TODO: deal with this
+    # TODO: deal with this (what does this comment mean?)
     def get_direct_beam(self):
         """Retrieve the direct beam data for the active reflectivity data.
 
@@ -390,6 +390,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def match_direct_beam_clicked(self):
         """Find the best direct beam run for the activate data set and compute the reflectivity as needed."""
         if self.data_manager.find_best_direct_beam():
+            # TODO: this should maybe just get the direct_beam from self.nexus_data, not get the active direct beam
+            dpix = self.data_manager.update_direct_pixel_from_direct_beam()
+            if dpix is not None:
+                self.ui.directPixelOverwrite.setValue(dpix)
+            # self.file_handler.direct_beam_matched()
             self.file_handler.update_tables()
             self.file_handler.update_calculated_data()
             QtWidgets.QApplication.instance().processEvents()
@@ -524,7 +529,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.destroy()
 
         if output_options is not None:
-            self.file_handler.get_configuration()
+            self.file_handler.get_configuration_from_ui()
 
             # Show smoothing dialog as needed
             if output_options["export_offspec_smooth"] and self.ui.offspec_smooth_checkbox.isChecked():
