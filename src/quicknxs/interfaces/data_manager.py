@@ -254,8 +254,11 @@ class DataManager(object):
         int | None:
             The index within the direct beam list, or none.
         """
+        if nexus_data is None:
+            return None
         for i in range(len(self.direct_beam_list)):
-            if nexus_data == self.direct_beam_list[i]:
+            # Compare by run number since deepcopy creates different objects
+            if nexus_data.number == self.direct_beam_list[i].number:
                 return i
         return None
 
@@ -373,13 +376,24 @@ class DataManager(object):
             1 if the run was added but is NOT a true direct beam (data_type != 1)
             0 if the run was not added (already in the list)
         """
-        if self._nexus_data in self.direct_beam_list:
+        # Check if already in list by run number (since we may have deepcopied objects)
+        if self.find_data_in_direct_beam_list(self._nexus_data) is not None:
             return 0
 
         is_true_direct_beam = self._nexus_data.is_direct_beam()
-        self.direct_beam_list.append(self._nexus_data)
 
-        if not is_true_direct_beam:
+        if is_true_direct_beam:
+            # True direct beam - add directly
+            self.direct_beam_list.append(self._nexus_data)
+        else:
+            # Not a true direct beam - check if it's also in the reduction list
+            # If so, make a deep copy to prevent shared state between tables
+            if self._nexus_data in self.reduction_list:
+                direct_beam_nexus_data = copy.deepcopy(self._nexus_data)
+                self.direct_beam_list.append(direct_beam_nexus_data)
+            else:
+                self.direct_beam_list.append(self._nexus_data)
+
             logging.warning(
                 "Run %s was added to the direct beam list but is not labeled as a direct beam "
                 "(data_type PV != 1). This run may have been started with 'Start RUN' command.",
@@ -392,7 +406,8 @@ class DataManager(object):
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list."""
         for i in range(len(self.direct_beam_list)):
-            if self.direct_beam_list[i] == self._nexus_data:
+            # Compare by run number since deepcopy creates different objects
+            if self.direct_beam_list[i].number == self._nexus_data.number:
                 self.direct_beam_list.pop(i)
                 return i
         return -1
