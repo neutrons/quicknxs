@@ -257,8 +257,8 @@ class DataManager(object):
         if nexus_data is None:
             return None
         for i in range(len(self.direct_beam_list)):
-            # Compare by run number since deepcopy creates different objects
-            if nexus_data.number == self.direct_beam_list[i].number:
+            # Compare by object identity to properly distinguish deepcopied objects
+            if nexus_data is self.direct_beam_list[i]:
                 return i
         return None
 
