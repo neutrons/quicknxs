@@ -1032,11 +1032,11 @@ class DataManager(object):
         Parameters
         ----------
         db_files: list
-            List of (run_number, run_file, conf) for direct beam files
+            List of (run_number, run_file, conf, slice_value) for direct beam files
         data_files: list
-            List of (run_number, run_file, conf) for data files
+            List of (run_number, run_file, conf, slice_value) for data files
         additional_peaks: list | None
-            List of (peak_index, run_number, run_file, conf) for data files for additional peaks
+            List of (peak_index, run_number, run_file, conf, slice_value) for data files for additional peaks
         configuration: Configuration
             Configuration to base the loaded data on
         progress: ProgressReporter
@@ -1050,13 +1050,15 @@ class DataManager(object):
             t_0 = time.time()
         n_loaded = 0
         n_total = len(db_files) + len(data_files)
-        for r_id, run_file, conf in db_files:
+        for r_id, run_file, conf, slice_value in db_files:
             t_i = time.time()
             if os.path.isfile(run_file):
                 is_from_cache = self.load(run_file, conf, force=force, update_parameters=False)
                 if is_from_cache:
                     configuration.direct_beam = None
                     self._nexus_data.update_configuration(conf)
+                # Set the slice value on the NexusData object
+                self._nexus_data.slice = slice_value
                 self.add_active_to_direct_beam_list()
                 logging.info("%s loaded: %s sec [%s]", r_id, time.time() - t_i, time.time() - t_0)
                 if progress:
@@ -1066,7 +1068,7 @@ class DataManager(object):
                 if progress:
                     progress.set_value(n_loaded, message="ERROR: %s does not exist" % run_file, out_of=n_total)
             n_loaded += 1
-        for r_id, run_file, conf in data_files:
+        for r_id, run_file, conf, slice_value in data_files:
             t_i = time.time()
             do_files_exist = []
             for name in run_file.split("+"):
@@ -1078,6 +1080,8 @@ class DataManager(object):
                     configuration.direct_beam = None
                     self._nexus_data.update_configuration(conf)
                     self.calculate_reflectivity()
+                # Set the slice value on the NexusData object
+                self._nexus_data.slice = slice_value
                 if self.add_active_to_reduction():
                     logging.info("%s loaded: %s sec [%s]", r_id, time.time() - t_i, time.time() - t_0)
                 else:
@@ -1094,7 +1098,7 @@ class DataManager(object):
 
         # Initialize any additional peak reduction lists by copying the data from the main reduction list
         if additional_peaks:
-            for peak_index, r_id, run_file, conf in additional_peaks:
+            for peak_index, r_id, run_file, conf, slice_value in additional_peaks:
                 if peak_index not in self.peak_reduction_lists:
                     self.peak_reduction_lists[peak_index] = []
                 self.set_active_reduction_list_index(peak_index)
@@ -1104,6 +1108,8 @@ class DataManager(object):
                 configuration.direct_beam = None
                 self.update_configuration(conf)
                 self.calculate_reflectivity()
+                # Set the slice value on the NexusData object
+                self._nexus_data.slice = slice_value
                 self.add_active_to_reduction(peak_index)
 
     @property
@@ -1125,15 +1131,20 @@ class DataManager(object):
             return nexus_data.cross_sections[nexus_data.main_cross_section].configuration
 
         # Get files to reload
-        db_files = [(nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in self.direct_beam_list]
+        db_files = [
+            (nexus.number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice) for nexus in self.direct_beam_list
+        ]
         data_files = []
         additional_peaks = []
         for ipeak, reduction_list in self.peak_reduction_lists.items():
             if ipeak == self.MAIN_REDUCTION_LIST_INDEX:
-                data_files = [(nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in reduction_list]
+                data_files = [
+                    (nexus.number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice) for nexus in reduction_list
+                ]
             else:
                 additional_peaks = [
-                    (ipeak, nexus.number, nexus.file_path, _get_nexus_conf(nexus)) for nexus in reduction_list
+                    (ipeak, nexus.number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice)
+                    for nexus in reduction_list
                 ]
         # Clear the lists
         self.direct_beam_list.clear()

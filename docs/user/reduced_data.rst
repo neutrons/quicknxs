@@ -69,6 +69,7 @@ Common fields:
 - ``dpix``: Direct pixel position
 - ``tth``: Two-theta angle (if available)
 - ``number``: Run number
+- ``slice``: Slice index for multiple slices per run (defaults to 0)
 - ``File``: Full file path to the NeXus file
 
 [Data Runs]
@@ -78,7 +79,9 @@ This section mirrors the format of the direct beam section, but for each reflect
 
 - ``scale``: Normalization scaling factor (applied to this file)
 - ``scale_err``: Uncertainty in the scaling
-- ``number`` and ``File``: As above
+- ``number``: Run number
+- ``slice``: Slice index for multiple slices per run (defaults to 0)
+- ``File``: Full file path to the NeXus file
 
 Column Formatting
 -----------------
@@ -86,6 +89,19 @@ Column Formatting
 - Each section uses aligned, fixed-width columns
 - Values are aligned to the column headers for readability
 - The final column is always ``File``, which may contain long absolute paths
+
+Slice Column in the UI
+----------------------
+
+The ``Slice`` column also appears in the reduction table in the main QuickNXS interface,
+positioned immediately after the ``Run No.`` column. This column is not editable from the UI
+and displays the slice index associated with each data run. Currently, all runs have a slice
+value of 0 (default), but this column supports future functionality for handling multiple
+slices per run.
+
+.. note::
+   The ``Slice`` column does not appear in the normalization (direct beam) table, as multiple
+   slices are not supported for direct beam runs.
 
 Reusing the File
 ----------------
