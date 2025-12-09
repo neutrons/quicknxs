@@ -8,7 +8,7 @@ import math
 import time
 import traceback
 from collections import OrderedDict
-from typing import Callable, Dict, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Union
 
 import mantid.simpleapi as api
 import numpy as np
@@ -19,6 +19,9 @@ from quicknxs.interfaces.data_handling.data_info import DataInfo
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.gisans import GISANS
 from quicknxs.interfaces.data_handling.off_specular import OffSpecular
+
+if TYPE_CHECKING:
+    from quicknxs.interfaces.configuration import Configuration
 
 # Set Mantid logging level to warnings
 api.ConfigService.setLogLevel(3)
@@ -99,7 +102,7 @@ class CrossSectionData(object):
     det_size_y = 0.0007
     lambda_center = 0.0
 
-    def __init__(self, name, configuration, entry_name="entry", workspace=None):
+    def __init__(self, name, configuration: "Configuration", entry_name="entry", workspace=None):
         self.name = name
         self.entry_name = entry_name
         self.cross_section_label = entry_name
@@ -726,6 +729,17 @@ class NexusData(object):
         wsg = api.GroupWorkspaces(InputWorkspaces=ws_list)
         return wsg
 
+    def get_parameter(self, param):
+        """Get a parameter value from the main cross-section data set."""
+        if self.main_cross_section is None:
+            return None
+        try:
+            if hasattr(self.cross_sections[self.main_cross_section].configuration, param):
+                return getattr(self.cross_sections[self.main_cross_section].configuration, param)
+        except Exception as e:
+            logging.error(f"Could not get parameter {param}: {e}")
+        return None
+
     def set_parameter(self, param, value):
         """Loop through the cross-section data sets and update a parameter."""
         has_changed = False
@@ -735,12 +749,15 @@ class NexusData(object):
                     if not getattr(self.cross_sections[xs].configuration, param) == value:
                         setattr(self.cross_sections[xs].configuration, param, value)
                         has_changed = True
-        except:
-            logging.error("Could not set parameter %s %s", param, value)
+        except Exception as e:
+            logging.error(f"Could not set parameter {param} {value}: {e}")
         return has_changed
 
     def calculate_reflectivity(
-        self, direct_beam: Optional[CrossSectionData] = None, configuration: Configuration = None, ws_suffix: str = ""
+        self,
+        direct_beam: Optional[CrossSectionData] = None,
+        configuration: Optional[Configuration] = None,
+        ws_suffix: str = "",
     ):
         """
         Loop through the cross-section data sets and update the reflectivity.

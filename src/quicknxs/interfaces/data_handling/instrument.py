@@ -413,7 +413,7 @@ class Instrument(object):
             return True
         return False
 
-    def direct_beam_distance(self, scattering, direct_beam):
+    def direct_beam_distance(self, scattering, direct_beam) -> float:
         """Return a Euclidean squared-distance between slit widths in scattered, direct beams"""
         scatter_slit_array = (scattering.slit1_width, scattering.slit2_width, scattering.slit3_width)
         direct_slit_array = (direct_beam.slit1_width, direct_beam.slit2_width, direct_beam.slit3_width)

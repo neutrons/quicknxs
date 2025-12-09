@@ -14,7 +14,7 @@ import numpy as np
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknxs_io
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
-from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
+from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 
 
@@ -82,6 +82,7 @@ class DataManager(object):
 
         self.final_merged_reflectivity = {}
 
+        # TODO: cache could be improved to be a dict or named tuple with file_path as key (Glass)
         self._cache: List[NexusData] = list()
         self.cached_offspec: Optional[dict] = None
         self.cached_gisans: Optional[dict] = None
@@ -499,39 +500,44 @@ class DataManager(object):
         if progress is not None:
             progress(80, "Calculating...")
 
-        if nexus_data is not None:
-            self._nexus_data = nexus_data
-            # Example: '/SNS/REF_M/IPTS-25531/nexus/REF_M_38198.nxs.h5+/SNS/REF_M/IPTS-25531/nexus/REF_M_38199.nxs.h5'
-            # will be split into directory='/SNS/REF_M/IPTS-25531/nexus' and
-            # file_name='REF_M_38198.nxs.h5+REF_M_38199.nxs.h5'
-            directory, file_name = FilePath(file_path).split()
-            self.current_directory = directory
-            self.current_file_name = file_name
-            self.set_active_cross_section(0)
+        self._nexus_data = nexus_data
+        # Example: '/SNS/REF_M/IPTS-25531/nexus/REF_M_38198.nxs.h5+/SNS/REF_M/IPTS-25531/nexus/REF_M_38199.nxs.h5'
+        # will be split into directory='/SNS/REF_M/IPTS-25531/nexus' and
+        # file_name='REF_M_38198.nxs.h5+REF_M_38199.nxs.h5'
+        directory, file_name = FilePath(file_path).split()
+        self.current_directory = directory
+        self.current_file_name = file_name
+        self.set_active_cross_section(0)
 
-            # If we didn't get this data set from our cache, add it and compute its reflectivity.
-            if not is_from_cache:
-                # Find suitable direct beam
-                if configuration.match_direct_beam:
-                    self.find_best_direct_beam()
+        # If we didn't get this data set from our cache, add it and compute its reflectivity.
+        if not is_from_cache:
+            # Find suitable direct beam
+            if configuration.match_direct_beam:
+                match_found = self.find_best_direct_beam()
+                direct_beam = self.get_active_direct_beam()
+                if match_found and direct_beam is not None:
+                    dpix = direct_beam.configuration.peak_position
+                    self._nexus_data.set_parameter("direct_pixel_overwrite", dpix)
+                else:
+                    logging.info(f"DataManager.load: No matching direct beam found - {match_found=}, {direct_beam=}")
 
-                # Replace reduction and direct beam entries as needed
-                if reduction_list_id is not None:
-                    self.reduction_list[reduction_list_id] = nexus_data
-                if direct_beam_list_id is not None:
-                    self.direct_beam_list[direct_beam_list_id] = nexus_data
+            # Replace reduction and direct beam entries as needed
+            if reduction_list_id is not None:
+                self.reduction_list[reduction_list_id] = nexus_data
+            if direct_beam_list_id is not None:
+                self.direct_beam_list[direct_beam_list_id] = nexus_data
 
-                # Compute reflectivity
-                if not nexus_data.is_direct_beam():
-                    try:
-                        self.calculate_reflectivity()
-                    except Exception as e:
-                        logging.error(f"Reflectivity calculation failed for {file_name}: {e}")
+            # Compute reflectivity
+            if not nexus_data.is_direct_beam():
+                try:
+                    self.calculate_reflectivity()
+                except Exception as e:
+                    logging.error(f"Reflectivity calculation failed for {file_name}: {e}")
 
-                # if cached reduced data exceeds maximum cache size, remove the oldest reduced data
-                while len(self._cache) >= self.MAX_CACHE:
-                    self._cache.pop(0)
-                self._cache.append(nexus_data)
+            # if cached reduced data exceeds maximum cache size, remove the oldest reduced data
+            while len(self._cache) >= self.MAX_CACHE:
+                self._cache.pop(0)
+            self._cache.append(nexus_data)
 
         if progress is not None:
             progress(100)
@@ -552,6 +558,19 @@ class DataManager(object):
     def get_active_direct_beam(self):
         """Return the direct beam data object for the active data."""
         return self._find_direct_beam(self._nexus_data)
+
+    def update_direct_pixel_from_direct_beam(self) -> Optional[float]:
+        """Set `direct_pixel_overwrite` based on the matched direct beam peak position."""
+        if self._nexus_data is None:
+            return None
+
+        direct_beam = self.get_active_direct_beam()
+        if direct_beam is None:
+            return None
+
+        dpix = direct_beam.configuration.peak_position
+        self._nexus_data.set_parameter("direct_pixel_overwrite", dpix)
+        return dpix
 
     def is_same_run(self, run_number_a: str | int, run_number_b: str | int) -> bool:
         """
@@ -581,7 +600,7 @@ class DataManager(object):
 
         return normalize(run_number_a) == normalize(run_number_b)
 
-    def is_direct_beam_for_run(self, nexus_data: NexusData, direct_beam_run: str):
+    def is_direct_beam_for_run(self, nexus_data: NexusData, direct_beam_run: str | int) -> bool:
         """Check if the direct beam is the configured direct beam for the given run.
 
         Parameters
@@ -602,7 +621,6 @@ class DataManager(object):
         CrossSectionData or None:
             The direct beam data set if found, otherwise None.
         """
-        direct_beam = None
         # Find the CrossSectionData object to work with
         if isinstance(nexus_data, NexusData):
             # Get the direct beam info from the configuration
@@ -617,20 +635,43 @@ class DataManager(object):
         else:
             raise TypeError("nexus_data must be a NexusData or CrossSectionData object")
 
-        if data_xs.configuration is not None and data_xs.configuration.direct_beam is not None:
-            data_xs_direct_beam = data_xs.configuration.direct_beam
-            for direct_beam_item in self.direct_beam_list:
-                if self.is_same_run(direct_beam_item.number, data_xs_direct_beam):
-                    keys = list(direct_beam_item.cross_sections.keys())
-                    if len(keys) >= 1:
-                        if len(keys) > 1:
-                            logging.info("More than one cross-section for the direct beam, using the first one")
-                        direct_beam = direct_beam_item.cross_sections[keys[0]]
-                        break
-            if direct_beam is None:
-                logging.error("The specified direct beam is not available: skipping")
+        direct_beam = None
+        if data_xs.configuration is None or data_xs.configuration.direct_beam is None:
+            return direct_beam
+        data_xs_direct_beam = data_xs.configuration.direct_beam
+        for direct_beam_item in self.direct_beam_list:
+            if not self.is_same_run(direct_beam_item.number, data_xs_direct_beam):
+                continue
+            keys = list(direct_beam_item.cross_sections.keys())
+            if not keys:
+                logging.error(f"Direct beam {direct_beam_item.number} has no cross-sections")
+                continue
+            if len(keys) > 1:
+                logging.error("More than one cross-section for the direct beam, using the first one")
+            direct_beam = direct_beam_item.cross_sections[keys[0]]
+            break
+        if direct_beam is None:
+            logging.error("The specified direct beam is not available: skipping")
 
         return direct_beam
+
+    def find_direct_beam_by_name(self, direct_beam_name: str) -> Optional[NexusData]:
+        """Find a direct beam data set by its name.
+
+        Parameters
+        ----------
+        direct_beam_name : str
+            Name of the direct beam run to find.
+
+        Returns
+        -------
+        NexusData or None
+            The direct beam data set if found, otherwise None.
+        """
+        for db in self.direct_beam_list:
+            if db.number == str(direct_beam_name):
+                return db
+        return None
 
     def reduce_gisans(self, progress=None):
         """Calculate GISANS for all datasets in the reduction list.
@@ -729,7 +770,7 @@ class DataManager(object):
             use_pf=use_pf,
         )
 
-    # TODO 67 FInd out whether it can work with merged data
+    # TODO 67 Find out whether it can work with merged data
     def calculate_reflectivity(self, configuration=None, active_only=False, nexus_data=None, specular=True):
         """Calculate reflectivity using the current configuration."""
         # Select the data to work on
@@ -756,18 +797,14 @@ class DataManager(object):
         bool:
             True if we have updated the data with a new normalization run.
         """
-        # TODO 65+ Can it work with merged data?
-        # Select the first run number if the active cross section is derived from more than one run
-        active_cross_section_number = RunNumbers(self.active_cross_section.number).numbers[0]
         closest = None
-
         # for each run in the beamline, compute a closeness score
         # if the wavelengths do not match within tolerance, this is some overlarge value
         # if the wavelengths do match, compute a euclidean difference of their slit widths
         # pick the run with a matching wavelength and lowest euclidean slit difference
         active_xs = self.active_cross_section
         active_instrument = active_xs.configuration.instrument
-        closeness = {}
+        closeness: Dict[int, float] = {}
         for item in self.direct_beam_list:
             item_number = int(item.number)
             xs_keys = list(item.cross_sections.keys())
@@ -781,8 +818,14 @@ class DataManager(object):
         if len(self.direct_beam_list) > 0:
             closest = min(closeness.items(), key=lambda item: item[1])[0]
 
+        logging.info(f"Best direct beam for run {self._nexus_data.number} is {closest}")
         if closest is not None:
-            return self._nexus_data.set_parameter("direct_beam", closest)
+            try:
+                self._nexus_data.set_parameter("direct_beam", closest)
+                return True
+            except Exception as e:
+                logging.error(f"Could not set direct beam to {closest}: {e}")
+                return False
         return False
 
     def get_trim_values(self) -> Optional[List[int]]:

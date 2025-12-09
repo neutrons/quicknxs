@@ -13,7 +13,7 @@ def test_metadata_roi_updates_ui(data_server, qtbot):
     main_window.file_handler.open_file(data_server.path_to("REF_M_42099"))
     main_window.actionAddDirectBeam.triggered.emit()
 
-    config = main_window.file_handler.get_configuration()
+    config = main_window.file_handler.get_configuration_from_ui()
 
     assert main_window.ui.roi_peak_value.text() == str(config.metadata_roi_peak)
     assert main_window.ui.roi_bck_value.text() == str(config.metadata_roi_bck)
@@ -37,7 +37,7 @@ def test_metadata_roi_disables_peak_finder(qtbot):
 def test_peak_finder_settings_persist(data_server, qtbot):
     def _assert_peak_finder_config():
         """Assert that the peak finder config is as expected."""
-        config = main_window.file_handler.get_configuration()
+        config = main_window.file_handler.get_configuration_from_ui()
         assert config.use_roi is False
         assert config.use_metadata_bck_roi is True
         assert config.update_peak_range is True
