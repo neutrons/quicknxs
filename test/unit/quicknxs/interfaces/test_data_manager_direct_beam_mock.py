@@ -28,9 +28,11 @@ class TestDirectBeamFeatureMocked:
         result = manager.add_active_to_direct_beam_list()
         assert result == 1
 
-        # Should be in the direct beam list
+        # Should be in the direct beam list (as a deepcopy with same run number)
         assert len(manager.direct_beam_list) == 1
-        assert manager.direct_beam_list[0] == mock_nexus
+        assert manager.direct_beam_list[0].number == mock_nexus.number
+        # It should be a different object (deepcopied)
+        assert manager.direct_beam_list[0] is not mock_nexus
 
     def test_add_true_direct_beam_run_returns_2(self):
         """Test that adding a true direct beam run returns 2."""

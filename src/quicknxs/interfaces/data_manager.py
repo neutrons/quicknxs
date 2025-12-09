@@ -258,7 +258,8 @@ class DataManager(object):
             return None
         for i in range(len(self.direct_beam_list)):
             # Compare by object identity to properly distinguish deepcopied objects
-            if nexus_data is self.direct_beam_list[i]:
+            # Compare by run number to handle deepcopied objects
+            if nexus_data.number == self.direct_beam_list[i].number:
                 return i
         return None
 
@@ -404,7 +405,8 @@ class DataManager(object):
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list."""
         for i in range(len(self.direct_beam_list)):
-            if self.direct_beam_list[i] == self._nexus_data:
+            # Compare by run number to handle deepcopied objects
+            if self.direct_beam_list[i].number == self._nexus_data.number:
                 self.direct_beam_list.pop(i)
                 return i
         return -1
