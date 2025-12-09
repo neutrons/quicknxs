@@ -1170,10 +1170,6 @@ class MainHandler(object):
         direct_beam:
             Direct beam data
         """
-        for i in self._data_manager.reduction_list:
-            refl_db = i.get_parameter("direct_beam")
-            match = str(refl_db) == str(direct_beam.number)
-
         matched_runs = [
             refl
             for refl in self._data_manager.reduction_list
