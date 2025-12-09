@@ -1149,8 +1149,12 @@ class MainHandler(object):
                 )
         # else: add_result == 2, run was added and is a true direct beam (no warning needed)
 
-        self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
-        self.update_tables()
+        # The direct beam list has been appended with a new direct beam - add it to the UI table
+        direct_beam_count = len(self._data_manager.direct_beam_list)
+        self.ui.directBeamTable.setRowCount(direct_beam_count)
+        idx = direct_beam_count - 1
+        direct_beam_data = self._data_manager.direct_beam_list[idx].get_main_cross_section_data()
+        self.update_direct_beam_table(idx, direct_beam_data)
 
         direct_beam_ids = [str(r.number) for r in self._data_manager.direct_beam_list]
         self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
