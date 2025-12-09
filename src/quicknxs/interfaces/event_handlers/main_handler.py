@@ -134,9 +134,7 @@ class MainHandler(object):
         else:
             self.main_window.frame_2.hide()
 
-    def open_file(
-        self, file_path: Optional[str], force: Optional[bool] = False, silent: Optional[bool] = False
-    ) -> None:
+    def open_file(self, file_path: str, force: bool = False, silent: bool = False) -> None:
         """Read one or more data files. If more than one, merge their data.
 
         Parameters
@@ -176,7 +174,7 @@ class MainHandler(object):
         try:
             self.report_message(f"Loading file(s) {file_path}")
             prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
-            configuration = self.get_configuration()
+            configuration = self.get_configuration_from_ui()
             self._data_manager.load(file_path, configuration, force=force, progress=prog)
             self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
         except (RuntimeError, InsufficientEventCountError) as run_err:
@@ -316,6 +314,8 @@ class MainHandler(object):
         idx = self._data_manager.find_active_direct_beam_id()
         if idx is not None:
             self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
+            direct_beam = self._data_manager.direct_beam_list[idx]
+            self.update_reduction_table_from_direct_beam(direct_beam)
 
     def update_calculated_data(self):
         """Update the calculated entries in the overview tab.
@@ -324,6 +324,9 @@ class MainHandler(object):
         or after a change is made that will affect the displayed results.
         """
         d = self._data_manager.active_cross_section
+        if d is None:
+            return
+
         self.ui.datasetAi.setText("%.3f°" % (d.scattering_angle))
 
         try:
@@ -592,7 +595,7 @@ class MainHandler(object):
             self.main_window.reset_data_tabs()
             self.clear_direct_beams()
             self.clear_reflectivity()
-            configuration = self.get_configuration()
+            configuration = self.get_configuration_from_ui()
             prog = self.new_progress_reporter()
             self._data_manager.load_data_from_reduced_file(file_path, configuration=configuration, progress=prog)
 
@@ -757,7 +760,7 @@ class MainHandler(object):
         run_numbers = RunNumbers(number)
         file_list = list()
         # Look for new-style nexus file name
-        configuration = self.get_configuration()
+        configuration = self.get_configuration_from_ui()
         for run_number in run_numbers.numbers:
             search_string = configuration.instrument.file_search_template % run_number
             matches = glob.glob(search_string + ".nxs.h5")  # type: Optional[List[str]]
@@ -824,7 +827,7 @@ class MainHandler(object):
         # was turned on, we pick the ranges from the currently active cross-section
         # and apply then to all cross-sections.
         if self.ui.action_use_common_ranges.isChecked():
-            config = self.get_configuration()
+            config = self.get_configuration_from_ui()
             self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
@@ -967,14 +970,11 @@ class MainHandler(object):
         if self.main_window.auto_change_active:
             return
 
-        entry = item.row()
+        row = item.row()
         column = item.column()
         column = ReductionTableColumn(column)
 
-        refl = self._data_manager.reduction_list[entry]
-
-        # TODO: If we changed the normalization run, make sure it's in the list
-        # of direct beams we know about.
+        refl = self._data_manager.reduction_list[row]
 
         keys = {
             # ReductionTableColumn.ACTIVE: "active",
@@ -1016,11 +1016,22 @@ class MainHandler(object):
                 refl.set_parameter(keys[column], int(item.text()))
 
             case ReductionTableColumn.DIRECT_BEAM:
-                try:
-                    refl.set_parameter(keys[column], item.text())
-                except:
+                direct_beam_name = item.text()
+                direct_beam = self._data_manager.find_direct_beam_by_name(direct_beam_name)
+                if direct_beam:
+                    refl.set_parameter(keys[column], direct_beam_name)
+                    # use direct beam peak position as dpix overwrite for matched ref runs
+                    dpix = direct_beam.get_parameter("peak_position")
+                    refl.set_parameter("direct_pixel_overwrite", dpix)
+                    dpix_item = self.reduction_table.item(row, ReductionTableColumn.DPIX)
+                    dpix_item.setText(str(dpix))
+                else:
+                    self.report_message("Not a valid direct beam run number, or the direct beam is not in the list.")
                     refl.set_parameter(keys[column], None)
+                    self.main_window.auto_change_active = True
                     item.setText("none")
+                    self.main_window.auto_change_active = False
+                    # TODO: reset dpix overwrite to DAS value? (Glass)
 
             case ReductionTableColumn.Q_STEPS:
                 try:
@@ -1030,7 +1041,16 @@ class MainHandler(object):
                 except:
                     refl.set_parameter(keys[column], None)
 
-        recalculate = False if column in [1, 2, 3] else True
+        recalculate = (
+            False
+            if column
+            in [
+                ReductionTableColumn.SCALE_FACTOR,
+                ReductionTableColumn.NUM_LEFT,
+                ReductionTableColumn.NUM_RIGHT,
+            ]
+            else True
+        )
 
         # Recalculate and replot
         self.reduction_table_cell_changed(refl, recalculate)
@@ -1108,7 +1128,7 @@ class MainHandler(object):
         """Add dataset to the direct beam table."""
         # Update all cross-section parameters as needed.
         if self.ui.action_use_common_ranges.isChecked():
-            config = self.get_configuration()
+            config = self.get_configuration_from_ui()
             self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
@@ -1142,6 +1162,28 @@ class MainHandler(object):
         self.ui.direct_beam_list_label.setText("None")
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 
+    def update_reduction_table_from_direct_beam(self, direct_beam: NexusData):
+        """Update all reflectivity runs that use the given direct beam.
+
+        Parameters
+        ----------
+        direct_beam:
+            Direct beam data
+        """
+        matched_runs = [
+            refl
+            for refl in self._data_manager.reduction_list
+            if str(refl.get_parameter("direct_beam")) == str(direct_beam.number)
+        ]
+        dpix = direct_beam.get_parameter("peak_position")
+        for refl in matched_runs:
+            refl.set_parameter("direct_pixel_overwrite", dpix)
+            idx = self._data_manager.find_data_in_reduction_list(refl)
+            dpix_item = self.reduction_table.item(idx, ReductionTableColumn.DPIX)
+            self.main_window.auto_change_active = True
+            dpix_item.setText(str(dpix))
+            self.main_window.auto_change_active = False
+
     def update_direct_beam_table(self, idx: int, data: CrossSectionData) -> None:
         """Update a direct beam table entry with cross-section data.
 
@@ -1152,6 +1194,7 @@ class MainHandler(object):
         data:
             Cross-section data
         """
+        # Block signals to prevent recursion
         self.main_window.auto_change_active = True
 
         # radio button for active data (layout inside a widget to center it)
@@ -1191,6 +1234,8 @@ class MainHandler(object):
         item = QtWidgets.QTableWidgetItem(wl)
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         self.ui.directBeamTable.setItem(idx, DirectBeamTableColumn.WAVELENGTH, item)
+
+        # Unblock signals
         self.main_window.auto_change_active = False
 
     def direct_beam_table_changed(self, item: QtWidgets.QTableWidgetItem):
@@ -1228,6 +1273,10 @@ class MainHandler(object):
             old_value = getattr(self._data_manager.active_cross_section.configuration, keys[col])
             item.setText(str(old_value))
             return
+
+        # If peak position changed, also update direct pixel overwrite in all reflectivity runs using this direct beam
+        if col == DirectBeamTableColumn.PEAK_POSITION:
+            self.update_reduction_table_from_direct_beam(data)
 
         # Update calculated data
         data.update_calculated_values()
@@ -1402,7 +1451,7 @@ class MainHandler(object):
         logging.info("Exists %s %s", has_changed_values, offspec_data_exists)
         if force or has_changed_values >= 0 or not offspec_data_exists:
             logging.info("Updating....")
-            config = self.get_configuration()
+            config = self.get_configuration_from_ui()
             self._data_manager.update_configuration(configuration=config, active_only=False)
             self._data_manager.reduce_offspec(progress=prog)
 
@@ -1414,7 +1463,7 @@ class MainHandler(object):
         logging.info("Exists %s %s %s", force, has_changed_values, gisans_data_exists)
         if force or has_changed_values >= 0 or not gisans_data_exists:
             logging.info("Updating....")
-            config = self.get_configuration()
+            config = self.get_configuration_from_ui()
             self._data_manager.update_configuration(configuration=config, active_only=False)
             if active_only:
                 result = self._data_manager.calculate_gisans(progress=prog)
@@ -1516,7 +1565,7 @@ class MainHandler(object):
             return 0
         return -1
 
-    def get_configuration(self) -> Configuration:
+    def get_configuration_from_ui(self) -> Configuration:
         """Gather the reduction options.
 
         Retrieve the reduction options either from the active cross section,
@@ -1738,7 +1787,7 @@ class MainHandler(object):
         """Stitch the reflectivity parts and normalize to 1."""
         # Update the configuration so we can remember the cutoff value
         # later if it was changed
-        self.get_configuration()
+        self.get_configuration_from_ui()
         if self.ui.polynomial_stitching_checkbox.isChecked():
             poly_degree = self.ui.polynomial_stitching_degree_spinbox.value()
         else:
@@ -1824,7 +1873,7 @@ class MainHandler(object):
 
         # Reload files
         self._data_manager.clear_cached_unused_data()
-        configuration = self.get_configuration()
+        configuration = self.get_configuration_from_ui()
         prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
         self._data_manager.reload_files(configuration, prog)
 

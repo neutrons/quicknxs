@@ -92,5 +92,41 @@ def test_table_peak_position_change_triggers_plot_update(mocker, main_window_wit
     assert mock_plot_refl.call_count == plot_refl_call_count + 1
 
 
+@pytest.mark.datarepo
+def test_peak_position_updates_direct_pixel(qtbot, data_server):
+    """Test that updating the peak position in the direct beam table updates the direct pixel value."""
+    main_window = MainWindow()
+    qtbot.addWidget(main_window)
+    Configuration.setup_default_values()
+
+    # Load direct beam run and add to the table
+    main_window.file_handler.open_file(data_server.path_to("REF_M_42099"))
+    main_window.actionAddDirectBeam.triggered.emit()
+
+    # Load reflected run and add to the reduction list
+    main_window.file_handler.open_file(data_server.path_to("REF_M_42112"))
+    main_window.actionAddRefl.triggered.emit()
+
+    # assert that main_window.data_manager.load() was called and data is loaded
+    assert len(main_window.data_manager.direct_beam_list) == 1
+    assert len(main_window.data_manager.reduction_list) == 1
+
+    # Assert reflected run is using the direct beam
+    refl_run = main_window.data_manager.reduction_list[0]
+    assert str(refl_run.get_parameter("direct_beam")) == str(main_window.data_manager.direct_beam_list[0].number)
+
+    # Update peak position in the direct beam table
+    table: QtWidgets.QTableWidget = main_window.ui.directBeamTable
+    table.item(0, DBTableCols.PEAK_POSITION).setText("300.0")
+
+    # Verify that the direct pixel in the direct beam object is updated
+    direct_beam = main_window.data_manager.direct_beam_list[0]
+    direct_beam_peak_position = direct_beam.get_parameter("peak_position")
+    assert direct_beam_peak_position == 300.0
+
+    # Verify that the direct pixel in the reflected run is updated
+    assert refl_run.get_parameter("direct_pixel_overwrite") == direct_beam_peak_position
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

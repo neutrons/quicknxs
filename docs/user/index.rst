@@ -8,6 +8,7 @@ User Guide
 .. toctree::
    :maxdepth: 2
 
+   overview
    custom_config
    binning
    dead_time_correction
