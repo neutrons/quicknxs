@@ -629,13 +629,7 @@ class PlotManager(object):
             self._plot_message(self.main_window.ui.refl, "No data")
             return False
 
-        # Determine plot type based on whether the active data was selected from the direct beam table
-        # or if it's natively a direct beam. This allows the same run to show different plots depending
-        # on which table context the user is viewing from.
-        is_native_direct_beam = self.main_window.data_manager.active_cross_section.is_direct_beam
-        selected_from_direct_beam_table = self.main_window.data_manager.active_from_direct_beam_table
-
-        if is_native_direct_beam or selected_from_direct_beam_table:
+        if self.main_window.data_manager.active_cross_section.is_direct_beam:
             plot_title = "Intensity"
             self._prepare_intensity_plot()
             is_plotted = True
