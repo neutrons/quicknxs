@@ -79,6 +79,7 @@ mr_reduction = "==2.15.0"  # requires mantid >=6.13.0,<6.14.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.6.3"
+urllib3 = ">=2.6.0" # for pip-audit compatibility, can be removed when resolved upstream
 
 [tool.pixi.pypi-dependencies]
 quicknxs = { path = ".", editable = true }

@@ -390,7 +390,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def match_direct_beam_clicked(self):
         """Find the best direct beam run for the activate data set and compute the reflectivity as needed."""
         if self.data_manager.find_best_direct_beam():
-            # TODO: this should maybe just get the direct_beam from self.nexus_data, not get the active direct beam
             dpix = self.data_manager.update_direct_pixel_from_direct_beam()
             if dpix is not None:
                 self.ui.directPixelOverwrite.setValue(dpix)
