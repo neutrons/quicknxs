@@ -73,10 +73,6 @@ class DataManager(object):
         self.last_selected_reduction_row: Dict[int, int] = {}  # key: tab index, value: row index
         self.last_selected_direct_beam_row: int = 0
 
-        # Track whether the active data was selected from the direct beam table (True)
-        # or from the reduction/data table (False). This affects plot display behavior.
-        self.active_from_direct_beam_table: bool = False
-
         # List of cross-sections common to all reduced data sets
         self.reduction_states: List[str] = []
 
@@ -141,8 +137,6 @@ class DataManager(object):
             self.set_active_cross_section(0)
             # Track the last selected row for this reduction table
             self.last_selected_reduction_row[self.active_reduction_list_index] = index
-            # Mark that the active data was selected from the reduction table (not direct beam table)
-            self.active_from_direct_beam_table = False
 
     def set_active_data_from_direct_beam_list(self, index: int):
         """Set a data set in the direct beam list as the active data set according to its index.
@@ -155,8 +149,6 @@ class DataManager(object):
             self.set_active_cross_section(0)
             # Track the last selected row for the direct beam table
             self.last_selected_direct_beam_row = index
-            # Mark that the active data was selected from the direct beam table
-            self.active_from_direct_beam_table = True
 
     def set_active_cross_section(self, index: int) -> bool:
         """Set the current cross section to the specified index, or zero if it doesn't exist."""
@@ -259,8 +251,7 @@ class DataManager(object):
             return None
         for i in range(len(self.direct_beam_list)):
             # Compare by object identity to properly distinguish deepcopied objects
-            # Compare by run number to handle deepcopied objects
-            if nexus_data.number == self.direct_beam_list[i].number:
+            if nexus_data == self.direct_beam_list[i]:
                 return i
         return None
 
@@ -406,8 +397,7 @@ class DataManager(object):
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list."""
         for i in range(len(self.direct_beam_list)):
-            # Compare by run number to handle deepcopied objects
-            if self.direct_beam_list[i].number == self._nexus_data.number:
+            if self.direct_beam_list[i] == self._nexus_data:
                 self.direct_beam_list.pop(i)
                 return i
         return -1

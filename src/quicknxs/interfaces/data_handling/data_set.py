@@ -689,6 +689,20 @@ class NexusData(object):
         self.cross_sections: Dict[str, CrossSectionData] = {}
         self.main_cross_section: str = None
 
+    def __eq__(self, other):
+        """Compare NexusData objects by run number and file path.
+
+        This allows proper comparison even after deepcopy operations, as the run number
+        and file path identify the same underlying data regardless of object identity.
+        """
+        if not isinstance(other, NexusData):
+            return False
+        return self.number == other.number and self.file_path == other.file_path
+
+    def __hash__(self):
+        """Make NexusData hashable based on number and file_path."""
+        return hash((self.number, self.file_path))
+
     def get_highest_cross_section(self, n_points=10):
         """Get the cross-section with the largest signal at the lower end of its Q range.
 
