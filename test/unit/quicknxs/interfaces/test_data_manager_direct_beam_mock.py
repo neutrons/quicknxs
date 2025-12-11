@@ -60,17 +60,6 @@ class TestDirectBeamFeatureMocked:
         mock_nexus = mock.Mock(spec=NexusData)
         mock_nexus.is_direct_beam.return_value = False
         mock_nexus.number = "12347"
-        mock_nexus.file_path = "/tmp/test_12347.nxs"
-
-        # Configure __eq__ to compare by number and file_path like the real NexusData
-        # Use a function that dynamically gets attributes to work with deepcopy
-        mock_nexus.__eq__ = lambda self, other: (  # noqa: ARG005
-            isinstance(other, (mock.Mock, NexusData))
-            and hasattr(other, "number")
-            and hasattr(other, "file_path")
-            and getattr(other, "number", None) == "12347"
-            and getattr(other, "file_path", None) == "/tmp/test_12347.nxs"
-        )
         manager._nexus_data = mock_nexus
 
         # Add it the first time
@@ -118,17 +107,6 @@ class TestDirectBeamFeatureMocked:
         mock_nexus = mock.Mock(spec=NexusData)
         mock_nexus.is_direct_beam.return_value = False
         mock_nexus.number = "12351"
-        mock_nexus.file_path = "/tmp/test_12351.nxs"
-
-        # Configure __eq__ to compare by number and file_path like the real NexusData
-        # Use a function that dynamically gets attributes to work with deepcopy
-        mock_nexus.__eq__ = lambda self, other: (  # noqa: ARG005
-            isinstance(other, (mock.Mock, NexusData))
-            and hasattr(other, "number")
-            and hasattr(other, "file_path")
-            and getattr(other, "number", None) == "12351"
-            and getattr(other, "file_path", None) == "/tmp/test_12351.nxs"
-        )
         manager._nexus_data = mock_nexus
         manager.add_active_to_direct_beam_list()
         assert len(manager.direct_beam_list) == 1
