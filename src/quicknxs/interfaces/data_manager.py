@@ -250,7 +250,29 @@ class DataManager(object):
         if nexus_data is None:
             return None
         for i in range(len(self.direct_beam_list)):
-            # Compare by run number to handle deepcopied objects
+            if nexus_data == self.direct_beam_list[i]:
+                return i
+        return None
+
+    def find_run_number_in_direct_beam_list(self, nexus_data: NexusData | None) -> Optional[int]:
+        """Look for data with the same run number in the direct beam list.
+
+        This method compares by run number rather than object identity, which is useful
+        for detecting duplicates when deepcopied objects are involved.
+
+        Parameters
+        ----------
+        nexus_data : NexusData | None
+            The data to search for by run number.
+
+        Returns
+        -------
+        int | None:
+            The index within the direct beam list, or None if not found.
+        """
+        if nexus_data is None:
+            return None
+        for i in range(len(self.direct_beam_list)):
             if nexus_data.number == self.direct_beam_list[i].number:
                 return i
         return None
@@ -370,7 +392,7 @@ class DataManager(object):
             0 if the run was not added (already in the list)
         """
         # Check if already in list by run number (since we may have deepcopied objects)
-        if self.find_data_in_direct_beam_list(self._nexus_data) is not None:
+        if self.find_run_number_in_direct_beam_list(self._nexus_data) is not None:
             return 0
 
         is_true_direct_beam = self._nexus_data.is_direct_beam()
@@ -395,12 +417,15 @@ class DataManager(object):
         return 2
 
     def remove_active_from_direct_beam_list(self):
-        """Remove the active data set from the direct beam list."""
-        for i in range(len(self.direct_beam_list)):
-            # Compare by run number to handle deepcopied objects
-            if self.direct_beam_list[i].number == self._nexus_data.number:
-                self.direct_beam_list.pop(i)
-                return i
+        """Remove the active data set from the direct beam list.
+
+        Uses run number comparison to find the entry, since the active data may be
+        the original object while the list contains a deepcopy.
+        """
+        index = self.find_run_number_in_direct_beam_list(self._nexus_data)
+        if index is not None:
+            self.direct_beam_list.pop(index)
+            return index
         return -1
 
     def remove_from_active_reduction_list(self, index: int):
