@@ -609,9 +609,15 @@ class PlotManager(object):
     def plot_reflectivity_or_intensity(self):
         """Plot reflectivity data or intensity, depending on the type of the active run.
 
-        If the active run is a direct beam run, the intensity vs ToF (or wavelength) in the
+        If the active run is a direct beam run (natively labeled as direct beam OR selected
+        from the direct beam table), the intensity vs ToF (or wavelength) in the
         region-of-interest (ROI) is plotted.
-        Otherwise, the reflectivity of all datasets is plotted.
+
+        If the active run is selected from the reduction/data table, the reflectivity of all
+        datasets is plotted, even if that same run also exists in the direct beam table.
+
+        This allows users to compare different ROIs by adding the same run to both tables,
+        with the plot type determined by which table the user is currently viewing from.
 
         Returns
         -------

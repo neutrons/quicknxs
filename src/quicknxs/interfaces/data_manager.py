@@ -247,8 +247,33 @@ class DataManager(object):
         int | None:
             The index within the direct beam list, or none.
         """
+        if nexus_data is None:
+            return None
         for i in range(len(self.direct_beam_list)):
             if nexus_data == self.direct_beam_list[i]:
+                return i
+        return None
+
+    def find_run_number_in_direct_beam_list(self, nexus_data: NexusData | None) -> Optional[int]:
+        """Look for data with the same run number in the direct beam list.
+
+        This method compares by run number rather than object identity, which is useful
+        for detecting duplicates when deepcopied objects are involved.
+
+        Parameters
+        ----------
+        nexus_data : NexusData | None
+            The data to search for by run number.
+
+        Returns
+        -------
+        int | None:
+            The index within the direct beam list, or None if not found.
+        """
+        if nexus_data is None:
+            return None
+        for i in range(len(self.direct_beam_list)):
+            if nexus_data.number == self.direct_beam_list[i].number:
                 return i
         return None
 
@@ -352,18 +377,55 @@ class DataManager(object):
         return False
 
     def add_active_to_direct_beam_list(self):
-        """Add active data set to the direct beam list."""
-        if self._nexus_data not in self.direct_beam_list and self._nexus_data.is_direct_beam():
+        """Add active data set to the direct beam list.
+
+        This method allows adding any run to the direct beam list, even if it wasn't originally
+        acquired as a direct beam (i.e., when the PV data_type != 1). This is useful for
+        calibration and other runs started with "Start RUN" command in EPICS, which don't add
+        the "Direct Beam" PV-tag.
+
+        Returns
+        -------
+        int
+            2 if the run was added and is a true direct beam (data_type == 1)
+            1 if the run was added but is NOT a true direct beam (data_type != 1)
+            0 if the run was not added (already in the list)
+        """
+        # Check if already in list by run number (since we may have deepcopied objects)
+        if self.find_run_number_in_direct_beam_list(self._nexus_data) is not None:
+            return 0
+
+        is_true_direct_beam = self._nexus_data.is_direct_beam()
+
+        if is_true_direct_beam:
+            # True direct beam - add directly
             self.direct_beam_list.append(self._nexus_data)
-            return True
-        return False
+        else:
+            # Not a true direct beam - make a deep copy and change the data type of the copy
+            # This makes it possible to add the same run also as a data run while preventing them sharing state
+            direct_beam_nexus_data = copy.deepcopy(self._nexus_data)
+            direct_beam_nexus_data.set_is_direct_beam(True)
+            self.direct_beam_list.append(direct_beam_nexus_data)
+
+            logging.warning(
+                "Run %s was added to the direct beam list but is not labeled as a direct beam "
+                "(data_type PV != 1). This run may have been started with 'Start RUN' command.",
+                self._nexus_data.number,
+            )
+            return 1
+
+        return 2
 
     def remove_active_from_direct_beam_list(self):
-        """Remove the active data set from the direct beam list."""
-        for i in range(len(self.direct_beam_list)):
-            if self.direct_beam_list[i] == self._nexus_data:
-                self.direct_beam_list.pop(i)
-                return i
+        """Remove the active data set from the direct beam list.
+
+        Uses run number comparison to find the entry, since the active data may be
+        the original object while the list contains a deepcopy.
+        """
+        index = self.find_run_number_in_direct_beam_list(self._nexus_data)
+        if index is not None:
+            self.direct_beam_list.pop(index)
+            return index
         return -1
 
     def remove_from_active_reduction_list(self, index: int):

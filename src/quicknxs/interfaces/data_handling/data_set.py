@@ -1049,6 +1049,16 @@ class NexusData(object):
         """Returns True if the main cross-section is a direct beam."""
         return self.cross_sections[self.main_cross_section].is_direct_beam
 
+    def set_is_direct_beam(self, is_direct_beam: bool):
+        """Sets the value of `is_direct_beam` for all cross-sections."""
+        for xs in self.cross_sections:
+            self.cross_sections[xs].is_direct_beam = is_direct_beam
+
+    def get_main_cross_section_data(self) -> CrossSectionData:
+        """Returns the CrossSectionData object corresponding to the main cross section"""
+        xs_label = self.main_cross_section
+        return self.cross_sections[xs_label]
+
 
 class NexusMetaData(object):
     """Class used to hold meta-data read before loading the neutron events."""
