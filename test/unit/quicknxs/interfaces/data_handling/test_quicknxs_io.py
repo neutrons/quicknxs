@@ -26,6 +26,12 @@ class TestDataLoader(object):
         r"""Pass the data_file fixture."""
         self.file = data_server.path_to
 
+    @pytest.fixture(autouse=True)
+    def _reset_config(self):
+        """Reset configuration to defaults after each test."""
+        yield
+        Configuration.setup_default_values()
+
     def test_simple_load(self):
         file_path = self.file("REF_M_28613+28614+28615+28616+28617+28618+28619_Specular_++.dat")
         db_list, data_list, _, _ = read_reduced_file(file_path)
