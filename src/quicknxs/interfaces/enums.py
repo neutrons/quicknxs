@@ -6,20 +6,21 @@ class ReductionTableColumn(IntEnum):
 
     ACTIVE = 0
     RUN_NUMBER = 1
-    SCALE_FACTOR = 2
-    NUM_LEFT = 3
-    NUM_RIGHT = 4
-    PEAK_POSITION = 5
-    PEAK_WIDTH = 6
-    LOW_RES_POSITION = 7
-    LOW_RES_WIDTH = 8
-    BCK_POSITION = 9
-    BCK_WIDTH = 10
-    DPIX = 11
-    THETA = 12
-    DIRECT_BEAM = 13
-    BINNING_TYPE = 14
-    Q_STEPS = 15
+    SLICE = 2
+    SCALE_FACTOR = 3
+    NUM_LEFT = 4
+    NUM_RIGHT = 5
+    PEAK_POSITION = 6
+    PEAK_WIDTH = 7
+    LOW_RES_POSITION = 8
+    LOW_RES_WIDTH = 9
+    BCK_POSITION = 10
+    BCK_WIDTH = 11
+    DPIX = 12
+    THETA = 13
+    DIRECT_BEAM = 14
+    BINNING_TYPE = 15
+    Q_STEPS = 16
 
 
 class DirectBeamTableColumn(IntEnum):

@@ -233,6 +233,7 @@ def write_reflectivity_header(
         "dpix",
         "tth",
         "number",
+        "slice",
         "File",
     ]
     dataset_options = [
@@ -240,6 +241,7 @@ def write_reflectivity_header(
         "dpix",
         "tth",
         "number",
+        "slice",
         "DB_ID",
         "File",
     ]
@@ -299,6 +301,7 @@ def write_reflectivity_header(
             PN=0,
             dpix=dpix,
             number=normalization_run,
+            slice=direct_beam.slice if direct_beam is not None else 0,
             File=filename,
         )
 
@@ -320,7 +323,7 @@ def write_reflectivity_header(
     direct_beam_idx = 0
     for data_set in reduction_list:
         cross_section_data = data_set.cross_sections[pol_list[0]]
-        dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx)
+        dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx, data_set)
         config_value_dict = _build_config_row_dict(
             config=cross_section_data.configuration,
             item=dataset_dict,
@@ -338,7 +341,7 @@ def write_reflectivity_header(
         config_values = []
         for data_set in peak_reduction_list:
             cross_section_data = data_set.cross_sections[pol_list[0]]
-            dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx)
+            dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx, data_set)
             config_value_dict = _build_config_row_dict(
                 config=cross_section_data.configuration,
                 item=dataset_dict,
@@ -364,7 +367,9 @@ def write_reflectivity_header(
     fd.close()
 
 
-def _get_cross_section_config_values(cross_section_data: CrossSectionData, direct_beam_idx: int) -> Dict[str, str]:
+def _get_cross_section_config_values(
+    cross_section_data: CrossSectionData, direct_beam_idx: int, nexus_data: NexusData = None
+) -> Dict[str, str]:
     """Get dict of cross-section data configuration to write to QuickNXS file."""
     ws = cross_section_data.reflectivity_workspace
     run_object = ws.getRun()
@@ -397,6 +402,7 @@ def _get_cross_section_config_values(cross_section_data: CrossSectionData, direc
         fan=constant_q_binning,
         dpix=dpix,
         number=str(ws.getRunNumber()),
+        slice=nexus_data.slice if nexus_data is not None else 0,
         File=filename,
     )
 
@@ -540,6 +546,9 @@ def read_reduced_file(file_path: str, configuration=None):
                             _assign_config_value(conf, attr, value_str)
 
                     run_number = int(_get_tok("number", cols, toks))
+                    # Read slice value if present, default to 0 for backwards compatibility
+                    slice_str = _get_tok("slice", cols, toks)
+                    slice_value = int(slice_str) if slice_str is not None else 0
                     run_file = _get_tok("File", cols, toks)
                     if not Path(str(run_file)).is_absolute():
                         run_file = str(Path(file_path).parent / f"{run_file}")
@@ -554,7 +563,7 @@ def read_reduced_file(file_path: str, configuration=None):
                         # conf.cut_last_n_points = 0
                     # Catch data files meant for QuickNXS and use the raw file instead
                     run_file = _find_h5_data(run_file)
-                    direct_beam_runs.append([run_number, run_file, conf])
+                    direct_beam_runs.append([run_number, run_file, conf, slice_value])
                 except ValueError:
                     logging.error("Unable to parse line '%s' in run file %s", line, run_file)
 
@@ -584,6 +593,9 @@ def read_reduced_file(file_path: str, configuration=None):
                     if DB_ID > 0 and len(direct_beam_runs) > DB_ID - 1:
                         conf.direct_beam = direct_beam_runs[DB_ID - 1][0]
                     run_number = int(_get_tok("number", cols, toks))
+                    # Read slice value if present, default to 0 for backwards compatibility
+                    slice_str = _get_tok("slice", cols, toks)
+                    slice_value = int(slice_str) if slice_str is not None else 0
                     run_file = _get_tok("File", cols, toks)
                     if not Path(run_file).is_absolute():
                         run_file = str(Path(file_path).parent / run_file)
@@ -595,9 +607,9 @@ def read_reduced_file(file_path: str, configuration=None):
                     run_file = determine_which_files_to_sum(run_file, data_file_indices)
 
                     if _in_section == 2:
-                        data_runs.append([run_number, run_file, conf])
+                        data_runs.append([run_number, run_file, conf, slice_value])
                     else:
-                        additional_peaks.append([peak_index, run_number, run_file, conf])
+                        additional_peaks.append([peak_index, run_number, run_file, conf, slice_value])
                 except ValueError:
                     logging.error("Unable to parse line '%s' in run file %s", line, run_file)
 

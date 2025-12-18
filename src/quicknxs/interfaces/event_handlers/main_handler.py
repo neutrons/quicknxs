@@ -882,6 +882,17 @@ class MainHandler(object):
         # Set the item to be non-editable (bitwise AND with the negation of the editable flag)
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         table_widget.setItem(idx, ReductionTableColumn.RUN_NUMBER, item)
+
+        # Slice column (non-editable)
+        if idx < len(self._data_manager.reduction_list):
+            nexus_data = self._data_manager.reduction_list[idx]
+            slice_item = QtWidgets.QTableWidgetItem(str(nexus_data.slice))
+        else:
+            # Fallback if index is out of bounds (shouldn't happen but defensive programming)
+            slice_item = QtWidgets.QTableWidgetItem("0")
+        slice_item.setFlags(slice_item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
+        table_widget.setItem(idx, ReductionTableColumn.SLICE, slice_item)
+
         table_widget.setItem(
             idx,
             ReductionTableColumn.SCALE_FACTOR,

@@ -688,6 +688,7 @@ class NexusData(object):
         self.configuration = configuration
         self.cross_sections: Dict[str, CrossSectionData] = {}
         self.main_cross_section: str = None
+        self.slice: int = 0  # slice index for multiple slices per run (default 0)
 
     def get_highest_cross_section(self, n_points=10):
         """Get the cross-section with the largest signal at the lower end of its Q range.

@@ -2912,6 +2912,14 @@
                       </column>
                       <column>
                        <property name="text">
+                        <string>Slice</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Slice index for multiple slices per run</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
                         <string>I0</string>
                        </property>
                        <property name="toolTip">
@@ -3110,6 +3118,14 @@
                        </property>
                        <property name="toolTip">
                         <string>Run number to get file for</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Slice</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Slice index for multiple slices per run</string>
                        </property>
                       </column>
                       <column>
@@ -3316,6 +3332,14 @@
                       </column>
                       <column>
                        <property name="text">
+                        <string>Slice</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Slice index for multiple slices per run</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
                         <string>I0</string>
                        </property>
                        <property name="toolTip">
@@ -3514,6 +3538,14 @@
                        </property>
                        <property name="toolTip">
                         <string>File Number</string>
+                       </property>
+                      </column>
+                      <column>
+                       <property name="text">
+                        <string>Slice</string>
+                       </property>
+                       <property name="toolTip">
+                        <string>Slice index for multiple slices per run</string>
                        </property>
                       </column>
                       <column>

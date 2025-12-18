@@ -26,6 +26,12 @@ class TestDataLoader(object):
         r"""Pass the data_file fixture."""
         self.file = data_server.path_to
 
+    @pytest.fixture(autouse=True)
+    def _reset_config(self):
+        """Reset configuration to defaults after each test."""
+        yield
+        Configuration.setup_default_values()
+
     def test_simple_load(self):
         file_path = self.file("REF_M_28613+28614+28615+28616+28617+28618+28619_Specular_++.dat")
         db_list, data_list, _, _ = read_reduced_file(file_path)
@@ -74,8 +80,8 @@ class TestDataLoader(object):
         assert len(data_list) == 2
         # test that there are two additional peaks, both with run numbers 42536 and 42537
         assert len(additional_peaks_list) == 4
-        assert len(additional_peaks_list[0]) == 4
-        assert len(additional_peaks_list[1]) == 4
+        assert len(additional_peaks_list[0]) == 5  # Now includes slice_value as 5th element
+        assert len(additional_peaks_list[1]) == 5
         assert additional_peaks_list[0][0] == additional_peaks_list[1][0] == 2
         assert additional_peaks_list[2][0] == additional_peaks_list[3][0] == 3
         assert additional_peaks_list[0][1] == additional_peaks_list[2][1] == 42536
@@ -154,6 +160,72 @@ class TestDataWriter(object):
         assert len(data_list) == 2
         assert len(additional_peaks_list) == 2
         assert has_scaling_error is True
+
+    def test_save_and_load_slice(self, tmp_path, mock_nexus_data):
+        """Test that slice attribute is saved and loaded correctly."""
+        output_path = tmp_path / "test_slice_save_load.dat"
+        pol_state = "On_Off"
+        col_names = ["Qz [1/A]", "R [a.u.]", "dR [a.u.]", "dQz [1/A]", "theta [rad]"]
+        output_data = np.array(
+            [
+                [2.26337261e-02, 5.39473109e-03, 7.23757965e-05, 1.25223308e-03, 1.44538147e-02],
+                [2.28600633e-02, 5.25972758e-03, 6.96006058e-05, 1.26563639e-03, 1.44538147e-02],
+            ]
+        )
+
+        # Create mock data with different slice values
+        nexus_db = mock_nexus_data(30001)
+        nexus_db.slice = 0
+
+        nexus_1 = mock_nexus_data(30002)
+        nexus_1.slice = 1
+
+        nexus_2 = mock_nexus_data(30003)
+        nexus_2.slice = 2
+
+        direct_beam_list = [nexus_db]
+        peak_reduction_lists = {1: [nexus_1, nexus_2]}
+        active_list_index = 1
+
+        # Write reflectivity data to file
+        write_reflectivity_header(
+            peak_reduction_lists,
+            active_list_index,
+            direct_beam_list,
+            output_path,
+            pol_state,
+        )
+        write_reflectivity_data(output_path, output_data, col_names)
+
+        # Test loading saved file
+        db_list, data_list, _, _ = read_reduced_file(output_path)
+
+        # Check direct beam slice - there will be 2 entries (one per data run) both referencing the same direct beam
+        assert len(db_list) == 2
+        assert db_list[0][3] == 0  # slice_value is 4th element in tuple
+        assert db_list[1][3] == 0  # both direct beam entries have slice=0
+
+        # Check data runs slices
+        assert len(data_list) == 2
+        assert data_list[0][3] == 1  # first run has slice=1
+        assert data_list[1][3] == 2  # second run has slice=2
+
+
+class TestBackwardsCompatibility(TestDataLoader):
+    """Test backwards compatibility for loading files without slice column."""
+
+    def test_load_file_without_slice_backwards_compatibility(self):
+        """Test that files without slice column load with slice=0 for backwards compatibility."""
+        # Use existing test file that doesn't have slice column
+        file_path = self.file("REF_M_28613+28614+28615+28616+28617+28618+28619_Specular_++.dat")
+        db_list, data_list, _, _ = read_reduced_file(file_path)
+
+        # All entries should have slice=0 (default)
+        for db_entry in db_list:
+            assert db_entry[3] == 0  # slice_value is 4th element in tuple
+
+        for data_entry in data_list:
+            assert data_entry[3] == 0  # slice_value is 4th element in tuple
 
 
 @pytest.fixture
