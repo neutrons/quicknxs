@@ -276,42 +276,54 @@ def write_reflectivity_header(
         return
 
     # Direct beam section
+    # Collect direct beams from ALL peaks, not just the active one
     config_values = []
     direct_beam_idx = 0
-    for data_set in reduction_list:
-        run_object = data_set.cross_sections[pol_list[0]].reflectivity_workspace.getRun()
-        normalization_run = run_object.getProperty("normalization_run").value
-        if normalization_run == "None":
-            continue
-        direct_beam = None
-        for db_i in direct_beam_list:
-            if str(db_i.number) == str(normalization_run):
-                direct_beam = db_i
-        if direct_beam is None:
-            continue
-        db_pol = list(direct_beam.cross_sections.keys())[0]
-        direct_beam_idx += 1
-        dpix = run_object.getProperty("normalization_dirpix").value
-        filename = run_object.getProperty("normalization_file_path").value
+    normalization_run_to_db_id = {}  # Map normalization run number to DB_ID
 
-        item = dict(
-            DB_ID=direct_beam_idx,
-            tth=0,
-            P0=0,
-            PN=0,
-            dpix=dpix,
-            number=normalization_run,
-            slice=direct_beam.slice if direct_beam is not None else 0,
-            File=filename,
-        )
+    # Iterate through all peaks to collect all direct beams
+    for peak_index, peak_list in peak_reduction_lists.items():
+        for data_set in peak_list:
+            run_object = data_set.cross_sections[pol_list[0]].reflectivity_workspace.getRun()
+            normalization_run = run_object.getProperty("normalization_run").value
+            if normalization_run == "None":
+                continue
 
-        config_value_dict = _build_config_row_dict(
-            config=direct_beam.cross_sections[db_pol].configuration,
-            item=item,
-            include_gisans=include_gisans,
-            include_offspec=include_offspec,
-        )
-        config_values.append(config_value_dict)
+            # Skip if we've already written this direct beam
+            if str(normalization_run) in normalization_run_to_db_id:
+                continue
+
+            direct_beam = None
+            for db_i in direct_beam_list:
+                if str(db_i.number) == str(normalization_run):
+                    direct_beam = db_i
+            if direct_beam is None:
+                continue
+            db_pol = list(direct_beam.cross_sections.keys())[0]
+            dpix = run_object.getProperty("normalization_dirpix").value
+            filename = run_object.getProperty("normalization_file_path").value
+
+            item = dict(
+                DB_ID=direct_beam_idx,
+                tth=0,
+                P0=0,
+                PN=0,
+                dpix=dpix,
+                number=normalization_run,
+                slice=direct_beam.slice if direct_beam is not None else 0,
+                File=filename,
+            )
+
+            config_value_dict = _build_config_row_dict(
+                config=direct_beam.cross_sections[db_pol].configuration,
+                item=item,
+                include_gisans=include_gisans,
+                include_offspec=include_offspec,
+            )
+            config_values.append(config_value_dict)
+            normalization_run_to_db_id[str(normalization_run)] = direct_beam_idx  # Map normalization run to DB_ID
+            direct_beam_idx += 1
+
     fd.write(_build_table(config_values, direct_beam_options, "Direct Beam Runs"))
 
     # Peak for reflectivity data
@@ -320,10 +332,18 @@ def write_reflectivity_header(
     dataset_options = _sort_keys_with_file_last(list(set(dataset_options)))
 
     config_values = []
-    direct_beam_idx = 0
     for data_set in reduction_list:
-        cross_section_data = data_set.cross_sections[pol_list[0]]
-        dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx, data_set)
+        # Find the first cross-section that has a valid reflectivity workspace
+        cross_section_data = None
+        for pol in data_set.cross_sections.keys():
+            if data_set.cross_sections[pol].reflectivity_workspace is not None:
+                cross_section_data = data_set.cross_sections[pol]
+                break
+
+        if cross_section_data is None:
+            continue
+
+        dataset_dict = _get_cross_section_config_values(cross_section_data, normalization_run_to_db_id, data_set)
         config_value_dict = _build_config_row_dict(
             config=cross_section_data.configuration,
             item=dataset_dict,
@@ -337,11 +357,19 @@ def write_reflectivity_header(
     for peak_index, peak_reduction_list in peak_reduction_lists.items():
         fd.write("#\n")
 
-        direct_beam_idx = 0
         config_values = []
         for data_set in peak_reduction_list:
-            cross_section_data = data_set.cross_sections[pol_list[0]]
-            dataset_dict = _get_cross_section_config_values(cross_section_data, direct_beam_idx, data_set)
+            # Find the first cross-section that has a valid reflectivity workspace
+            cross_section_data = None
+            for pol in data_set.cross_sections.keys():
+                if data_set.cross_sections[pol].reflectivity_workspace is not None:
+                    cross_section_data = data_set.cross_sections[pol]
+                    break
+
+            if cross_section_data is None:
+                continue
+
+            dataset_dict = _get_cross_section_config_values(cross_section_data, normalization_run_to_db_id, data_set)
             config_value_dict = _build_config_row_dict(
                 config=cross_section_data.configuration,
                 item=dataset_dict,
@@ -368,9 +396,21 @@ def write_reflectivity_header(
 
 
 def _get_cross_section_config_values(
-    cross_section_data: CrossSectionData, direct_beam_idx: int, nexus_data: NexusData = None
+    cross_section_data: CrossSectionData,
+    normalization_run_to_db_id: Dict[str, int],
+    nexus_data: NexusData = None,
 ) -> Dict[str, str]:
-    """Get dict of cross-section data configuration to write to QuickNXS file."""
+    """Get dict of cross-section data configuration to write to QuickNXS file.
+
+    Parameters
+    ----------
+    cross_section_data:
+        Cross-section data containing reflectivity workspace
+    normalization_run_to_db_id:
+        Mapping from normalization run number (as string) to DB_ID
+    nexus_data:
+        Optional NexusData object containing slice information
+    """
     ws = cross_section_data.reflectivity_workspace
     run_object = ws.getRun()
     dpix = run_object.getProperty("DIRPIX").getStatistics().mean
@@ -393,15 +433,15 @@ def _get_cross_section_config_values(
     if normalization_run == "None":
         db_id = 0
     else:
-        direct_beam_idx += 1
-        db_id = direct_beam_idx
+        # Look up the DB_ID from the mapping
+        db_id = normalization_run_to_db_id.get(str(normalization_run), 0)
 
     item = dict(
         DB_ID=db_id,
         tth=tth,
         fan=constant_q_binning,
         dpix=dpix,
-        number=str(ws.getRunNumber()),
+        number=str(nexus_data.number if nexus_data is not None else ws.getRunNumber()),
         slice=nexus_data.slice if nexus_data is not None else 0,
         File=filename,
     )
@@ -503,6 +543,9 @@ def read_reduced_file(file_path: str, configuration=None):
         _in_section = 0
         _file_start = True
         has_scaling_error = False
+        # Detect if file uses 0-based or 1-based DB_ID indexing
+        # Default to None, will be set when we see the first DB_ID
+        db_id_is_zero_based = None
         for line in file_content.readlines():
             if _file_start and not line.startswith("# Datafile created by QuickNXS"):
                 raise RuntimeError("The selected file does not conform to the QuickNXS format")
@@ -535,6 +578,12 @@ def read_reduced_file(file_path: str, configuration=None):
                 if len(toks) < 14:
                     continue
                 try:
+                    # Detect if file uses 0-based or 1-based DB_ID indexing
+                    # on the first direct beam entry
+                    if db_id_is_zero_based is None:
+                        first_db_id = int(_get_tok("DB_ID", cols, toks))
+                        db_id_is_zero_based = first_db_id == 0
+
                     if configuration is not None:
                         conf = copy.deepcopy(configuration)
                     else:
@@ -590,8 +639,15 @@ def read_reduced_file(file_path: str, configuration=None):
                                 has_scaling_error = True
 
                     DB_ID = int(_get_tok("DB_ID", cols, toks))
-                    if DB_ID > 0 and len(direct_beam_runs) > DB_ID - 1:
-                        conf.direct_beam = direct_beam_runs[DB_ID - 1][0]
+                    # Handle both 0-based (new) and 1-based (legacy) DB_ID indexing
+                    if db_id_is_zero_based:
+                        # New format: DB_ID is direct array index (0, 1, 2, ...)
+                        if DB_ID >= 0 and len(direct_beam_runs) > DB_ID:
+                            conf.direct_beam = direct_beam_runs[DB_ID][0]
+                    else:
+                        # Legacy format: DB_ID starts at 1, so subtract 1 for array index
+                        if DB_ID > 0 and len(direct_beam_runs) >= DB_ID:
+                            conf.direct_beam = direct_beam_runs[DB_ID - 1][0]
                     run_number = int(_get_tok("number", cols, toks))
                     # Read slice value if present, default to 0 for backwards compatibility
                     slice_str = _get_tok("slice", cols, toks)

@@ -124,8 +124,8 @@ def mock_nexus_data(tmp_path, temp_workspace_name):
 class TestDataWriter(object):
     """Test the data writing functionality from quicknxs_io module."""
 
-    def test_save_multiple_peaks(self, tmp_path, mock_nexus_data):
-        """Test saving session with multiple peaks."""
+    def test_save_multiple_peaks(self, tmp_path, temp_workspace_name):
+        """Test saving session with multiple peaks and different direct beams."""
         output_path = tmp_path / "test_REF_M_save_data_output.dat"
         pol_state = "On_Off"
         col_names = ["Qz [1/A]", "R [a.u.]", "dR [a.u.]", "dQz [1/A]", "theta [rad]"]
@@ -137,10 +137,47 @@ class TestDataWriter(object):
                 [2.33195506e-02, 4.99204401e-03, 6.49017474e-05, 1.29292564e-03, 1.44538147e-02],
             ]
         )
-        direct_beam_list = [mock_nexus_data(30001)]
+
+        # Helper to create mock data with specific direct beam
+        def create_mock_with_db(run_number, db_number):
+            ws = api.CreateWorkspace([0.0, 1.0], [12.0, 14.0], OutputWorkspace=temp_workspace_name())
+            api.AddSampleLog(ws, LogName="Filename", LogText=os.path.join(tmp_path, f"run{run_number}.nxs.h5"))
+            api.AddSampleLog(ws, LogName="DIRPIX", LogText="105.0", LogType="Number Series")
+            api.AddSampleLog(ws, LogName="normalization_dirpix", LogText="105.0")
+            api.AddSampleLog(ws, LogName="normalization_file_path", LogText=f"/test/db_{db_number}.nxs.h5")
+            api.AddSampleLog(ws, LogName="normalization_run", LogText=str(db_number))
+            api.AddSampleLog(ws, LogName="constant_q_binning", LogText="True")
+            api.AddSampleLog(ws, LogName="specular_pixel", LogText="80.0", LogType="Number")
+            api.AddSampleLog(ws, LogName="two_theta", LogText="5.0", LogType="Number")
+            api.AddSampleLog(ws, LogName="SampleDetDis", LogText="105.0", LogType="Number Series")
+
+            config = Configuration()
+            nexus_data = NexusData("file/path", config)
+            off_off = CrossSectionData("Off_Off", config)
+            off_off._reflectivity_workspace = str(ws)
+            on_off = CrossSectionData("On_Off", config)
+            on_off._reflectivity_workspace = str(ws)
+            nexus_data.cross_sections["Off_Off"] = off_off
+            nexus_data.cross_sections["On_Off"] = on_off
+            nexus_data.number = run_number
+            return nexus_data
+
+        # Create direct beams
+        db_30001 = create_mock_with_db(30001, 30001)
+        db_30004 = create_mock_with_db(30004, 30004)
+        direct_beam_list = [db_30001, db_30004]
+
+        # Peak 1: run 30002 uses DB 30001, run 30003 uses DB 30004
+        peak1_run1 = create_mock_with_db(30002, 30001)
+        peak1_run2 = create_mock_with_db(30003, 30004)
+
+        # Peak 2: same runs with same direct beams
+        peak2_run1 = create_mock_with_db(30002, 30001)
+        peak2_run2 = create_mock_with_db(30003, 30004)
+
         peak_reduction_lists = {
-            1: [mock_nexus_data(30002), mock_nexus_data(30003)],
-            2: [mock_nexus_data(30002), mock_nexus_data(30003)],
+            1: [peak1_run1, peak1_run2],
+            2: [peak2_run1, peak2_run2],
         }
         active_list_index = 1
 
@@ -156,8 +193,19 @@ class TestDataWriter(object):
 
         # test loading saved file
         db_list, data_list, additional_peaks_list, has_scaling_error = read_reduced_file(output_path)
+
+        # Verify both direct beams are saved
         assert len(db_list) == 2
+        db_numbers = [db[0] for db in db_list]
+        assert 30001 in db_numbers
+        assert 30004 in db_numbers
+
+        # Verify data runs are correctly matched to their direct beams
         assert len(data_list) == 2
+        assert data_list[0][2].direct_beam == 30001  # run 30002 uses DB 30001
+        assert data_list[1][2].direct_beam == 30004  # run 30003 uses DB 30004
+
+        # Verify additional peak has same direct beam matching
         assert len(additional_peaks_list) == 2
         assert has_scaling_error is True
 
@@ -200,10 +248,9 @@ class TestDataWriter(object):
         # Test loading saved file
         db_list, data_list, _, _ = read_reduced_file(output_path)
 
-        # Check direct beam slice - there will be 2 entries (one per data run) both referencing the same direct beam
-        assert len(db_list) == 2
+        # Check direct beam - should only be written once since both data runs reference the same direct beam
+        assert len(db_list) == 1
         assert db_list[0][3] == 0  # slice_value is 4th element in tuple
-        assert db_list[1][3] == 0  # both direct beam entries have slice=0
 
         # Check data runs slices
         assert len(data_list) == 2
