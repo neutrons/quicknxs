@@ -5,18 +5,15 @@ Abstracts out how we obtaininformation from the data file
 """
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, bare-except
 
-import logging
 import math
-import random
-import string
-import sys
 from typing import TYPE_CHECKING, List, Optional
 
 import mantid.simpleapi as api
 import numpy as np
-from mantid.api import WorkspaceGroup
 from mantid.dataobjects import EventWorkspace
 from mr_reduction.dead_time_correction import apply_dead_time_correction
+from mr_reduction.filter_events import split_error_events, split_events
+from mr_reduction.settings import PolarizationLogs
 
 from quicknxs.interfaces.data_handling.filepath import FilePath
 
@@ -66,31 +63,6 @@ def get_cross_section_label(ws, entry_name):
         return "%s%s" % (pol_label, ana_label)
 
 
-def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
-    """
-    Removes workspaces with number of events below the cutoff from a list of workspaces.
-
-    Parameters
-    ----------
-    ws_list: list[EventWorkspace]
-    nbr_events_cutoff: int
-        Minimum number of events
-
-    Returns
-    -------
-    List[EventWorkspace]
-        Input list with low event workspaces removes
-    """
-    pruned_list = []
-    for ws in ws_list:
-        xs_name = ws.getRun()["cross_section_id"].value
-        if ws.getNumberEvents() < nbr_events_cutoff:
-            logging.warning("Too few events for %s: %s", xs_name, ws.getNumberEvents())
-        else:
-            pruned_list.append(ws)
-    return pruned_list
-
-
 class InsufficientEventCountError(Exception):
     """Exception raised when the number of events in the workspace is too low"""
 
@@ -120,63 +92,6 @@ class Instrument(object):
         self.ana_state = "AnalyzerState"
         self.ana_veto = "AnalyzerVeto"
 
-    @staticmethod
-    def dummy_filter_cross_sections(ws: EventWorkspace, name_prefix: Optional[str] = None) -> WorkspaceGroup:
-        r"""Filter events according to an aggregated state log.
-
-        Parameters
-        ----------
-        ws:
-            Workspace containing the unfiltered events
-        name_prefix:
-            Root name of the output WorkspaceGroup.
-            If None, the run number of the workspace is chosen as the root name.
-
-        Returns
-        -------
-        WorkspaceGroup:
-            A group workspace for each of the four different filter/analyzer combinations
-
-        Examples
-        --------
-        BL4A:SF:ICP:getDI
-        015 (0000 1111): SF1=OFF, SF2=OFF, SF1Veto=OFF, SF2Veto=OFF
-        047 (0010 1111): SF1=ON, SF2=OFF, SF1Veto=OFF, SF2Veto=OFF
-        031 (0001 1111): SF1=OFF, SF2=ON, SF1Veto=OFF, SF2Veto=OFF
-        063 (0011 1111): SF1=ON, SF2=ON, SF1Veto=OFF, SF2Veto=OFF
-        """
-        state_log = "BL4A:SF:ICP:getDI"
-        states = {"Off_Off": 15, "On_Off": 47, "Off_On": 31, "On_On": 63}
-        cross_sections = []
-        if name_prefix is None:
-            name_prefix = str(ws.getRunNumber())
-        for pol_state in ["Off_Off", "On_On", "Off_On", "On_Off"]:
-            try:
-                _ws = api.FilterByLogValue(
-                    InputWorkspace=ws,
-                    LogName=state_log,
-                    TimeTolerance=0.1,
-                    MinimumValue=states[pol_state],
-                    MaximumValue=states[pol_state],
-                    LogBoundary="Left",
-                    # FIXME 64 - the merged workspace only shows the first run's number
-                    #  Thus this method won't give a merged workspace a unique name
-                    #  And potentially it could confuse the program with single-run workspace
-                    OutputWorkspace="%s_entry-%s" % (name_prefix, pol_state),
-                )
-                _ws.getRun()["cross_section_id"] = pol_state
-                api.AddSampleLog(
-                    Workspace=str(_ws),
-                    LogName="loaded_with_getDI",
-                    LogText="True",
-                    LogType="String",
-                )
-                cross_sections.append(_ws)
-            except RuntimeError as run_err:
-                logging.error(f"Could not filter {pol_state}: {sys.exc_info()[1]}\nError: {run_err}")
-
-        return cross_sections
-
     def _get_xs_list(self, file_path: str, ws_root_name: str, configuration: "Configuration") -> List[EventWorkspace]:
         """Load the cross-sections from a data file. Handles both pre- and post-epics data.
 
@@ -199,22 +114,15 @@ class Instrument(object):
         InsufficientEventCountError
             If the data file does not contain enough events
         """
-        temp_ws_root_name = "".join(random.sample(string.ascii_letters, 12))  # random string of 12 characters
         use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG
         xs_list = []
 
-        is_pre_epics = True if file_path.endswith(".nxs") else False if file_path.endswith(".nxs.h5") else None
-        if is_pre_epics is None:
-            raise RuntimeError(f"Unknown file type: {file_path}")
-        if is_pre_epics:
-            _path_xs_list = api.MRFilterCrossSections(
-                Filename=file_path,
-                CrossSectionWorkspaces=f"{temp_ws_root_name}_entry",
-            )
-        else:
+        # Determine if we need to use slow flipper log for post-epics data
+        is_pre_epics = file_path.endswith(".nxs")
+        if not is_pre_epics and file_path.endswith(".nxs.h5"):
+            # Check metadata for post-epics data to determine if slow flipper log is needed
             event_ws = api.LoadEventNexus(Filename=file_path, OutputWorkspace="raw_events")
             metadata = event_ws.getRun()
-            # If the meta data is corrupted and we are missing analyzer/polarizer data, use the simple filtering.
             polarizer = metadata.getProperty("Polarizer").value[0]
             analyzer = metadata.getProperty("Analyzer").value[0]
             if (polarizer > 0 and self.pol_state not in event_ws.getRun()) or (
@@ -222,56 +130,57 @@ class Instrument(object):
             ):
                 use_slow_flipper_log = True
                 print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
+            # Delete the temporary workspace as split_events will reload it
+            api.DeleteWorkspace("raw_events")
+        elif not is_pre_epics and not file_path.endswith(".nxs.h5"):
+            raise RuntimeError(f"Unknown file type: {file_path}")
 
-            # If running in unpolarized mode, no filtering is needed
-            unpolarized = polarizer == 0 and analyzer == 0
+        # Use mr_reduction's split_events to load and filter cross-sections
+        try:
+            # Create PolarizationLogs with custom log names matching REF_M
+            pol_logs = PolarizationLogs()
+            pol_logs.POL_STATE = self.pol_state
+            pol_logs.ANA_STATE = self.ana_state
+            pol_logs.POL_VETO = self.pol_veto
+            pol_logs.ANA_VETO = self.ana_veto
 
-            if use_slow_flipper_log:
-                _path_xs_list = self.dummy_filter_cross_sections(event_ws, name_prefix=temp_ws_root_name)
-            elif unpolarized:
-                _ws = api.CloneWorkspace(event_ws, OutputWorkspace=f"{temp_ws_root_name}_entry")
-                # add the expected sample log
-                _ws.getRun()["cross_section_id"] = UNPOLARIZED_XS_LABEL
-                _path_xs_list = [_ws]
-            else:
-                _path_xs_list = api.MRFilterCrossSections(
-                    InputWorkspace=event_ws,
-                    PolState=self.pol_state,
-                    AnaState=self.ana_state,
-                    PolVeto=self.pol_veto if self.pol_veto in metadata else "",  # safeguard against missing log
-                    AnaVeto=self.ana_veto if self.ana_veto in metadata else "",
-                    CrossSectionWorkspaces=f"{temp_ws_root_name}_entry",
+            _path_xs_list = split_events(
+                file_path=file_path,
+                output_workspace=ws_root_name,
+                min_event_count=0,  # We'll filter manually to match original behavior
+                use_slow_flipper_log=use_slow_flipper_log,
+                polarization_logs=pol_logs,
+            )
+
+            # Filter out workspaces with too few events (matching original behavior)
+            _path_xs_list = [ws for ws in _path_xs_list if ws.getNumberEvents() >= configuration.nbr_events_min]
+
+            if len(_path_xs_list) == 0:
+                raise InsufficientEventCountError(
+                    f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
                 )
-
-        # Remove workspaces with too few events
-        _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
-        if len(_path_xs_list) == 0:
+        except ValueError as e:
+            # split_events raises ValueError when there are insufficient events at the workspace level
             raise InsufficientEventCountError(
                 f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
-            )
+            ) from e
 
         # Dead-time correction only applies to post-epics data
         if configuration is not None and configuration.apply_deadtime and not is_pre_epics:
-            # Load error events from the bank_error_events entry
-            err_ws = api.LoadErrorEventsNexus(file_path)
-            metadata = err_ws.getRun()
-            # Split error events by cross-section for compatibility with normal events
-            if use_slow_flipper_log:
-                _err_list = self.dummy_filter_cross_sections(err_ws, name_prefix=temp_ws_root_name + "_err")
-            elif unpolarized:
-                _ws = api.CloneWorkspace(err_ws, OutputWorkspace=f"{temp_ws_root_name}_err")
-                # add the expected sample log
-                _ws.getRun()["cross_section_id"] = UNPOLARIZED_XS_LABEL
-                _err_list = [_ws]
-            else:
-                _err_list = api.MRFilterCrossSections(
-                    InputWorkspace=err_ws,
-                    PolState=self.pol_state,
-                    AnaState=self.ana_state,
-                    PolVeto=self.pol_veto if self.pol_veto in metadata else "",  # safeguard against missing log
-                    AnaVeto=self.ana_veto if self.ana_veto in metadata else "",
-                    CrossSectionWorkspaces="%s_err_entry" % temp_ws_root_name + "_err",
-                )
+            # Create PolarizationLogs with custom log names matching REF_M
+            pol_logs = PolarizationLogs()
+            pol_logs.POL_STATE = self.pol_state
+            pol_logs.ANA_STATE = self.ana_state
+            pol_logs.POL_VETO = self.pol_veto
+            pol_logs.ANA_VETO = self.ana_veto
+
+            # Use mr_reduction's split_error_events to load and filter error events
+            _err_list = split_error_events(
+                file_path=file_path,
+                output_workspace=f"{ws_root_name}_err",
+                use_slow_flipper_log=use_slow_flipper_log,
+                polarization_logs=pol_logs,
+            )
 
             # Apply dead-time correction for each cross-section workspace
             path_xs_list = []
@@ -306,11 +215,6 @@ class Instrument(object):
         # initialize xs_list with the cross sections of the first data file
         if len(xs_list) == 0:
             xs_list = path_xs_list
-            # Pre-epics data workspaces are already named based on the run number, no need to rename them
-            if not is_pre_epics:
-                for ws in xs_list:
-                    name_new = str(ws).replace(temp_ws_root_name, ws_root_name)
-                    api.RenameWorkspace(str(ws), name_new)
         else:
             # Merge the cross sections from the new data file with the existing ones
             for i, ws in enumerate(xs_list):
