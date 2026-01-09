@@ -156,7 +156,9 @@ class TestDataWriter(object):
 
         # test loading saved file
         db_list, data_list, additional_peaks_list, has_scaling_error = read_reduced_file(output_path)
-        assert len(db_list) == 2
+        # After deduplication fix, direct beam 30001 should only appear once even though
+        # both data runs (30002 and 30003) use it
+        assert len(db_list) == 1
         assert len(data_list) == 2
         assert len(additional_peaks_list) == 2
         assert has_scaling_error is True
@@ -200,10 +202,9 @@ class TestDataWriter(object):
         # Test loading saved file
         db_list, data_list, _, _ = read_reduced_file(output_path)
 
-        # Check direct beam slice - there will be 2 entries (one per data run) both referencing the same direct beam
-        assert len(db_list) == 2
+        # Check direct beam - should only be written once since both data runs reference the same direct beam
+        assert len(db_list) == 1
         assert db_list[0][3] == 0  # slice_value is 4th element in tuple
-        assert db_list[1][3] == 0  # both direct beam entries have slice=0
 
         # Check data runs slices
         assert len(data_list) == 2
