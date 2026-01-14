@@ -5,6 +5,7 @@ Abstracts out how we obtaininformation from the data file
 """
 # pylint: disable=invalid-name, too-many-instance-attributes, line-too-long, bare-except
 
+import logging
 import math
 from typing import TYPE_CHECKING, List, Optional
 
@@ -61,6 +62,31 @@ def get_cross_section_label(ws, entry_name):
         return entry_name
     else:
         return "%s%s" % (pol_label, ana_label)
+
+
+def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
+    """
+    Removes workspaces with number of events below the cutoff from a list of workspaces.
+
+    Parameters
+    ----------
+    ws_list: list[EventWorkspace]
+    nbr_events_cutoff: int
+        Minimum number of events
+
+    Returns
+    -------
+    List[EventWorkspace]
+        Input list with low event workspaces removed
+    """
+    pruned_list = []
+    for ws in ws_list:
+        xs_name = ws.getRun()["cross_section_id"].value
+        if ws.getNumberEvents() < nbr_events_cutoff:
+            logging.warning("Too few events for %s: %s", xs_name, ws.getNumberEvents())
+        else:
+            pruned_list.append(ws)
+    return pruned_list
 
 
 class InsufficientEventCountError(Exception):
@@ -138,6 +164,8 @@ class Instrument(object):
         # Use mr_reduction's split_events to load and filter cross-sections
         try:
             # Create PolarizationLogs with custom log names matching REF_M
+            # Note: PolarizationLogs doesn't support initialization with parameters,
+            # so we set attributes individually. This could be improved in mr_reduction.
             pol_logs = PolarizationLogs()
             pol_logs.POL_STATE = self.pol_state
             pol_logs.ANA_STATE = self.ana_state
@@ -147,13 +175,13 @@ class Instrument(object):
             _path_xs_list = split_events(
                 file_path=file_path,
                 output_workspace=ws_root_name,
-                min_event_count=0,  # We'll filter manually to match original behavior
+                min_event_count=0,  # We'll filter manually to preserve warning logs
                 use_slow_flipper_log=use_slow_flipper_log,
                 polarization_logs=pol_logs,
             )
 
-            # Filter out workspaces with too few events (matching original behavior)
-            _path_xs_list = [ws for ws in _path_xs_list if ws.getNumberEvents() >= configuration.nbr_events_min]
+            # Filter out workspaces with too few events and log warnings
+            _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
 
             if len(_path_xs_list) == 0:
                 raise InsufficientEventCountError(
