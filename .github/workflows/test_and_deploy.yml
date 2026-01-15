@@ -170,6 +170,3 @@ jobs:
         with:
           body: |
             GitLab pipeline for ${{ steps.env_name.outputs.name }} has been submitted for this commit: ${{ steps.trigger.outputs.web_url }}
-
-# 18088
-# glptt-217977778998e5975bdc41c2af5ac3d5296e1b9b
