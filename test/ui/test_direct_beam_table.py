@@ -3,6 +3,7 @@ from qtpy import QtWidgets
 
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.enums import DirectBeamTableColumn as DBTableCols
+from quicknxs.interfaces.enums import ReductionTableColumn
 from quicknxs.interfaces.main_window import MainWindow
 
 
@@ -103,17 +104,31 @@ def test_peak_position_updates_direct_pixel(qtbot, data_server):
     main_window.file_handler.open_file(data_server.path_to("REF_M_42099"))
     main_window.actionAddDirectBeam.triggered.emit()
 
-    # Load reflected run and add to the reduction list
+    # Load reflected runs and add to the reduction list
     main_window.file_handler.open_file(data_server.path_to("REF_M_42112"))
+    main_window.actionAddRefl.triggered.emit()
+    main_window.file_handler.open_file(data_server.path_to("REF_M_42113"))
     main_window.actionAddRefl.triggered.emit()
 
     # assert that main_window.data_manager.load() was called and data is loaded
     assert len(main_window.data_manager.direct_beam_list) == 1
-    assert len(main_window.data_manager.reduction_list) == 1
+    assert len(main_window.data_manager.reduction_list) == 2
 
-    # Assert reflected run is using the direct beam
-    refl_run = main_window.data_manager.reduction_list[0]
-    assert str(refl_run.get_parameter("direct_beam")) == str(main_window.data_manager.direct_beam_list[0].number)
+    # Assert reflected runs are using the direct beam
+    refl_run0 = main_window.data_manager.reduction_list[0]
+    assert str(refl_run0.get_parameter("direct_beam")) == str(main_window.data_manager.direct_beam_list[0].number)
+    refl_run1 = main_window.data_manager.reduction_list[1]
+    assert str(refl_run1.get_parameter("direct_beam")) == str(main_window.data_manager.direct_beam_list[0].number)
+
+    # Verify that the column DPix is initially populated with the value from the DAS
+    table_reduction: QtWidgets.QTableWidget = main_window.ui.reductionTable
+    dpix_item0 = table_reduction.item(0, ReductionTableColumn.DPIX)
+    assert float(dpix_item0.text()) == refl_run0.get_main_cross_section_data().direct_pixel
+    dpix_item1 = table_reduction.item(1, ReductionTableColumn.DPIX)
+    assert float(dpix_item1.text()) == refl_run1.get_main_cross_section_data().direct_pixel
+
+    # Enable set_direct_pixel for one of the reflected runs
+    refl_run0.set_parameter("set_direct_pixel", True)
 
     # Update peak position in the direct beam table
     table: QtWidgets.QTableWidget = main_window.ui.directBeamTable
@@ -125,7 +140,15 @@ def test_peak_position_updates_direct_pixel(qtbot, data_server):
     assert direct_beam_peak_position == 300.0
 
     # Verify that the direct pixel in the reflected run is updated
-    assert refl_run.get_parameter("direct_pixel_overwrite") == direct_beam_peak_position
+    assert refl_run0.get_parameter("direct_pixel_overwrite") == direct_beam_peak_position
+    assert refl_run1.get_parameter("direct_pixel_overwrite") == direct_beam_peak_position
+
+    # Verify that the column DPix is only updated for the reflected run with set_direct_pixel enabled
+    table_reduction: QtWidgets.QTableWidget = main_window.ui.reductionTable
+    dpix_item0 = table_reduction.item(0, ReductionTableColumn.DPIX)
+    assert float(dpix_item0.text()) == direct_beam_peak_position
+    dpix_item1 = table_reduction.item(1, ReductionTableColumn.DPIX)
+    assert float(dpix_item1.text()) == refl_run1.get_main_cross_section_data().direct_pixel  # should be unchanged
 
 
 if __name__ == "__main__":
