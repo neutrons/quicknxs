@@ -1206,12 +1206,16 @@ class MainHandler(object):
         ]
         dpix = direct_beam.get_parameter("peak_position")
         for refl in matched_runs:
+            # update the overwrite value for all runs with this direct beam
             refl.set_parameter("direct_pixel_overwrite", dpix)
-            idx = self._data_manager.find_data_in_reduction_list(refl)
-            dpix_item = self.reduction_table.item(idx, ReductionTableColumn.DPIX)
-            self.main_window.auto_change_active = True
-            dpix_item.setText(str(dpix))
-            self.main_window.auto_change_active = False
+            # only update the UI table for runs with set_direct_pixel ("overwrite") enabled,
+            # if it is disabled, the value from the DAS will be used and shown instead
+            if refl.get_parameter("set_direct_pixel"):
+                idx = self._data_manager.find_data_in_reduction_list(refl)
+                dpix_item = self.reduction_table.item(idx, ReductionTableColumn.DPIX)
+                self.main_window.auto_change_active = True
+                dpix_item.setText(str(dpix))
+                self.main_window.auto_change_active = False
 
     def update_direct_beam_table(self, idx: int, data: CrossSectionData) -> None:
         """Update a direct beam table entry with cross-section data.
