@@ -79,8 +79,7 @@ mr_reduction = "==2.15.0"  # requires mantid >=6.13.0,<6.14.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
-urllib3 = ">=2.6.3" # CVE-2026-21441 fixed in 2.6.3
-werkzeug = ">=3.1.5" # CVE-2026-21860 fixed in 3.1.5
+wheel = ">=0.46.2"         # CVE-2026-24049 fixed in 0.46.2
 
 [tool.pixi.pypi-dependencies]
 quicknxs = { path = ".", editable = true }
@@ -134,6 +133,8 @@ pip-audit = ">=2.9.0"
 pre-commit = ">=4.2.0"
 ruff = "*"
 versioningit = ">=3.2.0"
+virtualenv = ">=20.36.1"  # CVE-2026-22702 fixed in version 20.36.1
+filelock = ">=3.20.3"     # CVE-2026-22701 fixed in version 3.20.3
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = ">=8"
@@ -169,7 +170,7 @@ conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .c
 # Misc
 # TODO: ignore fonttools until matplotlib pin inc. to > 3.9.4 in mantid (Glass)
 # TODO: ignore werkzeug until flask upd to > 3.1.2 in mr_reduction (Glass)
-audit-deps = { cmd = "pip-audit --local --ignore-vuln=GHSA-768j-98cg-p3fv --ignore-vuln=GHSA-hgf8-39gv-g3f2", description = "Audit the package dependencies for vulnerabilities" }
+audit-deps = { cmd = "pip-audit --local", description = "Audit the package dependencies for vulnerabilities" }
 clean = { cmd = 'rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__ **/_version.py', description = "Clean up various caches and build artifacts" }
 clean-conda = { cmd = "rm -f *.conda", description = "Clean the local .conda build artifacts" }
 clean-docs = { cmd = "rm -rf docs/_build", description = "Clean up documentation build artifacts" }
