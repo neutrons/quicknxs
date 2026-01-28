@@ -31,7 +31,7 @@ from quicknxs.ui.active_radio_button import ActiveDataRadioButton
 from quicknxs.ui.binningtype_combobox import BinningTypeSelection
 
 
-class MainHandler(object):
+class MainHandler:
     """Event handler for the main application window."""
 
     # Index of the direct beam tab in the reduction table tab widget
@@ -45,7 +45,7 @@ class MainHandler(object):
         self._data_manager: DataManager = main_window.data_manager
 
         # Create button groups for radio buttons to ensure mutual exclusivity
-        self.reduction_table_button_groups = {}  # key: tab_index, value: QButtonGroup
+        self.reduction_table_button_groups = {}  # {tab_index: QButtonGroup}
         self.direct_beam_button_group = QtWidgets.QButtonGroup(self.main_window)
 
         # Initialize button group for the main reduction table
@@ -88,20 +88,19 @@ class MainHandler(object):
         self.ui.statusbar.addWidget(self.log_level)
 
     @property
-    def reduction_table(self):
-        """
-        Returns the active reduction table widget if one of the data tabs is active, else the first one.
-
-        Returns
-        -------
-        QTableWidget
-        """
+    def reduction_table(self) -> QtWidgets.QTableWidget:
+        """Returns the active reduction table widget if one of the data tabs is active, else the first one."""
         if self.ui.tabWidget.currentIndex() == self.DIRECT_BEAM_TAB_INDEX:
             # get the table for the main data tab
             current_table = self.ui.tabWidget.widget(self.MAIN_DATA_TAB_INDEX).findChild(QtWidgets.QTableWidget)
         else:
             current_table = self.ui.tabWidget.currentWidget().findChild(QtWidgets.QTableWidget)
         return current_table
+
+    @property
+    def direct_beam_table(self) -> QtWidgets.QTableWidget:
+        """Returns the direct beam table widget."""
+        return self.ui.directBeamTable
 
     def get_reduction_table_by_index(self, tab_index: int) -> QtWidgets.QTableWidget:
         """Return the QTableWidget for the data tab with the given index."""

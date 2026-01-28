@@ -338,7 +338,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.data_manager.set_active_data_from_direct_beam_list(row)
         self.file_loaded()
-        # TODO: why is this commented out?
+        # TODO: why is this commented out? (Glass)
         # self.file_handler.active_data_changed()
 
     def direct_beam_table_right_click(self, pos: QtCore.QPoint):

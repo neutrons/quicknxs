@@ -447,5 +447,60 @@ def test_marie_workflow_tab_switching_radio_buttons(qtbot, data_server):
         )
 
 
+@pytest.mark.datarepo
+def test_radio_button_indices_after_q_reordering(qtbot, data_server):
+    """Test that radio button row indices are correct after runs are reordered by Q value."""
+    window_main = MainWindow()
+    qtbot.addWidget(window_main)
+    Configuration.setup_default_values()
+
+    # Step 1: Load run 42113 and add to Data tab
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
+    window_main.actionAddRefl.triggered.emit()
+    QApplication.processEvents()
+
+    # Verify 42113 is in the table at row 0
+    table = window_main.ui.reductionTable
+    assert table.rowCount() == 1
+    assert table.item(0, 1).text() == "42113"
+
+    # Step 2: Load run 42112 and add to Data tab (will be inserted at row 0)
+    window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
+    window_main.actionAddRefl.triggered.emit()
+    QApplication.processEvents()
+
+    # Verify both runs are in the table, ordered by Q
+    assert table.rowCount() == 2
+    # Run 42112 should be at row 0 (lower Q), run 42113 at row 1 (higher Q)
+    assert table.item(0, 1).text() == "42112"
+    assert table.item(1, 1).text() == "42113"
+
+    # Step 3: Click the Active radio button for run 42113
+    radio_widget_row1 = table.cellWidget(1, 0)
+    assert radio_widget_row1 is not None
+    radio_button_row1 = radio_widget_row1.findChild(QtWidgets.QRadioButton)
+    assert radio_button_row1 is not None
+
+    # Simulate clicking the radio button
+    radio_button_row1.setChecked(True)
+    QApplication.processEvents()
+
+    # Step 4: Verify that run 42113 is now the active run (not 42112)
+    active_run_number = window_main.data_manager._nexus_data.number
+    assert active_run_number == "42113", (
+        f"Expected active run to be 42113, but it is {active_run_number}. "
+        "This indicates the radio button is using an outdated row index."
+    )
+
+    # Update references to radio buttons after reordering
+    radio_widget_row0 = table.cellWidget(0, 0)
+    radio_button_row0 = radio_widget_row0.findChild(QtWidgets.QRadioButton)
+    radio_widget_row1 = table.cellWidget(1, 0)
+    radio_button_row1 = radio_widget_row1.findChild(QtWidgets.QRadioButton)
+    # Verify only row 1 is checked
+    assert not radio_button_row0.isChecked(), "Row 0 (42112) should not be checked"
+    assert radio_button_row1.isChecked(), "Row 1 (42113) should be checked"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

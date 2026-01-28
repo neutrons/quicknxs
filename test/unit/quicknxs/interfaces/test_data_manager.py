@@ -139,6 +139,132 @@ class TestDataManagerTest(object):
         assert spy_calc_refl_run1.call_count == 2
         assert spy_calc_refl_run2.call_count == 1
 
+    @pytest.mark.datarepo
+    def test_add_active_to_reduction_no_duplicates(self, data_server, setup_method):
+        """Test that add_active_to_reduction prevents duplicate entries."""
+        manager = DataManager(data_server.directory)
+
+        # Add run once
+        manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        assert manager.add_active_to_reduction()
+        assert len(manager.reduction_list) == 1
+
+        # Try to add the same run again - should return False
+        assert not manager.add_active_to_reduction()
+        assert len(manager.reduction_list) == 1
+
+    @pytest.mark.datarepo
+    def test_copy_nexus_data_prevents_duplicates(self, data_server, setup_method):
+        """Test that copy_nexus_data_to_reduction prevents duplicate run numbers."""
+        manager = DataManager(data_server.directory)
+
+        # Setup main reduction list
+        manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        manager.add_active_to_reduction(peak_index=1)
+
+        # Create second reduction list
+        manager.peak_reduction_lists[2] = []
+
+        # Copy run to second list
+        nexus_data = manager.reduction_list[0]
+        assert manager.copy_nexus_data_to_reduction(nexus_data, peak_index=2)
+        assert len(manager.peak_reduction_lists[2]) == 1
+
+        # Try to copy same run again - should return False
+        assert not manager.copy_nexus_data_to_reduction(nexus_data, peak_index=2)
+        assert len(manager.peak_reduction_lists[2]) == 1
+
+    ########################
+    ### Q ordering tests ###
+    ########################
+
+    @pytest.mark.datarepo
+    def test_q_ordering_add_active_to_reduction(self, data_server, setup_method):
+        """Test that runs are inserted in ascending Q order when added to reduction list.
+
+        Load runs with different Q ranges in non-sequential order
+        REF_M_42112: Q ~ 0.008-0.02 (lowest Q)
+        REF_M_42113: Q ~ 0.02-0.05 (highest Q)
+        REF_M_40782: Q ~ 0.01-0.03 (middle Q)
+        """
+        manager = DataManager(data_server.directory)
+
+        # Add highest Q run first
+        manager.load(data_server.path_to("REF_M_42113"), Configuration())
+        assert manager.add_active_to_reduction()
+        assert len(manager.reduction_list) == 1
+        assert manager.reduction_list[0].number == "42113"
+
+        # Add lowest Q run - should be inserted at the beginning
+        manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        assert manager.add_active_to_reduction()
+        assert len(manager.reduction_list) == 2
+        assert manager.reduction_list[0].number == "42112"
+        assert manager.reduction_list[1].number == "42113"
+
+        # Add middle Q run - should be inserted in the middle
+        manager.load(data_server.path_to("REF_M_40782"), Configuration())
+        assert manager.add_active_to_reduction()
+        assert len(manager.reduction_list) == 3
+        assert manager.reduction_list[0].number == "42112"
+        assert manager.reduction_list[1].number == "40782"
+        assert manager.reduction_list[2].number == "42113"
+
+        # Verify Q values are in ascending order
+        for i in range(len(manager.reduction_list) - 1):
+            q_min_current, _ = manager.reduction_list[i].get_q_range()
+            q_min_next, _ = manager.reduction_list[i + 1].get_q_range()
+            assert q_min_current <= q_min_next, (
+                f"Q ordering violated: run {manager.reduction_list[i].number} "
+                f"(Q={q_min_current}) should be <= run {manager.reduction_list[i + 1].number} (Q={q_min_next})"
+            )
+
+    @pytest.mark.datarepo
+    def test_q_ordering_copy_nexus_data_to_reduction(self, data_server, setup_method):
+        """Test that copy_nexus_data_to_reduction maintains Q ordering."""
+        manager = DataManager(data_server.directory)
+
+        # Setup main reduction list (tab 1)
+        manager.load(data_server.path_to("REF_M_42113"), Configuration())
+        manager.add_active_to_reduction(peak_index=1)
+        manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        manager.add_active_to_reduction(peak_index=1)
+
+        # Create a second reduction list (tab 2)
+        manager.peak_reduction_lists[2] = []
+
+        # Copy runs to tab 2 in different order
+        nexus_data_high_q = manager.reduction_list[1]  # 42113 (high Q)
+        nexus_data_low_q = manager.reduction_list[0]  # 42112 (low Q)
+
+        # Add high Q run first
+        assert manager.copy_nexus_data_to_reduction(nexus_data_high_q, peak_index=2)
+        assert len(manager.peak_reduction_lists[2]) == 1
+
+        # Add low Q run - should be inserted before high Q
+        assert manager.copy_nexus_data_to_reduction(nexus_data_low_q, peak_index=2)
+        assert len(manager.peak_reduction_lists[2]) == 2
+        assert manager.peak_reduction_lists[2][0].number == "42112"
+        assert manager.peak_reduction_lists[2][1].number == "42113"
+
+        # Verify Q values are in ascending order
+        for i in range(len(manager.peak_reduction_lists[2]) - 1):
+            q_min_current, _ = manager.peak_reduction_lists[2][i].get_q_range()
+            q_min_next, _ = manager.peak_reduction_lists[2][i + 1].get_q_range()
+            assert q_min_current <= q_min_next
+
+    @pytest.mark.datarepo
+    def test_q_ordering_empty_list(self, data_server, setup_method):
+        """Test that the first run added to an empty list initializes properly."""
+        manager = DataManager(data_server.directory)
+
+        # Add to empty list
+        manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        assert manager.add_active_to_reduction()
+        assert len(manager.reduction_list) == 1
+        assert manager.reduction_states is not None
+        assert len(manager.reduction_states) > 0
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
