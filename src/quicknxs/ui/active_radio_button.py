@@ -66,9 +66,7 @@ class ActiveDataRadioButton(QWidget):
         if self.parent_handler is None:
             return -1
         table: QTableWidget = (
-            self.parent_handler.direct_beam_table
-            if self.is_direct_beam
-            else self.parent_handler.reduction_table
+            self.parent_handler.direct_beam_table if self.is_direct_beam else self.parent_handler.reduction_table
         )
         for row in range(table.rowCount()):
             if table.cellWidget(row, 0) == self:
