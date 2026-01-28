@@ -297,6 +297,38 @@ class DataManager(object):
         """
         return self.find_data_in_direct_beam_list(self._nexus_data)
 
+    def _insert_into_reduction_list_by_q(self, nexus_data: NexusData, reduction_list: List[NexusData]) -> bool:
+        """Insert NexusData into reduction list in ascending Q order.
+
+        Parameters
+        ----------
+        nexus_data:
+            Data to insert
+        reduction_list:
+            Target reduction list
+
+        Returns
+        -------
+        bool
+            True if successfully inserted, False if Q range is unavailable
+        """
+        q_min, _ = nexus_data.get_q_range()
+        if q_min is None:
+            logging.error("Could not get q range information")
+            return False
+
+        # Find insertion point to maintain ascending Q order
+        is_inserted = False
+        for i in range(len(reduction_list)):
+            _q_min, _ = reduction_list[i].get_q_range()
+            if q_min <= _q_min:
+                reduction_list.insert(i, nexus_data)
+                is_inserted = True
+                break
+        if not is_inserted:
+            reduction_list.append(nexus_data)
+        return True
+
     def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX) -> bool:
         """Add active data set to reduction list.
 
@@ -314,26 +346,13 @@ class DataManager(object):
         bool
             True if the active data set was added to the reduction list, False if it was not added
         """
-        reduct_list = self.peak_reduction_lists[peak_index]
+        reduction_list = self.peak_reduction_lists[peak_index]
 
-        if self._nexus_data not in reduct_list:
-            if self.is_nexus_data_compatible(self._nexus_data, reduct_list):
-                if len(reduct_list) == 0:
+        if self._nexus_data not in reduction_list:
+            if self.is_nexus_data_compatible(self._nexus_data, reduction_list):
+                if len(reduction_list) == 0:
                     self.reduction_states = list(self.data_sets.keys())
-                is_inserted = False
-                q_min, _ = self._nexus_data.get_q_range()
-                if q_min is None:
-                    logging.error("Could not get q range information")
-                    return False
-                for i in range(len(reduct_list)):
-                    _q_min, _ = reduct_list[i].get_q_range()
-                    if q_min <= _q_min:
-                        reduct_list.insert(i, self._nexus_data)
-                        is_inserted = True
-                        break
-                if not is_inserted:
-                    reduct_list.append(self._nexus_data)
-                return True
+                return self._insert_into_reduction_list_by_q(self._nexus_data, reduction_list)
             else:
                 logging.error("The data you are trying to add has different cross-sections")
         return False
@@ -361,17 +380,7 @@ class DataManager(object):
 
         nexus_data = copy.deepcopy(nexus_data_to_copy)
         if self.is_nexus_data_compatible(nexus_data, reduction_list):
-            is_inserted = False
-            q_min, _ = nexus_data.get_q_range()
-            for i in range(len(reduction_list)):
-                _q_min, _ = reduction_list[i].get_q_range()
-                if q_min <= _q_min:
-                    reduction_list.insert(i, nexus_data)
-                    is_inserted = True
-                    break
-            if not is_inserted:
-                reduction_list.append(nexus_data)
-            return True
+            return self._insert_into_reduction_list_by_q(nexus_data, reduction_list)
         else:
             logging.error("The data you are trying to add has different cross-sections")
         return False
