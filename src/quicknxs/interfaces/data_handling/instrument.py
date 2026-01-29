@@ -97,17 +97,25 @@ class NoCrossSectionsFoundError(Exception):
         run_numbers = self.file_path.run_numbers()
 
         _xs_list = []
+        self.path_dict = dict()
         for idx, path in enumerate(self.file_path.single_paths):
+            _, fpath = FilePath(path).split()
+            self.path_dict[run_numbers[idx]] = fpath
             ws_name = api.mtd.unique_hidden_name()
             ws = api.LoadEventNexus(Filename=path, OutputWorkspace=ws_name)
             ws.mutableRun().addProperty("run_number", run_numbers[idx], True)
             _xs_list.append(ws)
 
         self.xs_list = _xs_list
+        print(f"\n\n{self.file_path.split()[1]}\n\n")
+        self.bad_files = set()
+        self.bad_files.add(self.file_path.split()[1])
         self.diagnostic_data = self._extract_diagnostic_data()
         self.sample_logs = self._get_sample_logs()
+
         if message is None:
             message = f"No valid cross-sections found in file: {file_path}"
+        self.message = message
         super().__init__(message)
 
     def _extract_diagnostic_data(self):
@@ -145,6 +153,8 @@ class NoCrossSectionsFoundError(Exception):
                 data["cross_section_id"] = f"Run {run_number}"
 
             event_count = ws.getNumberEvents()
+            if event_count < 100:
+                self.bad_files.add(self.path_dict[run_number])
             data["event_count"] = event_count
             data["lambda_center"] = get_prop_value("LambdaRequest")
             data["direct_pixel"] = get_prop_value("DIRPIX")
@@ -368,12 +378,15 @@ class Instrument(object):
 
         # Collect cross-sections from all files
         all_xs_lists = []
-        for idx, path in enumerate(fp_instance.single_paths):
-            # Use unique workspace names for each file to avoid overwrites
-            path_fp = FilePath(path)
-            path_ws_name = path_fp.run_numbers(string_representation="short")
-            all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
-
+        try:
+            for idx, path in enumerate(fp_instance.single_paths):
+                # Use unique workspace names for each file to avoid overwrites
+                path_fp = FilePath(path)
+                path_ws_name = path_fp.run_numbers(string_representation="short")
+                all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
+        except NoCrossSectionsFoundError as err:
+            raise NoCrossSectionsFoundError(file_path, err.message)
+        
         # If only one file, return its cross-sections directly
         if len(all_xs_lists) == 1:
             xs_list = all_xs_lists[0]

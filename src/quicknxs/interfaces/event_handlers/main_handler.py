@@ -2095,7 +2095,7 @@ class MainHandler:
         layout = QtWidgets.QVBoxLayout()
 
         # Add informative text
-        info_text = f"<b>Error: No valid cross-sections found</b><br><br>File: {error.file_path}<br>"
+        info_text = f"<b>Error: {error.message}<br>"
         info_text += f"Number of runs analyzed: {len(error.diagnostic_data)}"
 
         info_label = QtWidgets.QLabel(info_text)
@@ -2132,7 +2132,13 @@ class MainHandler:
             table.setItem(i, 5, QtWidgets.QTableWidgetItem(format_value(data["dangle"], fmt="angle")))
             table.setItem(i, 6, QtWidgets.QTableWidgetItem(format_value(data["dangle0"], fmt="angle")))
             table.setItem(i, 7, QtWidgets.QTableWidgetItem(format_value(data["counting_time"], fmt="time")))
-            table.setItem(i, 8, QtWidgets.QTableWidgetItem(str(data["event_count"])))
+            event_count = QtWidgets.QTableWidgetItem(str(data["event_count"]))
+            try:
+                if float(data["event_count"]) < 100:
+                    event_count.setForeground(QColors.red)
+            except:
+                pass
+            table.setItem(i, 8, event_count)
             table.setItem(i, 9, QtWidgets.QTableWidgetItem(format_value(data["count_rate"], fmt="cps")))
 
         table.resizeColumnsToContents()
