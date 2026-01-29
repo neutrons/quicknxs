@@ -245,7 +245,7 @@ class Instrument(object):
 
         Raises
         ------
-        InsufficientEventCountError
+        NoCrossSectionsFoundError
             If the data file does not contain enough events
         """
         use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG

@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
+from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
 
 
 @pytest.mark.datarepo
@@ -72,7 +72,7 @@ def test_load_data_insufficient_event_count(data_server):
     conf = Configuration()
     file_path = data_server.path_to("REF_M_43670")
 
-    with pytest.raises(InsufficientEventCountError):
+    with pytest.raises(NoCrossSectionsFoundError):
         conf.instrument.load_data(file_path, conf)
 
 

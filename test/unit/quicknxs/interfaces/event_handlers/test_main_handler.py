@@ -16,7 +16,7 @@ from qtpy import QtCore, QtWidgets
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
-from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
+from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
 from quicknxs.interfaces.enums import ReductionTableColumn
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.main_window import MainWindow
@@ -299,14 +299,22 @@ def test_reduction_table_dpix(qtbot):
         assert xs.configuration.direct_pixel_overwrite == new_dpix_value
 
 
+class MockNoCrossSectionsFoundError(NoCrossSectionsFoundError):
+    """Mock exception class to make testing work without a real file"""
+
+    def __init__(self):
+        pass
+
+
 @pytest.mark.parametrize(
     "error_type",
     [
-        (InsufficientEventCountError),
+        (MockNoCrossSectionsFoundError),
         (RuntimeError),
     ],
 )
 def test_open_file_insufficient_event_count_error(error_type, mocker, qtbot):
+    mock_show_diag = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler._show_diagnostic")
     mocker.patch("quicknxs.interfaces.data_manager.DataManager.load", side_effect=error_type)
     mocker.patch("os.path.isfile", return_value=True)
     mock_report_message = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler.report_message")
@@ -317,8 +325,13 @@ def test_open_file_insufficient_event_count_error(error_type, mocker, qtbot):
 
     handler.open_file("test/file/path")
 
-    assert mock_report_message.call_count == 2
-    assert "Error loading file(s)" in mock_report_message.call_args[0][0]
+    if error_type is RuntimeError:
+        mock_show_diag.assert_not_called()
+        assert mock_report_message.call_count == 2
+        assert "Error loading file(s)" in mock_report_message.call_args[0][0]
+    else:
+        mock_show_diag.assert_called_once()
+        mock_report_message.assert_any_call("Loading file(s) test/file/path")
 
 
 def test_logging_default_level(monkeypatch):
