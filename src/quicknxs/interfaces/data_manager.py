@@ -7,7 +7,7 @@ import logging
 import os
 import sys
 import time
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union, Set
 
 import numpy as np
 
@@ -16,7 +16,7 @@ from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknx
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
-
+from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
 
 class DataManager(object):
     """Holds information about the current data location and manages the data cache.
@@ -82,6 +82,9 @@ class DataManager(object):
         self._cache: List[NexusData] = list()
         self.cached_offspec: Optional[dict] = None
         self.cached_gisans: Optional[dict] = None
+
+        # List of bad files that can't be loaded due to insufficient event count or other failure
+        self.bad_files: Set[str] = set()
 
     @property
     def data_sets(self):
@@ -520,7 +523,12 @@ class DataManager(object):
         if nexus_data is None:
             nexus_data = NexusData(file_path, configuration)
             sub_task = progress.create_sub_task(max_value=70) if progress else None
-            nexus_data.load(progress=sub_task, update_parameters=update_parameters)
+            try:
+                nexus_data.load(progress=sub_task, update_parameters=update_parameters)
+            except NoCrossSectionsFoundError as ex:
+                directory, file_name = FilePath(file_path).split()
+                self.bad_files.add(file_name)
+                raise ex
 
         if progress is not None:
             progress(80, "Calculating...")

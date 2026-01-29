@@ -7,7 +7,7 @@ Abstracts out how we obtaininformation from the data file
 
 import logging
 import math
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import mantid.simpleapi as api
 import numpy as np
@@ -89,10 +89,108 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
     return pruned_list
 
 
-class InsufficientEventCountError(Exception):
-    """Exception raised when the number of events in the workspace is too low"""
+class NoCrossSectionsFoundError(Exception):
+    """Exception raised when no valid cross section data can be loaded"""
 
-    pass
+    def __init__(self, file_path: Union[str, List[str]], message: str = None):
+        self.file_path = FilePath(file_path)
+        run_numbers = self.file_path.run_numbers()
+
+        _xs_list = []
+        for idx, path in enumerate(self.file_path.single_paths):
+            ws_name = api.mtd.unique_hidden_name()
+            ws = api.LoadEventNexus(Filename=path, OutputWorkspace=ws_name)
+            ws.mutableRun().addProperty("run_number", run_numbers[idx], True)
+            _xs_list.append(ws)
+
+        self.xs_list = _xs_list
+        self.diagnostic_data = self._extract_diagnostic_data()
+        self.sample_logs = self._get_sample_logs()
+        if message is None:
+            message = f"No valid cross-sections found in file: {file_path}"
+        super().__init__(message)
+
+    def _extract_diagnostic_data(self):
+        """Extract diagnostic information from workspaces.
+
+        Returns
+        -------
+        list of dict
+            List of dictionaries containing diagnostic information for each workspace.
+        """
+        diagnostic_data = []
+
+        for idx, ws in enumerate(self.xs_list):
+            run = ws.getRun()
+
+            def get_prop_value(prop_name, default="N/A"):
+                if run.hasProperty(prop_name):
+                    try:
+                        prop = run.getProperty(prop_name)
+                        if hasattr(prop, "getStatistics"):
+                            return prop.getStatistics().mean
+                        else:
+                            return prop.value
+                    except Exception:
+                        return default
+                return default
+
+            data = {}
+
+            run_number = get_prop_value("run_number")
+            xs_id = get_prop_value("cross_section_id")
+            if xs_id != "N/A":
+                data["cross_section_id"] = f"Run {run_number} ({xs_id})"
+            else:
+                data["cross_section_id"] = f"Run {run_number}"
+
+            event_count = ws.getNumberEvents()
+            data["event_count"] = event_count
+            data["lambda_center"] = get_prop_value("LambdaRequest")
+            data["direct_pixel"] = get_prop_value("DIRPIX")
+            data["proton_charge"] = get_prop_value("gd_prtn_chrg")
+            sample_angle = get_prop_value("SampleAngle")
+            if sample_angle == "N/A":
+                sample_angle = get_prop_value("SANGLE")
+            data["sample_angle"] = sample_angle
+            data["dangle"] = get_prop_value("DANGLE")
+            data["dangle0"] = get_prop_value("DANGLE0")
+            counting_time = get_prop_value("duration")
+            data["counting_time"] = counting_time
+
+            if counting_time != "N/A" and counting_time > 0:
+                data["count_rate"] = event_count / counting_time
+            else:
+                data["count_rate"] = "N/A"
+
+            diagnostic_data.append(data)
+
+        return diagnostic_data
+
+    def _get_sample_logs(self):
+        """Extract all sample logs from workspaces.
+
+        Returns
+        -------
+        list of dict
+            List of dictionaries, each containing:
+            - 'run_id': identifier for the run
+            - 'logs': list of tuples (property_name, property_value)
+        """
+        sample_logs = []
+
+        for ws in self.xs_list:
+            run = ws.getRun()
+            run_id = run.getProperty("run_number").value
+
+            logs = []
+            for prop in run.getProperties():
+                logs.append((prop.name, str(prop.value)))
+            logs = sorted(logs, key=lambda x: x[0])
+
+            sample_logs.append({"run_id": run_id, "logs": logs})
+
+        return sample_logs
 
 
 class Instrument(object):
@@ -184,12 +282,14 @@ class Instrument(object):
             _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
 
             if len(_path_xs_list) == 0:
-                raise InsufficientEventCountError(
+                raise NoCrossSectionsFoundError(
+                    file_path,
                     f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
                 )
         except ValueError as e:
             # split_events raises ValueError when there are insufficient events at the workspace level
-            raise InsufficientEventCountError(
+            raise NoCrossSectionsFoundError(
+                file_path,
                 f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
             ) from e
 

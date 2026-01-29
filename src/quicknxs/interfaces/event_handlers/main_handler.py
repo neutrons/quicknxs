@@ -21,7 +21,7 @@ from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData, NoCrossSectionsFoundError
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
-from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
+from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
 from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.enums import DirectBeamTableColumn, ReductionTableColumn
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
@@ -176,22 +176,23 @@ class MainHandler:
             configuration = self.get_configuration_from_ui()
             self._data_manager.load(file_path, configuration, force=force, progress=prog)
             self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
-        except (RuntimeError, InsufficientEventCountError) as run_err:
-            self.report_message(
-                f"Error loading file(s) {self._data_manager.current_file_name} due to:\n{run_err}",
-                detailed_message=str(traceback.format_exc()),
-                pop_up=True,
-                is_error=True,
-            )
+        except (RuntimeError, NoCrossSectionsFoundError) as run_err:
+            if isinstance(run_err, RuntimeError):
+                self.report_message(
+                    f"Error loading file(s) {self._data_manager.current_file_name} due to:\n{run_err}",
+                    detailed_message=str(traceback.format_exc()),
+                    pop_up=True,
+                    is_error=True,
+                )
+            else:
+                self._show_diagnostic(run_err)
+
             self.main_window.auto_change_active = False
             # reset progress bar
             if prog is not None:
                 prog.reset()
             return
-        except NoCrossSectionsFoundError as err:
-            self._show_diagnostic(err)
-            return
-
+            
         if not silent:
             self.file_loaded()
         self.main_window.auto_change_active = False
@@ -467,6 +468,8 @@ class MainHandler:
                     # however, the current setting self.main_window.auto_change_active == True will cause
                     # self.main_window.file_open_from_list() to return before any statement is executed
                     self.ui.file_list.setCurrentItem(listitem)
+                if item in self._data_manager.bad_files:
+                    listitem.setForeground(QColors.red)
 
         def _update_current_directory(new_dir):
             r"""Update the directory path in the main window and the path watcher."""
@@ -2089,7 +2092,6 @@ class MainHandler:
         # Create diagnostic dialog
         dialog = QtWidgets.QDialog(self.main_window)
         dialog.setWindowTitle("No Valid Cross-Sections - Diagnostic Information")
-        dialog.resize(900, 300)
         layout = QtWidgets.QVBoxLayout()
 
         # Add informative text
@@ -2134,6 +2136,13 @@ class MainHandler:
             table.setItem(i, 9, QtWidgets.QTableWidgetItem(format_value(data["count_rate"], fmt="cps")))
 
         table.resizeColumnsToContents()
+        table.resizeRowsToContents()
+
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setStretchLastSection(True)
+
+        table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         layout.addWidget(table)
 
         logs_button = QtWidgets.QPushButton("Open Sample Logs Table")
@@ -2145,7 +2154,9 @@ class MainHandler:
         layout.addWidget(close_button)
 
         dialog.setLayout(layout)
+        dialog.adjustSize()
         dialog.exec_()
+        self.update_file_list()
 
     def _open_sample_logs_table(self, error, parent=None):
         """Open a table view of all sample logs from the workspaces.
@@ -2159,7 +2170,6 @@ class MainHandler:
         """
         dialog = QtWidgets.QDialog(parent)
         dialog.setWindowTitle("Sample Logs - All Properties")
-        dialog.resize(1000, 700)
         layout = QtWidgets.QVBoxLayout()
         table = QtWidgets.QTableWidget()
 
@@ -2181,6 +2191,13 @@ class MainHandler:
                 current_row += 1
 
         table.resizeColumnsToContents()
+        table.resizeRowsToContents()
+
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setStretchLastSection(True)
+
+        table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         layout.addWidget(table)
 
         close_button = QtWidgets.QPushButton("Close")
@@ -2188,4 +2205,5 @@ class MainHandler:
         layout.addWidget(close_button)
 
         dialog.setLayout(layout)
+        dialog.adjustSize()
         dialog.exec_()
