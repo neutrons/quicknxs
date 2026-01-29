@@ -18,8 +18,8 @@ from quicknxs.interfaces.configuration import BinningType, Configuration, get_di
 from quicknxs.interfaces.data_handling.data_info import DataInfo
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.gisans import GISANS
-from quicknxs.interfaces.data_handling.off_specular import OffSpecular
 from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
+from quicknxs.interfaces.data_handling.off_specular import OffSpecular
 
 if TYPE_CHECKING:
     from quicknxs.interfaces.configuration import Configuration

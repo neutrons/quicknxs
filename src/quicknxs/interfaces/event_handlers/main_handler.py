@@ -19,7 +19,7 @@ from quicknxs.config import Settings
 from quicknxs.config.gui import QColors
 from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData, NoCrossSectionsFoundError
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
 from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
 from quicknxs.interfaces.data_manager import DataManager
@@ -192,7 +192,7 @@ class MainHandler:
             if prog is not None:
                 prog.reset()
             return
-            
+
         if not silent:
             self.file_loaded()
         self.main_window.auto_change_active = False

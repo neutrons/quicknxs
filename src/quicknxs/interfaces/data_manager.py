@@ -7,7 +7,7 @@ import logging
 import os
 import sys
 import time
-from typing import Callable, Dict, List, Optional, Union, Set
+from typing import Callable, Dict, List, Optional, Set, Union
 
 import numpy as np
 
@@ -15,8 +15,9 @@ from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknxs_io
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath
-from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
+from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
+
 
 class DataManager(object):
     """Holds information about the current data location and manages the data cache.

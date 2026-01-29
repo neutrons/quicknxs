@@ -284,13 +284,13 @@ class Instrument(object):
             if len(_path_xs_list) == 0:
                 raise NoCrossSectionsFoundError(
                     file_path,
-                    f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
+                    f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}",
                 )
         except ValueError as e:
             # split_events raises ValueError when there are insufficient events at the workspace level
             raise NoCrossSectionsFoundError(
                 file_path,
-                f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
+                f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}",
             ) from e
 
         # Dead-time correction only applies to post-epics data
