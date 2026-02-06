@@ -1029,7 +1029,7 @@ class NexusData(object):
             cross_section.configuration.direct_pixel_overwrite = cross_section.direct_pixel
 
         if _max_xs is None:
-            raise NoCrossSectionsFoundError(self.file_path)
+            raise NoCrossSectionsFoundError(self.file_path, min_num_evts=self.configuration.nbr_events_min)
 
         # Now that we know which cross section has the most data,
         # use that one to get the reduction parameters
