@@ -9,6 +9,8 @@ environments:
     - url: https://prefix.dev/pixi-build-backends/
     indexes:
     - https://pypi.org/simple
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -4172,8 +4174,8 @@ packages:
   timestamp: 1743692373820
 - pypi: ./
   name: quicknxs
-  version: 4.16.0.dev7
-  sha256: 669740028c8ffc0f140b7f7e533475af06efb024bdd08915741d320825d5741a
+  version: 4.16.0.dev8
+  sha256: 04a4ade3468547586aec0609c0c6e6f5ee94e2b341eccec51fb96b42dbad45d7
   requires_python: '>=3.10,<3.13'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/rapidjson-1.1.0.post20240409-h3f2d84a_2.conda

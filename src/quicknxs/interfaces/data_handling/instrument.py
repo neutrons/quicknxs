@@ -92,7 +92,7 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
 class NoCrossSectionsFoundError(Exception):
     """Exception raised when no valid cross section data can be loaded"""
 
-    def __init__(self, file_path: Union[str, List[str]], message: str = None, min_num_evts: int = 100):
+    def __init__(self, file_path: Union[str, List[str]], message: Optional[str] = None, min_num_evts: int = 100):
         self.file_path = FilePath(file_path)
         run_numbers = self.file_path.run_numbers()
 
@@ -128,10 +128,10 @@ class NoCrossSectionsFoundError(Exception):
         """
         diagnostic_data = []
 
-        for idx, ws in enumerate(self.xs_list):
+        for ws in self.xs_list:
             run = ws.getRun()
 
-            def get_prop_value(prop_name, default="N/A"):
+            def get_prop_value(run, prop_name, default="N/A"):
                 if run.hasProperty(prop_name):
                     try:
                         prop = run.getProperty(prop_name)
@@ -145,8 +145,8 @@ class NoCrossSectionsFoundError(Exception):
 
             data = {}
 
-            run_number = get_prop_value("run_number")
-            xs_id = get_prop_value("cross_section_id")
+            run_number = get_prop_value(run, "run_number")
+            xs_id = get_prop_value(run, "cross_section_id")
             if xs_id != "N/A":
                 data["cross_section_id"] = f"Run {run_number} ({xs_id})"
             else:
@@ -156,16 +156,16 @@ class NoCrossSectionsFoundError(Exception):
             if event_count < self.min_num_events:
                 self.bad_files.add(self.path_dict[run_number])
             data["event_count"] = event_count
-            data["lambda_center"] = get_prop_value("LambdaRequest")
-            data["direct_pixel"] = get_prop_value("DIRPIX")
-            data["proton_charge"] = get_prop_value("gd_prtn_chrg")
-            sample_angle = get_prop_value("SampleAngle")
+            data["lambda_center"] = get_prop_value(run, "LambdaRequest")
+            data["direct_pixel"] = get_prop_value(run, "DIRPIX")
+            data["proton_charge"] = get_prop_value(run, "gd_prtn_chrg")
+            sample_angle = get_prop_value(run, "SampleAngle")
             if sample_angle == "N/A":
-                sample_angle = get_prop_value("SANGLE")
+                sample_angle = get_prop_value(run, "SANGLE")
             data["sample_angle"] = sample_angle
-            data["dangle"] = get_prop_value("DANGLE")
-            data["dangle0"] = get_prop_value("DANGLE0")
-            counting_time = get_prop_value("duration")
+            data["dangle"] = get_prop_value(run, "DANGLE")
+            data["dangle0"] = get_prop_value(run, "DANGLE0")
+            counting_time = get_prop_value(run, "duration")
             data["counting_time"] = counting_time
 
             if counting_time != "N/A" and counting_time > 0:
