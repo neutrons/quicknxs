@@ -92,7 +92,7 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
 class NoCrossSectionsFoundError(Exception):
     """Exception raised when no valid cross section data can be loaded"""
 
-    def __init__(self, file_path: Union[str, List[str]], message: str = None):
+    def __init__(self, file_path: Union[str, List[str]], message: str = None, min_num_evts: int = 100):
         self.file_path = FilePath(file_path)
         run_numbers = self.file_path.run_numbers()
 
@@ -107,7 +107,7 @@ class NoCrossSectionsFoundError(Exception):
             _xs_list.append(ws)
 
         self.xs_list = _xs_list
-        print(f"\n\n{self.file_path.split()[1]}\n\n")
+        self.min_num_events = min_num_evts
         self.bad_files = set()
         self.bad_files.add(self.file_path.split()[1])
         self.diagnostic_data = self._extract_diagnostic_data()
@@ -153,7 +153,7 @@ class NoCrossSectionsFoundError(Exception):
                 data["cross_section_id"] = f"Run {run_number}"
 
             event_count = ws.getNumberEvents()
-            if event_count < 100:
+            if event_count < self.min_num_events:
                 self.bad_files.add(self.path_dict[run_number])
             data["event_count"] = event_count
             data["lambda_center"] = get_prop_value("LambdaRequest")
@@ -295,6 +295,7 @@ class Instrument(object):
                 raise NoCrossSectionsFoundError(
                     file_path,
                     f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}",
+                    configuration.nbr_events_min,
                 )
         except ValueError as e:
             # split_events raises ValueError when there are insufficient events at the workspace level
@@ -369,7 +370,7 @@ class Instrument(object):
 
         Raises
         ------
-        InsufficientEventCountError
+        NoCrossSectionsFoundError
             If the data file does not contain enough events
         """
         fp_instance = FilePath(file_path)

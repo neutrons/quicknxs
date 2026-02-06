@@ -528,7 +528,7 @@ class DataManager(object):
                 nexus_data.load(progress=sub_task, update_parameters=update_parameters)
             except NoCrossSectionsFoundError as ex:
                 self.bad_files.update(ex.bad_files)
-                raise ex
+                raise
 
         if progress is not None:
             progress(80, "Calculating...")

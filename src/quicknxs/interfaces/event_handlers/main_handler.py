@@ -2140,7 +2140,7 @@ class MainHandler:
             try:
                 if float(data["event_count"]) < 100:
                     event_count.setForeground(QColors.red)
-            except:
+            except (ValueError, TypeError):
                 pass
             table.setItem(i, 8, event_count)
             table.setItem(i, 9, QtWidgets.QTableWidgetItem(format_value(data["count_rate"], fmt="cps")))
