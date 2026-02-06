@@ -2138,7 +2138,7 @@ class MainHandler:
             table.setItem(i, 7, QtWidgets.QTableWidgetItem(format_value(data["counting_time"], fmt="time")))
             event_count = QtWidgets.QTableWidgetItem(str(data["event_count"]))
             try:
-                if float(data["event_count"]) < 100:
+                if float(data["event_count"]) < Configuration.nbr_events_min:
                     event_count.setForeground(QColors.red)
             except (ValueError, TypeError):
                 pass

@@ -92,26 +92,29 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
 class NoCrossSectionsFoundError(Exception):
     """Exception raised when no valid cross section data can be loaded"""
 
-    def __init__(self, file_path: Union[str, List[str]], message: Optional[str] = None, min_num_evts: int = 100):
-        self.file_path = FilePath(file_path)
-        run_numbers = self.file_path.run_numbers()
+    def __init__(
+        self, file_path: Optional[Union[str, List[str]]] = None, message: Optional[str] = None, min_num_evts: int = 100
+    ):
+        if file_path:
+            self.file_path = FilePath(file_path)
+            run_numbers = self.file_path.run_numbers()
 
-        _xs_list = []
-        self.path_dict = dict()
-        for idx, path in enumerate(self.file_path.single_paths):
-            _, fpath = FilePath(path).split()
-            self.path_dict[run_numbers[idx]] = fpath
-            ws_name = api.mtd.unique_hidden_name()
-            ws = api.LoadEventNexus(Filename=path, OutputWorkspace=ws_name)
-            ws.mutableRun().addProperty("run_number", run_numbers[idx], True)
-            _xs_list.append(ws)
+            _xs_list = []
+            self.path_dict = dict()
+            for idx, path in enumerate(self.file_path.single_paths):
+                _, fpath = FilePath(path).split()
+                self.path_dict[run_numbers[idx]] = fpath
+                ws_name = api.mtd.unique_hidden_name()
+                ws = api.LoadEventNexus(Filename=path, OutputWorkspace=ws_name)
+                ws.mutableRun().addProperty("run_number", run_numbers[idx], True)
+                _xs_list.append(ws)
 
-        self.xs_list = _xs_list
-        self.min_num_events = min_num_evts
-        self.bad_files = set()
-        self.bad_files.add(self.file_path.split()[1])
-        self.diagnostic_data = self._extract_diagnostic_data()
-        self.sample_logs = self._get_sample_logs()
+            self.xs_list = _xs_list
+            self.min_num_events = min_num_evts
+            self.bad_files = set()
+            self.bad_files.add(self.file_path.split()[1])
+            self.diagnostic_data = self._extract_diagnostic_data()
+            self.sample_logs = self._get_sample_logs()
 
         if message is None:
             message = f"No valid cross-sections found in file: {file_path}"
@@ -293,14 +296,14 @@ class Instrument(object):
 
             if len(_path_xs_list) == 0:
                 raise NoCrossSectionsFoundError(
-                    file_path,
+                    None,
                     f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}",
                     configuration.nbr_events_min,
                 )
         except ValueError as e:
             # split_events raises ValueError when there are insufficient events at the workspace level
             raise NoCrossSectionsFoundError(
-                file_path,
+                None,
                 f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}",
             ) from e
 
@@ -386,7 +389,7 @@ class Instrument(object):
                 path_ws_name = path_fp.run_numbers(string_representation="short")
                 all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
         except NoCrossSectionsFoundError as err:
-            raise NoCrossSectionsFoundError(file_path, err.message)
+            raise NoCrossSectionsFoundError(file_path, err.message, err.min_num_events) from err
         
         # If only one file, return its cross-sections directly
         if len(all_xs_lists) == 1:
