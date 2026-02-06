@@ -95,23 +95,16 @@ class NoCrossSectionsFoundError(Exception):
     def __init__(
         self, file_path: Optional[Union[str, List[str]]] = None, message: Optional[str] = None, min_num_evts: int = 100
     ):
+        self.min_num_events = min_num_evts
+        self.bad_files = set()
+        self.file_path = None
+        self.xs_list = []
+        self.diagnostic_data = []
+        self.sample_logs = []
+
         if file_path:
             self.file_path = FilePath(file_path)
-            run_numbers = self.file_path.run_numbers()
 
-            _xs_list = []
-            self.path_dict = dict()
-            for idx, path in enumerate(self.file_path.single_paths):
-                _, fpath = FilePath(path).split()
-                self.path_dict[run_numbers[idx]] = fpath
-                ws_name = api.mtd.unique_hidden_name()
-                ws = api.LoadEventNexus(Filename=path, OutputWorkspace=ws_name)
-                ws.mutableRun().addProperty("run_number", run_numbers[idx], True)
-                _xs_list.append(ws)
-
-            self.xs_list = _xs_list
-            self.min_num_events = min_num_evts
-            self.bad_files = set()
             self.bad_files.add(self.file_path.split()[1])
             self.diagnostic_data = self._extract_diagnostic_data()
             self.sample_logs = self._get_sample_logs()
@@ -130,6 +123,20 @@ class NoCrossSectionsFoundError(Exception):
             List of dictionaries containing diagnostic information for each workspace.
         """
         diagnostic_data = []
+        run_numbers = self.file_path.run_numbers()
+
+        _xs_list = []
+        path_dict = dict()
+
+        for idx, path in enumerate(self.file_path.single_paths):
+            _, fpath = FilePath(path).split()
+            path_dict[run_numbers[idx]] = fpath
+            ws_name = api.mtd.unique_hidden_name()
+            ws = api.LoadEventNexus(Filename=path, OutputWorkspace=ws_name)
+            ws.mutableRun().addProperty("run_number", run_numbers[idx], True)
+            _xs_list.append(ws)
+
+        self.xs_list = _xs_list
 
         for ws in self.xs_list:
             run = ws.getRun()
@@ -157,7 +164,7 @@ class NoCrossSectionsFoundError(Exception):
 
             event_count = ws.getNumberEvents()
             if event_count < self.min_num_events:
-                self.bad_files.add(self.path_dict[run_number])
+                self.bad_files.add(path_dict[run_number])
             data["event_count"] = event_count
             data["lambda_center"] = get_prop_value(run, "LambdaRequest")
             data["direct_pixel"] = get_prop_value(run, "DIRPIX")
