@@ -128,7 +128,7 @@ versioningit = ">=3.2.0"
 toml-cli = "*"
 
 [tool.pixi.feature.dev.dependencies]
-pip = ">=25.3"
+pip = ">=26.0"            # CVE-2026-1703 fixed in version 26.0
 pip-audit = ">=2.9.0"
 pre-commit = ">=4.2.0"
 ruff = "*"
