@@ -594,7 +594,13 @@ def read_reduced_file(file_path: str, configuration=None):
                         if value_str is not None and attr not in config_properties:
                             _assign_config_value(conf, attr, value_str)
 
-                    run_number = int(_get_tok("number", cols, toks))
+                    # Handle run numbers that may contain "+" for summed files (e.g., "42112+42113")
+                    run_number_str = _get_tok("number", cols, toks)
+                    if "+" in run_number_str:
+                        # For summed files, use the first run number as the identifier
+                        run_number = int(run_number_str.split("+")[0])
+                    else:
+                        run_number = int(run_number_str)
                     # Read slice value if present, default to 0 for backwards compatibility
                     slice_str = _get_tok("slice", cols, toks)
                     slice_value = int(slice_str) if slice_str is not None else 0
@@ -648,7 +654,13 @@ def read_reduced_file(file_path: str, configuration=None):
                         # Legacy format: DB_ID starts at 1, so subtract 1 for array index
                         if DB_ID > 0 and len(direct_beam_runs) >= DB_ID:
                             conf.direct_beam = direct_beam_runs[DB_ID - 1][0]
-                    run_number = int(_get_tok("number", cols, toks))
+                    # Handle run numbers that may contain "+" for summed files (e.g., "42112+42113")
+                    run_number_str = _get_tok("number", cols, toks)
+                    if "+" in run_number_str:
+                        # For summed files, use the first run number as the identifier
+                        run_number = int(run_number_str.split("+")[0])
+                    else:
+                        run_number = int(run_number_str)
                     # Read slice value if present, default to 0 for backwards compatibility
                     slice_str = _get_tok("slice", cols, toks)
                     slice_value = int(slice_str) if slice_str is not None else 0
@@ -660,7 +672,7 @@ def read_reduced_file(file_path: str, configuration=None):
                         # conf.cut_first_n_points = 0
                         # conf.cut_last_n_points = 0
                     run_file = _find_h5_data(run_file)
-                    run_file = determine_which_files_to_sum(run_file, data_file_indices)
+                    run_file = determine_which_files_to_sum(run_file, data_file_indices, run_number_str)
 
                     if _in_section == 2:
                         data_runs.append([run_number, run_file, conf, slice_value])
@@ -681,7 +693,7 @@ def read_reduced_file(file_path: str, configuration=None):
     return direct_beam_runs, data_runs, additional_peaks, has_scaling_error
 
 
-def determine_which_files_to_sum(run_file, data_file_indices):
+def determine_which_files_to_sum(run_file, data_file_indices, run_number_str=None):
     """Determine which files are summed when reading a saved reduction file.
 
     The saved file has the correct run numbers (numors) in the line that
@@ -690,6 +702,23 @@ def determine_which_files_to_sum(run_file, data_file_indices):
     summed in the processing from which the saved file was created.
     """
 
+    # If run_number_str contains "+", this is a summed file - construct paths for all runs
+    if run_number_str and "+" in run_number_str:
+        run_numbers = run_number_str.split("+")
+        outfile = ""
+        for run_num in run_numbers:
+            if outfile:
+                outfile += "+"
+            # Replace the run number in the file path
+            file_with_new_run = run_file
+            for old_run in run_numbers:
+                if old_run in run_file:
+                    file_with_new_run = run_file.replace(old_run, run_num)
+                    break
+            outfile += file_with_new_run
+        return outfile
+
+    # Legacy behavior for non-summed files or old format
     if "+" in data_file_indices:
         runs = str.split(str.split(data_file_indices)[-1], "+")
     else:
