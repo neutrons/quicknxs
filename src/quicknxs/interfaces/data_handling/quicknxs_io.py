@@ -672,6 +672,7 @@ def read_reduced_file(file_path: str, configuration=None):
                         # conf.cut_first_n_points = 0
                         # conf.cut_last_n_points = 0
                     run_file = _find_h5_data(run_file)
+                    # Determine which files to sum based on run_number_str (e.g., "42112+42113")
                     run_file = determine_which_files_to_sum(run_file, data_file_indices, run_number_str)
 
                     if _in_section == 2:
@@ -719,10 +720,19 @@ def determine_which_files_to_sum(run_file, data_file_indices, run_number_str=Non
         return outfile
 
     # Legacy behavior for non-summed files or old format
-    if "+" in data_file_indices:
-        runs = str.split(str.split(data_file_indices)[-1], "+")
+    # Extract just the run numbers part (last token after splitting by spaces)
+    indices_str = str.split(data_file_indices)[-1]
+
+    # Handle mixed format: "42112+42113,42116" contains both + and ,
+    # First split by comma to get individual entries
+    if "," in indices_str:
+        runs = str.split(indices_str, ",")
+    elif "+" in indices_str:
+        # Only split by + if there's no comma (pure summed format)
+        runs = str.split(indices_str, "+")
     else:
-        runs = str.split(str.split(data_file_indices)[-1], ",")
+        # Single file
+        runs = [indices_str]
 
     outfile = run_file
     for run in runs:
