@@ -1111,8 +1111,28 @@ class DataManager(object):
                 if peak_index not in self.peak_reduction_lists:
                     self.peak_reduction_lists[peak_index] = []
                 self.set_active_reduction_list_index(peak_index)
-                # find run in main reduction list and make a copy TODO: what if it is missing?
-                run_index = [i for i, data in enumerate(self.main_reduction_list) if data.number == str(r_id)][0]
+                # find run in main reduction list and make a copy
+                # Handle case where data.number can be single (e.g., "42116") or composite (e.g., "42112+42113")
+                run_matches = []
+                for i, data in enumerate(self.main_reduction_list):
+                    # Check if r_id matches the data number exactly, or is the first run in a summed/composite number
+                    if data.number == str(r_id):
+                        run_matches.append(i)
+                    elif "+" in data.number and data.number.split("+")[0] == str(r_id):
+                        run_matches.append(i)
+                    elif ":" in data.number and data.number.split(":")[0] == str(r_id):
+                        run_matches.append(i)
+
+                if not run_matches:
+                    logging.error(
+                        "Could not find run %s in main reduction list for peak %s. Available runs: %s",
+                        r_id,
+                        peak_index,
+                        [d.number for d in self.main_reduction_list],
+                    )
+                    continue
+
+                run_index = run_matches[0]
                 self._nexus_data = copy.deepcopy(self.main_reduction_list[run_index])
                 configuration.direct_beam = None
                 self.update_configuration(conf)
