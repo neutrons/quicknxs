@@ -717,15 +717,31 @@ class MainHandler:
         It updates the file list widget as well as reads-in the file(s)
         """
         if self.ui.histogramActive.isChecked():
-            filter_ = "All (*.*);;histo.nxs (*histo.nxs)"
+            filter_ = "All (*.*);;histo.nxs (*histo.nxs);;QuickNXS (*.dat)"
         else:
-            filter_ = "All (*.*);;nxs.h5 (*nxs.h5);;event.nxs (*event.nxs)"
+            filter_ = "All (*.*);;nxs.h5 (*nxs.h5);;event.nxs (*event.nxs);;QuickNXS (*.dat)"
 
         file_path = getattr(self, dialog_opening_method)(filter_=filter_)
 
         if file_path:
-            self.update_file_list(file_path)
-            self.open_file(file_path)
+            # Check if this is a reduced data file (.dat) - handle it differently
+            if file_path.endswith(".dat"):
+                # For reduced data files, skip update_file_list and open_file
+                # and instead load via the reduced file loader
+                t_0 = time.time()
+                # Clear the reduction lists first
+                self.main_window.reset_data_tabs()
+                self.clear_direct_beams()
+                self.clear_reflectivity()
+                configuration = self.get_configuration_from_ui()
+                prog = self.new_progress_reporter()
+                self._data_manager.load_data_from_reduced_file(file_path, configuration=configuration, progress=prog)
+                self.report_message("Loaded reduced file: %s" % file_path)
+                logging.info("Reduced file loaded in %s sec", time.time() - t_0)
+            else:
+                # For nexus files, use the normal loading path
+                self.update_file_list(file_path)
+                self.open_file(file_path)
 
     def file_open_dialog(self):
         """GUI callback for backend MainHandler._file_open_dialog."""
