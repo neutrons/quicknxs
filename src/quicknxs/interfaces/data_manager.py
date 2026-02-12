@@ -1111,8 +1111,9 @@ class DataManager(object):
                 if peak_index not in self.peak_reduction_lists:
                     self.peak_reduction_lists[peak_index] = []
                 self.set_active_reduction_list_index(peak_index)
-                # find run in main reduction list and make a copy TODO: what if it is missing?
-                run_index = [i for i, data in enumerate(self.main_reduction_list) if data.number == str(r_id)][0]
+                # find run in main reduction list and make a copy
+                # Match by file path which handles both single and summed runs correctly
+                run_index = [i for i, data in enumerate(self.main_reduction_list) if data.file_path == run_file][0]
                 self._nexus_data = copy.deepcopy(self.main_reduction_list[run_index])
                 configuration.direct_beam = None
                 self.update_configuration(conf)

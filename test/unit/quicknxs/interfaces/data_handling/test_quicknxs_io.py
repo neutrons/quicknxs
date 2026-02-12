@@ -12,6 +12,7 @@ from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusDa
 from quicknxs.interfaces.data_handling.quicknxs_io import (
     _assign_config_value,
     _sort_keys_with_file_last,
+    determine_which_files_to_sum,
     read_reduced_file,
     write_reflectivity_data,
     write_reflectivity_header,
@@ -86,6 +87,67 @@ class TestDataLoader(object):
         assert additional_peaks_list[2][0] == additional_peaks_list[3][0] == 3
         assert additional_peaks_list[0][1] == additional_peaks_list[2][1] == 42536
         assert additional_peaks_list[1][1] == additional_peaks_list[3][1] == 42537
+
+    def test_load_summed_runs_in_file_column(self, tmp_path):
+        """Test loading reduced file where number column contains '+' for summed runs."""
+        # Create a reduced file with summed run numbers in both number and File columns
+        test_file = tmp_path / "test_summed.dat"
+        test_file.write_text(
+            """# Datafile created by QuickNXS 4.16.0.dev2
+# Datafile created using Mantid 6.14.0
+# Date: 2025-01-20 10:30:00
+# Type: Specular
+# Input file indices: 42112+42113,42116
+# Extracted states: +
+#
+# [Direct Beam Runs]
+#    DB_ID        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width      dpix       tth    number      File
+#        0         0         0     179.5        19       144        46        39        56       180         0     42110  /SNS/REF_M/IPTS-30794/nexus/REF_M_42110.nxs.h5
+#
+# [Data Runs]
+#    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File
+#        1         5        10     212.6        19     117.3      65.3        39        56     False       180    2.2255  42112+42113      0  /SNS/REF_M/IPTS-30794/nexus/REF_M_42112.nxs.h5
+#   3.7201         5        10     214.9        22     121.8      56.3        39        56     False       180    4.1776     42116         0  /SNS/REF_M/IPTS-30794/nexus/REF_M_42116.nxs.h5
+#
+# [Peak 1 Runs]
+#    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File
+#        1         5        10     212.6        19     117.3      65.3        39        56     False       180    2.2255  42112+42113      0  /SNS/REF_M/IPTS-30794/nexus/REF_M_42112.nxs.h5
+#   3.7201         5        10     214.9        22     121.8      56.3        39        56     False       180    4.1776     42116         0  /SNS/REF_M/IPTS-30794/nexus/REF_M_42116.nxs.h5
+#
+# [Global Options]
+# name           value
+# sample_length  10.0
+#
+# [Data]
+#     Qz [1/A]	    R [a.u.]	   dR [a.u.]	   dQz [1/A]	 theta [rad]
+2.263373e-02      	1.986968e-02      	1.427452e-04      	1.252235e-03      	1.445378e-02
+"""
+        )
+
+        # Read the file
+        direct_beam_runs, data_runs, additional_peaks, has_scaling_error = read_reduced_file(str(test_file))
+
+        # Check direct beam
+        assert len(direct_beam_runs) == 1
+        assert direct_beam_runs[0][0] == 42110
+
+        # Peak 1 Runs replaces Data Runs, so data_runs contains Peak 1 data
+        assert len(data_runs) == 2
+
+        # First entry: summed files (42112+42113)
+        assert data_runs[0][0] == 42112  # run number (first of summed)
+        assert "42112.nxs.h5+/SNS/REF_M/IPTS-30794/nexus/REF_M_42113.nxs.h5" in data_runs[0][1]
+        assert data_runs[0][1].count("+") == 1  # Only one "+" separator
+        assert data_runs[0][1].count("42112") == 1  # No duplicates
+        assert data_runs[0][1].count("42113") == 1  # No duplicates
+
+        # Second entry: single file (42116)
+        assert data_runs[1][0] == 42116
+        assert "42116.nxs.h5" in data_runs[1][1]
+        assert "+" not in data_runs[1][1]
+
+        # additional_peaks should be empty (only Peak 2, 3, ... go there)
+        assert len(additional_peaks) == 0
 
 
 @pytest.fixture
@@ -395,6 +457,84 @@ def test_sort_keys_with_file_last():
     sorted_keys = _sort_keys_with_file_last(keys)
     assert sorted_keys[-1] == "File"
     assert set(sorted_keys[:-1]) == {"a", "x", "z"}
+
+
+def test_determine_which_files_to_sum_with_summed_format():
+    """Test determine_which_files_to_sum with summed format (run_number_str='42112+42113')."""
+    run_file = "/SNS/REF_M/IPTS-12345/nexus/REF_M_42112.nxs.h5"
+    data_file_indices = "42112"
+    run_number_str = "42112+42113"
+
+    result = determine_which_files_to_sum(run_file, data_file_indices, run_number_str)
+
+    # Should return string with both file paths joined by "+"
+    expected = "/SNS/REF_M/IPTS-12345/nexus/REF_M_42112.nxs.h5+/SNS/REF_M/IPTS-12345/nexus/REF_M_42113.nxs.h5"
+    assert result == expected
+    assert "+" in result
+    # Verify both file paths are present
+    paths = result.split("+")
+    assert len(paths) == 2
+    assert "REF_M_42112.nxs.h5" in paths[0]
+    assert "REF_M_42113.nxs.h5" in paths[1]
+
+
+def test_determine_which_files_to_sum_with_single_run():
+    """Test determine_which_files_to_sum with single run number."""
+    run_file = "/SNS/REF_M/IPTS-12345/nexus/REF_M_42116.nxs.h5"
+    data_file_indices = "42116"
+    run_number_str = "42116"
+
+    result = determine_which_files_to_sum(run_file, data_file_indices, run_number_str)
+
+    # Should return the original file path (no summing)
+    assert result == "/SNS/REF_M/IPTS-12345/nexus/REF_M_42116.nxs.h5"
+    assert "+" not in result
+
+
+def test_determine_which_files_to_sum_legacy_with_plus():
+    """Test determine_which_files_to_sum with legacy format (no run_number_str, plus in data_file_indices)."""
+    run_file = "/SNS/REF_M/IPTS-12345/nexus/REF_M_42112.nxs.h5"
+    data_file_indices = "42112+42113"
+    run_number_str = None
+
+    result = determine_which_files_to_sum(run_file, data_file_indices, run_number_str)
+
+    # Should return the original file path (legacy behavior doesn't modify for single matching run)
+    # The legacy code only returns run_file when the run is in the file
+    assert result == "/SNS/REF_M/IPTS-12345/nexus/REF_M_42112.nxs.h5"
+
+
+def test_determine_which_files_to_sum_with_mixed_format():
+    """Test determine_which_files_to_sum with mixed comma-separated format."""
+    run_file = "/SNS/REF_M/IPTS-12345/nexus/REF_M_42112.nxs.h5"
+    data_file_indices = "42112+42113,42116"
+    run_number_str = "42112+42113"
+
+    result = determine_which_files_to_sum(run_file, data_file_indices, run_number_str)
+
+    # With run_number_str provided, should process the summed part
+    expected = "/SNS/REF_M/IPTS-12345/nexus/REF_M_42112.nxs.h5+/SNS/REF_M/IPTS-12345/nexus/REF_M_42113.nxs.h5"
+    assert result == expected
+    paths = result.split("+")
+    assert len(paths) == 2
+
+
+def test_determine_which_files_to_sum_with_range_format():
+    """Test determine_which_files_to_sum with range format (colon)."""
+    run_file = "/SNS/REF_M/IPTS-12345/nexus/REF_M_42112.nxs.h5"
+    data_file_indices = "42112:42115"
+    run_number_str = None
+
+    result = determine_which_files_to_sum(run_file, data_file_indices, run_number_str)
+
+    # Should handle colon as range - expands to all files in range
+    assert "+" in result
+    paths = result.split("+")
+    assert len(paths) == 4  # 42112, 42113, 42114, 42115
+    assert "REF_M_42112.nxs.h5" in result
+    assert "REF_M_42113.nxs.h5" in result
+    assert "REF_M_42114.nxs.h5" in result
+    assert "REF_M_42115.nxs.h5" in result
 
 
 if __name__ == "__main__":

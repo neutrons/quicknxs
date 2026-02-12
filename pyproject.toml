@@ -80,6 +80,8 @@ pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
 wheel = ">=0.46.2"         # CVE-2026-24049 fixed in 0.46.2
+cryptography = ">=46.0.5"  # CVE-2026-26007 fixed in 46.0.5
+pillow = ">=12.1.1"        # CVE-2026-25990 fixed in 12.1.1
 
 [tool.pixi.pypi-dependencies]
 quicknxs = { path = ".", editable = true }
@@ -128,7 +130,7 @@ versioningit = ">=3.2.0"
 toml-cli = "*"
 
 [tool.pixi.feature.dev.dependencies]
-pip = ">=25.3"
+pip = ">=26.0"            # CVE-2026-1703 fixed in version 26.0
 pip-audit = ">=2.9.0"
 pre-commit = ">=4.2.0"
 ruff = "*"

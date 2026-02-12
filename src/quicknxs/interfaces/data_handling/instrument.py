@@ -240,18 +240,7 @@ class Instrument(object):
         else:
             path_xs_list = [ws for ws in _path_xs_list if not ws.getRun()["cross_section_id"].value == "unfiltered"]
 
-        # initialize xs_list with the cross sections of the first data file
-        if len(xs_list) == 0:
-            xs_list = path_xs_list
-        else:
-            # Merge the cross sections from the new data file with the existing ones
-            for i, ws in enumerate(xs_list):
-                api.Plus(
-                    LHSWorkspace=str(ws),
-                    RHSWorkspace=str(path_xs_list[i]),
-                    OutputWorkspace=str(ws),
-                )
-        return xs_list
+        return path_xs_list
 
     def load_data(self, file_path: str, configuration: Optional["Configuration"] = None) -> List[EventWorkspace]:
         r"""Load one or more data sets according to the needs of the instrument.
@@ -275,17 +264,38 @@ class Instrument(object):
         """
         fp_instance = FilePath(file_path)
         ws_root_name = fp_instance.run_numbers(string_representation="short")
-        xs_list = list()
+        ws_run_numbers = fp_instance.run_numbers(string_representation="long")
 
-        for path in fp_instance.single_paths:
-            xs_list += self._get_xs_list(path, ws_root_name, configuration)
+        # Collect cross-sections from all files
+        all_xs_lists = []
+        for idx, path in enumerate(fp_instance.single_paths):
+            # Use unique workspace names for each file to avoid overwrites
+            path_fp = FilePath(path)
+            path_ws_name = path_fp.run_numbers(string_representation="short")
+            all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
+
+        # If only one file, return its cross-sections directly
+        if len(all_xs_lists) == 1:
+            xs_list = all_xs_lists[0]
+        else:
+            # Merge cross-sections from multiple files by matching cross_section_id
+            xs_list = all_xs_lists[0]
+            for i, ws in enumerate(xs_list):
+                # Merge workspaces with matching cross_section_id from subsequent files
+                for xs_group in all_xs_lists[1:]:
+                    merged = api.Plus(
+                        LHSWorkspace=str(ws),
+                        RHSWorkspace=str(xs_group[i]),
+                        OutputWorkspace=str(ws),
+                    )
+                    xs_list[i] = merged  # Update the reference to the merged workspace
 
         # Insert a log indicating which run numbers contributed to this cross-section
         for ws in xs_list:
             api.AddSampleLog(
                 Workspace=str(ws),
                 LogName="run_numbers",
-                LogText=ws_root_name,
+                LogText=ws_run_numbers,
                 LogType="String",
             )
 
