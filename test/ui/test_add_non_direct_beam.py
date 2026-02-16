@@ -1,11 +1,9 @@
 """UI tests for adding non-direct-beam runs to the direct beam table."""
 
-# 3rd-party imports
 import pytest
 from qtpy import QtWidgets
 from qtpy.QtWidgets import QApplication
 
-# local imports
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.enums import DirectBeamTableColumn as DBTableCols
 from quicknxs.interfaces.main_window import MainWindow

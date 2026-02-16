@@ -57,7 +57,7 @@ Instrument.file_search_template = str(Path(__file__).parent / "data" / "quicknxs
 def data_server(DATA_DIR):
     r"""Object containing info and functionality for data files."""
 
-    class _DataServe(object):
+    class _DataServer(object):
         _directory = str(DATA_DIR)
         _h5_path = "quicknxs-data"
 
@@ -109,7 +109,7 @@ def data_server(DATA_DIR):
 
             return file_list
 
-    return _DataServe()
+    return _DataServer()
 
 
 @pytest.fixture

@@ -742,7 +742,7 @@ class NexusData(object):
         return None
 
     def set_parameter(self, param, value):
-        """Loop through the cross-section data sets and update a parameter."""
+        """Loop through the cross-section data sets and update a configuration parameter."""
         has_changed = False
         try:
             for xs in self.cross_sections:
@@ -1051,7 +1051,10 @@ class NexusData(object):
         return self.cross_sections[self.main_cross_section].is_direct_beam
 
     def set_is_direct_beam(self, is_direct_beam: bool):
-        """Sets the value of `is_direct_beam` for all cross-sections."""
+        """Sets the value of `is_direct_beam` for all cross-sections.
+
+        Note that this changes the value on the cross-sections directly, not in the configuration.
+        """
         for xs in self.cross_sections:
             self.cross_sections[xs].is_direct_beam = is_direct_beam
 
