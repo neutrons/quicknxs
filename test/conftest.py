@@ -1,7 +1,5 @@
-r"""Fixtures for pytest."""
+"""Fixtures for pytest."""
 
-# standard imports
-# 3rd-party imports
 import glob
 import os
 import sys

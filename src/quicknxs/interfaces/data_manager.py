@@ -319,8 +319,8 @@ class DataManager(object):
             try:
                 self.calculate_reflectivity(nexus_data=nexus_data)
                 q_min, _ = nexus_data.get_q_range()
-            except Exception as e:  # TODO (Glass): determine specific exceptions to catch here
-                logging.error(f"Error calculating reflectivity: {e}")
+            except Exception:  # TODO (Glass): determine specific exceptions to catch here
+                logging.exception(f"Error calculating reflectivity for data set {nexus_data.number}")
 
         # If we still don't have q range information, we can't insert in order
         if q_min is None:
@@ -1013,7 +1013,10 @@ class DataManager(object):
         return data_manipulation.extract_metadata(cross_section_data=self.active_cross_section)
 
     def load_data_from_reduced_file(
-        self, file_path: str, configuration: Configuration | None = None, progress: ProgressReporter = None
+        self,
+        file_path: str,
+        configuration: Configuration | None = None,
+        progress: ProgressReporter | None = None,
     ):
         """Load the information from a reduced file, the load the data.
 

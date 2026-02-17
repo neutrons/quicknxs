@@ -1,6 +1,7 @@
 """UI tests for adding a direct beam run to the reduction list, using nexus files with intentionally mislabeled PV."""
 
 import pytest
+from pytestqt.qtbot import QtBot
 from qtpy import QtWidgets
 
 from quicknxs.interfaces.configuration import Configuration
@@ -9,7 +10,7 @@ from quicknxs.interfaces.main_window import MainWindow
 
 
 @pytest.mark.datarepo
-def test_add_db_to_reduction(qtbot: QtWidgets.QWidget, data_server):
+def test_add_db_to_reduction(qtbot: QtBot, data_server):
     """Test adding a reflected run that was mislabeled as a direct beam run to the reduction list."""
     # Set up the main window and load the test .nxs file
     main_window = MainWindow()
@@ -25,7 +26,7 @@ def test_add_db_to_reduction(qtbot: QtWidgets.QWidget, data_server):
     assert main_window.data_manager._nexus_data.is_direct_beam()
 
     # Add to reduction table
-    main_window.actionAddRefl.triggered.emit()
+    main_window.actionAddRefl.trigger()
 
     # Check that it was added to reduction table
     table = main_window.ui.reductionTable
@@ -50,10 +51,10 @@ def test_add_mislabeled_db_to_reduction(qtbot: QtWidgets.QWidget, data_server):
     assert not main_window.data_manager._nexus_data.is_direct_beam()
 
     # Add to reduction table
-    main_window.actionAddRefl.triggered.emit()
+    main_window.actionAddRefl.trigger()
 
     # Check that it was added to reduction table
     table = main_window.ui.reductionTable
     assert table.rowCount() == 1
-    assert table.item(0, ReductionTableColumn.RUN_NUMBER).text() == "0"
-    # For some reason, it shortens "0000" to "0", but not "1111" to "1".
+    assert int(table.item(0, ReductionTableColumn.RUN_NUMBER).text()) == 0
+    # Normalize the run number; formatting (e.g., leading zeros) may vary in the UI.
