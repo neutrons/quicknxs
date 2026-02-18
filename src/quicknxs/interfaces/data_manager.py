@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 import time
+from bisect import insort_left
 from typing import Callable
 
 import numpy as np
@@ -15,6 +16,7 @@ from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknxs_io
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath
+from quicknxs.interfaces.enums import AddToReductionResult
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 
 
@@ -120,8 +122,8 @@ class DataManager(object):
         """Delete cached files that are not in the reduction list or direct beam list."""
 
         def is_used_in_reduction(f: NexusData):
-            return (self.find_data_in_reduction_list(f) is not None) or (
-                self.find_data_in_direct_beam_list(f) is not None
+            return (self.find_run_number_in_reduction_list(f) is not None) or (
+                self.find_run_number_in_direct_beam_list(f) is not None
             )
 
         self._cache[:] = [file for file in self._cache if is_used_in_reduction(file)]
@@ -213,21 +215,26 @@ class DataManager(object):
                 return False
         return True
 
-    def find_run_number_in_reduction_list(self, run_number: int, reduction_list: list[NexusData]):
-        """Look for the given run number in the reduction list.
+    def find_run_number_in_reduction_list(
+        self, nexus_data: NexusData, reduction_list: list[NexusData] | None = None
+    ) -> int | None:
+        """Look for the given run number in a reduction list, or the active reduction list if None.
 
         Returns
         -------
         int | None
             The index in the reduction list or None
         """
-        for i, nexus_data in enumerate(reduction_list):
-            if nexus_data.number == run_number:
+        if reduction_list is None:
+            reduction_list = self.reduction_list
+
+        for i, _nexus_data in enumerate(reduction_list):
+            if _nexus_data.number == nexus_data.number:
                 return i
         return None
 
-    def find_data_in_reduction_list(self, nexus_data):
-        """Look for the given data in the reduction list.
+    def find_data_in_reduction_list(self, nexus_data: NexusData) -> int | None:
+        """Look for the given data in the active reduction list.
 
         Returns
         -------
@@ -285,7 +292,7 @@ class DataManager(object):
         int | None:
             The index within the reduction list or none.
         """
-        return self.find_data_in_reduction_list(self._nexus_data)
+        return self.find_run_number_in_reduction_list(self._nexus_data)
 
     def find_active_direct_beam_id(self) -> int | None:
         """Look for the active data in the direct beam list.
@@ -327,19 +334,11 @@ class DataManager(object):
             logging.error(f"Could not get q range for data set {nexus_data.number}, cannot insert in order.")
             return False
 
-        # Find insertion point to maintain ascending Q order
-        is_inserted = False
-        for i in range(len(reduction_list)):
-            _q_min, _ = reduction_list[i].get_q_range()
-            if q_min <= _q_min:
-                reduction_list.insert(i, nexus_data)
-                is_inserted = True
-                break
-        if not is_inserted:
-            reduction_list.append(nexus_data)
+        # Use binary search to find the correct insertion point to keep the list sorted by q_min
+        insort_left(reduction_list, nexus_data, key=lambda x: x.get_q_range()[0])
         return True
 
-    def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX) -> bool:
+    def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX) -> AddToReductionResult:
         """Add active data set to reduction list.
 
         New data sets are always added to the main reduction list. Data sets are added to secondary
@@ -353,19 +352,35 @@ class DataManager(object):
 
         Returns
         -------
-        bool
-            True if the active data set was added to the reduction list, False if it was not added
+        AddToReductionResult
         """
         reduction_list = self.peak_reduction_lists[peak_index]
 
-        if self._nexus_data not in reduction_list:
-            if self.is_nexus_data_compatible(self._nexus_data, reduction_list):
-                if len(reduction_list) == 0:
-                    self.reduction_states = list(self.data_sets.keys())
-                return self._insert_into_reduction_list_by_q(self._nexus_data, reduction_list)
-            else:
-                logging.error("The data you are trying to add has different cross-sections")
-        return False
+        # Check if already in list by run number (since we may have deepcopied objects)
+        if self.find_run_number_in_reduction_list(self._nexus_data, reduction_list) is not None:
+            logging.warning(f"Data set {self._nexus_data.number} is already in the reduction list.")
+            return AddToReductionResult.ALREADY_IN_LIST
+
+        if not self.is_nexus_data_compatible(self._nexus_data, reduction_list):
+            logging.error("The data you are trying to add has different cross-sections")
+            return AddToReductionResult.INCOMPATIBLE
+
+        if len(reduction_list) == 0:
+            self.reduction_states = list(self.data_sets.keys())
+
+        # Create a deepcopy to allow adding the same run to the reduction list(s) and direct beam list without sharing state
+        nexus_data = copy.deepcopy(self._nexus_data)
+        is_direct_beam = nexus_data.is_direct_beam()
+
+        result = self._insert_into_reduction_list_by_q(nexus_data, reduction_list)
+        if not result:
+            return AddToReductionResult.OTHER_ERROR
+
+        if is_direct_beam:
+            logging.warning(f"Run {nexus_data.number} was added to the reduction list but is labeled as a direct beam.")
+            return AddToReductionResult.SUCCESS_DIRECT_BEAM
+        else:
+            return AddToReductionResult.SUCCESS
 
     def copy_nexus_data_to_reduction(self, nexus_data_to_copy: NexusData, peak_index: int):
         """Add data set to the reduction list specified by `peak_index`.
@@ -382,6 +397,11 @@ class DataManager(object):
         bool
             True if the data set was added successfully, otherwise False
         """
+        # >>>>> GLASS DEBUG BLOCK >>>>>
+        print(
+            f"\n\nCOPYING NEXUS DATA {nexus_data_to_copy.number} TO REDUCTION LIST {self.peak_reduction_lists[peak_index]}"
+        )
+        # <<<<< GLASS DEBUG BLOCK <<<<<
         reduction_list = self.peak_reduction_lists[peak_index]
 
         # check if run already exists in this reduction list
@@ -419,6 +439,7 @@ class DataManager(object):
         if is_true_direct_beam:
             # True direct beam - add directly
             self.direct_beam_list.append(self._nexus_data)
+            return 2
         else:
             # Not a true direct beam - make a deep copy and change the data type of the copy
             # This makes it possible to add the same run also as a data run while preventing them sharing state
@@ -432,8 +453,6 @@ class DataManager(object):
                 self._nexus_data.number,
             )
             return 1
-
-        return 2
 
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list.
@@ -518,8 +537,8 @@ class DataManager(object):
             if self._cache[i].file_path == file_path:
                 if force:
                     # Check whether the data is in the reduction list before removing it
-                    reduction_list_id = self.find_data_in_reduction_list(self._cache[i])
-                    direct_beam_list_id = self.find_data_in_direct_beam_list(self._cache[i])
+                    reduction_list_id = self.find_run_number_in_reduction_list(self._cache[i])
+                    direct_beam_list_id = self.find_run_number_in_direct_beam_list(self._cache[i])
                     self._cache.pop(i)
                 else:
                     nexus_data = self._cache[i]
@@ -1104,16 +1123,17 @@ class DataManager(object):
                     self.calculate_reflectivity()
                 # Set the slice value on the NexusData object
                 self._nexus_data.slice = slice_value
-                if self.add_active_to_reduction():
-                    logging.info("%s loaded: %s sec [%s]", r_id, time.time() - t_i, time.time() - t_0)
+                result = self.add_active_to_reduction()
+                if result == AddToReductionResult.SUCCESS:
+                    logging.info(f"{r_id} loaded: {time.time() - t_i} sec [{time.time() - t_0}]")
                 else:
-                    logging.error("Could not load %s", r_id)
+                    logging.error(f"Could not add run {r_id} to reduction table: {result.value}")
                 if progress:
                     progress.set_value(n_loaded, message="%s loaded" % os.path.basename(run_file), out_of=n_total)
             else:
-                logging.error("File does not exist: %s", run_file)
+                logging.error(f"File does not exist: {run_file}")
                 if progress:
-                    progress.set_value(n_loaded, message="ERROR: %s does not exist" % run_file, out_of=n_total)
+                    progress.set_value(n_loaded, message=f"ERROR: {run_file} does not exist", out_of=n_total)
             n_loaded += 1
         if progress:
             progress.set_value(n_total, message="Done", out_of=n_total)

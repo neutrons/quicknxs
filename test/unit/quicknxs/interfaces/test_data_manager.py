@@ -1,11 +1,10 @@
-# local imports
-# 3rd-party imports
 import pytest
 
 import quicknxs.interfaces.data_handling.data_manipulation as dm
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.instrument import Instrument
 from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.enums import AddToReductionResult
 
 
 @pytest.fixture()
@@ -26,7 +25,7 @@ class TestDataManagerTest(object):
         assert manager.current_file == data_server.path_to("REF_M_29160")
 
         manager.add_active_to_reduction()
-        assert manager.find_data_in_reduction_list(manager._nexus_data) == 0
+        assert manager.find_run_number_in_reduction_list(manager._nexus_data) == 0
         assert manager.find_data_in_direct_beam_list(manager._nexus_data) is None
 
         q_range = manager._nexus_data.get_q_range()
@@ -146,11 +145,11 @@ class TestDataManagerTest(object):
 
         # Add run once
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
-        assert manager.add_active_to_reduction()
+        assert manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(manager.reduction_list) == 1
 
-        # Try to add the same run again - should return False
-        assert not manager.add_active_to_reduction()
+        # Try to add the same run again - should return 1 (indicating already in list)
+        assert manager.add_active_to_reduction() == AddToReductionResult.ALREADY_IN_LIST
         assert len(manager.reduction_list) == 1
 
     @pytest.mark.datarepo
@@ -191,20 +190,20 @@ class TestDataManagerTest(object):
 
         # Add highest Q run first
         manager.load(data_server.path_to("REF_M_42113"), Configuration())
-        assert manager.add_active_to_reduction()
+        assert manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(manager.reduction_list) == 1
         assert manager.reduction_list[0].number == "42113"
 
         # Add lowest Q run - should be inserted at the beginning
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
-        assert manager.add_active_to_reduction()
+        assert manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(manager.reduction_list) == 2
         assert manager.reduction_list[0].number == "42112"
         assert manager.reduction_list[1].number == "42113"
 
         # Add middle Q run - should be inserted in the middle
         manager.load(data_server.path_to("REF_M_40782"), Configuration())
-        assert manager.add_active_to_reduction()
+        assert manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(manager.reduction_list) == 3
         assert manager.reduction_list[0].number == "42112"
         assert manager.reduction_list[1].number == "40782"
@@ -260,7 +259,7 @@ class TestDataManagerTest(object):
 
         # Add to empty list
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
-        assert manager.add_active_to_reduction()
+        assert manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(manager.reduction_list) == 1
         assert manager.reduction_states is not None
         assert len(manager.reduction_states) > 0

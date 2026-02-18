@@ -23,7 +23,7 @@ from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusDa
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
 from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
 from quicknxs.interfaces.data_manager import DataManager
-from quicknxs.interfaces.enums import DirectBeamTableColumn, ReductionTableColumn
+from quicknxs.interfaces.enums import AddToReductionResult, DirectBeamTableColumn, ReductionTableColumn
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
 from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
@@ -830,16 +830,27 @@ class MainHandler:
             self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        if not self._data_manager.add_active_to_reduction():
+        result = self._data_manager.add_active_to_reduction()
+        print(f"Result of adding to reduction: {result}")
+        match result:
+            case AddToReductionResult.ALREADY_IN_LIST:
+                msg = "Data already in the list."
+            case AddToReductionResult.INCOMPATIBLE:
+                msg = "This data is incompatible with existing data in the list."
+            case AddToReductionResult.OTHER_ERROR:
+                msg = "Something went wrong - could not add data."
+
+        if result not in [AddToReductionResult.SUCCESS, AddToReductionResult.SUCCESS_DIRECT_BEAM]:
             if not silent:
-                self.report_message("(Add reflectivity) Data incompatible or already in the list.", pop_up=True)
+                self.report_message(msg, pop_up=True)
             return False
+
         self.main_window.auto_change_active = True
 
-        idx = self._data_manager.find_data_in_reduction_list(self._data_manager._nexus_data)
+        idx = self._data_manager.find_run_number_in_reduction_list(self._data_manager._nexus_data)
         if idx is None:
             raise RuntimeError(
-                "We just added this data to the reduction list, so it should be there! Something went wrong."
+                "We just added this data to the reduction list, so it should be there! Something went wrong"
             )
         self.ui.reductionTable.insertRow(idx)
         self.update_tables()
@@ -1109,13 +1120,13 @@ class MainHandler:
             # If the changed data set is another data run, only need to update the UI reduction table,
             # to take into account changes in one column affecting another column
             table_widget = self.reduction_table
-            idx = self._data_manager.find_data_in_reduction_list(refl)
+            idx = self._data_manager.find_run_number_in_reduction_list(refl)
             active_cross_section_name: str = self._data_manager.active_cross_section.name
             active_cross_section = refl.cross_sections[active_cross_section_name]
             self.update_reduction_table(table_widget, idx, active_cross_section)
 
         # Update the direct beam table if this data set is in it
-        idx = self._data_manager.find_data_in_direct_beam_list(refl)
+        idx = self._data_manager.find_run_number_in_direct_beam_list(refl)
         if idx is not None:
             cross_sections = list(refl.cross_sections.keys())
             self.update_direct_beam_table(idx, refl.cross_sections[cross_sections[0]])
@@ -1212,7 +1223,7 @@ class MainHandler:
             # only update the UI table for runs with set_direct_pixel ("overwrite") enabled,
             # if it is disabled, the value from the DAS will be used and shown instead
             if refl.get_parameter("set_direct_pixel"):
-                idx = self._data_manager.find_data_in_reduction_list(refl)
+                idx = self._data_manager.find_run_number_in_reduction_list(refl)
                 dpix_item = self.reduction_table.item(idx, ReductionTableColumn.DPIX)
                 self.main_window.auto_change_active = True
                 dpix_item.setText(str(dpix))
@@ -1407,7 +1418,7 @@ class MainHandler:
                     if self._data_manager.copy_nexus_data_to_reduction(nexus_data, ipeak):
                         # get widget for target reduction table
                         target_widget = self.get_reduction_table_by_index(ipeak)
-                        idx = self._data_manager.find_run_number_in_reduction_list(nexus_data.number, peak_data)
+                        idx = self._data_manager.find_run_number_in_reduction_list(nexus_data, peak_data)
                         if idx is None:
                             raise RuntimeError("Run number not in reduction list")
                         target_widget.insertRow(idx)

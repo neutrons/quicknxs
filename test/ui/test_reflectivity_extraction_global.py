@@ -1,13 +1,9 @@
-# local imports
-# third party imports
 import pytest
 
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
-
-# standard library imports
 
 
 def _initialize_test_data(main_window):
@@ -16,6 +12,7 @@ def _initialize_test_data(main_window):
     nexus_data = NexusData("file/path", config)
     off_off = CrossSectionData("Off_Off", config)
     on_off = CrossSectionData("On_Off", config)
+    nexus_data.main_cross_section = "Off_Off"
     nexus_data.cross_sections["Off_Off"] = off_off
     nexus_data.cross_sections["On_Off"] = on_off
     main_window.data_manager._nexus_data = nexus_data

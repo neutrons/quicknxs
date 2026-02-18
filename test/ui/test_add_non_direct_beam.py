@@ -98,8 +98,8 @@ def test_non_direct_beam_can_normalize_scattering_data(qtbot, data_server):
     # Verify the reduction list has the correct direct beam set
     run_in_reduction = window_main.data_manager.reduction_list[0]
     assert (
-        run_in_reduction.cross_sections[list(run_in_reduction.cross_sections.keys())[0]].configuration.direct_beam
-        == "42112"
+        int(run_in_reduction.cross_sections[list(run_in_reduction.cross_sections.keys())[0]].configuration.direct_beam)
+        == 42112
     )
 
 

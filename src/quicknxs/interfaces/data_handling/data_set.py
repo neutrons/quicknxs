@@ -687,7 +687,7 @@ class NexusData(object):
         self.number: str = ""  # can be a single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.configuration = configuration
         self.cross_sections: Dict[str, CrossSectionData] = {}
-        self.main_cross_section: str = None
+        self.main_cross_section: str | None = None
         self.slice: int = 0  # slice index for multiple slices per run (default 0)
 
     def get_highest_cross_section(self, n_points=10):
