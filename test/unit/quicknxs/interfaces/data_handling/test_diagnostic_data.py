@@ -2,6 +2,7 @@ import pytest
 
 from quicknxs.interfaces.data_handling.diagnostic_data import DiagnosticData
 
+
 class TestDiagnosticData:
     """Tests for the DiagnosticData class"""
 
@@ -98,6 +99,7 @@ class TestDiagnosticData:
         )
         assert data_40786["event_count"] == 1987764
         assert data_40786["lambda_center"] == pytest.approx(5.35)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
