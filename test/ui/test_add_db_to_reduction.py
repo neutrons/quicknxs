@@ -2,7 +2,6 @@
 
 import pytest
 from pytestqt.qtbot import QtBot
-from qtpy import QtWidgets
 
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.enums import ReductionTableColumn
