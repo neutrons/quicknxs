@@ -288,7 +288,7 @@ class Instrument(object):
                 all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
         except CrossSectionError as err:
             raise CrossSectionError(file_path, err.message, err.min_num_events) from err
-        
+
         # If only one file, return its cross-sections directly
         if len(all_xs_lists) == 1:
             xs_list = all_xs_lists[0]
