@@ -15,7 +15,7 @@ from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknxs_io
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath
-from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
+from quicknxs.interfaces.data_handling.instrument import CrossSectionError
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 
 
@@ -526,7 +526,7 @@ class DataManager(object):
             sub_task = progress.create_sub_task(max_value=70) if progress else None
             try:
                 nexus_data.load(progress=sub_task, update_parameters=update_parameters)
-            except NoCrossSectionsFoundError as ex:
+            except CrossSectionError as ex:
                 self.bad_files.update(ex.bad_files)
                 raise
 

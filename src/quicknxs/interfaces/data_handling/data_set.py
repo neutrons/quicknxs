@@ -18,7 +18,7 @@ from quicknxs.interfaces.configuration import BinningType, Configuration, get_di
 from quicknxs.interfaces.data_handling.data_info import DataInfo
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.gisans import GISANS
-from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
+from quicknxs.interfaces.data_handling.instrument import CrossSectionError
 from quicknxs.interfaces.data_handling.off_specular import OffSpecular
 
 if TYPE_CHECKING:
@@ -1029,7 +1029,7 @@ class NexusData(object):
             cross_section.configuration.direct_pixel_overwrite = cross_section.direct_pixel
 
         if _max_xs is None:
-            raise NoCrossSectionsFoundError(self.file_path, min_num_evts=self.configuration.nbr_events_min)
+            raise CrossSectionError(self.file_path, min_num_evts=self.configuration.nbr_events_min)
 
         # Now that we know which cross section has the most data,
         # use that one to get the reduction parameters

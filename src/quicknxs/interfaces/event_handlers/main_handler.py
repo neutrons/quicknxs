@@ -20,9 +20,11 @@ from quicknxs.config.gui import QColors
 from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.data_handling.diagnostic_data import DiagnosticData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
-from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
+from quicknxs.interfaces.data_handling.instrument import CrossSectionError
 from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.diagnostic_widget import DiagnosticWidget
 from quicknxs.interfaces.enums import DirectBeamTableColumn, ReductionTableColumn
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
@@ -176,7 +178,7 @@ class MainHandler:
             configuration = self.get_configuration_from_ui()
             self._data_manager.load(file_path, configuration, force=force, progress=prog)
             self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
-        except (RuntimeError, NoCrossSectionsFoundError) as run_err:
+        except (RuntimeError, CrossSectionError) as run_err:
             if isinstance(run_err, RuntimeError):
                 self.report_message(
                     f"Error loading file(s) {self._data_manager.current_file_name} due to:\n{run_err}",
@@ -604,7 +606,7 @@ class MainHandler:
             prog = self.new_progress_reporter()
             try:
                 self._data_manager.load_data_from_reduced_file(file_path, configuration=configuration, progress=prog)
-            except NoCrossSectionsFoundError as err:
+            except CrossSectionError as err:
                 self._show_diagnostic(err)
                 return
 
@@ -1919,7 +1921,7 @@ class MainHandler:
         prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
         try:
             self._data_manager.reload_files(configuration, prog)
-        except NoCrossSectionsFoundError as err:
+        except CrossSectionError as err:
             self._show_diagnostic(err)
             return
 
@@ -2063,157 +2065,15 @@ class MainHandler:
         for handler in root.handlers:
             handler.setLevel(lvl)
 
-    def _show_diagnostic(self, error: NoCrossSectionsFoundError):
+    def _show_diagnostic(self, error: CrossSectionError):
         """Show diagnostic widget when no valid cross-sections can be loaded.
 
         Parameters
         ----------
         error:
-            NoCrossSectionsFoundError exception containing diagnostic data
+            CrossSectionError exception containing diagnostic data
         """
-
-        def format_value(value, fmt=None):
-            if value == "N/A":
-                return "N/A"
-            try:
-                if fmt == "scientific":
-                    return f"{float(value):.2e}"
-                elif fmt == "float":
-                    return f"{float(value):.3f}"
-                elif fmt == "time":
-                    return f"{float(value):.2f} s"
-                elif fmt == "angle":
-                    return f"{float(value):.3f}°"
-                elif fmt == "wavelength":
-                    return f"{float(value):.3f} Å"
-                elif fmt == "cps":
-                    return f"{float(value):.2f} cps"
-                else:
-                    return str(value)
-            except (ValueError, TypeError):
-                return str(value)
-
-        # Create diagnostic dialog
-        dialog = QtWidgets.QDialog(self.main_window)
-        dialog.setWindowTitle("No Valid Cross-Sections - Diagnostic Information")
-        layout = QtWidgets.QVBoxLayout()
-
-        # Add informative text
-        info_text = f"<b>Error: {error.message}<br>"
-        info_text += f"Number of runs analyzed: {len(error.diagnostic_data)}"
-
-        info_label = QtWidgets.QLabel(info_text)
-        info_label.setWordWrap(True)
-        layout.addWidget(info_label)
-
-        # Create table for diagnostic information
-        table = QtWidgets.QTableWidget()
-
-        # Define columns
-        headers = [
-            "Run",
-            "λ",
-            "Direct Pixel",
-            "Proton Charge",
-            "Sample Angle",
-            "DANGLE",
-            "DANGLE0",
-            "Counting Time",
-            "Total Counts",
-            "Count Rate",
-        ]
-        table.setColumnCount(len(headers))
-        table.setHorizontalHeaderLabels(headers)
-        table.setRowCount(len(error.diagnostic_data))
-
-        # Fill table with formatted data
-        for i, data in enumerate(error.diagnostic_data):
-            table.setItem(i, 0, QtWidgets.QTableWidgetItem(str(data["cross_section_id"])))
-            table.setItem(i, 1, QtWidgets.QTableWidgetItem(format_value(data["lambda_center"], fmt="wavelength")))
-            table.setItem(i, 2, QtWidgets.QTableWidgetItem(format_value(data["direct_pixel"], fmt="float")))
-            table.setItem(i, 3, QtWidgets.QTableWidgetItem(format_value(data["proton_charge"], fmt="scientific")))
-            table.setItem(i, 4, QtWidgets.QTableWidgetItem(format_value(data["sample_angle"], fmt="angle")))
-            table.setItem(i, 5, QtWidgets.QTableWidgetItem(format_value(data["dangle"], fmt="angle")))
-            table.setItem(i, 6, QtWidgets.QTableWidgetItem(format_value(data["dangle0"], fmt="angle")))
-            table.setItem(i, 7, QtWidgets.QTableWidgetItem(format_value(data["counting_time"], fmt="time")))
-            event_count = QtWidgets.QTableWidgetItem(str(data["event_count"]))
-            try:
-                if float(data["event_count"]) < Configuration.nbr_events_min:
-                    event_count.setForeground(QColors.red)
-            except (ValueError, TypeError):
-                pass
-            table.setItem(i, 8, event_count)
-            table.setItem(i, 9, QtWidgets.QTableWidgetItem(format_value(data["count_rate"], fmt="cps")))
-
-        table.resizeColumnsToContents()
-        table.resizeRowsToContents()
-
-        header = table.horizontalHeader()
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        header.setStretchLastSection(True)
-
-        table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        layout.addWidget(table)
-
-        logs_button = QtWidgets.QPushButton("Open Sample Logs Table")
-        logs_button.clicked.connect(lambda: self._open_sample_logs_table(error, dialog))
-        layout.addWidget(logs_button)
-
-        close_button = QtWidgets.QPushButton("Close")
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
-
-        dialog.setLayout(layout)
-        dialog.adjustSize()
-        dialog.exec_()
+        diag_data = DiagnosticData(file_path=e.file_path, message=str(e))
+        diagnostic_widget = DiagnosticWidget(parent=main_window)
+        diagnostic_widget.show(diag_data)
         self.update_file_list()
-
-    def _open_sample_logs_table(self, error, parent=None):
-        """Open a table view of all sample logs from the workspaces.
-
-        Parameters
-        ----------
-        error:
-            NoCrossSectionsFoundError exception containing sample log data
-        parent:
-            parent widget for the dialog
-        """
-        dialog = QtWidgets.QDialog(parent)
-        dialog.setWindowTitle("Sample Logs - All Properties")
-        layout = QtWidgets.QVBoxLayout()
-        table = QtWidgets.QTableWidget()
-
-        sample_logs = error.sample_logs
-
-        total_rows = sum(len(log_data["logs"]) for log_data in sample_logs)
-        table.setColumnCount(3)
-        table.setHorizontalHeaderLabels(["Run", "Property", "Value"])
-        table.setRowCount(total_rows)
-
-        current_row = 0
-        for log_data in sample_logs:
-            run_id = str(log_data["run_id"])
-
-            for prop_name, prop_value in log_data["logs"]:
-                table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(run_id))
-                table.setItem(current_row, 1, QtWidgets.QTableWidgetItem(prop_name))
-                table.setItem(current_row, 2, QtWidgets.QTableWidgetItem(prop_value))
-                current_row += 1
-
-        table.resizeColumnsToContents()
-        table.resizeRowsToContents()
-
-        header = table.horizontalHeader()
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        header.setStretchLastSection(True)
-
-        table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        layout.addWidget(table)
-
-        close_button = QtWidgets.QPushButton("Close")
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
-
-        dialog.setLayout(layout)
-        dialog.adjustSize()
-        dialog.exec_()

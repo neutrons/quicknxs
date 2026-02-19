@@ -16,7 +16,7 @@ from qtpy import QtCore, QtWidgets
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
-from quicknxs.interfaces.data_handling.instrument import NoCrossSectionsFoundError
+from quicknxs.interfaces.data_handling.instrument import CrossSectionError
 from quicknxs.interfaces.enums import ReductionTableColumn
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.main_window import MainWindow
@@ -299,7 +299,7 @@ def test_reduction_table_dpix(qtbot):
         assert xs.configuration.direct_pixel_overwrite == new_dpix_value
 
 
-class MockNoCrossSectionsFoundError(NoCrossSectionsFoundError):
+class MockCrossSectionError(CrossSectionError):
     """Mock exception class to make testing work without a real file"""
 
     def __init__(self):
@@ -309,7 +309,7 @@ class MockNoCrossSectionsFoundError(NoCrossSectionsFoundError):
 @pytest.mark.parametrize(
     "error_type",
     [
-        (MockNoCrossSectionsFoundError),
+        (MockCrossSectionError),
         (RuntimeError),
     ],
 )

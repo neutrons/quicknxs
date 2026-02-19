@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NoCrossSectionsFoundError
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, CrossSectionError
 
 
 def _get_cross_section_data():
@@ -23,13 +23,13 @@ def _get_cross_section_data():
     return xs
 
 
-class TestNoCrossSectionsFoundError:
-    """Tests for the NoCrossSectionsFoundError Exception class"""
+class TestCrossSectionError:
+    """Tests for the CrossSectionError Exception class"""
 
     def test_exception_initialization(self, data_server):
         """Test that exception initializes and loads workspaces"""
         file_path = data_server.path_to("REF_M_40785")
-        error = NoCrossSectionsFoundError(file_path)
+        error = CrossSectionError(file_path)
 
         assert str(error) == f"No valid cross-sections found in file: {file_path}"
         assert len(error.xs_list) == 1
@@ -39,7 +39,7 @@ class TestNoCrossSectionsFoundError:
     def test_diagnostic_data_extraction(self, data_server):
         """Test that diagnostic data is properly extracted"""
         file_path = data_server.path_to("REF_M_40785")
-        error = NoCrossSectionsFoundError(file_path)
+        error = CrossSectionError(file_path)
 
         assert len(error.diagnostic_data) == 1
         data = error.diagnostic_data[0]
@@ -70,7 +70,7 @@ class TestNoCrossSectionsFoundError:
     def test_sample_logs_extraction(self, data_server):
         """Test that sample logs are properly extracted"""
         file_path = data_server.path_to("REF_M_40785")
-        error = NoCrossSectionsFoundError(file_path)
+        error = CrossSectionError(file_path)
 
         assert len(error.sample_logs) == 1
         log_data = error.sample_logs[0]
@@ -94,7 +94,7 @@ class TestNoCrossSectionsFoundError:
     def test_multiple_workspaces(self, data_server):
         """Test that exception handles multiple workspaces correctly"""
         file_path = data_server.path_to("REF_M_40785") + "+" + data_server.path_to("REF_M_40786")
-        error = NoCrossSectionsFoundError(file_path)
+        error = CrossSectionError(file_path)
 
         assert len(error.xs_list) == 2
         assert len(error.diagnostic_data) == 2
