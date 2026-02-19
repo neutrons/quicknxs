@@ -35,7 +35,7 @@ def test_add_db_to_reduction(qtbot: QtBot, data_server):
 
 
 @pytest.mark.datarepo
-def test_add_mislabeled_db_to_reduction(qtbot: QtWidgets.QWidget, data_server):
+def test_add_mislabeled_db_to_reduction(qtbot: QtBot, data_server):
     """Test adding a direct beam run that was mislabeled as a reflected run to the reduction list."""
     # Set up the main window and load the test .nxs file
     main_window = MainWindow()

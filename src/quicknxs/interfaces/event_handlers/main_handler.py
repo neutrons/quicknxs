@@ -831,7 +831,6 @@ class MainHandler:
 
         # Verify that the new data is consistent with existing data in the table
         result = self._data_manager.add_active_to_reduction()
-        print(f"Result of adding to reduction: {result}")
         match result:
             case AddToReductionResult.ALREADY_IN_LIST:
                 msg = "Data already in the list."

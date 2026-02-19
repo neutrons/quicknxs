@@ -216,7 +216,9 @@ class DataManager(object):
         return True
 
     def find_run_number_in_reduction_list(
-        self, nexus_data: NexusData, reduction_list: list[NexusData] | None = None
+        self,
+        nexus_data: NexusData | None,
+        reduction_list: list[NexusData] | None = None,
     ) -> int | None:
         """Look for the given run number in a reduction list, or the active reduction list if None.
 
@@ -225,6 +227,9 @@ class DataManager(object):
         int | None
             The index in the reduction list or None
         """
+        if nexus_data is None:
+            return None
+
         if reduction_list is None:
             reduction_list = self.reduction_list
 
@@ -302,7 +307,7 @@ class DataManager(object):
         int | None:
             The index within the direct beam list or none.
         """
-        return self.find_data_in_direct_beam_list(self._nexus_data)
+        return self.find_run_number_in_direct_beam_list(self._nexus_data)
 
     def _insert_into_reduction_list_by_q(self, nexus_data: NexusData, reduction_list: list[NexusData]) -> bool:
         """Insert NexusData into reduction list in ascending Q order.
@@ -397,11 +402,6 @@ class DataManager(object):
         bool
             True if the data set was added successfully, otherwise False
         """
-        # >>>>> GLASS DEBUG BLOCK >>>>>
-        print(
-            f"\n\nCOPYING NEXUS DATA {nexus_data_to_copy.number} TO REDUCTION LIST {self.peak_reduction_lists[peak_index]}"
-        )
-        # <<<<< GLASS DEBUG BLOCK <<<<<
         reduction_list = self.peak_reduction_lists[peak_index]
 
         # check if run already exists in this reduction list
@@ -1124,7 +1124,7 @@ class DataManager(object):
                 # Set the slice value on the NexusData object
                 self._nexus_data.slice = slice_value
                 result = self.add_active_to_reduction()
-                if result == AddToReductionResult.SUCCESS:
+                if result in [AddToReductionResult.SUCCESS, AddToReductionResult.SUCCESS_DIRECT_BEAM]:
                     logging.info(f"{r_id} loaded: {time.time() - t_i} sec [{time.time() - t_0}]")
                 else:
                     logging.error(f"Could not add run {r_id} to reduction table: {result.value}")

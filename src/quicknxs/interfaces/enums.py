@@ -1,4 +1,4 @@
-from enum import IntEnum, StrEnum
+from enum import Enum, IntEnum
 
 
 class ReductionTableColumn(IntEnum):
@@ -37,7 +37,7 @@ class DirectBeamTableColumn(IntEnum):
     WAVELENGTH = 8
 
 
-class AddToReductionResult(StrEnum):
+class AddToReductionResult(str, Enum):
     """Result codes for adding a run to the reduction list."""
 
     SUCCESS = "SUCCESS"
