@@ -11,7 +11,7 @@ class TestDiagnosticData:
         file_path = data_server.path_to("REF_M_40785")
         diag = DiagnosticData(file_path)
 
-        assert str(diag) == f"No valid cross-sections found in file: {file_path}"
+        assert str(diag.message) == f"No valid cross-sections found in file: {file_path}"
         assert len(diag.xs_list) == 1
         assert len(diag.diagnostic_data) == 1
         assert len(diag.sample_logs) == 1
