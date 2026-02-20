@@ -6,9 +6,7 @@ from quicknxs.interfaces.data_handling.filepath import FilePath
 class DiagnosticData(object):
     """Diagnositc data for a run or group of runs to help understand and debug issues with QuickNXS workspaces"""
 
-    def __init__(
-        self, file_path: str | list[str] | None = None, message: str | None = None, min_num_evts: int = 100
-    ):
+    def __init__(self, file_path: str | list[str] | None = None, message: str | None = None, min_num_evts: int = 100):
         self.min_num_events = min_num_evts
         self.bad_files = set()
         self.file_path = None
