@@ -7,6 +7,7 @@ Abstracts out how we obtaininformation from the data file
 
 import logging
 import math
+from typing import TYPE_CHECKING
 
 import mantid.simpleapi as api
 import numpy as np
@@ -15,9 +16,11 @@ from mr_reduction.dead_time_correction import apply_dead_time_correction
 from mr_reduction.filter_events import split_error_events, split_events
 from mr_reduction.settings import PolarizationLogs
 
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 from quicknxs.interfaces.data_handling.filepath import FilePath
+
+if TYPE_CHECKING:
+    from quicknxs.interfaces.configuration import Configuration
+    from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 
 # Constants
 h = 6.626e-34  # m^2 kg s^-1
@@ -122,7 +125,7 @@ class Instrument(object):
         self.ana_state = "AnalyzerState"
         self.ana_veto = "AnalyzerVeto"
 
-    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration: Configuration) -> list[EventWorkspace]:
+    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration: "Configuration") -> list[EventWorkspace]:
         """Load the cross-sections from a data file. Handles both pre- and post-epics data.
 
         Parameters
