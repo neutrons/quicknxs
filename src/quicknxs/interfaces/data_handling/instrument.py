@@ -7,7 +7,6 @@ Abstracts out how we obtaininformation from the data file
 
 import logging
 import math
-from typing import TYPE_CHECKING, List, Optional, Union
 
 import mantid.simpleapi as api
 import numpy as np
@@ -16,11 +15,9 @@ from mr_reduction.dead_time_correction import apply_dead_time_correction
 from mr_reduction.filter_events import split_error_events, split_events
 from mr_reduction.settings import PolarizationLogs
 
+from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 from quicknxs.interfaces.data_handling.filepath import FilePath
-
-if TYPE_CHECKING:
-    from quicknxs.interfaces.configuration import Configuration
-    from quicknxs.interfaces.data_handling.data_set import CrossSectionData
 
 # Constants
 h = 6.626e-34  # m^2 kg s^-1
@@ -92,9 +89,7 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
 class CrossSectionError(Exception):
     """Exception raised when no valid cross section data can be loaded"""
 
-    def __init__(
-        self, file_path: Optional[Union[str, List[str]]] = None, message: Optional[str] = None, min_num_evts: int = 100
-    ):
+    def __init__(self, file_path: str | list[str] | None = None, message: str | None = None, min_num_evts: int = 100):
         self.min_num_events = min_num_evts
         self.file_path = file_path
 
@@ -127,7 +122,7 @@ class Instrument(object):
         self.ana_state = "AnalyzerState"
         self.ana_veto = "AnalyzerVeto"
 
-    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration: "Configuration") -> List[EventWorkspace]:
+    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration: Configuration) -> list[EventWorkspace]:
         """Load the cross-sections from a data file. Handles both pre- and post-epics data.
 
         Parameters
@@ -254,7 +249,7 @@ class Instrument(object):
 
         return path_xs_list
 
-    def load_data(self, file_path: str, configuration: Optional["Configuration"] = None) -> List[EventWorkspace]:
+    def load_data(self, file_path: str, configuration: Configuration | None = None) -> list[EventWorkspace]:
         r"""Load one or more data sets according to the needs of the instrument.
 
         This function assumes that when loading more than one data file, the files are congruent and their
