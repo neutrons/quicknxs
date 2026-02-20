@@ -7,7 +7,7 @@ Abstracts out how we obtaininformation from the data file
 
 import logging
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import mantid.simpleapi as api
 import numpy as np
@@ -252,7 +252,7 @@ class Instrument(object):
 
         return path_xs_list
 
-    def load_data(self, file_path: str, configuration: Configuration | None = None) -> list[EventWorkspace]:
+    def load_data(self, file_path: str, configuration: Optional["Configuration"] = None) -> list[EventWorkspace]:
         r"""Load one or more data sets according to the needs of the instrument.
 
         This function assumes that when loading more than one data file, the files are congruent and their
