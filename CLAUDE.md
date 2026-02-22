@@ -23,7 +23,7 @@ compatibility.
 ## Branch naming conventions
 - `EWM{number}_{description}` — work items tracked in the SNS work management system
 - `bugfix_{description}` or `fix_{description}` — bug fixes
-- `bvacaliuc/{description}` — personal/agentic branches (see Agent workflow below)
+- `{user}/{description}` — personal/agentic branches (see Agent workflow below)
 - `dependabot/**`, `pre-commit-ci-*` — automated dependency/tooling branches
 
 ## CI/CD (`.github/workflows/test_and_deploy.yml`)
@@ -61,22 +61,22 @@ git push origin ...     # NOT permitted
 ```
 
 **Branch creation and push is performed by the human contributor.**
-The agreed convention is `bvacaliuc/{feature-description}` for agentic branches.
+The agreed convention is `{user}/{feature-description}` for agentic branches.
 
 **Draft PR creation via PAT:**
-After the human has pushed a `bvacaliuc/` branch, Claude may use the PAT
+After the human has pushed a `{user}/` branch, Claude may use the PAT
 (extracted from the `upstream` remote URL) to open a **draft PR** targeting
 `next` via the GitHub REST API:
 ```
 POST https://api.github.com/repos/neutrons/quicknxs/pulls
-{ "draft": true, "head": "bvacaliuc/{feature}", "base": "next", ... }
+{ "draft": true, "head": "{user}/{feature}", "base": "next", ... }
 ```
 
 **Claude's session workflow:**
-1. Prepare all changes for a logical task on the local `bvacaliuc/agentic-knowledge`
+1. Prepare all changes for a logical task on the local `{user}/agentic-knowledge`
    branch (or a task-specific branch agreed with the user).
 2. Commit locally with descriptive messages.
-3. Ask the user to push: `git push origin bvacaliuc/{feature-description}`.
+3. Ask the user to push: `git push origin {user}/{feature-description}`.
 4. Once confirmed, create a draft PR via the PAT.
 5. The user reviews and promotes the PR from draft to ready when satisfied.
 
