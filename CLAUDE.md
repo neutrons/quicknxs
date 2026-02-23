@@ -73,7 +73,7 @@ POST https://api.github.com/repos/neutrons/quicknxs/pulls
 ```
 
 **Claude's session workflow:**
-1. Prepare all changes for a logical task on the local `{user}/agentic-knowledge`
+1. Prepare all changes for a logical task on the local `{user}/{feature-description}`
    branch (or a task-specific branch agreed with the user).
 2. Commit locally with descriptive messages.
 3. Ask the user to push: `git push origin {user}/{feature-description}`.
