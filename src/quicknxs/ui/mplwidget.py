@@ -9,6 +9,7 @@ Plotting widget taken from QuickNXS.
 import inspect
 import os
 import tempfile
+import logging
 
 import matplotlib.colors
 import numpy as np
@@ -48,6 +49,11 @@ def getIcon(filename: str) -> "QtGui.QIcon":
     icon.addPixmap(QtGui.QPixmap(filename_full), QtGui.QIcon.Normal, QtGui.QIcon.Off)
     return icon
 
+def centerbins(xvals):
+    ''' for a given numpy array return the bin centers
+    '''
+    NewXvals=( xvals + np.roll(xvals,-1) )/2 # calculate the bin center
+    return np.delete(NewXvals,-1) # remove the last element which is junk
 
 class NavigationToolbar(NavigationToolbar2QT):
     """A small change to the original navigation toolbar."""
@@ -149,33 +155,75 @@ class NavigationToolbar(NavigationToolbar2QT):
                 )
 
     def save_data(self):
+        import wat
+
         ax = self.canvas.ax
 
-        if hasattr(ax, "get_array") == False:
-            if np.mod(len(ax.lines), 3) == 1:
-                data_to_save = ax.lines[0].get_xydata()
-            if np.mod(len(ax.lines), 3) == 0:
-                data_to_save = np.empty((0, 3), float)
-                for i in range(0, int(len(ax.lines)), 3):
-                    xdata_from_plot = ax.lines[i].get_xdata()
-                    ydata_from_plot = ax.lines[i].get_ydata()
-                    err_from_plot = (ax.lines[i + 2].get_ydata() - ax.lines[i + 1].get_ydata()) / 2.0
-                    data_to_save = np.append(
-                        data_to_save, np.array([xdata_from_plot, ydata_from_plot, err_from_plot]).transpose(), axis=0
-                    )
-        else:
-            data_to_save = ax.get_array()
+        #logging.debug(f'self.canvas={wat / self.canvas}')
+        #logging.debug(f'ax={wat / ax}')
+        logging.debug(f'ax.figure={wat / ax.figure}')
 
-        fname = QtWidgets.QFileDialog.getSaveFileName(self, "Choose a filename to save to")
+        try:
+            file_save_prompt = "Choose a filename to save to"
+            selector = np.mod(len(ax.lines), 3)
+            if hasattr(ax, "get_array") == False:
+                if selector == 1:
+                    file_save_prompt = "Choose an .npz filename to save to (selector=1)"
+                    logging.debug(f'selector=1, len(ax.lines)={len(ax.lines)}')
+                    data_to_save = ax.lines[0]
+                elif selector == 0:
+                    # these are 1D plots (but 2D plots on TABs also go thru here)
+                    logging.debug(f'selector=0, len(ax.lines)={len(ax.lines)}')
+                    data_to_save = np.empty((0, 3), float)
+                    column_headers = ''
+                    for i in range(0, int(len(ax.lines)), 3):
+                        xdata_from_plot = ax.lines[i].get_xdata()
+                        ydata_from_plot = ax.lines[i].get_ydata()
+                        err_from_plot = (ax.lines[i + 2].get_ydata() - ax.lines[i + 1].get_ydata()) / 2.0
+                        column_headers += f'X{i}, Y{i}, E{i}, '
+                        data_to_save = np.append(
+                            data_to_save, np.array([xdata_from_plot, ydata_from_plot, err_from_plot]).transpose(), axis=0
+                        )
+                else:
+                    # TODO: log a debug and give the user a simpler message
+                    raise Exception(f"Unable to handle selector={selector}; only 0,1 are coded")
+            else:
+                #data_to_save = np.empty((0, 3), float)
+                #data_to_save = np.append(
+                #    centerbins(ax.get_coordinates()[0,:,0]),    # X
+                #    centerbins(ax.get_coordinates()[:,0,1]),    # Y
+                #    ax.get_array().data.reshape(                # E
+                #        (ax.get_coordinates().shape[0]-1, ax.get_coordinates().shape[1]-1)
+                #    )
+                #)
+                file_save_prompt = "Choose an .npz filename to save to"
+                logging.debug(f'ax.get_array=True, len(ax.lines)={len(ax.lines)}')
+                data_to_save = ax.get_array()
 
-        if type(fname[0]) == str:
-            try:
-                np.savetxt(fname[0], data_to_save)
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(
-                    self, "Error saving file", str(e), QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.NoButton
-                )
+            fname = QtWidgets.QFileDialog.getSaveFileName(self, file_save_prompt)
+            if type(fname[0]) == str:
+                if fname[0].endswith('.npz'):
+                    logging.debug(f'saving {fname[0]} with ax, data_to_save, canvas_figure, ax_figure, ax_lines')
+                    np.savez_compressed(fname[0], ax=ax, data_to_save=data_to_save, canvas_figure=self.canvas.figure, ax_figure=ax.figure, ax_lines=ax.lines)
+                elif fname[0].endswith('.pkl'):
+                    import pickle
+                    # Source - https://stackoverflow.com/a/37460048
+                    # Posted by gerrit, modified by community. See post 'Timeline' for change history
+                    # Retrieved 2026-02-21, License - CC BY-SA 3.0
+                    logging.debug(f'saving {fname[0]} with ax, data_to_save, canvas_figure')
+                    with open(fname[0], "wb") as fp:
+                        pickle.dump((ax, data_to_save, self.canvas.figure), fp, protocol=4)
+                elif selector == 0:
+                    np.savetxt(fname[0], data_to_save, header=column_headers)
+                else:
+                    raise Exception(f"Unsupported extension {fname[0].split('.')[-1]}")
+            else:
+                raise Exception(f"Unexpected type {type(fname[0])} from dialog box")
 
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error saving file", str(e), QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.NoButton
+            )
 
 class NavigationToolbarGeneric(NavigationToolbar):
     """A navigation toolbar for a generic plot."""
