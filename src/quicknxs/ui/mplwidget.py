@@ -7,9 +7,10 @@ Plotting widget taken from QuickNXS.
 """
 
 import inspect
-import os
-import tempfile
 import logging
+import os
+import pickle
+import tempfile
 
 import matplotlib.colors
 import numpy as np
@@ -49,11 +50,215 @@ def getIcon(filename: str) -> "QtGui.QIcon":
     icon.addPixmap(QtGui.QPixmap(filename_full), QtGui.QIcon.Normal, QtGui.QIcon.Off)
     return icon
 
+
 def centerbins(xvals):
-    ''' for a given numpy array return the bin centers
-    '''
-    NewXvals=( xvals + np.roll(xvals,-1) )/2 # calculate the bin center
-    return np.delete(NewXvals,-1) # remove the last element which is junk
+    """For a given numpy array of bin edges, return the bin centers."""
+    new_xvals = (xvals + np.roll(xvals, -1)) / 2
+    return np.delete(new_xvals, -1)
+
+
+def _data_lines(ax):
+    """Return lines that carry plotted data, excluding overlay markers (axvline/axhline)."""
+    return [line for line in ax.lines if line.get_transform() == ax.transData]
+
+
+def _errorbar_containers(ax):
+    """Return ErrorbarContainer objects from the axes, if any."""
+    from matplotlib.container import ErrorbarContainer
+
+    return [c for c in ax.containers if isinstance(c, ErrorbarContainer)]
+
+
+def _detect_plot_type(ax):
+    """Classify the current axes content.
+
+    Returns one of: ``"imshow"``, ``"pcolormesh"``, ``"errorbar"``, ``"line"``, ``"empty"``.
+    """
+    if len(ax.images) > 0:
+        return "imshow"
+    if any(c.__class__.__name__ == "QuadMesh" for c in ax.collections):
+        return "pcolormesh"
+    if len(_errorbar_containers(ax)) > 0:
+        return "errorbar"
+    lines = _data_lines(ax)
+    if len(lines) == 0:
+        return "empty"
+    return "line"
+
+
+def _extract_errorbar_data(ax):
+    """Extract X, Y, Error datasets from ErrorbarContainer objects."""
+    containers = _errorbar_containers(ax)
+    datasets = []
+    for container in containers:
+        data_line = container[0]
+        x = np.array(data_line.get_xdata(), dtype=float)
+        y = np.array(data_line.get_ydata(), dtype=float)
+        # Extract error from the vertical bar LineCollection segments
+        bar_collections = container[2]
+        if bar_collections:
+            segments = bar_collections[0].get_segments()
+            error = np.array([(seg[1, 1] - seg[0, 1]) / 2.0 for seg in segments])
+        else:
+            error = np.zeros_like(y)
+        label = data_line.get_label() or f"dataset_{len(datasets)}"
+        datasets.append({"x": x, "y": y, "error": error, "label": label})
+    return {
+        "datasets": datasets,
+        "xlabel": ax.get_xlabel(),
+        "ylabel": ax.get_ylabel(),
+        "title": ax.get_title(),
+    }
+
+
+def _extract_imshow_data(ax):
+    """Extract the 2D array and extent from an imshow plot."""
+    img = ax.images[0]
+    data = np.array(img.get_array(), dtype=float)
+    extent = np.array(img.get_extent())
+    return {
+        "data": data,
+        "extent": extent,
+        "xlabel": ax.get_xlabel(),
+        "ylabel": ax.get_ylabel(),
+        "title": ax.get_title(),
+    }
+
+
+def _extract_pcolormesh_data(ax):
+    """Extract mesh coordinates and Z values from a pcolormesh (QuadMesh) plot."""
+    qm = next(c for c in ax.collections if c.__class__.__name__ == "QuadMesh")
+    coords = qm.get_coordinates()  # shape (ny+1, nx+1, 2)
+    z_data = np.array(qm.get_array(), dtype=float)
+    ny, nx = coords.shape[0] - 1, coords.shape[1] - 1
+    if z_data.ndim == 1:
+        z_data = z_data.reshape(ny, nx)
+    x_edges = coords[0, :, 0]
+    y_edges = coords[:, 0, 1]
+    x_centers = centerbins(x_edges)
+    y_centers = centerbins(y_edges)
+    return {
+        "x_edges": x_edges,
+        "y_edges": y_edges,
+        "x_centers": x_centers,
+        "y_centers": y_centers,
+        "z_data": z_data,
+        "xlabel": ax.get_xlabel(),
+        "ylabel": ax.get_ylabel(),
+        "title": ax.get_title(),
+    }
+
+
+def _extract_line_data(ax):
+    """Extract X, Y data from simple line plots (non-errorbar)."""
+    lines = _data_lines(ax)
+    datasets = []
+    for line in lines:
+        x = np.array(line.get_xdata(), dtype=float)
+        y = np.array(line.get_ydata(), dtype=float)
+        label = line.get_label() or f"dataset_{len(datasets)}"
+        datasets.append({"x": x, "y": y, "label": label})
+    return {
+        "datasets": datasets,
+        "xlabel": ax.get_xlabel(),
+        "ylabel": ax.get_ylabel(),
+        "title": ax.get_title(),
+    }
+
+
+def _save_dat(fname, extracted, plot_type):
+    """Save extracted data as ASCII table."""
+    if plot_type == "errorbar":
+        _save_dat_errorbar(fname, extracted)
+    elif plot_type == "line":
+        _save_dat_line(fname, extracted)
+    elif plot_type == "imshow":
+        _save_dat_imshow(fname, extracted)
+    elif plot_type == "pcolormesh":
+        _save_dat_pcolormesh(fname, extracted)
+    else:
+        raise ValueError(f"Cannot save plot type '{plot_type}' as .dat")
+
+
+def _save_dat_errorbar(fname, extracted):
+    with open(fname, "w") as f:
+        for i, ds in enumerate(extracted["datasets"]):
+            f.write(f"# Dataset {i}: {ds['label']}\n")
+            f.write(f"# {extracted['xlabel']}\t{extracted['ylabel']}\tError\n")
+            block = np.column_stack([ds["x"], ds["y"], ds["error"]])
+            np.savetxt(f, block, delimiter="\t")
+            if i < len(extracted["datasets"]) - 1:
+                f.write("\n\n")
+
+
+def _save_dat_line(fname, extracted):
+    with open(fname, "w") as f:
+        for i, ds in enumerate(extracted["datasets"]):
+            f.write(f"# Dataset {i}: {ds['label']}\n")
+            f.write(f"# {extracted['xlabel']}\t{extracted['ylabel']}\n")
+            block = np.column_stack([ds["x"], ds["y"]])
+            np.savetxt(f, block, delimiter="\t")
+            if i < len(extracted["datasets"]) - 1:
+                f.write("\n\n")
+
+
+def _save_dat_imshow(fname, extracted):
+    header = (
+        f"extent: xmin={extracted['extent'][0]}, xmax={extracted['extent'][1]}, "
+        f"ymin={extracted['extent'][2]}, ymax={extracted['extent'][3]}\n"
+        f"{extracted['xlabel']} vs {extracted['ylabel']}"
+    )
+    np.savetxt(fname, extracted["data"], header=header, delimiter="\t")
+
+
+def _save_dat_pcolormesh(fname, extracted):
+    header_lines = [
+        f"title: {extracted['title']}",
+        f"xlabel: {extracted['xlabel']}",
+        f"ylabel: {extracted['ylabel']}",
+        f"x_edges ({len(extracted['x_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['x_edges'])}",
+        f"y_edges ({len(extracted['y_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['y_edges'])}",
+        f"z_data shape: {extracted['z_data'].shape}",
+    ]
+    np.savetxt(fname, extracted["z_data"], header="\n".join(header_lines), delimiter="\t")
+
+
+def _save_npz(fname, extracted, plot_type):
+    """Save extracted data as a compressed numpy archive."""
+    save_dict = {"plot_type": np.array(plot_type)}
+    if plot_type in ("errorbar", "line"):
+        save_dict["n_datasets"] = np.array(len(extracted["datasets"]))
+        for i, ds in enumerate(extracted["datasets"]):
+            save_dict[f"x_{i}"] = ds["x"]
+            save_dict[f"y_{i}"] = ds["y"]
+            if "error" in ds:
+                save_dict[f"error_{i}"] = ds["error"]
+            save_dict[f"label_{i}"] = np.array(ds["label"])
+    elif plot_type == "imshow":
+        save_dict["data"] = extracted["data"]
+        save_dict["extent"] = extracted["extent"]
+    elif plot_type == "pcolormesh":
+        save_dict["x_edges"] = extracted["x_edges"]
+        save_dict["y_edges"] = extracted["y_edges"]
+        save_dict["x_centers"] = extracted["x_centers"]
+        save_dict["y_centers"] = extracted["y_centers"]
+        save_dict["z_data"] = extracted["z_data"]
+    save_dict["xlabel"] = np.array(extracted.get("xlabel", ""))
+    save_dict["ylabel"] = np.array(extracted.get("ylabel", ""))
+    save_dict["title"] = np.array(extracted.get("title", ""))
+    np.savez_compressed(fname, **save_dict)
+
+
+def _save_pkl(fname, figure, extracted, plot_type):
+    """Save figure and extracted data as a pickle file."""
+    payload = {
+        "figure": figure,
+        "plot_type": plot_type,
+        "data": extracted,
+    }
+    with open(fname, "wb") as f:
+        pickle.dump(payload, f, protocol=4)
+
 
 class NavigationToolbar(NavigationToolbar2QT):
     """A small change to the original navigation toolbar."""
@@ -79,7 +284,7 @@ class NavigationToolbar(NavigationToolbar2QT):
         icon = getIcon("saveData.png")
         self.addSeparator()
         a = self.addAction(icon, "SaveData", self.save_data)
-        a.setToolTip("Save XYE data to file")
+        a.setToolTip("Save plot data to file")
 
         # Add the x,y location widget at the right side of the toolbar
         # The stretch factor is 1 which means any resizing of the toolbar
@@ -155,75 +360,56 @@ class NavigationToolbar(NavigationToolbar2QT):
                 )
 
     def save_data(self):
-        import wat
-
+        """Save the current plot data to file (.dat, .npz, or .pkl)."""
         ax = self.canvas.ax
-
-        #logging.debug(f'self.canvas={wat / self.canvas}')
-        #logging.debug(f'ax={wat / ax}')
-        logging.debug(f'ax.figure={wat / ax.figure}')
-
         try:
-            file_save_prompt = "Choose a filename to save to"
-            selector = np.mod(len(ax.lines), 3)
-            if hasattr(ax, "get_array") == False:
-                if selector == 1:
-                    file_save_prompt = "Choose an .npz filename to save to (selector=1)"
-                    logging.debug(f'selector=1, len(ax.lines)={len(ax.lines)}')
-                    data_to_save = ax.lines[0]
-                elif selector == 0:
-                    # these are 1D plots (but 2D plots on TABs also go thru here)
-                    logging.debug(f'selector=0, len(ax.lines)={len(ax.lines)}')
-                    data_to_save = np.empty((0, 3), float)
-                    column_headers = ''
-                    for i in range(0, int(len(ax.lines)), 3):
-                        xdata_from_plot = ax.lines[i].get_xdata()
-                        ydata_from_plot = ax.lines[i].get_ydata()
-                        err_from_plot = (ax.lines[i + 2].get_ydata() - ax.lines[i + 1].get_ydata()) / 2.0
-                        column_headers += f'X{i}, Y{i}, E{i}, '
-                        data_to_save = np.append(
-                            data_to_save, np.array([xdata_from_plot, ydata_from_plot, err_from_plot]).transpose(), axis=0
-                        )
-                else:
-                    # TODO: log a debug and give the user a simpler message
-                    raise Exception(f"Unable to handle selector={selector}; only 0,1 are coded")
-            else:
-                #data_to_save = np.empty((0, 3), float)
-                #data_to_save = np.append(
-                #    centerbins(ax.get_coordinates()[0,:,0]),    # X
-                #    centerbins(ax.get_coordinates()[:,0,1]),    # Y
-                #    ax.get_array().data.reshape(                # E
-                #        (ax.get_coordinates().shape[0]-1, ax.get_coordinates().shape[1]-1)
-                #    )
-                #)
-                file_save_prompt = "Choose an .npz filename to save to"
-                logging.debug(f'ax.get_array=True, len(ax.lines)={len(ax.lines)}')
-                data_to_save = ax.get_array()
+            plot_type = _detect_plot_type(ax)
+            if plot_type == "empty":
+                raise ValueError("No data to save: the plot is empty.")
 
-            fname = QtWidgets.QFileDialog.getSaveFileName(self, file_save_prompt)
-            if type(fname[0]) == str:
-                if fname[0].endswith('.npz'):
-                    logging.debug(f'saving {fname[0]} with ax, data_to_save, canvas_figure, ax_figure, ax_lines')
-                    np.savez_compressed(fname[0], ax=ax, data_to_save=data_to_save, canvas_figure=self.canvas.figure, ax_figure=ax.figure, ax_lines=ax.lines)
-                elif fname[0].endswith('.pkl'):
-                    import pickle
-                    # Source - https://stackoverflow.com/a/37460048
-                    # Posted by gerrit, modified by community. See post 'Timeline' for change history
-                    # Retrieved 2026-02-21, License - CC BY-SA 3.0
-                    logging.debug(f'saving {fname[0]} with ax, data_to_save, canvas_figure')
-                    with open(fname[0], "wb") as fp:
-                        pickle.dump((ax, data_to_save, self.canvas.figure), fp, protocol=4)
-                elif selector == 0:
-                    np.savetxt(fname[0], data_to_save, header=column_headers)
+            extractor = {
+                "errorbar": _extract_errorbar_data,
+                "imshow": _extract_imshow_data,
+                "pcolormesh": _extract_pcolormesh_data,
+                "line": _extract_line_data,
+            }
+            extracted = extractor[plot_type](ax)
+
+            filters = "ASCII data (*.dat);;Numpy archive (*.npz);;Pickle (*.pkl)"
+            fname, selected_filter = QtWidgets.QFileDialog.getSaveFileName(self, "Save plot data", "", filters)
+            if not fname:
+                return
+
+            _, ext = os.path.splitext(fname)
+            ext = ext.lower()
+            if ext not in (".dat", ".npz", ".pkl"):
+                for candidate in (".dat", ".npz", ".pkl"):
+                    if f"*{candidate}" in selected_filter:
+                        fname += candidate
+                        ext = candidate
+                        break
                 else:
-                    raise Exception(f"Unsupported extension {fname[0].split('.')[-1]}")
-            else:
-                raise Exception(f"Unexpected type {type(fname[0])} from dialog box")
+                    raise ValueError(f"Unknown file format: {ext or '(none)'}")
+
+            if ext == ".dat":
+                _save_dat(fname, extracted, plot_type)
+            elif ext == ".npz":
+                _save_npz(fname, extracted, plot_type)
+            elif ext == ".pkl":
+                _save_pkl(fname, self.canvas.figure, extracted, plot_type)
+
+            logging.info(f"Saved {plot_type} data to {fname}")
 
         except Exception as e:
+            logging.error(f"Error saving data: {e}")
             QtWidgets.QMessageBox.critical(
-                self, "Error saving file", str(e), QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.NoButton
+                self,
+                "Error saving data",
+                str(e),
+                QtWidgets.QMessageBox.Ok,
+                QtWidgets.QMessageBox.NoButton,
             )
+
 
 class NavigationToolbarGeneric(NavigationToolbar):
     """A navigation toolbar for a generic plot."""

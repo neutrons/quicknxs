@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
@@ -5,7 +7,13 @@ from numpy.testing import assert_allclose
 from PyQt5 import QtWidgets
 
 from quicknxs.interfaces.main_window import MainWindow
-from quicknxs.ui.mplwidget import NavigationToolbar, NavigationToolbarGeneric, NavigationToolbarReflectivity
+from quicknxs.ui.mplwidget import (
+    MPLWidget,
+    NavigationToolbar,
+    NavigationToolbarGeneric,
+    NavigationToolbarReflectivity,
+    _detect_plot_type,
+)
 
 
 def _refl_data():
@@ -128,3 +136,184 @@ class TestNavigationToolbar:
         # check that the plot data has been scaled by Q^4
         _compare_lines_data(lines, gold_data, is_q4_plot=True)
         _compare_error_bar_data(collections, gold_data, is_q4_plot=True)
+
+
+class TestSaveData:
+    """Test save_data() across all plot types and output formats."""
+
+    # -- helpers --
+
+    @staticmethod
+    def _make_widget(qtbot):
+        w = MPLWidget()
+        qtbot.addWidget(w)
+        return w
+
+    @staticmethod
+    def _mock_dialog(monkeypatch, path, filter_str="ASCII data (*.dat)"):
+        monkeypatch.setattr(
+            QtWidgets.QFileDialog,
+            "getSaveFileName",
+            staticmethod(lambda *_a, **_kw: (path, filter_str)),
+        )
+
+    # -- plot type detection --
+
+    def test_detect_empty(self, qtbot):
+        w = self._make_widget(qtbot)
+        assert _detect_plot_type(w.canvas.ax) == "empty"
+
+    def test_detect_errorbar(self, qtbot):
+        w = self._make_widget(qtbot)
+        w.errorbar([1, 2], [3, 4], yerr=[0.1, 0.2])
+        assert _detect_plot_type(w.canvas.ax) == "errorbar"
+
+    def test_detect_imshow(self, qtbot):
+        w = self._make_widget(qtbot)
+        w.imshow(np.ones((5, 5)), extent=[0, 1, 0, 1])
+        assert _detect_plot_type(w.canvas.ax) == "imshow"
+
+    def test_detect_pcolormesh(self, qtbot):
+        w = self._make_widget(qtbot)
+        x = np.arange(4)
+        y = np.arange(3)
+        z = np.ones((2, 3))
+        w.pcolormesh(x, y, z)
+        assert _detect_plot_type(w.canvas.ax) == "pcolormesh"
+
+    def test_detect_line(self, qtbot):
+        w = self._make_widget(qtbot)
+        w.plot([1, 2, 3], [4, 5, 6])
+        assert _detect_plot_type(w.canvas.ax) == "line"
+
+    def test_detect_imshow_with_overlays(self, qtbot):
+        w = self._make_widget(qtbot)
+        w.imshow(np.ones((5, 5)), extent=[0, 1, 0, 1])
+        w.canvas.ax.axvline(0.5, color="red")
+        w.canvas.ax.axhline(0.5, color="green")
+        assert _detect_plot_type(w.canvas.ax) == "imshow"
+
+    # -- errorbar saves --
+
+    def test_save_errorbar_dat(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        x = np.array([1.0, 2.0, 3.0])
+        y = np.array([10.0, 20.0, 30.0])
+        e = np.array([0.5, 1.0, 1.5])
+        w.errorbar(x, y, yerr=e)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        loaded = np.loadtxt(out)
+        assert_allclose(loaded[:, 0], x)
+        assert_allclose(loaded[:, 1], y)
+        assert_allclose(loaded[:, 2], e)
+
+    def test_save_errorbar_npz(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        x = np.array([1.0, 2.0])
+        y = np.array([10.0, 20.0])
+        e = np.array([0.5, 1.0])
+        w.errorbar(x, y, yerr=e)
+        out = str(tmp_path / "test.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        data = np.load(out, allow_pickle=True)
+        assert str(data["plot_type"]) == "errorbar"
+        assert_allclose(data["x_0"], x)
+        assert_allclose(data["y_0"], y)
+        assert_allclose(data["error_0"], e)
+
+    def test_save_errorbar_pkl(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        w.errorbar([1, 2], [3, 4], yerr=[0.1, 0.2])
+        out = str(tmp_path / "test.pkl")
+        self._mock_dialog(monkeypatch, out, "Pickle (*.pkl)")
+        w.toolbar.save_data()
+        with open(out, "rb") as f:
+            payload = pickle.load(f)
+        assert payload["plot_type"] == "errorbar"
+        assert "figure" in payload
+        assert len(payload["data"]["datasets"]) == 1
+
+    # -- imshow saves --
+
+    def test_save_imshow_dat(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        arr = np.array([[1.0, 2.0], [3.0, 4.0]])
+        w.imshow(arr, extent=[0, 1, 0, 1], update=False)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        loaded = np.loadtxt(out)
+        assert_allclose(loaded, arr)
+
+    def test_save_imshow_npz(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        arr = np.array([[1.0, 2.0], [3.0, 4.0]])
+        w.imshow(arr, extent=[0, 10, 0, 20], update=False)
+        out = str(tmp_path / "test.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        data = np.load(out)
+        assert str(data["plot_type"]) == "imshow"
+        assert_allclose(data["extent"], [0, 10, 0, 20])
+
+    # -- pcolormesh saves --
+
+    def test_save_pcolormesh_npz(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        x_edges = np.array([0.0, 1.0, 2.0, 3.0])
+        y_edges = np.array([0.0, 1.0, 2.0])
+        z = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        w.pcolormesh(x_edges, y_edges, z)
+        out = str(tmp_path / "test.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        data = np.load(out)
+        assert str(data["plot_type"]) == "pcolormesh"
+        assert_allclose(data["z_data"], z)
+        assert len(data["x_edges"]) == len(x_edges)
+        assert len(data["y_edges"]) == len(y_edges)
+
+    # -- line saves --
+
+    def test_save_line_dat(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        x = np.array([1.0, 2.0, 3.0])
+        y = np.array([4.0, 5.0, 6.0])
+        w.plot(x, y)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        loaded = np.loadtxt(out)
+        assert_allclose(loaded[:, 0], x)
+        assert_allclose(loaded[:, 1], y)
+
+    # -- error handling --
+
+    def test_save_empty_plot_shows_error(self, qtbot, monkeypatch):
+        w = self._make_widget(qtbot)
+        errors = []
+        monkeypatch.setattr(
+            QtWidgets.QMessageBox,
+            "critical",
+            staticmethod(lambda *_a, **_kw: errors.append(_a)),
+        )
+        w.toolbar.save_data()
+        assert len(errors) == 1
+        assert "empty" in errors[0][2].lower()
+
+    # -- overlay filtering --
+
+    def test_save_imshow_with_overlays_npz(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        arr = np.array([[10.0, 20.0], [30.0, 40.0]])
+        w.imshow(arr, extent=[0, 1, 0, 1], update=False)
+        w.canvas.ax.axvline(0.5, color="red")
+        w.canvas.ax.axhline(0.5, color="green")
+        out = str(tmp_path / "test.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        data = np.load(out)
+        assert str(data["plot_type"]) == "imshow"

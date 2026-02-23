@@ -373,7 +373,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b5/1b/4590db9caa8db3d5a3fe31197c4e42c15aab3643b549ef6a454525fa3a61/regex-2026.2.19-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/1a/75/9f020e662bfe50213dfb81f42afc0a02be3dcb566e6212288ba3da3d031a/sphinx_qt_documentation-0.4.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d2/b8/f0b9b880c03a3db8eaff63d76ca751ac7d8e45483fb7a0bb9f8e5c6ce433/toml_cli-0.8.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/b1/02/5dbdecc50207c884a70e6f2f561d4c53fb353d755b12c049ad15cc905bc0/wat-0.7.0-py3-none-any.whl
       - pypi: ./
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -4175,12 +4174,9 @@ packages:
   timestamp: 1743692373820
 - pypi: ./
   name: quicknxs
-  version: 4.15.0rc4
-  sha256: 5084edc0cb77e9978e7b20d2532d4bcdaafd614178da2051d339e9e6beabef3b
-  requires_dist:
-  - wat>=0.7.0,<0.8
+  version: 4.16.0.dev8
+  sha256: 26dc20594c3c23685dbefb1f0483f07b79bf08ea42e34b16421eaa8d64481117
   requires_python: '>=3.10,<3.13'
-  editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/rapidjson-1.1.0.post20240409-h3f2d84a_2.conda
   sha256: f87f265263a1ddbc50b98e2c2bcaa2bac63da3acc09267815dd0f4bd614cd902
   md5: 65e2f30d532b4ae2063a424c185cc678
@@ -4965,11 +4961,6 @@ packages:
   - pkg:pypi/virtualenv?source=hash-mapping
   size: 4404318
   timestamp: 1768069793682
-- pypi: https://files.pythonhosted.org/packages/b1/02/5dbdecc50207c884a70e6f2f561d4c53fb353d755b12c049ad15cc905bc0/wat-0.7.0-py3-none-any.whl
-  name: wat
-  version: 0.7.0
-  sha256: 4d7d1a3030111899d04c230372a631d61d7a290f255e21d3c27d1dc0e32a6cef
-  requires_python: '>=3.8'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/wayland-1.24.0-hd6090a7_1.conda
   sha256: 3aa04ae8e9521d9b56b562376d944c3e52b69f9d2a0667f77b8953464822e125
   md5: 035da2e4f5770f036ff704fa17aace24
