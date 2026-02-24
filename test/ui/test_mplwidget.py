@@ -259,9 +259,9 @@ class TestSaveData:
         assert str(data["plot_type"]) == "imshow"
         assert_allclose(data["extent"], [0, 10, 0, 20])
 
-    # -- pcolormesh saves --
+    # -- pcolormesh saves (flat shading, 1D edge arrays) --
 
-    def test_save_pcolormesh_dat(self, qtbot, tmp_path, monkeypatch):
+    def test_save_pcolormesh_flat_dat(self, qtbot, tmp_path, monkeypatch):
         w = self._make_widget(qtbot)
         x_edges = np.array([0.0, 1.0, 2.0, 3.0])
         y_edges = np.array([0.0, 1.0, 2.0])
@@ -270,22 +270,17 @@ class TestSaveData:
         out = str(tmp_path / "test.dat")
         self._mock_dialog(monkeypatch, out)
         w.toolbar.save_data()
-        # Read back as gnuplot xyz: x_centers=[0.5,1.5,2.5], y_centers=[0.5,1.5]
-        # Expect 3 blocks (one per x) x 2 rows (one per y) = 6 data lines
         text = open(out).read()
-        blocks = text.split("\n\n")
-        assert len(blocks) == 3  # 3 x-blocks separated by blank lines
-        # Parse all data lines (skip comments)
+        assert "shading: flat" in text
         rows = np.loadtxt(out)
         assert rows.shape == (6, 3)
-        # First block: x=0.5, y=[0.5,1.5], z=column 0 of z (z[0,0]=1, z[1,0]=4)
+        # x_centers=[0.5,1.5,2.5], y_centers=[0.5,1.5]
         assert_allclose(rows[0], [0.5, 0.5, 1.0])
         assert_allclose(rows[1], [0.5, 1.5, 4.0])
-        # Last block: x=2.5, y=[0.5,1.5], z=column 2 of z (z[0,2]=3, z[1,2]=6)
         assert_allclose(rows[4], [2.5, 0.5, 3.0])
         assert_allclose(rows[5], [2.5, 1.5, 6.0])
 
-    def test_save_pcolormesh_npz(self, qtbot, tmp_path, monkeypatch):
+    def test_save_pcolormesh_flat_npz(self, qtbot, tmp_path, monkeypatch):
         w = self._make_widget(qtbot)
         x_edges = np.array([0.0, 1.0, 2.0, 3.0])
         y_edges = np.array([0.0, 1.0, 2.0])
@@ -296,9 +291,57 @@ class TestSaveData:
         w.toolbar.save_data()
         data = np.load(out)
         assert str(data["plot_type"]) == "pcolormesh"
+        assert str(data["shading"]) == "flat"
         assert_allclose(data["z_data"], z)
         assert len(data["x_edges"]) == len(x_edges)
         assert len(data["y_edges"]) == len(y_edges)
+
+    # -- pcolormesh saves (gouraud shading, 2D node grids) --
+
+    def test_detect_pcolormesh_gouraud(self, qtbot):
+        w = self._make_widget(qtbot)
+        x2d = np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]], dtype=float)
+        y2d = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]], dtype=float)
+        z2d = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
+        w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
+        assert _detect_plot_type(w.canvas.ax) == "pcolormesh"
+
+    def test_save_pcolormesh_gouraud_dat(self, qtbot, tmp_path, monkeypatch):
+        """Gouraud xyz output must have ALL z_data points (no data loss)."""
+        w = self._make_widget(qtbot)
+        x2d = np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]], dtype=float)
+        y2d = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]], dtype=float)
+        z2d = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
+        w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "shading: gouraud" in text
+        rows = np.loadtxt(out)
+        # 3 x-nodes × 3 y-nodes = 9 data lines
+        assert rows.shape == (9, 3)
+        # Node positions used directly (not centerbins)
+        assert_allclose(rows[0], [0.0, 0.0, 1.0])
+        assert_allclose(rows[1], [0.0, 1.0, 4.0])
+        assert_allclose(rows[2], [0.0, 2.0, 7.0])
+        assert_allclose(rows[8], [2.0, 2.0, 9.0])
+
+    def test_save_pcolormesh_gouraud_npz(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        x2d = np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]], dtype=float)
+        y2d = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]], dtype=float)
+        z2d = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
+        w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
+        out = str(tmp_path / "test.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        data = np.load(out)
+        assert str(data["plot_type"]) == "pcolormesh"
+        assert str(data["shading"]) == "gouraud"
+        assert_allclose(data["z_data"], z2d)
+        assert_allclose(data["x_nodes"], [0, 1, 2])
+        assert_allclose(data["y_nodes"], [0, 1, 2])
 
     # -- line saves --
 
@@ -341,3 +384,154 @@ class TestSaveData:
         w.toolbar.save_data()
         data = np.load(out)
         assert str(data["plot_type"]) == "imshow"
+
+    # -- imshow origin --
+
+    def test_save_imshow_origin_lower(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        arr = np.array([[1.0, 2.0], [3.0, 4.0]])
+        w.imshow(arr, extent=[0, 10, 0, 20], origin="lower", update=False)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "origin: lower" in text
+
+    def test_save_imshow_origin_upper(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        arr = np.array([[1.0, 2.0], [3.0, 4.0]])
+        w.imshow(arr, extent=[0, 10, 0, 20], origin="upper", update=False)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "origin: upper" in text
+
+    def test_save_imshow_origin_npz(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        arr = np.array([[1.0, 2.0], [3.0, 4.0]])
+        w.imshow(arr, extent=[0, 10, 0, 20], origin="lower", update=False)
+        out = str(tmp_path / "test.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        data = np.load(out, allow_pickle=True)
+        assert str(data["origin"]) == "lower"
+
+    # -- round-trip tests --
+
+    def test_roundtrip_errorbar_dat(self, qtbot, tmp_path, monkeypatch):
+        """Write errorbar .dat, read back, verify X/Y/E match."""
+        w = self._make_widget(qtbot)
+        x = np.array([1.0, 2.0, 3.0])
+        y = np.array([10.0, 20.0, 30.0])
+        e = np.array([0.5, 1.0, 1.5])
+        w.errorbar(x, y, yerr=e)
+        out = str(tmp_path / "rt.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        loaded = np.loadtxt(out)
+        assert_allclose(loaded[:, 0], x)
+        assert_allclose(loaded[:, 1], y)
+        assert_allclose(loaded[:, 2], e)
+
+    def test_roundtrip_line_dat(self, qtbot, tmp_path, monkeypatch):
+        """Write line .dat, read back, verify X/Y match."""
+        w = self._make_widget(qtbot)
+        x = np.array([0.5, 1.5, 2.5, 3.5])
+        y = np.array([10.0, 20.0, 15.0, 25.0])
+        w.plot(x, y)
+        out = str(tmp_path / "rt.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        loaded = np.loadtxt(out)
+        assert_allclose(loaded[:, 0], x)
+        assert_allclose(loaded[:, 1], y)
+
+    def test_roundtrip_imshow_dat(self, qtbot, tmp_path, monkeypatch):
+        """Write imshow .dat, read back with extent+origin, verify array."""
+        w = self._make_widget(qtbot)
+        arr = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        extent = [0, 30, 0, 20]
+        w.imshow(arr, extent=extent, origin="lower", update=False)
+        out = str(tmp_path / "rt.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        # Read back and verify
+        loaded = np.loadtxt(out)
+        assert_allclose(loaded, arr)
+        text = open(out).read()
+        assert "origin: lower" in text
+        assert "xmin=0" in text
+        assert "xmax=30" in text
+
+    def test_roundtrip_pcolormesh_flat_dat(self, qtbot, tmp_path, monkeypatch):
+        """Write flat pcolormesh .dat, read back as xyz, reconstruct z grid."""
+        w = self._make_widget(qtbot)
+        x_edges = np.array([0.0, 1.0, 2.0, 3.0])
+        y_edges = np.array([0.0, 1.0, 2.0])
+        z = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        w.pcolormesh(x_edges, y_edges, z)
+        out = str(tmp_path / "rt.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        rows = np.loadtxt(out)
+        xs = np.unique(rows[:, 0])
+        ys = np.unique(rows[:, 1])
+        z_rt = rows[:, 2].reshape(len(xs), len(ys)).T
+        assert_allclose(z_rt, z)
+
+    def test_roundtrip_pcolormesh_gouraud_dat(self, qtbot, tmp_path, monkeypatch):
+        """Write gouraud pcolormesh .dat, read back, reconstruct z grid."""
+        w = self._make_widget(qtbot)
+        x2d = np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]], dtype=float)
+        y2d = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]], dtype=float)
+        z2d = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
+        w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
+        out = str(tmp_path / "rt.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        rows = np.loadtxt(out)
+        xs = np.unique(rows[:, 0])
+        ys = np.unique(rows[:, 1])
+        z_rt = rows[:, 2].reshape(len(xs), len(ys)).T
+        assert_allclose(z_rt, z2d)
+
+    def test_roundtrip_all_npz(self, qtbot, tmp_path, monkeypatch):
+        """Verify .npz round-trip for all plot types."""
+        # errorbar
+        w = self._make_widget(qtbot)
+        w.errorbar([1, 2], [3, 4], yerr=[0.1, 0.2])
+        out = str(tmp_path / "eb.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        d = np.load(out, allow_pickle=True)
+        assert str(d["plot_type"]) == "errorbar"
+        assert_allclose(d["x_0"], [1, 2])
+
+        # imshow
+        w2 = self._make_widget(qtbot)
+        arr = np.array([[5.0, 6.0], [7.0, 8.0]])
+        w2.imshow(arr, extent=[0, 1, 0, 1], origin="lower", update=False)
+        out2 = str(tmp_path / "im.npz")
+        self._mock_dialog(monkeypatch, out2, "Numpy archive (*.npz)")
+        w2.toolbar.save_data()
+        d2 = np.load(out2, allow_pickle=True)
+        assert str(d2["plot_type"]) == "imshow"
+        assert str(d2["origin"]) == "lower"
+        assert_allclose(d2["data"], arr)
+
+        # pcolormesh gouraud
+        w3 = self._make_widget(qtbot)
+        x2d = np.array([[0, 1], [0, 1]], dtype=float)
+        y2d = np.array([[0, 0], [1, 1]], dtype=float)
+        z2d = np.array([[10, 20], [30, 40]], dtype=float)
+        w3.pcolormesh(x2d, y2d, z2d, shading="gouraud")
+        out3 = str(tmp_path / "pm.npz")
+        self._mock_dialog(monkeypatch, out3, "Numpy archive (*.npz)")
+        w3.toolbar.save_data()
+        d3 = np.load(out3)
+        assert str(d3["plot_type"]) == "pcolormesh"
+        assert str(d3["shading"]) == "gouraud"
+        assert_allclose(d3["z_data"], z2d)
+        assert_allclose(d3["x_nodes"], [0, 1])
+        assert_allclose(d3["y_nodes"], [0, 1])

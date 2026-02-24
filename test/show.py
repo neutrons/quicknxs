@@ -4,10 +4,11 @@
 Usage:
     python show.py [path-to-file]
 
-Supports .dat (gnuplot xyz for pcolormesh, columnar for others),
+Supports .dat (gnuplot xyz for pcolormesh, imshow 2D array, columnar for others),
 .npz (compressed numpy archive), and .pkl (pickle with full figure).
 """
 
+import re
 import sys
 
 import matplotlib.pyplot as plt
@@ -27,29 +28,91 @@ def show_figure(fig):
     plt.show()
 
 
+def _parse_dat_header(text):
+    """Extract metadata from # comment lines in a .dat file."""
+    meta = {}
+    for line in text.splitlines():
+        if not line.startswith("#"):
+            break
+        content = line.lstrip("# ").strip()
+        # extent line
+        m = re.match(
+            r"extent: xmin=([\d.e+-]+), xmax=([\d.e+-]+), "
+            r"ymin=([\d.e+-]+), ymax=([\d.e+-]+)",
+            content,
+        )
+        if m:
+            meta["extent"] = [float(m.group(i)) for i in range(1, 5)]
+        # origin line
+        m = re.match(r"origin: (\w+)", content)
+        if m:
+            meta["origin"] = m.group(1)
+        # shading line
+        m = re.match(r"shading: (\w+)", content)
+        if m:
+            meta["shading"] = m.group(1)
+        # xlabel / ylabel
+        m = re.match(r"xlabel: (.+)", content)
+        if m:
+            meta["xlabel"] = m.group(1)
+        m = re.match(r"ylabel: (.+)", content)
+        if m:
+            meta["ylabel"] = m.group(1)
+        m = re.match(r"title: (.+)", content)
+        if m:
+            meta["title"] = m.group(1)
+    return meta
+
+
 if filename.endswith(".dat"):
-    # Detect gnuplot xyz format (pcolormesh) vs columnar (errorbar/line/imshow)
-    raw = np.loadtxt(filename)
     text = open(filename).read()
-    blocks = [b.strip() for b in text.split("\n\n") if b.strip() and not b.strip().startswith("#")]
-    if raw.shape[1] == 3 and len(blocks) > 1:
-        # Gnuplot xyz: reconstruct 2D grid
-        xs = np.unique(raw[:, 0])
-        ys = np.unique(raw[:, 1])
-        z = raw[:, 2].reshape(len(xs), len(ys)).T
-        print(f"Pcolormesh .dat: {len(xs)} x-centers, {len(ys)} y-centers, z shape {z.shape}")
+    meta = _parse_dat_header(text)
+    raw = np.loadtxt(filename)
+
+    if "extent" in meta:
+        # Imshow format: 2D array with extent header
+        extent = meta["extent"]
+        origin = meta.get("origin", "upper")
+        print(f"Imshow .dat: shape {raw.shape}, extent {extent}, origin {origin}")
         fig, ax = plt.subplots()
-        ax.pcolormesh(xs, ys, z)
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
+        ax.imshow(raw, extent=extent, origin=origin, aspect="auto")
+        ax.set_xlabel(meta.get("xlabel", ""))
+        ax.set_ylabel(meta.get("ylabel", ""))
+        ax.set_title(meta.get("title", ""))
         plt.show()
-    else:
-        print(f"Columnar .dat: shape {raw.shape}")
-        fig, ax = plt.subplots()
-        if raw.shape[1] >= 3:
-            ax.errorbar(raw[:, 0], raw[:, 1], yerr=raw[:, 2], fmt="o")
+
+    elif raw.ndim == 2 and raw.shape[1] == 3:
+        # Check for gnuplot xyz blocks (blank-line separated)
+        data_text = "\n".join(l for l in text.splitlines() if not l.startswith("#"))
+        blocks = [b.strip() for b in data_text.split("\n\n") if b.strip()]
+        if len(blocks) > 1:
+            # Gnuplot xyz: reconstruct pcolormesh
+            shading = meta.get("shading", "flat")
+            xs = np.unique(raw[:, 0])
+            ys = np.unique(raw[:, 1])
+            z = raw[:, 2].reshape(len(xs), len(ys)).T
+            print(f"Pcolormesh .dat ({shading}): {len(xs)} x-vals, {len(ys)} y-vals, z shape {z.shape}")
+            fig, ax = plt.subplots()
+            if shading == "gouraud":
+                X, Y = np.meshgrid(xs, ys)
+                ax.pcolormesh(X, Y, z, shading="gouraud")
+            else:
+                ax.pcolormesh(xs, ys, z)
+            ax.set_xlabel(meta.get("xlabel", "X"))
+            ax.set_ylabel(meta.get("ylabel", "Y"))
+            ax.set_title(meta.get("title", ""))
+            plt.show()
         else:
-            ax.plot(raw[:, 0], raw[:, 1])
+            # 3-column errorbar data
+            print(f"Errorbar .dat: {raw.shape[0]} points")
+            fig, ax = plt.subplots()
+            ax.errorbar(raw[:, 0], raw[:, 1], yerr=raw[:, 2], fmt="o")
+            plt.show()
+    else:
+        # 2-column line data
+        print(f"Line .dat: shape {raw.shape}")
+        fig, ax = plt.subplots()
+        ax.plot(raw[:, 0], raw[:, 1])
         plt.show()
 
 elif filename.endswith(".npz"):
@@ -58,15 +121,41 @@ elif filename.endswith(".npz"):
     plot_type = str(npz.get("plot_type", "unknown"))
     print(f"Plot type: {plot_type}")
 
+    fig, ax = plt.subplots()
+
     if plot_type in ("errorbar", "line"):
         n = int(npz["n_datasets"])
         for i in range(n):
-            print(f"  Dataset {i}: x={npz[f'x_{i}'].shape}, y={npz[f'y_{i}'].shape}")
+            x, y = npz[f"x_{i}"], npz[f"y_{i}"]
+            label = str(npz.get(f"label_{i}", f"dataset_{i}"))
+            if f"error_{i}" in npz:
+                ax.errorbar(x, y, yerr=npz[f"error_{i}"], fmt="o", label=label)
+            else:
+                ax.plot(x, y, label=label)
+            print(f"  Dataset {i} ({label}): x={x.shape}, y={y.shape}")
+        ax.legend()
+
     elif plot_type == "imshow":
-        print(f"  data shape: {npz['data'].shape}, extent: {npz['extent']}")
+        origin = str(npz.get("origin", "upper"))
+        ax.imshow(npz["data"], extent=npz["extent"], origin=origin, aspect="auto")
+        print(f"  data shape: {npz['data'].shape}, extent: {npz['extent']}, origin: {origin}")
+
     elif plot_type == "pcolormesh":
-        print(f"  z_data shape: {npz['z_data'].shape}")
-        print(f"  x_edges: {npz['x_edges'].shape}, y_edges: {npz['y_edges'].shape}")
+        shading = str(npz.get("shading", "flat"))
+        z = npz["z_data"]
+        if shading == "gouraud":
+            X, Y = np.meshgrid(npz["x_nodes"], npz["y_nodes"])
+            ax.pcolormesh(X, Y, z, shading="gouraud")
+            print(f"  gouraud: x_nodes={npz['x_nodes'].shape}, y_nodes={npz['y_nodes'].shape}")
+        else:
+            ax.pcolormesh(npz["x_edges"], npz["y_edges"], z)
+            print(f"  flat: x_edges={npz['x_edges'].shape}, y_edges={npz['y_edges'].shape}")
+        print(f"  z_data shape: {z.shape}")
+
+    ax.set_xlabel(str(npz.get("xlabel", "")))
+    ax.set_ylabel(str(npz.get("ylabel", "")))
+    ax.set_title(str(npz.get("title", "")))
+    plt.show()
 
 else:
     import pickle

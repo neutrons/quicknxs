@@ -112,13 +112,14 @@ def _extract_errorbar_data(ax):
 
 
 def _extract_imshow_data(ax):
-    """Extract the 2D array and extent from an imshow plot."""
+    """Extract the 2D array, extent, and origin from an imshow plot."""
     img = ax.images[0]
     data = np.array(img.get_array(), dtype=float)
     extent = np.array(img.get_extent())
     return {
         "data": data,
         "extent": extent,
+        "origin": img.origin,
         "xlabel": ax.get_xlabel(),
         "ylabel": ax.get_ylabel(),
         "title": ax.get_title(),
@@ -126,27 +127,49 @@ def _extract_imshow_data(ax):
 
 
 def _extract_pcolormesh_data(ax):
-    """Extract mesh coordinates and Z values from a pcolormesh (QuadMesh) plot."""
+    """Extract mesh coordinates and Z values from a pcolormesh (QuadMesh) plot.
+
+    Handles both flat shading (1D edge arrays, z is one smaller per dim) and
+    gouraud shading (2D node grids, z matches coordinate dims).
+    """
     qm = next(c for c in ax.collections if c.__class__.__name__ == "QuadMesh")
-    coords = qm.get_coordinates()  # shape (ny+1, nx+1, 2)
+    coords = qm.get_coordinates()  # (ny_coords, nx_coords, 2)
     z_data = np.array(qm.get_array(), dtype=float)
-    ny, nx = coords.shape[0] - 1, coords.shape[1] - 1
-    if z_data.ndim == 1:
-        z_data = z_data.reshape(ny, nx)
-    x_edges = coords[0, :, 0]
-    y_edges = coords[:, 0, 1]
-    x_centers = centerbins(x_edges)
-    y_centers = centerbins(y_edges)
-    return {
-        "x_edges": x_edges,
-        "y_edges": y_edges,
-        "x_centers": x_centers,
-        "y_centers": y_centers,
-        "z_data": z_data,
-        "xlabel": ax.get_xlabel(),
-        "ylabel": ax.get_ylabel(),
-        "title": ax.get_title(),
-    }
+
+    x_coords_1d = coords[0, :, 0]
+    y_coords_1d = coords[:, 0, 1]
+
+    # Detect gouraud vs flat: gouraud z matches coords shape, flat z is one smaller per dim
+    is_gouraud = z_data.shape == (coords.shape[0], coords.shape[1])
+
+    if is_gouraud:
+        result = {
+            "x_nodes": x_coords_1d,
+            "y_nodes": y_coords_1d,
+            "z_data": z_data,
+            "shading": "gouraud",
+        }
+    else:
+        ny, nx = coords.shape[0] - 1, coords.shape[1] - 1
+        if z_data.ndim == 1:
+            z_data = z_data.reshape(ny, nx)
+        result = {
+            "x_edges": x_coords_1d,
+            "y_edges": y_coords_1d,
+            "x_centers": centerbins(x_coords_1d),
+            "y_centers": centerbins(y_coords_1d),
+            "z_data": z_data,
+            "shading": "flat",
+        }
+
+    result.update(
+        {
+            "xlabel": ax.get_xlabel(),
+            "ylabel": ax.get_ylabel(),
+            "title": ax.get_title(),
+        }
+    )
+    return result
 
 
 def _extract_line_data(ax):
@@ -206,6 +229,7 @@ def _save_dat_imshow(fname, extracted):
     header = (
         f"extent: xmin={extracted['extent'][0]}, xmax={extracted['extent'][1]}, "
         f"ymin={extracted['extent'][2]}, ymax={extracted['extent'][3]}\n"
+        f"origin: {extracted['origin']}\n"
         f"{extracted['xlabel']} vs {extracted['ylabel']}"
     )
     np.savetxt(fname, extracted["data"], header=header, delimiter="\t")
@@ -215,22 +239,32 @@ def _save_dat_pcolormesh(fname, extracted):
     """Save pcolormesh data in gnuplot splot xyz format.
 
     Each row is ``x y z``.  Blank lines separate blocks where the x value changes.
+    Handles both gouraud (node positions) and flat (bin-center) coordinate types.
     """
-    x_centers = extracted["x_centers"]
-    y_centers = extracted["y_centers"]
     z_data = extracted["z_data"]
+    shading = extracted.get("shading", "flat")
+
+    if shading == "gouraud":
+        x_vals = extracted["x_nodes"]
+        y_vals = extracted["y_nodes"]
+    else:
+        x_vals = extracted["x_centers"]
+        y_vals = extracted["y_centers"]
+
     with open(fname, "w") as f:
         f.write(f"# title: {extracted['title']}\n")
         f.write(f"# xlabel: {extracted['xlabel']}\n")
         f.write(f"# ylabel: {extracted['ylabel']}\n")
-        f.write(f"# x_edges ({len(extracted['x_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['x_edges'])}\n")
-        f.write(f"# y_edges ({len(extracted['y_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['y_edges'])}\n")
+        f.write(f"# shading: {shading}\n")
+        if shading == "flat":
+            f.write(f"# x_edges ({len(extracted['x_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['x_edges'])}\n")
+            f.write(f"# y_edges ({len(extracted['y_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['y_edges'])}\n")
         f.write(f"# z_data shape: {z_data.shape}\n")
         f.write(f"# {extracted['xlabel']}\t{extracted['ylabel']}\tZ\n")
-        for ix, xc in enumerate(x_centers):
-            for iy, yc in enumerate(y_centers):
+        for ix, xc in enumerate(x_vals):
+            for iy, yc in enumerate(y_vals):
                 f.write(f"{xc:.6g}\t{yc:.6g}\t{z_data[iy, ix]:.6g}\n")
-            if ix < len(x_centers) - 1:
+            if ix < len(x_vals) - 1:
                 f.write("\n")
 
 
@@ -248,12 +282,19 @@ def _save_npz(fname, extracted, plot_type):
     elif plot_type == "imshow":
         save_dict["data"] = extracted["data"]
         save_dict["extent"] = extracted["extent"]
+        save_dict["origin"] = np.array(extracted["origin"])
     elif plot_type == "pcolormesh":
-        save_dict["x_edges"] = extracted["x_edges"]
-        save_dict["y_edges"] = extracted["y_edges"]
-        save_dict["x_centers"] = extracted["x_centers"]
-        save_dict["y_centers"] = extracted["y_centers"]
+        shading = extracted.get("shading", "flat")
+        save_dict["shading"] = np.array(shading)
         save_dict["z_data"] = extracted["z_data"]
+        if shading == "gouraud":
+            save_dict["x_nodes"] = extracted["x_nodes"]
+            save_dict["y_nodes"] = extracted["y_nodes"]
+        else:
+            save_dict["x_edges"] = extracted["x_edges"]
+            save_dict["y_edges"] = extracted["y_edges"]
+            save_dict["x_centers"] = extracted["x_centers"]
+            save_dict["y_centers"] = extracted["y_centers"]
     save_dict["xlabel"] = np.array(extracted.get("xlabel", ""))
     save_dict["ylabel"] = np.array(extracted.get("ylabel", ""))
     save_dict["title"] = np.array(extracted.get("title", ""))
