@@ -122,25 +122,32 @@ if filename.endswith(".dat"):
         plt.show()
 
     elif raw.ndim == 2 and raw.shape[1] == 3 and _is_pcolormesh_dat(meta):
-        # Pcolormesh xyz — may have multiple surfaces
+        # Pcolormesh xyz — may have multiple surfaces of different sizes.
+        # Surfaces are separated by triple-newline (double blank line at end of surface).
+        # Within a surface, grid rows are separated by single blank line.
         shading = meta.get("shading", "flat")
         cmap = meta.get("cmap", "default")
         norm = _make_norm(meta)
-        grid_m = re.search(r"grid: (\d+) (\d+)", text)
-        n_surfaces = meta.get("n_surfaces", 1)
+
+        # Split data (excluding header) into surfaces by triple-newline
+        data_lines = [line for line in text.splitlines() if not line.startswith("#")]
+        data_text = "\n".join(data_lines)
+        surface_texts = [s.strip() for s in data_text.split("\n\n\n") if s.strip()]
 
         fig, ax = plt.subplots()
-        if shading == "gouraud" and grid_m:
-            ny, nx = int(grid_m.group(1)), int(grid_m.group(2))
-            points_per_surface = ny * nx
-            for si in range(n_surfaces):
-                offset = si * points_per_surface
-                chunk = raw[offset : offset + points_per_surface]
-                X = chunk[:, 0].reshape(ny, nx)
-                Y = chunk[:, 1].reshape(ny, nx)
-                Z = chunk[:, 2].reshape(ny, nx)
+        if shading == "gouraud":
+            for si, surf_text in enumerate(surface_texts):
+                # Each row-block within a surface is separated by double-newline
+                row_blocks = [r.strip() for r in surf_text.split("\n\n") if r.strip()]
+                s_ny = len(row_blocks)
+                s_nx = len([l for l in row_blocks[0].splitlines() if l.strip()])
+                surf_data = np.loadtxt(surf_text.splitlines())
+                X = surf_data[:, 0].reshape(s_ny, s_nx)
+                Y = surf_data[:, 1].reshape(s_ny, s_nx)
+                Z = surf_data[:, 2].reshape(s_ny, s_nx)
                 ax.pcolormesh(X, Y, Z, shading="gouraud", cmap=cmap, norm=norm)
-            print(f"Pcolormesh .dat (gouraud): {n_surfaces} surfaces, grid {ny}x{nx}")
+                print(f"  Surface {si}: grid {s_ny}x{s_nx}")
+            print(f"Pcolormesh .dat (gouraud): {len(surface_texts)} surfaces")
         else:
             xs = np.unique(raw[:, 0])
             ys = np.unique(raw[:, 1])
