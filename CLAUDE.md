@@ -83,6 +83,22 @@ POST https://api.github.com/repos/neutrons/quicknxs/pulls
 **Do not** open non-draft PRs, merge PRs, or modify branch protection settings
 on this repository without explicit instruction.
 
+## Plotting architecture (`src/quicknxs/ui/mplwidget.py`)
+
+Key classes and relationships:
+- **`MplCanvas`** — owns one `fig` + one `ax` (single subplot)
+- **`MPLWidget`** — owns one `MplCanvas`, two stacked toolbars (Generic + Reflectivity), and a `cplot` reference
+- **`NavigationToolbar`** — base class with Save Data / Print buttons; `self.canvas.ax` always refers to the correct axes for that widget
+- **`NavigationToolbarGeneric`** — for 2D plots (imshow/pcolormesh); has Log toggle
+- **`NavigationToolbarReflectivity`** — for 1D errorbar plots; has XLog, YLog, RQ⁴, Lines
+
+Plot types and their matplotlib storage:
+- **Errorbar** (reflectivity): `ax.containers` holds `ErrorbarContainer` per dataset; each has data line, cap lines, bar LineCollections
+- **Imshow** (detector maps): `ax.images[0]` — has `.get_array()`, `.get_extent()`, `.origin`, `.norm`, `.get_cmap()`
+- **Pcolormesh** (off-specular, GISANS): `ax.collections` may hold **multiple QuadMesh** objects (one per run file overlaid). Each has `.get_coordinates()`, `.get_array()`, `.norm`, `.get_cmap()`
+
+Critical: off-specular data uses `shading="gouraud"` with **irregular 2D coordinate grids** — each pixel/ToF pair has unique (Qx, Qz). Coordinates cannot be reduced to 1D arrays. Different run files may produce surfaces with different column counts.
+
 ## GitHub Actions gotchas (cross-project lessons)
 - `GITHUB_TOKEN` pushes are silenced by GitHub's anti-loop protection; any
   workflow creating a branch that needs CI to run on it must use a PAT instead
