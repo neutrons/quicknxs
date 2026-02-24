@@ -261,6 +261,30 @@ class TestSaveData:
 
     # -- pcolormesh saves --
 
+    def test_save_pcolormesh_dat(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        x_edges = np.array([0.0, 1.0, 2.0, 3.0])
+        y_edges = np.array([0.0, 1.0, 2.0])
+        z = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        w.pcolormesh(x_edges, y_edges, z)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        # Read back as gnuplot xyz: x_centers=[0.5,1.5,2.5], y_centers=[0.5,1.5]
+        # Expect 3 blocks (one per x) x 2 rows (one per y) = 6 data lines
+        text = open(out).read()
+        blocks = text.split("\n\n")
+        assert len(blocks) == 3  # 3 x-blocks separated by blank lines
+        # Parse all data lines (skip comments)
+        rows = np.loadtxt(out)
+        assert rows.shape == (6, 3)
+        # First block: x=0.5, y=[0.5,1.5], z=column 0 of z (z[0,0]=1, z[1,0]=4)
+        assert_allclose(rows[0], [0.5, 0.5, 1.0])
+        assert_allclose(rows[1], [0.5, 1.5, 4.0])
+        # Last block: x=2.5, y=[0.5,1.5], z=column 2 of z (z[0,2]=3, z[1,2]=6)
+        assert_allclose(rows[4], [2.5, 0.5, 3.0])
+        assert_allclose(rows[5], [2.5, 1.5, 6.0])
+
     def test_save_pcolormesh_npz(self, qtbot, tmp_path, monkeypatch):
         w = self._make_widget(qtbot)
         x_edges = np.array([0.0, 1.0, 2.0, 3.0])

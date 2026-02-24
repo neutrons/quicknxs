@@ -212,15 +212,20 @@ def _save_dat_imshow(fname, extracted):
 
 
 def _save_dat_pcolormesh(fname, extracted):
-    header_lines = [
-        f"title: {extracted['title']}",
-        f"xlabel: {extracted['xlabel']}",
-        f"ylabel: {extracted['ylabel']}",
-        f"x_edges ({len(extracted['x_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['x_edges'])}",
-        f"y_edges ({len(extracted['y_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['y_edges'])}",
-        f"z_data shape: {extracted['z_data'].shape}",
-    ]
-    np.savetxt(fname, extracted["z_data"], header="\n".join(header_lines), delimiter="\t")
+    """Save pcolormesh data in gnuplot splot xyz format.
+
+    Each row is ``x y z``.  Blank lines separate blocks where the x value changes.
+    """
+    x_centers = extracted["x_centers"]
+    y_centers = extracted["y_centers"]
+    z_data = extracted["z_data"]
+    with open(fname, "w") as f:
+        f.write(f"# {extracted['xlabel']}\t{extracted['ylabel']}\tZ\n")
+        for ix, xc in enumerate(x_centers):
+            for iy, yc in enumerate(y_centers):
+                f.write(f"{xc:.6g}\t{yc:.6g}\t{z_data[iy, ix]:.6g}\n")
+            if ix < len(x_centers) - 1:
+                f.write("\n")
 
 
 def _save_npz(fname, extracted, plot_type):

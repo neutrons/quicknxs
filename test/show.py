@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-"""Utility to display saved .pkl or .npz files from save_data().
+"""Utility to display saved .pkl, .npz, or .dat files from save_data().
 
 Usage:
     python show.py [path-to-file]
 
-Supports both the new dict-based pickle format and the legacy tuple format.
+Supports .dat (gnuplot xyz for pcolormesh, columnar for others),
+.npz (compressed numpy archive), and .pkl (pickle with full figure).
 """
 
 import sys
@@ -26,7 +27,32 @@ def show_figure(fig):
     plt.show()
 
 
-if filename.endswith(".npz"):
+if filename.endswith(".dat"):
+    # Detect gnuplot xyz format (pcolormesh) vs columnar (errorbar/line/imshow)
+    raw = np.loadtxt(filename)
+    text = open(filename).read()
+    blocks = [b.strip() for b in text.split("\n\n") if b.strip() and not b.strip().startswith("#")]
+    if raw.shape[1] == 3 and len(blocks) > 1:
+        # Gnuplot xyz: reconstruct 2D grid
+        xs = np.unique(raw[:, 0])
+        ys = np.unique(raw[:, 1])
+        z = raw[:, 2].reshape(len(xs), len(ys)).T
+        print(f"Pcolormesh .dat: {len(xs)} x-centers, {len(ys)} y-centers, z shape {z.shape}")
+        fig, ax = plt.subplots()
+        ax.pcolormesh(xs, ys, z)
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        plt.show()
+    else:
+        print(f"Columnar .dat: shape {raw.shape}")
+        fig, ax = plt.subplots()
+        if raw.shape[1] >= 3:
+            ax.errorbar(raw[:, 0], raw[:, 1], yerr=raw[:, 2], fmt="o")
+        else:
+            ax.plot(raw[:, 0], raw[:, 1])
+        plt.show()
+
+elif filename.endswith(".npz"):
     npz = np.load(filename, allow_pickle=True)
     print(f"Keys: {list(npz.keys())}")
     plot_type = str(npz.get("plot_type", "unknown"))
