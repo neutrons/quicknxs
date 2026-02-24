@@ -60,11 +60,14 @@ def _parse_dat_header(text):
             m = re.match(rf"{key}: ([\d.e+-]+)", content)
             if m:
                 meta[key] = float(m.group(1))
+        for key in ("n_surfaces",):
+            m = re.match(rf"{key}: (\d+)", content)
+            if m:
+                meta[key] = int(m.group(1))
         for key in ("xlabel", "ylabel", "title"):
             m = re.match(rf"{key}: (.+)", content)
             if m:
                 meta[key] = m.group(1)
-        # Dataset labels
         m = re.match(r"Dataset (\d+): (.+)", content)
         if m:
             meta.setdefault("dataset_labels", {})[int(m.group(1))] = m.group(2)
@@ -88,6 +91,19 @@ def _apply_labels(ax, meta):
     ax.set_title(meta.get("title", ""))
 
 
+def _apply_scales(ax, meta):
+    """Set xscale and yscale from metadata dict."""
+    if meta.get("xscale") == "log":
+        ax.set_xscale("log")
+    if meta.get("yscale") == "log":
+        ax.set_yscale("log")
+
+
+def _is_pcolormesh_dat(meta):
+    """Detect pcolormesh format by presence of shading or grid header keys."""
+    return "shading" in meta or "grid" in meta
+
+
 if filename.endswith(".dat"):
     text = open(filename).read()
     meta = _parse_dat_header(text)
@@ -99,65 +115,77 @@ if filename.endswith(".dat"):
         origin = meta.get("origin", "upper")
         cmap = meta.get("cmap", "default")
         norm = _make_norm(meta)
-        print(f"Imshow .dat: shape {raw.shape}, extent {extent}, origin {origin}, norm {type(norm).__name__}")
+        print(f"Imshow .dat: shape {raw.shape}, origin {origin}, norm {type(norm).__name__}")
         fig, ax = plt.subplots()
         ax.imshow(raw, extent=extent, origin=origin, aspect="auto", cmap=cmap, norm=norm)
         _apply_labels(ax, meta)
         plt.show()
 
-    elif raw.ndim == 2 and raw.shape[1] == 3:
-        data_text = "\n".join(line for line in text.splitlines() if not line.startswith("#"))
-        blocks = [b.strip() for b in data_text.split("\n\n") if b.strip()]
-        if len(blocks) > 1:
-            # Pcolormesh xyz
-            shading = meta.get("shading", "flat")
-            cmap = meta.get("cmap", "default")
-            norm = _make_norm(meta)
-            grid_m = re.search(r"grid: (\d+) (\d+)", text)
-            fig, ax = plt.subplots()
-            if shading == "gouraud" and grid_m:
-                ny, nx = int(grid_m.group(1)), int(grid_m.group(2))
-                X = raw[:, 0].reshape(ny, nx)
-                Y = raw[:, 1].reshape(ny, nx)
-                Z = raw[:, 2].reshape(ny, nx)
-                print(f"Pcolormesh .dat (gouraud): grid {ny}x{nx}, norm {type(norm).__name__}")
-                ax.pcolormesh(X, Y, Z, shading="gouraud", cmap=cmap, norm=norm)
-            else:
-                xs = np.unique(raw[:, 0])
-                ys = np.unique(raw[:, 1])
-                z = raw[:, 2].reshape(len(xs), len(ys)).T
-                print(f"Pcolormesh .dat (flat): {len(xs)}x{len(ys)}, norm {type(norm).__name__}")
-                ax.pcolormesh(xs, ys, z, cmap=cmap, norm=norm)
-            _apply_labels(ax, meta)
-            plt.show()
-        else:
-            # Errorbar data
-            labels = meta.get("dataset_labels", {})
-            print(f"Errorbar .dat: {raw.shape[0]} points")
-            fig, ax = plt.subplots()
-            ax.errorbar(raw[:, 0], raw[:, 1], yerr=raw[:, 2], fmt="o", label=labels.get(0, ""))
-            xscale = meta.get("xscale", "linear")
-            yscale = meta.get("yscale", "linear")
-            if xscale == "log":
-                ax.set_xscale("log")
-            if yscale == "log":
-                ax.set_yscale("log")
-            _apply_labels(ax, meta)
-            if labels:
-                ax.legend()
-            plt.show()
-    else:
-        # Line data
-        print(f"Line .dat: shape {raw.shape}")
+    elif raw.ndim == 2 and raw.shape[1] == 3 and _is_pcolormesh_dat(meta):
+        # Pcolormesh xyz — may have multiple surfaces
+        shading = meta.get("shading", "flat")
+        cmap = meta.get("cmap", "default")
+        norm = _make_norm(meta)
+        grid_m = re.search(r"grid: (\d+) (\d+)", text)
+        n_surfaces = meta.get("n_surfaces", 1)
+
         fig, ax = plt.subplots()
-        ax.plot(raw[:, 0], raw[:, 1])
-        xscale = meta.get("xscale", "linear")
-        yscale = meta.get("yscale", "linear")
-        if xscale == "log":
-            ax.set_xscale("log")
-        if yscale == "log":
-            ax.set_yscale("log")
+        if shading == "gouraud" and grid_m:
+            ny, nx = int(grid_m.group(1)), int(grid_m.group(2))
+            points_per_surface = ny * nx
+            for si in range(n_surfaces):
+                offset = si * points_per_surface
+                chunk = raw[offset : offset + points_per_surface]
+                X = chunk[:, 0].reshape(ny, nx)
+                Y = chunk[:, 1].reshape(ny, nx)
+                Z = chunk[:, 2].reshape(ny, nx)
+                ax.pcolormesh(X, Y, Z, shading="gouraud", cmap=cmap, norm=norm)
+            print(f"Pcolormesh .dat (gouraud): {n_surfaces} surfaces, grid {ny}x{nx}")
+        else:
+            xs = np.unique(raw[:, 0])
+            ys = np.unique(raw[:, 1])
+            z = raw[:, 2].reshape(len(xs), len(ys)).T
+            ax.pcolormesh(xs, ys, z, cmap=cmap, norm=norm)
+            print(f"Pcolormesh .dat (flat): {len(xs)}x{len(ys)}")
         _apply_labels(ax, meta)
+        plt.show()
+
+    elif raw.ndim == 2 and raw.shape[1] == 3:
+        # Errorbar data — may have multiple datasets separated by blank lines
+        labels = meta.get("dataset_labels", {})
+        # Split data by double-blank-line (gnuplot index) separation
+        data_lines = [line for line in text.splitlines() if not line.startswith("#")]
+        data_text = "\n".join(data_lines)
+        blocks = [b.strip() for b in data_text.split("\n\n") if b.strip()]
+        fig, ax = plt.subplots()
+        for i, block in enumerate(blocks):
+            arr = np.loadtxt(block.splitlines())
+            label = labels.get(i, f"dataset_{i}")
+            ax.errorbar(arr[:, 0], arr[:, 1], yerr=arr[:, 2], fmt="o", label=label, capsize=1)
+            print(f"  Dataset {i} ({label}): {arr.shape[0]} points")
+        _apply_scales(ax, meta)
+        _apply_labels(ax, meta)
+        if labels:
+            ax.legend()
+        plt.show()
+
+    else:
+        # Line data — may have multiple datasets
+        labels = meta.get("dataset_labels", {})
+        data_lines = [line for line in text.splitlines() if not line.startswith("#")]
+        data_text = "\n".join(data_lines)
+        blocks = [b.strip() for b in data_text.split("\n\n") if b.strip()]
+        fig, ax = plt.subplots()
+        for i, block in enumerate(blocks):
+            arr = np.loadtxt(block.splitlines())
+            if arr.ndim == 1:
+                arr = arr.reshape(1, -1)
+            label = labels.get(i, f"dataset_{i}")
+            ax.plot(arr[:, 0], arr[:, 1], label=label)
+        _apply_scales(ax, meta)
+        _apply_labels(ax, meta)
+        if labels:
+            ax.legend()
         plt.show()
 
 elif filename.endswith(".npz"):
@@ -174,7 +202,7 @@ elif filename.endswith(".npz"):
             x, y = npz[f"x_{i}"], npz[f"y_{i}"]
             label = str(npz.get(f"label_{i}", f"dataset_{i}"))
             if f"error_{i}" in npz:
-                ax.errorbar(x, y, yerr=npz[f"error_{i}"], fmt="o", label=label)
+                ax.errorbar(x, y, yerr=npz[f"error_{i}"], fmt="o", label=label, capsize=1)
             else:
                 ax.plot(x, y, label=label)
             print(f"  Dataset {i} ({label}): x={x.shape}, y={y.shape}")
@@ -203,14 +231,15 @@ elif filename.endswith(".npz"):
         vmin = float(npz["norm_vmin"]) if "norm_vmin" in npz else None
         vmax = float(npz["norm_vmax"]) if "norm_vmax" in npz else None
         norm = LogNorm(vmin=vmin, vmax=vmax) if norm_type == "LogNorm" else Normalize(vmin=vmin, vmax=vmax)
-        z = npz["z_data"]
-        if shading == "gouraud":
-            ax.pcolormesh(npz["x_grid"], npz["y_grid"], z, shading="gouraud", cmap=cmap, norm=norm)
-            print(f"  gouraud: x_grid={npz['x_grid'].shape}, norm: {norm_type}")
-        else:
-            ax.pcolormesh(npz["x_edges"], npz["y_edges"], z, cmap=cmap, norm=norm)
-            print(f"  flat: x_edges={npz['x_edges'].shape}, norm: {norm_type}")
-        print(f"  z_data shape: {z.shape}")
+        n_surfaces = int(npz.get("n_surfaces", 1))
+        for i in range(n_surfaces):
+            z = npz[f"z_data_{i}"]
+            if shading == "gouraud":
+                ax.pcolormesh(npz[f"x_grid_{i}"], npz[f"y_grid_{i}"], z, shading="gouraud", cmap=cmap, norm=norm)
+            else:
+                ax.pcolormesh(npz[f"x_edges_{i}"], npz[f"y_edges_{i}"], z, cmap=cmap, norm=norm)
+            print(f"  Surface {i}: z_data={z.shape}")
+        print(f"  {n_surfaces} surface(s), shading: {shading}, norm: {norm_type}")
 
     ax.set_xlabel(str(npz.get("xlabel", "")))
     ax.set_ylabel(str(npz.get("ylabel", "")))

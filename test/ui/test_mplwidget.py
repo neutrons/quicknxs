@@ -292,9 +292,9 @@ class TestSaveData:
         data = np.load(out)
         assert str(data["plot_type"]) == "pcolormesh"
         assert str(data["shading"]) == "flat"
-        assert_allclose(data["z_data"], z)
-        assert len(data["x_edges"]) == len(x_edges)
-        assert len(data["y_edges"]) == len(y_edges)
+        assert_allclose(data["z_data_0"], z)
+        assert len(data["x_edges_0"]) == len(x_edges)
+        assert len(data["y_edges_0"]) == len(y_edges)
 
     # -- pcolormesh saves (gouraud shading, 2D node grids) --
 
@@ -344,9 +344,9 @@ class TestSaveData:
         data = np.load(out)
         assert str(data["plot_type"]) == "pcolormesh"
         assert str(data["shading"]) == "gouraud"
-        assert_allclose(data["z_data"], z2d)
-        assert_allclose(data["x_grid"], x2d)
-        assert_allclose(data["y_grid"], y2d)
+        assert_allclose(data["z_data_0"], z2d)
+        assert_allclose(data["x_grid_0"], x2d)
+        assert_allclose(data["y_grid_0"], y2d)
 
     # -- line saves --
 
@@ -545,9 +545,9 @@ class TestSaveData:
         d3 = np.load(out3)
         assert str(d3["plot_type"]) == "pcolormesh"
         assert str(d3["shading"]) == "gouraud"
-        assert_allclose(d3["z_data"], z2d)
-        assert_allclose(d3["x_grid"], x2d)
-        assert_allclose(d3["y_grid"], y2d)
+        assert_allclose(d3["z_data_0"], z2d)
+        assert_allclose(d3["x_grid_0"], x2d)
+        assert_allclose(d3["y_grid_0"], y2d)
 
     # -- metadata preservation --
 
