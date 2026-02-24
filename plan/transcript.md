@@ -14,3 +14,9 @@ Good! This is nice code, thank you. I would like that .dat files that are made f
 
 Does the gnuplot xyz ascii format exclude multiline comments? If not then please restore the header detail that was present in the .dat file output before the last edit. Double-check the source of the z_data. Specifically, when exporting the Off-Specular plot, it appears to get the data from the Overview x vs ToF plot. Review the plot code carefully to make sure that the data plotted is assocated with the plot that the button refers to.
 
+## Prompt 4
+
+TBD
+
+The plan that Claude developed from this prompt is [data-export-validation.md](data-export-validation.md)
+
