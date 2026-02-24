@@ -548,3 +548,82 @@ class TestSaveData:
         assert_allclose(d3["z_data"], z2d)
         assert_allclose(d3["x_grid"], x2d)
         assert_allclose(d3["y_grid"], y2d)
+
+    # -- metadata preservation --
+
+    def test_errorbar_yscale_in_dat(self, qtbot, tmp_path, monkeypatch):
+        """Log y-scale is written to the .dat header."""
+        w = self._make_widget(qtbot)
+        w.errorbar([1, 2], [3, 4], yerr=[0.1, 0.2])
+        w.canvas.ax.set_yscale("log")
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "yscale: log" in text
+
+    def test_errorbar_yscale_in_npz(self, qtbot, tmp_path, monkeypatch):
+        w = self._make_widget(qtbot)
+        w.errorbar([1, 2], [3, 4], yerr=[0.1, 0.2])
+        w.canvas.ax.set_yscale("log")
+        out = str(tmp_path / "test.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        data = np.load(out, allow_pickle=True)
+        assert str(data["yscale"]) == "log"
+
+    def test_imshow_lognorm_in_dat(self, qtbot, tmp_path, monkeypatch):
+        """LogNorm and cmap are written to the imshow .dat header."""
+        w = self._make_widget(qtbot)
+        w.imshow(np.ones((3, 3)) + 1, log=True, imin=0.1, imax=10, update=False)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "norm: LogNorm" in text
+        assert "cmap:" in text
+
+    def test_pcolormesh_lognorm_in_dat(self, qtbot, tmp_path, monkeypatch):
+        """LogNorm and cmap are written to the pcolormesh .dat header."""
+        w = self._make_widget(qtbot)
+        x = np.array([0.0, 1.0, 2.0, 3.0])
+        y = np.array([0.0, 1.0, 2.0])
+        z = np.ones((2, 3)) + 1
+        w.pcolormesh(x, y, z, log=True, imin=0.1, imax=10)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "norm: LogNorm" in text
+        assert "norm_vmin: 0.1" in text
+        assert "norm_vmax: 10" in text
+
+    def test_errorbar_labels_in_dat(self, qtbot, tmp_path, monkeypatch):
+        """Dataset labels from legend are preserved in the .dat header."""
+        w = self._make_widget(qtbot)
+        w.errorbar([1, 2], [3, 4], yerr=[0.1, 0.2], label="Active")
+        w.errorbar([2, 3], [5, 6], yerr=[0.2, 0.3], label="43279")
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "Dataset 0: Active" in text
+        assert "Dataset 1: 43279" in text
+
+    def test_pcolormesh_title_labels_in_dat(self, qtbot, tmp_path, monkeypatch):
+        """Title and axis labels are written to the pcolormesh .dat header."""
+        w = self._make_widget(qtbot)
+        x2d = np.array([[0, 1], [0, 1]], dtype=float)
+        y2d = np.array([[0, 0], [1, 1]], dtype=float)
+        z2d = np.array([[1, 2], [3, 4]], dtype=float)
+        w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
+        w.canvas.ax.set_title("Off_Off")
+        w.canvas.ax.set_xlabel(r"k$_{i,z}$-k$_{f,z}$ [\u00c5$^{-1}$]")
+        w.canvas.ax.set_ylabel(r"Q$_z$ [\u00c5$^{-1}$]")
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "title: Off_Off" in text
+        assert "xlabel: k$" in text
+        assert "ylabel: Q$" in text

@@ -6,13 +6,23 @@ Usage:
 
 Supports .dat (gnuplot xyz for pcolormesh, imshow 2D array, columnar for others),
 .npz (compressed numpy archive), and .pkl (pickle with full figure).
+Preserves logarithmic scales, colormaps, norms, titles, and axis labels.
 """
 
 import re
 import sys
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import LogNorm, Normalize
+
+# Register the custom "default" colormap used by quicknxs
+_cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
+    "default", ["#0000ff", "#00ff00", "#ffff00", "#ff0000", "#bd7efc", "#000000"], N=256
+)
+if "default" not in matplotlib.colormaps:
+    matplotlib.colormaps.register(_cmap, name="default")
 
 filename = sys.argv[1] if len(sys.argv) > 1 else "output.pkl"
 
@@ -35,7 +45,6 @@ def _parse_dat_header(text):
         if not line.startswith("#"):
             break
         content = line.lstrip("# ").strip()
-        # extent line
         m = re.match(
             r"extent: xmin=([\d.e+-]+), xmax=([\d.e+-]+), "
             r"ymin=([\d.e+-]+), ymax=([\d.e+-]+)",
@@ -43,25 +52,40 @@ def _parse_dat_header(text):
         )
         if m:
             meta["extent"] = [float(m.group(i)) for i in range(1, 5)]
-        # origin line
-        m = re.match(r"origin: (\w+)", content)
+        for key in ("origin", "shading", "cmap", "norm", "xscale", "yscale"):
+            m = re.match(rf"{key}: (\S+)", content)
+            if m:
+                meta[key] = m.group(1)
+        for key in ("norm_vmin", "norm_vmax"):
+            m = re.match(rf"{key}: ([\d.e+-]+)", content)
+            if m:
+                meta[key] = float(m.group(1))
+        for key in ("xlabel", "ylabel", "title"):
+            m = re.match(rf"{key}: (.+)", content)
+            if m:
+                meta[key] = m.group(1)
+        # Dataset labels
+        m = re.match(r"Dataset (\d+): (.+)", content)
         if m:
-            meta["origin"] = m.group(1)
-        # shading line
-        m = re.match(r"shading: (\w+)", content)
-        if m:
-            meta["shading"] = m.group(1)
-        # xlabel / ylabel
-        m = re.match(r"xlabel: (.+)", content)
-        if m:
-            meta["xlabel"] = m.group(1)
-        m = re.match(r"ylabel: (.+)", content)
-        if m:
-            meta["ylabel"] = m.group(1)
-        m = re.match(r"title: (.+)", content)
-        if m:
-            meta["title"] = m.group(1)
+            meta.setdefault("dataset_labels", {})[int(m.group(1))] = m.group(2)
     return meta
+
+
+def _make_norm(meta):
+    """Build a matplotlib Normalize or LogNorm from header metadata."""
+    norm_type = meta.get("norm", "Normalize")
+    vmin = meta.get("norm_vmin")
+    vmax = meta.get("norm_vmax")
+    if norm_type == "LogNorm":
+        return LogNorm(vmin=vmin, vmax=vmax)
+    return Normalize(vmin=vmin, vmax=vmax)
+
+
+def _apply_labels(ax, meta):
+    """Set title, xlabel, ylabel on axes from metadata dict."""
+    ax.set_xlabel(meta.get("xlabel", ""))
+    ax.set_ylabel(meta.get("ylabel", ""))
+    ax.set_title(meta.get("title", ""))
 
 
 if filename.endswith(".dat"):
@@ -70,25 +94,25 @@ if filename.endswith(".dat"):
     raw = np.loadtxt(filename)
 
     if "extent" in meta:
-        # Imshow format: 2D array with extent header
+        # Imshow format
         extent = meta["extent"]
         origin = meta.get("origin", "upper")
-        print(f"Imshow .dat: shape {raw.shape}, extent {extent}, origin {origin}")
+        cmap = meta.get("cmap", "default")
+        norm = _make_norm(meta)
+        print(f"Imshow .dat: shape {raw.shape}, extent {extent}, origin {origin}, norm {type(norm).__name__}")
         fig, ax = plt.subplots()
-        ax.imshow(raw, extent=extent, origin=origin, aspect="auto")
-        ax.set_xlabel(meta.get("xlabel", ""))
-        ax.set_ylabel(meta.get("ylabel", ""))
-        ax.set_title(meta.get("title", ""))
+        ax.imshow(raw, extent=extent, origin=origin, aspect="auto", cmap=cmap, norm=norm)
+        _apply_labels(ax, meta)
         plt.show()
 
     elif raw.ndim == 2 and raw.shape[1] == 3:
-        # Check for gnuplot xyz blocks (blank-line separated)
-        data_text = "\n".join(l for l in text.splitlines() if not l.startswith("#"))
+        data_text = "\n".join(line for line in text.splitlines() if not line.startswith("#"))
         blocks = [b.strip() for b in data_text.split("\n\n") if b.strip()]
         if len(blocks) > 1:
-            # Gnuplot xyz: reconstruct pcolormesh
+            # Pcolormesh xyz
             shading = meta.get("shading", "flat")
-            # Parse grid dimensions from header
+            cmap = meta.get("cmap", "default")
+            norm = _make_norm(meta)
             grid_m = re.search(r"grid: (\d+) (\d+)", text)
             fig, ax = plt.subplots()
             if shading == "gouraud" and grid_m:
@@ -96,29 +120,44 @@ if filename.endswith(".dat"):
                 X = raw[:, 0].reshape(ny, nx)
                 Y = raw[:, 1].reshape(ny, nx)
                 Z = raw[:, 2].reshape(ny, nx)
-                print(f"Pcolormesh .dat (gouraud): grid {ny}x{nx}")
-                ax.pcolormesh(X, Y, Z, shading="gouraud")
+                print(f"Pcolormesh .dat (gouraud): grid {ny}x{nx}, norm {type(norm).__name__}")
+                ax.pcolormesh(X, Y, Z, shading="gouraud", cmap=cmap, norm=norm)
             else:
                 xs = np.unique(raw[:, 0])
                 ys = np.unique(raw[:, 1])
                 z = raw[:, 2].reshape(len(xs), len(ys)).T
-                print(f"Pcolormesh .dat (flat): {len(xs)} x-centers, {len(ys)} y-centers")
-                ax.pcolormesh(xs, ys, z)
-            ax.set_xlabel(meta.get("xlabel", "X"))
-            ax.set_ylabel(meta.get("ylabel", "Y"))
-            ax.set_title(meta.get("title", ""))
+                print(f"Pcolormesh .dat (flat): {len(xs)}x{len(ys)}, norm {type(norm).__name__}")
+                ax.pcolormesh(xs, ys, z, cmap=cmap, norm=norm)
+            _apply_labels(ax, meta)
             plt.show()
         else:
-            # 3-column errorbar data
+            # Errorbar data
+            labels = meta.get("dataset_labels", {})
             print(f"Errorbar .dat: {raw.shape[0]} points")
             fig, ax = plt.subplots()
-            ax.errorbar(raw[:, 0], raw[:, 1], yerr=raw[:, 2], fmt="o")
+            ax.errorbar(raw[:, 0], raw[:, 1], yerr=raw[:, 2], fmt="o", label=labels.get(0, ""))
+            xscale = meta.get("xscale", "linear")
+            yscale = meta.get("yscale", "linear")
+            if xscale == "log":
+                ax.set_xscale("log")
+            if yscale == "log":
+                ax.set_yscale("log")
+            _apply_labels(ax, meta)
+            if labels:
+                ax.legend()
             plt.show()
     else:
-        # 2-column line data
+        # Line data
         print(f"Line .dat: shape {raw.shape}")
         fig, ax = plt.subplots()
         ax.plot(raw[:, 0], raw[:, 1])
+        xscale = meta.get("xscale", "linear")
+        yscale = meta.get("yscale", "linear")
+        if xscale == "log":
+            ax.set_xscale("log")
+        if yscale == "log":
+            ax.set_yscale("log")
+        _apply_labels(ax, meta)
         plt.show()
 
 elif filename.endswith(".npz"):
@@ -139,22 +178,38 @@ elif filename.endswith(".npz"):
             else:
                 ax.plot(x, y, label=label)
             print(f"  Dataset {i} ({label}): x={x.shape}, y={y.shape}")
+        xscale = str(npz.get("xscale", "linear"))
+        yscale = str(npz.get("yscale", "linear"))
+        if xscale == "log":
+            ax.set_xscale("log")
+        if yscale == "log":
+            ax.set_yscale("log")
         ax.legend()
 
     elif plot_type == "imshow":
         origin = str(npz.get("origin", "upper"))
-        ax.imshow(npz["data"], extent=npz["extent"], origin=origin, aspect="auto")
-        print(f"  data shape: {npz['data'].shape}, extent: {npz['extent']}, origin: {origin}")
+        cmap = str(npz.get("cmap", "default"))
+        norm_type = str(npz.get("norm", "Normalize"))
+        vmin = float(npz["norm_vmin"]) if "norm_vmin" in npz else None
+        vmax = float(npz["norm_vmax"]) if "norm_vmax" in npz else None
+        norm = LogNorm(vmin=vmin, vmax=vmax) if norm_type == "LogNorm" else Normalize(vmin=vmin, vmax=vmax)
+        ax.imshow(npz["data"], extent=npz["extent"], origin=origin, aspect="auto", cmap=cmap, norm=norm)
+        print(f"  data shape: {npz['data'].shape}, origin: {origin}, norm: {norm_type}")
 
     elif plot_type == "pcolormesh":
         shading = str(npz.get("shading", "flat"))
+        cmap = str(npz.get("cmap", "default"))
+        norm_type = str(npz.get("norm", "Normalize"))
+        vmin = float(npz["norm_vmin"]) if "norm_vmin" in npz else None
+        vmax = float(npz["norm_vmax"]) if "norm_vmax" in npz else None
+        norm = LogNorm(vmin=vmin, vmax=vmax) if norm_type == "LogNorm" else Normalize(vmin=vmin, vmax=vmax)
         z = npz["z_data"]
         if shading == "gouraud":
-            ax.pcolormesh(npz["x_grid"], npz["y_grid"], z, shading="gouraud")
-            print(f"  gouraud: x_grid={npz['x_grid'].shape}, y_grid={npz['y_grid'].shape}")
+            ax.pcolormesh(npz["x_grid"], npz["y_grid"], z, shading="gouraud", cmap=cmap, norm=norm)
+            print(f"  gouraud: x_grid={npz['x_grid'].shape}, norm: {norm_type}")
         else:
-            ax.pcolormesh(npz["x_edges"], npz["y_edges"], z)
-            print(f"  flat: x_edges={npz['x_edges'].shape}, y_edges={npz['y_edges'].shape}")
+            ax.pcolormesh(npz["x_edges"], npz["y_edges"], z, cmap=cmap, norm=norm)
+            print(f"  flat: x_edges={npz['x_edges'].shape}, norm: {norm_type}")
         print(f"  z_data shape: {z.shape}")
 
     ax.set_xlabel(str(npz.get("xlabel", "")))
@@ -168,8 +223,6 @@ else:
     with open(filename, "rb") as f:
         pkl = pickle.load(f)
 
-    # New format: dict with 'figure', 'plot_type', 'data' keys
-    # Legacy format: tuple (ax, data_to_save, figure)
     if isinstance(pkl, dict) and "figure" in pkl:
         print(f"Plot type: {pkl['plot_type']}")
         fig = pkl["figure"]

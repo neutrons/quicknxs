@@ -101,25 +101,32 @@ def _extract_errorbar_data(ax):
             error = np.array([(seg[1, 1] - seg[0, 1]) / 2.0 for seg in segments])
         else:
             error = np.zeros_like(y)
-        label = data_line.get_label() or f"dataset_{len(datasets)}"
+        label = container.get_label() or f"dataset_{len(datasets)}"
         datasets.append({"x": x, "y": y, "error": error, "label": label})
     return {
         "datasets": datasets,
         "xlabel": ax.get_xlabel(),
         "ylabel": ax.get_ylabel(),
         "title": ax.get_title(),
+        "xscale": ax.get_xscale(),
+        "yscale": ax.get_yscale(),
     }
 
 
 def _extract_imshow_data(ax):
-    """Extract the 2D array, extent, and origin from an imshow plot."""
+    """Extract the 2D array, extent, origin, norm, and colormap from an imshow plot."""
     img = ax.images[0]
     data = np.array(img.get_array(), dtype=float)
     extent = np.array(img.get_extent())
+    norm = img.norm
     return {
         "data": data,
         "extent": extent,
         "origin": img.origin,
+        "cmap": img.get_cmap().name,
+        "norm": type(norm).__name__,
+        "norm_vmin": float(norm.vmin) if norm.vmin is not None else None,
+        "norm_vmax": float(norm.vmax) if norm.vmax is not None else None,
         "xlabel": ax.get_xlabel(),
         "ylabel": ax.get_ylabel(),
         "title": ax.get_title(),
@@ -137,6 +144,7 @@ def _extract_pcolormesh_data(ax):
     qm = next(c for c in ax.collections if c.__class__.__name__ == "QuadMesh")
     coords = qm.get_coordinates()  # (ny_coords, nx_coords, 2)
     z_data = np.array(qm.get_array(), dtype=float)
+    norm = qm.norm
 
     # Detect gouraud vs flat: gouraud z matches coords shape, flat z is one smaller per dim
     is_gouraud = z_data.shape == (coords.shape[0], coords.shape[1])
@@ -169,6 +177,10 @@ def _extract_pcolormesh_data(ax):
             "xlabel": ax.get_xlabel(),
             "ylabel": ax.get_ylabel(),
             "title": ax.get_title(),
+            "cmap": qm.get_cmap().name,
+            "norm": type(norm).__name__,
+            "norm_vmin": float(norm.vmin) if norm.vmin is not None else None,
+            "norm_vmax": float(norm.vmax) if norm.vmax is not None else None,
         }
     )
     return result
@@ -188,6 +200,8 @@ def _extract_line_data(ax):
         "xlabel": ax.get_xlabel(),
         "ylabel": ax.get_ylabel(),
         "title": ax.get_title(),
+        "xscale": ax.get_xscale(),
+        "yscale": ax.get_yscale(),
     }
 
 
@@ -207,6 +221,11 @@ def _save_dat(fname, extracted, plot_type):
 
 def _save_dat_errorbar(fname, extracted):
     with open(fname, "w") as f:
+        f.write(f"# title: {extracted['title']}\n")
+        f.write(f"# xlabel: {extracted['xlabel']}\n")
+        f.write(f"# ylabel: {extracted['ylabel']}\n")
+        f.write(f"# xscale: {extracted.get('xscale', 'linear')}\n")
+        f.write(f"# yscale: {extracted.get('yscale', 'linear')}\n")
         for i, ds in enumerate(extracted["datasets"]):
             f.write(f"# Dataset {i}: {ds['label']}\n")
             f.write(f"# {extracted['xlabel']}\t{extracted['ylabel']}\tError\n")
@@ -218,6 +237,11 @@ def _save_dat_errorbar(fname, extracted):
 
 def _save_dat_line(fname, extracted):
     with open(fname, "w") as f:
+        f.write(f"# title: {extracted['title']}\n")
+        f.write(f"# xlabel: {extracted['xlabel']}\n")
+        f.write(f"# ylabel: {extracted['ylabel']}\n")
+        f.write(f"# xscale: {extracted.get('xscale', 'linear')}\n")
+        f.write(f"# yscale: {extracted.get('yscale', 'linear')}\n")
         for i, ds in enumerate(extracted["datasets"]):
             f.write(f"# Dataset {i}: {ds['label']}\n")
             f.write(f"# {extracted['xlabel']}\t{extracted['ylabel']}\n")
@@ -228,13 +252,19 @@ def _save_dat_line(fname, extracted):
 
 
 def _save_dat_imshow(fname, extracted):
-    header = (
+    header_lines = [
+        f"title: {extracted['title']}",
+        f"xlabel: {extracted['xlabel']}",
+        f"ylabel: {extracted['ylabel']}",
         f"extent: xmin={extracted['extent'][0]}, xmax={extracted['extent'][1]}, "
-        f"ymin={extracted['extent'][2]}, ymax={extracted['extent'][3]}\n"
-        f"origin: {extracted['origin']}\n"
-        f"{extracted['xlabel']} vs {extracted['ylabel']}"
-    )
-    np.savetxt(fname, extracted["data"], header=header, delimiter="\t")
+        f"ymin={extracted['extent'][2]}, ymax={extracted['extent'][3]}",
+        f"origin: {extracted['origin']}",
+        f"cmap: {extracted.get('cmap', 'default')}",
+        f"norm: {extracted.get('norm', 'Normalize')}",
+        f"norm_vmin: {extracted.get('norm_vmin', '')}",
+        f"norm_vmax: {extracted.get('norm_vmax', '')}",
+    ]
+    np.savetxt(fname, extracted["data"], header="\n".join(header_lines), delimiter="\t")
 
 
 def _save_dat_pcolormesh(fname, extracted):
@@ -254,6 +284,10 @@ def _save_dat_pcolormesh(fname, extracted):
         f.write(f"# ylabel: {extracted['ylabel']}\n")
         f.write(f"# shading: {shading}\n")
         f.write(f"# grid: {ny} {nx}\n")
+        f.write(f"# cmap: {extracted.get('cmap', 'default')}\n")
+        f.write(f"# norm: {extracted.get('norm', 'Normalize')}\n")
+        f.write(f"# norm_vmin: {extracted.get('norm_vmin', '')}\n")
+        f.write(f"# norm_vmax: {extracted.get('norm_vmax', '')}\n")
         if shading == "flat":
             f.write(f"# x_edges ({len(extracted['x_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['x_edges'])}\n")
             f.write(f"# y_edges ({len(extracted['y_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['y_edges'])}\n")
@@ -288,14 +322,28 @@ def _save_npz(fname, extracted, plot_type):
             if "error" in ds:
                 save_dict[f"error_{i}"] = ds["error"]
             save_dict[f"label_{i}"] = np.array(ds["label"])
+        save_dict["xscale"] = np.array(extracted.get("xscale", "linear"))
+        save_dict["yscale"] = np.array(extracted.get("yscale", "linear"))
     elif plot_type == "imshow":
         save_dict["data"] = extracted["data"]
         save_dict["extent"] = extracted["extent"]
         save_dict["origin"] = np.array(extracted["origin"])
+        save_dict["cmap"] = np.array(extracted.get("cmap", "default"))
+        save_dict["norm"] = np.array(extracted.get("norm", "Normalize"))
+        if extracted.get("norm_vmin") is not None:
+            save_dict["norm_vmin"] = np.array(extracted["norm_vmin"])
+        if extracted.get("norm_vmax") is not None:
+            save_dict["norm_vmax"] = np.array(extracted["norm_vmax"])
     elif plot_type == "pcolormesh":
         shading = extracted.get("shading", "flat")
         save_dict["shading"] = np.array(shading)
         save_dict["z_data"] = extracted["z_data"]
+        save_dict["cmap"] = np.array(extracted.get("cmap", "default"))
+        save_dict["norm"] = np.array(extracted.get("norm", "Normalize"))
+        if extracted.get("norm_vmin") is not None:
+            save_dict["norm_vmin"] = np.array(extracted["norm_vmin"])
+        if extracted.get("norm_vmax") is not None:
+            save_dict["norm_vmax"] = np.array(extracted["norm_vmax"])
         if shading == "gouraud":
             save_dict["x_grid"] = extracted["x_grid"]
             save_dict["y_grid"] = extracted["y_grid"]
