@@ -300,17 +300,18 @@ class TestSaveData:
 
     def test_detect_pcolormesh_gouraud(self, qtbot):
         w = self._make_widget(qtbot)
-        x2d = np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]], dtype=float)
-        y2d = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]], dtype=float)
+        x2d = np.array([[0, 1, 3], [0.5, 1.5, 3.5], [1, 2, 4]], dtype=float)
+        y2d = np.array([[0, 0.1, 0.3], [1, 1.1, 1.3], [2, 2.1, 2.3]], dtype=float)
         z2d = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
         w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
         assert _detect_plot_type(w.canvas.ax) == "pcolormesh"
 
     def test_save_pcolormesh_gouraud_dat(self, qtbot, tmp_path, monkeypatch):
-        """Gouraud xyz output must have ALL z_data points (no data loss)."""
+        """Gouraud xyz output must have ALL z_data points with per-cell coords."""
         w = self._make_widget(qtbot)
-        x2d = np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]], dtype=float)
-        y2d = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]], dtype=float)
+        # Irregular grid: each row has different x values
+        x2d = np.array([[0, 1, 3], [0.5, 1.5, 3.5], [1, 2, 4]], dtype=float)
+        y2d = np.array([[0, 0.1, 0.3], [1, 1.1, 1.3], [2, 2.1, 2.3]], dtype=float)
         z2d = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
         w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
         out = str(tmp_path / "test.dat")
@@ -318,19 +319,23 @@ class TestSaveData:
         w.toolbar.save_data()
         text = open(out).read()
         assert "shading: gouraud" in text
+        assert "grid: 3 3" in text
         rows = np.loadtxt(out)
-        # 3 x-nodes × 3 y-nodes = 9 data lines
+        # 3 rows × 3 cols = 9 data lines, each with true (x, y, z)
         assert rows.shape == (9, 3)
-        # Node positions used directly (not centerbins)
+        # Row 0: x2d[0,:], y2d[0,:], z2d[0,:]
         assert_allclose(rows[0], [0.0, 0.0, 1.0])
-        assert_allclose(rows[1], [0.0, 1.0, 4.0])
-        assert_allclose(rows[2], [0.0, 2.0, 7.0])
-        assert_allclose(rows[8], [2.0, 2.0, 9.0])
+        assert_allclose(rows[1], [1.0, 0.1, 2.0])
+        assert_allclose(rows[2], [3.0, 0.3, 3.0])
+        # Row 1: x2d[1,:], y2d[1,:], z2d[1,:]
+        assert_allclose(rows[3], [0.5, 1.0, 4.0])
+        # Last: x2d[2,2], y2d[2,2], z2d[2,2]
+        assert_allclose(rows[8], [4.0, 2.3, 9.0])
 
     def test_save_pcolormesh_gouraud_npz(self, qtbot, tmp_path, monkeypatch):
         w = self._make_widget(qtbot)
-        x2d = np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]], dtype=float)
-        y2d = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]], dtype=float)
+        x2d = np.array([[0, 1, 3], [0.5, 1.5, 3.5], [1, 2, 4]], dtype=float)
+        y2d = np.array([[0, 0.1, 0.3], [1, 1.1, 1.3], [2, 2.1, 2.3]], dtype=float)
         z2d = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
         w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
         out = str(tmp_path / "test.npz")
@@ -340,8 +345,8 @@ class TestSaveData:
         assert str(data["plot_type"]) == "pcolormesh"
         assert str(data["shading"]) == "gouraud"
         assert_allclose(data["z_data"], z2d)
-        assert_allclose(data["x_nodes"], [0, 1, 2])
-        assert_allclose(data["y_nodes"], [0, 1, 2])
+        assert_allclose(data["x_grid"], x2d)
+        assert_allclose(data["y_grid"], y2d)
 
     # -- line saves --
 
@@ -481,19 +486,27 @@ class TestSaveData:
         assert_allclose(z_rt, z)
 
     def test_roundtrip_pcolormesh_gouraud_dat(self, qtbot, tmp_path, monkeypatch):
-        """Write gouraud pcolormesh .dat, read back, reconstruct z grid."""
+        """Write gouraud pcolormesh .dat, read back using grid dims, verify all arrays."""
         w = self._make_widget(qtbot)
-        x2d = np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]], dtype=float)
-        y2d = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]], dtype=float)
+        x2d = np.array([[0, 1, 3], [0.5, 1.5, 3.5], [1, 2, 4]], dtype=float)
+        y2d = np.array([[0, 0.1, 0.3], [1, 1.1, 1.3], [2, 2.1, 2.3]], dtype=float)
         z2d = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
         w.pcolormesh(x2d, y2d, z2d, shading="gouraud")
         out = str(tmp_path / "rt.dat")
         self._mock_dialog(monkeypatch, out)
         w.toolbar.save_data()
+        # Reconstruct using grid dimensions from header
+        import re
+
+        text = open(out).read()
+        m = re.search(r"grid: (\d+) (\d+)", text)
+        ny, nx = int(m.group(1)), int(m.group(2))
         rows = np.loadtxt(out)
-        xs = np.unique(rows[:, 0])
-        ys = np.unique(rows[:, 1])
-        z_rt = rows[:, 2].reshape(len(xs), len(ys)).T
+        x_rt = rows[:, 0].reshape(ny, nx)
+        y_rt = rows[:, 1].reshape(ny, nx)
+        z_rt = rows[:, 2].reshape(ny, nx)
+        assert_allclose(x_rt, x2d)
+        assert_allclose(y_rt, y2d)
         assert_allclose(z_rt, z2d)
 
     def test_roundtrip_all_npz(self, qtbot, tmp_path, monkeypatch):
@@ -520,10 +533,10 @@ class TestSaveData:
         assert str(d2["origin"]) == "lower"
         assert_allclose(d2["data"], arr)
 
-        # pcolormesh gouraud
+        # pcolormesh gouraud (irregular grid)
         w3 = self._make_widget(qtbot)
-        x2d = np.array([[0, 1], [0, 1]], dtype=float)
-        y2d = np.array([[0, 0], [1, 1]], dtype=float)
+        x2d = np.array([[0, 1.5], [0.5, 2.0]], dtype=float)
+        y2d = np.array([[0, 0.1], [1, 1.1]], dtype=float)
         z2d = np.array([[10, 20], [30, 40]], dtype=float)
         w3.pcolormesh(x2d, y2d, z2d, shading="gouraud")
         out3 = str(tmp_path / "pm.npz")
@@ -533,5 +546,5 @@ class TestSaveData:
         assert str(d3["plot_type"]) == "pcolormesh"
         assert str(d3["shading"]) == "gouraud"
         assert_allclose(d3["z_data"], z2d)
-        assert_allclose(d3["x_nodes"], [0, 1])
-        assert_allclose(d3["y_nodes"], [0, 1])
+        assert_allclose(d3["x_grid"], x2d)
+        assert_allclose(d3["y_grid"], y2d)

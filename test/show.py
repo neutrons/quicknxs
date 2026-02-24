@@ -88,15 +88,21 @@ if filename.endswith(".dat"):
         if len(blocks) > 1:
             # Gnuplot xyz: reconstruct pcolormesh
             shading = meta.get("shading", "flat")
-            xs = np.unique(raw[:, 0])
-            ys = np.unique(raw[:, 1])
-            z = raw[:, 2].reshape(len(xs), len(ys)).T
-            print(f"Pcolormesh .dat ({shading}): {len(xs)} x-vals, {len(ys)} y-vals, z shape {z.shape}")
+            # Parse grid dimensions from header
+            grid_m = re.search(r"grid: (\d+) (\d+)", text)
             fig, ax = plt.subplots()
-            if shading == "gouraud":
-                X, Y = np.meshgrid(xs, ys)
-                ax.pcolormesh(X, Y, z, shading="gouraud")
+            if shading == "gouraud" and grid_m:
+                ny, nx = int(grid_m.group(1)), int(grid_m.group(2))
+                X = raw[:, 0].reshape(ny, nx)
+                Y = raw[:, 1].reshape(ny, nx)
+                Z = raw[:, 2].reshape(ny, nx)
+                print(f"Pcolormesh .dat (gouraud): grid {ny}x{nx}")
+                ax.pcolormesh(X, Y, Z, shading="gouraud")
             else:
+                xs = np.unique(raw[:, 0])
+                ys = np.unique(raw[:, 1])
+                z = raw[:, 2].reshape(len(xs), len(ys)).T
+                print(f"Pcolormesh .dat (flat): {len(xs)} x-centers, {len(ys)} y-centers")
                 ax.pcolormesh(xs, ys, z)
             ax.set_xlabel(meta.get("xlabel", "X"))
             ax.set_ylabel(meta.get("ylabel", "Y"))
@@ -144,9 +150,8 @@ elif filename.endswith(".npz"):
         shading = str(npz.get("shading", "flat"))
         z = npz["z_data"]
         if shading == "gouraud":
-            X, Y = np.meshgrid(npz["x_nodes"], npz["y_nodes"])
-            ax.pcolormesh(X, Y, z, shading="gouraud")
-            print(f"  gouraud: x_nodes={npz['x_nodes'].shape}, y_nodes={npz['y_nodes'].shape}")
+            ax.pcolormesh(npz["x_grid"], npz["y_grid"], z, shading="gouraud")
+            print(f"  gouraud: x_grid={npz['x_grid'].shape}, y_grid={npz['y_grid'].shape}")
         else:
             ax.pcolormesh(npz["x_edges"], npz["y_edges"], z)
             print(f"  flat: x_edges={npz['x_edges'].shape}, y_edges={npz['y_edges'].shape}")

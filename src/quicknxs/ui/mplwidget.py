@@ -130,26 +130,28 @@ def _extract_pcolormesh_data(ax):
     """Extract mesh coordinates and Z values from a pcolormesh (QuadMesh) plot.
 
     Handles both flat shading (1D edge arrays, z is one smaller per dim) and
-    gouraud shading (2D node grids, z matches coordinate dims).
+    gouraud shading (2D node grids, z matches coordinate dims).  For gouraud
+    meshes the full 2D coordinate grids are preserved because off-specular and
+    GISANS data use irregular grids where each cell has unique (x, y).
     """
     qm = next(c for c in ax.collections if c.__class__.__name__ == "QuadMesh")
     coords = qm.get_coordinates()  # (ny_coords, nx_coords, 2)
     z_data = np.array(qm.get_array(), dtype=float)
 
-    x_coords_1d = coords[0, :, 0]
-    y_coords_1d = coords[:, 0, 1]
-
     # Detect gouraud vs flat: gouraud z matches coords shape, flat z is one smaller per dim
     is_gouraud = z_data.shape == (coords.shape[0], coords.shape[1])
 
     if is_gouraud:
+        # Store full 2D grids — irregular meshes cannot be reduced to 1D
         result = {
-            "x_nodes": x_coords_1d,
-            "y_nodes": y_coords_1d,
+            "x_grid": np.array(coords[:, :, 0], dtype=float),
+            "y_grid": np.array(coords[:, :, 1], dtype=float),
             "z_data": z_data,
             "shading": "gouraud",
         }
     else:
+        x_coords_1d = coords[0, :, 0]
+        y_coords_1d = coords[:, 0, 1]
         ny, nx = coords.shape[0] - 1, coords.shape[1] - 1
         if z_data.ndim == 1:
             z_data = z_data.reshape(ny, nx)
@@ -238,34 +240,41 @@ def _save_dat_imshow(fname, extracted):
 def _save_dat_pcolormesh(fname, extracted):
     """Save pcolormesh data in gnuplot splot xyz format.
 
-    Each row is ``x y z``.  Blank lines separate blocks where the x value changes.
-    Handles both gouraud (node positions) and flat (bin-center) coordinate types.
+    Each row is ``x y z``.  Blank lines separate blocks of the first grid
+    dimension.  For gouraud meshes, x and y come from the full 2D coordinate
+    grids (irregular meshes); for flat meshes, from computed bin centers.
     """
     z_data = extracted["z_data"]
     shading = extracted.get("shading", "flat")
-
-    if shading == "gouraud":
-        x_vals = extracted["x_nodes"]
-        y_vals = extracted["y_nodes"]
-    else:
-        x_vals = extracted["x_centers"]
-        y_vals = extracted["y_centers"]
+    ny, nx = z_data.shape
 
     with open(fname, "w") as f:
         f.write(f"# title: {extracted['title']}\n")
         f.write(f"# xlabel: {extracted['xlabel']}\n")
         f.write(f"# ylabel: {extracted['ylabel']}\n")
         f.write(f"# shading: {shading}\n")
+        f.write(f"# grid: {ny} {nx}\n")
         if shading == "flat":
             f.write(f"# x_edges ({len(extracted['x_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['x_edges'])}\n")
             f.write(f"# y_edges ({len(extracted['y_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['y_edges'])}\n")
-        f.write(f"# z_data shape: {z_data.shape}\n")
         f.write(f"# {extracted['xlabel']}\t{extracted['ylabel']}\tZ\n")
-        for ix, xc in enumerate(x_vals):
-            for iy, yc in enumerate(y_vals):
-                f.write(f"{xc:.6g}\t{yc:.6g}\t{z_data[iy, ix]:.6g}\n")
-            if ix < len(x_vals) - 1:
-                f.write("\n")
+
+        if shading == "gouraud":
+            x_grid = extracted["x_grid"]
+            y_grid = extracted["y_grid"]
+            for iy in range(ny):
+                for ix in range(nx):
+                    f.write(f"{x_grid[iy, ix]:.6g}\t{y_grid[iy, ix]:.6g}\t{z_data[iy, ix]:.6g}\n")
+                if iy < ny - 1:
+                    f.write("\n")
+        else:
+            x_vals = extracted["x_centers"]
+            y_vals = extracted["y_centers"]
+            for ix, xc in enumerate(x_vals):
+                for iy, yc in enumerate(y_vals):
+                    f.write(f"{xc:.6g}\t{yc:.6g}\t{z_data[iy, ix]:.6g}\n")
+                if ix < len(x_vals) - 1:
+                    f.write("\n")
 
 
 def _save_npz(fname, extracted, plot_type):
@@ -288,8 +297,8 @@ def _save_npz(fname, extracted, plot_type):
         save_dict["shading"] = np.array(shading)
         save_dict["z_data"] = extracted["z_data"]
         if shading == "gouraud":
-            save_dict["x_nodes"] = extracted["x_nodes"]
-            save_dict["y_nodes"] = extracted["y_nodes"]
+            save_dict["x_grid"] = extracted["x_grid"]
+            save_dict["y_grid"] = extracted["y_grid"]
         else:
             save_dict["x_edges"] = extracted["x_edges"]
             save_dict["y_edges"] = extracted["y_edges"]
