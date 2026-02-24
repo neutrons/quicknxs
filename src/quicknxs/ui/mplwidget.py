@@ -220,6 +220,12 @@ def _save_dat_pcolormesh(fname, extracted):
     y_centers = extracted["y_centers"]
     z_data = extracted["z_data"]
     with open(fname, "w") as f:
+        f.write(f"# title: {extracted['title']}\n")
+        f.write(f"# xlabel: {extracted['xlabel']}\n")
+        f.write(f"# ylabel: {extracted['ylabel']}\n")
+        f.write(f"# x_edges ({len(extracted['x_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['x_edges'])}\n")
+        f.write(f"# y_edges ({len(extracted['y_edges'])}): {' '.join(f'{v:.6g}' for v in extracted['y_edges'])}\n")
+        f.write(f"# z_data shape: {z_data.shape}\n")
         f.write(f"# {extracted['xlabel']}\t{extracted['ylabel']}\tZ\n")
         for ix, xc in enumerate(x_centers):
             for iy, yc in enumerate(y_centers):
