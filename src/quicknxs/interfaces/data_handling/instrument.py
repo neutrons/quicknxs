@@ -7,7 +7,7 @@ Abstracts out how we obtaininformation from the data file
 
 import logging
 import math
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 import mantid.simpleapi as api
 import numpy as np
@@ -89,10 +89,17 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
     return pruned_list
 
 
-class InsufficientEventCountError(Exception):
-    """Exception raised when the number of events in the workspace is too low"""
+class CrossSectionError(Exception):
+    """Exception raised when no valid cross section data can be loaded"""
 
-    pass
+    def __init__(self, file_path: str | list[str] | None = None, message: str | None = None, min_num_evts: int = 100):
+        self.min_num_events = min_num_evts
+        self.file_path = file_path
+
+        if message is None:
+            message = f"No valid cross-sections found in file: {file_path}"
+        self.message = message
+        super().__init__(message)
 
 
 class Instrument(object):
@@ -118,7 +125,7 @@ class Instrument(object):
         self.ana_state = "AnalyzerState"
         self.ana_veto = "AnalyzerVeto"
 
-    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration: "Configuration") -> List[EventWorkspace]:
+    def _get_xs_list(self, file_path: str, ws_root_name: str, configuration: "Configuration") -> list[EventWorkspace]:
         """Load the cross-sections from a data file. Handles both pre- and post-epics data.
 
         Parameters
@@ -137,7 +144,7 @@ class Instrument(object):
 
         Raises
         ------
-        InsufficientEventCountError
+        CrossSectionError
             If the data file does not contain enough events
         """
         use_slow_flipper_log = self.USE_SLOW_FLIPPER_LOG
@@ -184,13 +191,16 @@ class Instrument(object):
             _path_xs_list = remove_low_event_workspaces(_path_xs_list, configuration.nbr_events_min)
 
             if len(_path_xs_list) == 0:
-                raise InsufficientEventCountError(
-                    f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
+                raise CrossSectionError(
+                    None,
+                    f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}",
+                    configuration.nbr_events_min,
                 )
         except ValueError as e:
             # split_events raises ValueError when there are insufficient events at the workspace level
-            raise InsufficientEventCountError(
-                f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}"
+            raise CrossSectionError(
+                None,
+                f"All cross-sections contain fewer than {configuration.nbr_events_min} events in: {file_path}",
             ) from e
 
         # Dead-time correction only applies to post-epics data
@@ -242,7 +252,7 @@ class Instrument(object):
 
         return path_xs_list
 
-    def load_data(self, file_path: str, configuration: Optional["Configuration"] = None) -> List[EventWorkspace]:
+    def load_data(self, file_path: str, configuration: Optional["Configuration"] = None) -> list[EventWorkspace]:
         r"""Load one or more data sets according to the needs of the instrument.
 
         This function assumes that when loading more than one data file, the files are congruent and their
@@ -259,7 +269,7 @@ class Instrument(object):
 
         Raises
         ------
-        InsufficientEventCountError
+        CrossSectionError
             If the data file does not contain enough events
         """
         fp_instance = FilePath(file_path)
@@ -268,11 +278,14 @@ class Instrument(object):
 
         # Collect cross-sections from all files
         all_xs_lists = []
-        for idx, path in enumerate(fp_instance.single_paths):
-            # Use unique workspace names for each file to avoid overwrites
-            path_fp = FilePath(path)
-            path_ws_name = path_fp.run_numbers(string_representation="short")
-            all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
+        try:
+            for idx, path in enumerate(fp_instance.single_paths):
+                # Use unique workspace names for each file to avoid overwrites
+                path_fp = FilePath(path)
+                path_ws_name = path_fp.run_numbers(string_representation="short")
+                all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
+        except CrossSectionError as err:
+            raise CrossSectionError(file_path, err.message, err.min_num_events) from err
 
         # If only one file, return its cross-sections directly
         if len(all_xs_lists) == 1:
