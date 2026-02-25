@@ -8,7 +8,7 @@ import os
 import sys
 import time
 from bisect import insort_left
-from typing import Callable, Dict, List, Optional, Set, Union
+from typing import Callable, Set
 
 import numpy as np
 
