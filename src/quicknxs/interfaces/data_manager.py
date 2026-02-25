@@ -379,13 +379,16 @@ class DataManager(object):
 
         # Create a deepcopy to allow adding the same run to the reduction list(s) and direct beam list without sharing state
         nexus_data = copy.deepcopy(self._nexus_data)
-        is_direct_beam = nexus_data.is_direct_beam()
+        is_true_direct_beam = nexus_data.is_direct_beam()
+        nexus_data.set_is_direct_beam(
+            False
+        )  # ensure data added to reduction list is not marked as direct beam, even if original data is
 
         result = self._insert_into_reduction_list_by_q(nexus_data, reduction_list)
         if not result:
             return AddToReductionResult.OTHER_ERROR
 
-        if is_direct_beam:
+        if is_true_direct_beam:
             logging.warning(f"Run {nexus_data.number} was added to the reduction list but is labeled as a direct beam.")
             return AddToReductionResult.SUCCESS_DIRECT_BEAM
         else:
