@@ -1512,12 +1512,8 @@ class MainHandler:
             if active_only:
                 result = self._data_manager.calculate_gisans(progress=prog)
                 if not result:
-                    self.report_message(
-                        f"Could not compute GISANS for {self._data_manager.current_file_name}",
-                        detailed_message=str(traceback.format_exc()),
-                        pop_up=True,
-                        is_error=True,
-                    )
+                    # Log error but don't show popup - GISANS computation can fail for valid reasons
+                    logging.error(f"Could not compute GISANS for {self._data_manager.current_file_name}")
             else:
                 self._data_manager.reduce_gisans(progress=prog)
 
@@ -1691,25 +1687,20 @@ class MainHandler:
             configuration.off_spec_x_axis = Configuration.QX_VS_QZ
         else:
             configuration.off_spec_x_axis = Configuration.KZI_VS_KZF
-        configuration.off_spec_slice = self.ui.offspec_slice_checkbox.isChecked()
-        configuration.off_spec_slice_qz_min = self.ui.slice_qz_min_spinbox.value()
-        configuration.off_spec_slice_qz_max = self.ui.slice_qz_max_spinbox.value()
-        # try:
-        #    qz_list = self.ui.offspec_qz_list_edit.text()
-        #    if len(qz_list) > 0:
-        #        configuration.off_spec_qz_list = [float(x) for x in self.ui.offspec_qz_list_edit.text().split(',')]
-        # except:
-        #    logging.error("Could not parse off_spec_qz_list: %s", configuration.off_spec_qz_list)
-        configuration.off_spec_err_weight = self.ui.offspec_err_weight_checkbox.isChecked()
-        configuration.off_spec_nxbins = self.ui.offspec_rebin_x_bins_spinbox.value()
-        configuration.off_spec_nybins = self.ui.offspec_rebin_y_bins_spinbox.value()
-        configuration.off_spec_x_min = self.ui.offspec_x_min_spinbox.value()
-        configuration.off_spec_x_max = self.ui.offspec_x_max_spinbox.value()
-        configuration.off_spec_y_min = self.ui.offspec_y_min_spinbox.value()
-        configuration.off_spec_y_max = self.ui.offspec_y_max_spinbox.value()
 
-        # Off-spec smoothing options
-        configuration.apply_smoothing = self.ui.offspec_smooth_checkbox.isChecked()
+        # Off-specular binned and slice parameters are now stored in QSettings via the dialogs
+        settings = QtCore.QSettings(".quicknxs")
+        configuration.off_spec_nxbins = int(settings.value("offspec_binned/bins_x", 120))
+        configuration.off_spec_nybins = int(settings.value("offspec_binned/bins_y", 120))
+        configuration.off_spec_x_min = float(settings.value("offspec_binned/x_min", -0.015))
+        configuration.off_spec_x_max = float(settings.value("offspec_binned/x_max", 0.015))
+        configuration.off_spec_y_min = float(settings.value("offspec_binned/y_min", 0.0))
+        configuration.off_spec_y_max = float(settings.value("offspec_binned/y_max", 0.15))
+        configuration.off_spec_err_weight = settings.value("offspec_binned/error_weighting", False, type=bool)
+
+        # Off-specular slice parameters
+        configuration.off_spec_slice_qz_min = float(settings.value("offspec_slice/qz_min", 0.05))
+        configuration.off_spec_slice_qz_max = float(settings.value("offspec_slice/qz_max", 0.07))
 
         # GISANS options
         configuration.gisans_wl_min = self.ui.gisans_wl_min_spinbox.value()
@@ -1801,20 +1792,21 @@ class MainHandler:
             self.ui.qxVSqz.setChecked(True)
         else:
             self.ui.kizVSkfz.setChecked(True)
-        self.ui.offspec_slice_checkbox.setChecked(configuration.off_spec_slice)
-        # self.ui.offspec_qz_list_edit.setText(','.join([str(x) for x in configuration.off_spec_qz_list]))
-        self.ui.slice_qz_min_spinbox.setValue(configuration.off_spec_slice_qz_min)
-        self.ui.slice_qz_max_spinbox.setValue(configuration.off_spec_slice_qz_max)
-        self.ui.offspec_err_weight_checkbox.setChecked(configuration.off_spec_err_weight)
-        self.ui.offspec_rebin_x_bins_spinbox.setValue(configuration.off_spec_nxbins)
-        self.ui.offspec_rebin_y_bins_spinbox.setValue(configuration.off_spec_nybins)
-        self.ui.offspec_x_min_spinbox.setValue(configuration.off_spec_x_min)
-        self.ui.offspec_x_max_spinbox.setValue(configuration.off_spec_x_max)
-        self.ui.offspec_y_min_spinbox.setValue(configuration.off_spec_y_min)
-        self.ui.offspec_y_max_spinbox.setValue(configuration.off_spec_y_max)
 
-        # Off-spec smoothing options
-        self.ui.offspec_smooth_checkbox.setChecked(configuration.apply_smoothing)
+        # Off-specular binned and slice parameters are now stored in QSettings via the dialogs
+        # Update QSettings with values from the loaded configuration
+        settings = QtCore.QSettings(".quicknxs")
+        settings.setValue("offspec_binned/bins_x", configuration.off_spec_nxbins)
+        settings.setValue("offspec_binned/bins_y", configuration.off_spec_nybins)
+        settings.setValue("offspec_binned/x_min", configuration.off_spec_x_min)
+        settings.setValue("offspec_binned/x_max", configuration.off_spec_x_max)
+        settings.setValue("offspec_binned/y_min", configuration.off_spec_y_min)
+        settings.setValue("offspec_binned/y_max", configuration.off_spec_y_max)
+        settings.setValue("offspec_binned/error_weighting", configuration.off_spec_err_weight)
+
+        # Off-specular slice parameters
+        settings.setValue("offspec_slice/qz_min", configuration.off_spec_slice_qz_min)
+        settings.setValue("offspec_slice/qz_max", configuration.off_spec_slice_qz_max)
 
         # GISANS options
         self.ui.gisans_wl_min_spinbox.setValue(configuration.gisans_wl_min)

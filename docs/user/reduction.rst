@@ -7,7 +7,17 @@ Reduction Options
 -----------------
 
 After clicking the **Reduce** button in the main Reflectometry GUI, the Reduction Options dialog window
-appears. This window allows you to configure various settings for the data reduction process.
+appears. This window allows you to configure various settings for the data reduction process,
+including output formats and off-specular processing options.
+
+The **Intensity smoothing** checkbox in this dialog controls whether a smoothing algorithm is applied
+to off-specular intensity data. When enabled, a smoothing parameters dialog will appear after clicking
+OK, allowing you to configure the smoothing grid and sigma values.
+
+For off-specular binned output, binning parameters (X/Y axis ranges and bin counts) are configured
+through the **Configure Binned Parameters** button on the Off-Specular tab. These parameters are saved
+and reused for future reductions until changed.
+
 See the image below for reference.
 
 .. figure::

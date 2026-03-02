@@ -32,7 +32,9 @@ class ReductionDialog(QtWidgets.QDialog):
         self.ui.export_SA.setChecked(self._verify_true("export_asym", True))
         self.ui.exportGISANS.setChecked(self._verify_true("export_gisans", False))
         self.ui.exportOffSpecular.setChecked(self._verify_true("export_offspec", False))
+        self.ui.intensitySmoothingCheckbox.setChecked(self._verify_true("apply_smoothing", False))
         self.ui.exportOffSpecularSmoothed.setChecked(self._verify_true("export_offspec_smooth", False))
+        self.ui.exportOffSpecularSlices.setChecked(self._verify_true("export_offspec_slices", False))
 
         # Formats
         self.ui.matlab.setChecked(self._verify_true("format_matlab", False))
@@ -71,7 +73,9 @@ class ReductionDialog(QtWidgets.QDialog):
             export_asym=self.ui.export_SA.isChecked(),
             export_gisans=self.ui.exportGISANS.isChecked(),
             export_offspec=self.ui.exportOffSpecular.isChecked(),
+            apply_smoothing=self.ui.intensitySmoothingCheckbox.isChecked(),
             export_offspec_smooth=self.ui.exportOffSpecularSmoothed.isChecked(),
+            export_offspec_slices=self.ui.exportOffSpecularSlices.isChecked(),
             format_matlab=self.ui.matlab.isChecked(),
             format_mantid=self.ui.mantid_script_checkbox.isChecked(),
             format_numpy=self.ui.numpy.isChecked(),
@@ -102,3 +106,28 @@ class ReductionDialog(QtWidgets.QDialog):
     def save_settings(self) -> None:
         """Save reduction options in QSettings."""
         self.settings.setValue("output_directory", self.ui.directoryEntry.text())
+        self.settings.setValue("output_file_template", self.ui.fileNameEntry.text())
+
+        # Save output checkboxes
+        self.settings.setValue("export_specular", self.ui.exportSpecular.isChecked())
+        self.settings.setValue("export_asym", self.ui.export_SA.isChecked())
+        self.settings.setValue("export_gisans", self.ui.exportGISANS.isChecked())
+        self.settings.setValue("export_offspec", self.ui.exportOffSpecular.isChecked())
+        self.settings.setValue("apply_smoothing", self.ui.intensitySmoothingCheckbox.isChecked())
+        self.settings.setValue("export_offspec_smooth", self.ui.exportOffSpecularSmoothed.isChecked())
+        self.settings.setValue("export_offspec_slices", self.ui.exportOffSpecularSlices.isChecked())
+
+        # Save format checkboxes
+        self.settings.setValue("format_matlab", self.ui.matlab.isChecked())
+        self.settings.setValue("format_numpy", self.ui.numpy.isChecked())
+        self.settings.setValue("format_mantid", self.ui.mantid_script_checkbox.isChecked())
+        self.settings.setValue("format_5cols", self.ui.five_cols_checkbox.isChecked())
+
+        # Save email settings
+        self.settings.setValue("email_send", self.ui.emailSend.isChecked())
+        self.settings.setValue("email_zip_data", self.ui.emailZIPData.isChecked())
+        self.settings.setValue("email_send_plots", self.ui.emailSendPlots.isChecked())
+        self.settings.setValue("email_send_data", self.ui.emailSendData.isChecked())
+        self.settings.setValue("email_to", self.ui.emailTo.text())
+        self.settings.setValue("email_cc", self.ui.emailCc.text())
+        self.settings.setValue("email_subject", self.ui.emailSubject.text())
