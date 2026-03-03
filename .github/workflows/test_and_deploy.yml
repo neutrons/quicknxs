@@ -169,7 +169,6 @@ jobs:
           ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
           CONDA_LABEL: dev
         run: |
-          # label is main or rc depending on the tag-name
           echo pushing ${{ github.ref }} with label ${{ env.CONDA_LABEL}}
           pixi run anaconda upload --label ${{ env.CONDA_LABEL}} --user neutrons ${{ env.PKG_NAME }}-*.conda
 
