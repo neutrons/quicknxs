@@ -171,13 +171,9 @@ class Instrument(object):
         # Use mr_reduction's split_events to load and filter cross-sections
         try:
             # Create PolarizationLogs with custom log names matching REF_M
-            # Note: PolarizationLogs doesn't support initialization with parameters,
-            # so we set attributes individually. This could be improved in mr_reduction.
-            pol_logs = PolarizationLogs()
-            pol_logs.POL_STATE = self.pol_state
-            pol_logs.ANA_STATE = self.ana_state
-            pol_logs.POL_VETO = self.pol_veto
-            pol_logs.ANA_VETO = self.ana_veto
+            pol_logs = PolarizationLogs(
+                pol_state=self.pol_state, ana_state=self.ana_state, pol_veto=self.pol_veto, ana_veto=self.ana_veto
+            )
 
             _path_xs_list = split_events(
                 file_path=file_path,
@@ -206,11 +202,9 @@ class Instrument(object):
         # Dead-time correction only applies to post-epics data
         if configuration is not None and configuration.apply_deadtime and not is_pre_epics:
             # Create PolarizationLogs with custom log names matching REF_M
-            pol_logs = PolarizationLogs()
-            pol_logs.POL_STATE = self.pol_state
-            pol_logs.ANA_STATE = self.ana_state
-            pol_logs.POL_VETO = self.pol_veto
-            pol_logs.ANA_VETO = self.ana_veto
+            pol_logs = PolarizationLogs(
+                pol_state=self.pol_state, ana_state=self.ana_state, pol_veto=self.pol_veto, ana_veto=self.ana_veto
+            )
 
             # Use mr_reduction's split_error_events to load and filter error events
             _err_list = split_error_events(
