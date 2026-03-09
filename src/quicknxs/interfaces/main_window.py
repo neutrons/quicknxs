@@ -12,11 +12,10 @@ from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.event_handlers.configuration_handler import ConfigurationHandler
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.event_handlers.plot_handler import PlotHandler
-from quicknxs.interfaces.offspec_binned_dialog import OffSpecBinnedDialog
+from quicknxs.interfaces.offspec_parameters_dialog import OffSpecParametersDialog
 from quicknxs.interfaces.offspec_slice_dialog import OffSpecSliceDialog
 from quicknxs.interfaces.plotting import PlotManager
 from quicknxs.interfaces.reduction_dialog import ReductionDialog
-from quicknxs.interfaces.smooth_dialog import SmoothDialog
 from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
 
 
@@ -539,28 +538,22 @@ class MainWindow(QtWidgets.QMainWindow):
             ):
                 self.file_handler.compute_offspec_on_change()
 
-            # Show smoothing dialog when intensity smoothing is requested
-            if output_options.get("apply_smoothing", False):
-                dia = SmoothDialog(self, self.data_manager)
-                if not dia.exec_():
-                    logging.info("Skipping smoothing options")
-                    dia.destroy()
-                    return
-                else:
-                    output_options = dia.update_output_options(output_options)
-                    dia.destroy()
+            # Show combined parameters dialog when smoothing or binned output is requested
+            show_smoothing = output_options.get("apply_smoothing", False)
+            show_binning = output_options.get("export_offspec_smooth", False)
 
-            # Show binned parameters dialog when off-specular binned output is requested
-            if output_options.get("export_offspec_smooth", False):
-                dia = OffSpecBinnedDialog(self, self.data_manager)
+            if show_smoothing or show_binning:
+                dia = OffSpecParametersDialog(
+                    self, self.data_manager, show_smoothing=show_smoothing, show_binning=show_binning
+                )
                 if not dia.exec_():
-                    logging.info("Skipping binned parameters")
+                    logging.info("Skipping off-specular parameters")
                     dia.destroy()
                     return
                 else:
-                    # Get binned parameters and add to output options
-                    binned_params = dia.get_parameters()
-                    output_options.update(binned_params)
+                    # Get parameters and add to output options
+                    params = dia.get_parameters()
+                    output_options.update(params)
                     dia.destroy()
 
             # Show slice parameters dialog when off-specular slices are requested
