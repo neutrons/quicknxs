@@ -438,34 +438,18 @@ class ProcessingWorkflow(object):
             return {}
 
         for pol_state in self.data_manager.reduction_states:
-            # Use parameters from output_options if set (from binned dialog), otherwise use configuration
+            # All parameters now come from the OffSpecParametersDialog
             r, dr, x, y, labels = off_specular.rebin_extract(
                 self.data_manager.reduction_list,
                 pol_state,
-                axes=self.output_options.get(
-                    "off_spec_x_axis", self.data_manager.active_cross_section.configuration.off_spec_x_axis
-                ),
-                use_weights=self.output_options.get(
-                    "off_spec_err_weight", self.data_manager.active_cross_section.configuration.off_spec_err_weight
-                ),
-                n_bins_x=self.output_options.get(
-                    "off_spec_nxbins", self.data_manager.active_cross_section.configuration.off_spec_nxbins
-                ),
-                n_bins_y=self.output_options.get(
-                    "off_spec_nybins", self.data_manager.active_cross_section.configuration.off_spec_nybins
-                ),
-                x_min=self.output_options.get(
-                    "off_spec_x_min", self.data_manager.active_cross_section.configuration.off_spec_x_min
-                ),
-                x_max=self.output_options.get(
-                    "off_spec_x_max", self.data_manager.active_cross_section.configuration.off_spec_x_max
-                ),
-                y_min=self.output_options.get(
-                    "off_spec_y_min", self.data_manager.active_cross_section.configuration.off_spec_y_min
-                ),
-                y_max=self.output_options.get(
-                    "off_spec_y_max", self.data_manager.active_cross_section.configuration.off_spec_y_max
-                ),
+                axes=self.output_options["off_spec_x_axis"],
+                use_weights=self.output_options["off_spec_err_weight"],
+                n_bins_x=self.output_options["off_spec_nxbins"],
+                n_bins_y=self.output_options["off_spec_nybins"],
+                x_min=self.output_options["off_spec_x_min"],
+                x_max=self.output_options["off_spec_x_max"],
+                y_min=self.output_options["off_spec_y_min"],
+                y_max=self.output_options["off_spec_y_max"],
             )
             if data_dict is None:
                 data_dict = dict(
@@ -647,10 +631,8 @@ class ProcessingWorkflow(object):
         Tuple[dict, dict]
             A tuple containing the smoothed data dictionary and a slice data dictionary.
         """
-        # Use coordinate system from output_options if set (from smooth dialog), otherwise use configuration
-        axes = self.output_options.get(
-            "off_spec_x_axis", self.data_manager.active_cross_section.configuration.off_spec_x_axis
-        )
+        # Coordinate system comes from the OffSpecParametersDialog
+        axes = self.output_options["off_spec_x_axis"]
         output_data = {
             "units": [],
             "columns": [],
@@ -716,13 +698,9 @@ class ProcessingWorkflow(object):
         if slice_data_dict == {}:
             slice_data_dict = dict(units=["1/A", "a.u.", "a.u."], columns=[label, "I", "dI"], cross_sections={})
 
-        # Use parameters from output_options if set (from slice dialog), otherwise use configuration
-        q_min = self.output_options.get(
-            "off_spec_slice_qz_min", self.data_manager.active_cross_section.configuration.off_spec_slice_qz_min
-        )
-        q_max = self.output_options.get(
-            "off_spec_slice_qz_max", self.data_manager.active_cross_section.configuration.off_spec_slice_qz_max
-        )
+        # Slice parameters come from the OffSpecSliceDialog
+        q_min = self.output_options["off_spec_slice_qz_min"]
+        q_max = self.output_options["off_spec_slice_qz_max"]
         result, error = off_specular.get_slice(qz, r, dr, q_min, q_max)
         if error is not None:
             # Is x what we need here, or the middle of the bin

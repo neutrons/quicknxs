@@ -1688,20 +1688,6 @@ class MainHandler:
         else:
             configuration.off_spec_x_axis = Configuration.KZI_VS_KZF
 
-        # Off-specular binned and slice parameters are now stored in QSettings via the dialogs
-        settings = QtCore.QSettings(".quicknxs")
-        configuration.off_spec_nxbins = int(settings.value("offspec_binned/bins_x", 120))
-        configuration.off_spec_nybins = int(settings.value("offspec_binned/bins_y", 120))
-        configuration.off_spec_x_min = float(settings.value("offspec_binned/x_min", -0.015))
-        configuration.off_spec_x_max = float(settings.value("offspec_binned/x_max", 0.015))
-        configuration.off_spec_y_min = float(settings.value("offspec_binned/y_min", 0.0))
-        configuration.off_spec_y_max = float(settings.value("offspec_binned/y_max", 0.15))
-        configuration.off_spec_err_weight = settings.value("offspec_binned/error_weighting", False, type=bool)
-
-        # Off-specular slice parameters
-        configuration.off_spec_slice_qz_min = float(settings.value("offspec_slice/qz_min", 0.05))
-        configuration.off_spec_slice_qz_max = float(settings.value("offspec_slice/qz_max", 0.07))
-
         # GISANS options
         configuration.gisans_wl_min = self.ui.gisans_wl_min_spinbox.value()
         configuration.gisans_wl_max = self.ui.gisans_wl_max_spinbox.value()
@@ -1792,21 +1778,6 @@ class MainHandler:
             self.ui.qxVSqz.setChecked(True)
         else:
             self.ui.kizVSkfz.setChecked(True)
-
-        # Off-specular binned and slice parameters are now stored in QSettings via the dialogs
-        # Update QSettings with values from the loaded configuration
-        settings = QtCore.QSettings(".quicknxs")
-        settings.setValue("offspec_binned/bins_x", configuration.off_spec_nxbins)
-        settings.setValue("offspec_binned/bins_y", configuration.off_spec_nybins)
-        settings.setValue("offspec_binned/x_min", configuration.off_spec_x_min)
-        settings.setValue("offspec_binned/x_max", configuration.off_spec_x_max)
-        settings.setValue("offspec_binned/y_min", configuration.off_spec_y_min)
-        settings.setValue("offspec_binned/y_max", configuration.off_spec_y_max)
-        settings.setValue("offspec_binned/error_weighting", configuration.off_spec_err_weight)
-
-        # Off-specular slice parameters
-        settings.setValue("offspec_slice/qz_min", configuration.off_spec_slice_qz_min)
-        settings.setValue("offspec_slice/qz_max", configuration.off_spec_slice_qz_max)
 
         # GISANS options
         self.ui.gisans_wl_min_spinbox.setValue(configuration.gisans_wl_min)
