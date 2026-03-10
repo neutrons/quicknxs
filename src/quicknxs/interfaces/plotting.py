@@ -757,13 +757,6 @@ class PlotManager(object):
             plot.show()
             selected_data = self.main_window.data_manager.data_sets[xs]
             plots[i].clear_fig()
-
-            # Check if GISANS data computation succeeded
-            if selected_data.gisans_data is None:
-                # Hide plot if no GISANS data available
-                plots[i].hide()
-                continue
-
             plots[i].pcolormesh(
                 selected_data.gisans_data.QyGrid,
                 selected_data.gisans_data.QzGrid,

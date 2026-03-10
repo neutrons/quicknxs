@@ -1512,8 +1512,12 @@ class MainHandler:
             if active_only:
                 result = self._data_manager.calculate_gisans(progress=prog)
                 if not result:
-                    # Log error but don't show popup - GISANS computation can fail for valid reasons
-                    logging.error(f"Could not compute GISANS for {self._data_manager.current_file_name}")
+                    self.report_message(
+                        f"Could not compute GISANS for {self._data_manager.current_file_name}",
+                        detailed_message=str(traceback.format_exc()),
+                        pop_up=True,
+                        is_error=True,
+                    )
             else:
                 self._data_manager.reduce_gisans(progress=prog)
 
