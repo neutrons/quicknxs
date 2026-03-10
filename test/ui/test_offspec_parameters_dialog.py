@@ -97,15 +97,10 @@ def test_dialog_smoothing_defaults(dialog_both):
     assert dialog_both.ui.sigmaX.value() == 0.0005
     assert dialog_both.ui.sigmaY.value() == 0.0005
 
-    # Check grid size defaults
-    assert dialog_both.ui.gridSizeX.value() == 200
-    assert dialog_both.ui.gridSizeY.value() == 200
-
     # Check r_sigmas default
     assert dialog_both.ui.rSigmas.value() == 3.0
 
     # Check coupling defaults
-    assert dialog_both.ui.gridSizeCoupled.isChecked()
     assert dialog_both.ui.sigmasCoupled.isChecked()
 
 
@@ -175,9 +170,6 @@ def test_dialog_get_parameters_smoothing_only(dialog_smoothing_only):
     dialog_smoothing_only.ui.sigmaX.setValue(0.001)
     dialog_smoothing_only.ui.sigmaY.setValue(0.002)
     dialog_smoothing_only.ui.rSigmas.setValue(4.0)
-    dialog_smoothing_only.ui.gridSizeCoupled.setChecked(False)
-    dialog_smoothing_only.ui.gridSizeX.setValue(300)
-    dialog_smoothing_only.ui.gridSizeY.setValue(400)
 
     params = dialog_smoothing_only.get_parameters()
 
@@ -192,11 +184,9 @@ def test_dialog_get_parameters_smoothing_only(dialog_smoothing_only):
     assert params["off_spec_sigmay"] == 0.002
     assert params["off_spec_sigmas"] == 4.0
 
-    # When smoothing only, grid size should be used for bins
-    assert params["off_spec_nxbins"] == 300
-    assert params["off_spec_nybins"] == 400
-
     # Binning-specific parameters should not be present
+    assert "off_spec_nxbins" not in params
+    assert "off_spec_nybins" not in params
     assert "off_spec_err_weight" not in params
 
 
@@ -254,9 +244,6 @@ def test_dialog_settings_persistence(dialog_both, qtbot):
     dialog_both.ui.sigmasCoupled.setChecked(False)
     dialog_both.ui.sigmaX.setValue(0.003)
     dialog_both.ui.sigmaY.setValue(0.004)
-    dialog_both.ui.gridSizeCoupled.setChecked(False)
-    dialog_both.ui.gridSizeX.setValue(350)
-    dialog_both.ui.gridSizeY.setValue(450)
     dialog_both.ui.rSigmas.setValue(5.0)
 
     # Save settings
@@ -281,13 +268,10 @@ def test_dialog_settings_persistence(dialog_both, qtbot):
     # Check that smoothing values were loaded
     assert new_dialog.ui.sigmaX.value() == 0.003
     assert new_dialog.ui.sigmaY.value() == 0.004
-    assert new_dialog.ui.gridSizeX.value() == 350
-    assert new_dialog.ui.gridSizeY.value() == 450
     assert new_dialog.ui.rSigmas.value() == 5.0
 
     # Check that coupling states were loaded
     assert new_dialog.ui.sigmasCoupled.isChecked() is False
-    assert new_dialog.ui.gridSizeCoupled.isChecked() is False
 
     # Cleanup
     settings.remove("offspec_binned")

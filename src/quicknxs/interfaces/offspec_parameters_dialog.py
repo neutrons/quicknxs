@@ -64,9 +64,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         if show_smoothing:
             self.ui.sigmaX.valueChanged.connect(self.update_settings)
             self.ui.sigmaY.valueChanged.connect(self.update_settings)
-            self.ui.gridSizeX.valueChanged.connect(self.update_settings)
-            self.ui.gridSizeY.valueChanged.connect(self.update_settings)
-            self.ui.gridSizeCoupled.toggled.connect(self.update_grid_coupling)
             self.ui.sigmasCoupled.toggled.connect(self.update_sigma_coupling)
             self.ui.rSigmas.valueChanged.connect(self.update_settings)
             self.ui.plot.canvas.mpl_connect("motion_notify_event", self.plot_select)
@@ -318,7 +315,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         if self.show_smoothing:
             self.update_sigma_coupling()
-            self.update_grid_coupling()
 
         self.drawing = False
 
@@ -355,8 +351,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             return
         self.drawing = True
 
-        self.update_grid()
-
         # Redraw indicators (only if they exist)
         if self.rect_region is not None:
             x1 = self.ui.offspec_x_min.value()
@@ -380,21 +374,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         self.drawing = False
 
-    def update_grid(self):
-        """Update grid size based on sigma (only called when smoothing is enabled)."""
-        if not self.show_smoothing:
-            return
-
-        if self.ui.gridSizeCoupled.isChecked():
-            sx = self.ui.sigmaX.value()
-            sy = self.ui.sigmaY.value()
-            x1 = self.ui.offspec_x_min.value()
-            x2 = self.ui.offspec_x_max.value()
-            y1 = self.ui.offspec_y_min.value()
-            y2 = self.ui.offspec_y_max.value()
-            self.ui.gridSizeX.setValue(int((x2 - x1) / sx * 1.41))
-            self.ui.gridSizeY.setValue(int((y2 - y1) / sy * 1.41))
-
     def update_sigma_coupling(self):
         """Update sigma coupling state and UI element states."""
         if not self.show_smoothing:
@@ -407,20 +386,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.ui.sigmaY.setEnabled(True)
 
         self.update_settings()
-
-    def update_grid_coupling(self):
-        """Update grid size coupling state and UI element states."""
-        if not self.show_smoothing:
-            return
-
-        if self.ui.gridSizeCoupled.isChecked():
-            self.ui.gridSizeX.setEnabled(False)
-            self.ui.gridSizeY.setEnabled(False)
-        else:
-            self.ui.gridSizeX.setEnabled(True)
-            self.ui.gridSizeY.setEnabled(True)
-
-        self.update_grid()
 
     def plot_select(self, event):
         """Handle plot clicks to adjust region (only used for smoothing)."""
@@ -481,18 +446,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
                 self.ui.sigmaX.setValue(float(settings.value("offspec_smoothing/sigma_x")))
             if settings.contains("offspec_smoothing/sigma_y"):
                 self.ui.sigmaY.setValue(float(settings.value("offspec_smoothing/sigma_y")))
-            if settings.contains("offspec_smoothing/grid_size_x"):
-                self.ui.gridSizeX.setValue(int(settings.value("offspec_smoothing/grid_size_x")))
-            if settings.contains("offspec_smoothing/grid_size_y"):
-                self.ui.gridSizeY.setValue(int(settings.value("offspec_smoothing/grid_size_y")))
             if settings.contains("offspec_smoothing/r_sigmas"):
                 self.ui.rSigmas.setValue(float(settings.value("offspec_smoothing/r_sigmas")))
             if settings.contains("offspec_smoothing/sigmas_coupled"):
                 self.ui.sigmasCoupled.setChecked(settings.value("offspec_smoothing/sigmas_coupled", True, type=bool))
-            if settings.contains("offspec_smoothing/grid_size_coupled"):
-                self.ui.gridSizeCoupled.setChecked(
-                    settings.value("offspec_smoothing/grid_size_coupled", True, type=bool)
-                )
 
         # Load coordinate system
         if settings.contains("offspec_binned/coordinate_system"):
@@ -533,11 +490,8 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         if self.show_smoothing:
             settings.setValue("offspec_smoothing/sigma_x", self.ui.sigmaX.value())
             settings.setValue("offspec_smoothing/sigma_y", self.ui.sigmaY.value())
-            settings.setValue("offspec_smoothing/grid_size_x", self.ui.gridSizeX.value())
-            settings.setValue("offspec_smoothing/grid_size_y", self.ui.gridSizeY.value())
             settings.setValue("offspec_smoothing/r_sigmas", self.ui.rSigmas.value())
             settings.setValue("offspec_smoothing/sigmas_coupled", self.ui.sigmasCoupled.isChecked())
-            settings.setValue("offspec_smoothing/grid_size_coupled", self.ui.gridSizeCoupled.isChecked())
 
     def update_bin_width(self):
         """Calculate and display the Qz bin width based on current settings."""
@@ -590,11 +544,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             params["off_spec_sigmas"] = self.ui.rSigmas.value()
             params["off_spec_sigmax"] = self.ui.sigmaX.value()
             params["off_spec_sigmay"] = self.ui.sigmaY.value()
-            # For smoothing, also use grid size for output
-            if not self.show_binning:
-                # Only set these if binning isn't also active (binning takes precedence for bin counts)
-                params["off_spec_nxbins"] = self.ui.gridSizeX.value()
-                params["off_spec_nybins"] = self.ui.gridSizeY.value()
 
         return params
 

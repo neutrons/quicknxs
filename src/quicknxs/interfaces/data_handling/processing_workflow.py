@@ -388,7 +388,8 @@ class ProcessingWorkflow(object):
                 smooth_output, slice_data_dict = self.smooth_offspec(output_data)
                 output_file_base = self.get_file_name(run_list, process_type="OffSpecSmooth")
                 self.write_quicknxs(smooth_output, output_file_base, include_offspec=True)
-                if slice_data_dict is not None and "cross_sections" in slice_data_dict:
+                # Only output smooth slices if both smooth and slices are requested
+                if slices and slice_data_dict is not None and "cross_sections" in slice_data_dict:
                     output_file_base = self.get_file_name(run_list, process_type="OffSpecSmoothSlice")
                     self.write_quicknxs(
                         slice_data_dict,
