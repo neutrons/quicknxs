@@ -4331,8 +4331,8 @@ packages:
   timestamp: 1743692373820
 - pypi: ./
   name: quicknxs
-  version: 4.17.0.dev13
-  sha256: 3d0398c5c6280ce5ef423c8422428ea9aea77cce5516404ae2791c0491e98bbe
+  version: 4.17.0.dev19
+  sha256: 2c5b147bbbacc60665498bb801bd3ffc44efa175d5a98a1d48b6c90da013720d
   requires_python: '>=3.10,<3.13'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/rapidjson-1.1.0.post20240409-h3f2d84a_2.conda
