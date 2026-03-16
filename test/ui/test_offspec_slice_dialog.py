@@ -1,5 +1,7 @@
 """Tests for the Off-Specular Qz Slice Parameters dialog"""
 
+from unittest.mock import Mock
+
 import pytest
 from qtpy import QtCore
 
@@ -7,19 +9,15 @@ from quicknxs.interfaces.offspec_slice_dialog import OffSpecSliceDialog
 
 
 @pytest.fixture
-def dialog(qtbot, main_window_with_data_factory):
+def dialog(qtbot):
     """Create an OffSpecSliceDialog instance for testing."""
-    main_window = main_window_with_data_factory()
+    # Create minimal mock data_manager for UI-only tests
+    data_manager = Mock()
+    data_manager.reduction_states = []  # Empty list for UI-only tests
+    data_manager.reduction_list = []  # Empty list for UI-only tests
 
-    # Clear any saved settings to test default values
-    # This must be done AFTER creating main_window, since initialize_instrument()
-    # writes Configuration defaults to QSettings
-    settings = QtCore.QSettings(".quicknxs")
-    settings.remove("offspec_slice/qz_min")
-    settings.remove("offspec_slice/qz_max")
-    settings.sync()  # Force write
-
-    dlg = OffSpecSliceDialog(main_window, main_window.data_manager)
+    # No parent needed for UI-only tests
+    dlg = OffSpecSliceDialog(None, data_manager)
     qtbot.addWidget(dlg)
     return dlg
 
@@ -65,10 +63,6 @@ def test_dialog_get_parameters(dialog):
 
 def test_dialog_settings_persistence(dialog, qtbot):
     """Test that settings are saved and loaded correctly."""
-    # Clear any existing settings
-    settings = QtCore.QSettings(".quicknxs")
-    settings.remove("offspec_slice")
-
     # Set custom values
     dialog.ui.slice_qz_min.setValue(0.03)
     dialog.ui.slice_qz_max.setValue(0.09)
@@ -76,25 +70,20 @@ def test_dialog_settings_persistence(dialog, qtbot):
     # Save settings
     dialog.save_settings()
 
-    # Create a new dialog to test loading
-    main_window = dialog.parent()
-    new_dialog = OffSpecSliceDialog(main_window, main_window.data_manager)
+    # Create a new dialog with mock data_manager to test loading
+    data_manager = Mock()
+    data_manager.reduction_states = []
+    data_manager.reduction_list = []
+    new_dialog = OffSpecSliceDialog(None, data_manager)
     qtbot.addWidget(new_dialog)
 
     # Check that values were loaded
     assert new_dialog.ui.slice_qz_min.value() == 0.03
     assert new_dialog.ui.slice_qz_max.value() == 0.09
 
-    # Cleanup
-    settings.remove("offspec_slice")
-
 
 def test_dialog_accept_saves_settings(dialog, qtbot):
     """Test that accepting the dialog saves settings."""
-    # Clear any existing settings
-    settings = QtCore.QSettings(".quicknxs")
-    settings.remove("offspec_slice")
-
     # Set custom values
     dialog.ui.slice_qz_min.setValue(0.055)
     dialog.ui.slice_qz_max.setValue(0.085)
@@ -103,13 +92,11 @@ def test_dialog_accept_saves_settings(dialog, qtbot):
     dialog.accept()
 
     # Check that settings were saved
+    settings = QtCore.QSettings(".quicknxs")
     assert settings.contains("offspec_slice/qz_min")
     assert float(settings.value("offspec_slice/qz_min")) == 0.055
     assert settings.contains("offspec_slice/qz_max")
     assert float(settings.value("offspec_slice/qz_max")) == 0.085
-
-    # Cleanup
-    settings.remove("offspec_slice")
 
 
 def test_dialog_slice_width_updates_on_value_change(dialog, qtbot):

@@ -1,49 +1,53 @@
 """Tests for the Off-Specular Parameters dialog (combined smoothing and binning)"""
 
+from unittest.mock import Mock
+
 import pytest
-from qtpy import QtCore
+from qtpy import QtWidgets
 
 from quicknxs.interfaces.offspec_parameters_dialog import OffSpecParametersDialog
 
 
 @pytest.fixture
-def dialog_both(qtbot, main_window_with_data_factory):
+def mock_main_window(qtbot):
+    """Create a minimal mock main window for testing UI components."""
+    main_window = QtWidgets.QMainWindow()
+    qtbot.addWidget(main_window)
+
+    # Mock data_manager with minimal required attributes
+    main_window.data_manager = Mock()
+    main_window.data_manager.reduction_states = []  # Empty list for UI-only tests
+    main_window.data_manager.reduction_list = []  # Empty list for UI-only tests
+
+    return main_window
+
+
+@pytest.fixture
+def dialog_both(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with both smoothing and binning enabled."""
-    main_window = main_window_with_data_factory()
-
-    # Clear any saved settings to test default values
-    settings = QtCore.QSettings(".quicknxs")
-    settings.remove("offspec_binned/x_min")
-    settings.remove("offspec_binned/x_max")
-    settings.remove("offspec_binned/y_min")
-    settings.remove("offspec_binned/y_max")
-    settings.remove("offspec_binned/bins_x")
-    settings.remove("offspec_binned/bins_y")
-    settings.remove("offspec_smoothing/sigma_x")
-    settings.remove("offspec_smoothing/sigma_y")
-    settings.remove("offspec_smoothing/grid_size_x")
-    settings.remove("offspec_smoothing/grid_size_y")
-    settings.sync()
-
-    dlg = OffSpecParametersDialog(main_window, main_window.data_manager, show_smoothing=True, show_binning=True)
+    dlg = OffSpecParametersDialog(
+        mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=True
+    )
     qtbot.addWidget(dlg)
     return dlg
 
 
 @pytest.fixture
-def dialog_smoothing_only(qtbot, main_window_with_data_factory):
+def dialog_smoothing_only(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with only smoothing enabled."""
-    main_window = main_window_with_data_factory()
-    dlg = OffSpecParametersDialog(main_window, main_window.data_manager, show_smoothing=True, show_binning=False)
+    dlg = OffSpecParametersDialog(
+        mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=False
+    )
     qtbot.addWidget(dlg)
     return dlg
 
 
 @pytest.fixture
-def dialog_binning_only(qtbot, main_window_with_data_factory):
+def dialog_binning_only(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with only binning enabled."""
-    main_window = main_window_with_data_factory()
-    dlg = OffSpecParametersDialog(main_window, main_window.data_manager, show_smoothing=False, show_binning=True)
+    dlg = OffSpecParametersDialog(
+        mock_main_window, mock_main_window.data_manager, show_smoothing=False, show_binning=True
+    )
     qtbot.addWidget(dlg)
     return dlg
 
@@ -224,11 +228,6 @@ def test_dialog_get_parameters_binning_only(dialog_binning_only):
 
 def test_dialog_settings_persistence(dialog_both, qtbot):
     """Test that settings are saved and loaded correctly."""
-    # Clear any existing settings
-    settings = QtCore.QSettings(".quicknxs")
-    settings.remove("offspec_binned")
-    settings.remove("offspec_smoothing")
-
     # Set custom values for region
     dialog_both.ui.offspec_x_min.setValue(-0.02)
     dialog_both.ui.offspec_x_max.setValue(0.03)
@@ -272,7 +271,3 @@ def test_dialog_settings_persistence(dialog_both, qtbot):
 
     # Check that coupling states were loaded
     assert new_dialog.ui.sigmasCoupled.isChecked() is False
-
-    # Cleanup
-    settings.remove("offspec_binned")
-    settings.remove("offspec_smoothing")
