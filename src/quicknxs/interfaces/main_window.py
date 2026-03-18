@@ -12,10 +12,10 @@ from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.event_handlers.configuration_handler import ConfigurationHandler
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.event_handlers.plot_handler import PlotHandler
-from quicknxs.interfaces.offspec_parameters_dialog import OffSpecParametersDialog
 from quicknxs.interfaces.offspec_slice_dialog import OffSpecSliceDialog
 from quicknxs.interfaces.plotting import PlotManager
 from quicknxs.interfaces.reduction_dialog import ReductionDialog
+from quicknxs.interfaces.smooth_dialog import OffSpecParametersDialog
 from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
 
 

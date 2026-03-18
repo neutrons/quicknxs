@@ -39,7 +39,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             Whether to show binning parameters
         """
         QtWidgets.QDialog.__init__(self, parent)
-        self.ui = load_ui("ui_offspec_parameters_dialog.ui", base_instance=self)
+        self.ui = load_ui("ui_smooth_dialog.ui", base_instance=self)
         self.data_manager = data_manager
         self.show_smoothing = show_smoothing
         self.show_binning = show_binning

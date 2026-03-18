@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import pytest
 from qtpy import QtWidgets
 
-from quicknxs.interfaces.offspec_parameters_dialog import OffSpecParametersDialog
+from quicknxs.interfaces.smooth_dialog import OffSpecParametersDialog
 
 
 @pytest.fixture
