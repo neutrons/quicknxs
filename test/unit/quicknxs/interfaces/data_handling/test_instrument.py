@@ -124,6 +124,9 @@ def test_load_data_sum_two_files(data_server):
     ws_list_42113 = [str(ws) for ws in ws_obj_list_42113]
 
     # Verify events are summed correctly for each cross-section
+    # Note: the workspaces are compared by name as a regression test to a previous issue where the
+    # name of the merged workspace was the same as one of the individual files, however, the issue
+    # was not seen when comparing by workspace handle, only by name in the ADS.
     for i in range(4):
         expected_events = mtd[ws_list_42112[i]].getNumberEvents() + mtd[ws_list_42113[i]].getNumberEvents()
         actual_events = mtd[ws_list[i]].getNumberEvents()
