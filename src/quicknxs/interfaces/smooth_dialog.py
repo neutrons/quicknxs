@@ -420,7 +420,12 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.ui.offspec_y_min.setValue(y1)
             self.ui.offspec_y_max.setValue(y2)
             self.drawing = False
-            self.update_settings()
+
+            # Update visualization: rectangle only for binning, rectangle + sigmas for smoothing
+            if self.show_smoothing:
+                self.update_settings()  # Updates both rectangle and sigma ellipses
+            else:
+                self.update_region()  # Updates only rectangle
 
     def load_settings(self):
         """Load parameter values from QSettings."""
