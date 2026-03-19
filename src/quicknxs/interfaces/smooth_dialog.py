@@ -66,8 +66,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.ui.sigmaY.valueChanged.connect(self.update_settings)
             self.ui.sigmasCoupled.toggled.connect(self.update_sigma_coupling)
             self.ui.rSigmas.valueChanged.connect(self.update_settings)
-            self.ui.plot.canvas.mpl_connect("motion_notify_event", self.plot_select)
-            self.ui.plot.canvas.mpl_connect("button_press_event", self.plot_select)
+
+        # Connect plot interaction for region selection (common to both binning and smoothing)
+        self.ui.plot.canvas.mpl_connect("motion_notify_event", self.plot_select)
+        self.ui.plot.canvas.mpl_connect("button_press_event", self.plot_select)
 
         # Connect signals to update plot region
         self.ui.offspec_x_min.valueChanged.connect(self.update_region)
@@ -93,9 +95,14 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         if hasattr(self.ui, "smoothing_group"):
             self.ui.smoothing_group.setVisible(self.show_smoothing)
 
-        # Binning-specific controls
+        # Binning group contains bins (needed for both) and error weighting (binning only)
+        # Show binning_group if either smoothing or binning is enabled
         if hasattr(self.ui, "binning_group"):
-            self.ui.binning_group.setVisible(self.show_binning)
+            self.ui.binning_group.setVisible(self.show_smoothing or self.show_binning)
+
+        # Error weighting checkbox is only for binning
+        if hasattr(self.ui, "error_weighting_checkbox"):
+            self.ui.error_weighting_checkbox.setVisible(self.show_binning)
 
         # Update dialog title
         if self.show_smoothing and self.show_binning:
@@ -113,8 +120,14 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         Parameters
         ----------
-        x_min, x_max, y_min, y_max : float
-            Min/max values for the region
+        x_min: float
+            k_diff_min, qx_min or ki_z_min
+        x_max: float
+            k_diff_max, qx_max or ki_z_max
+        y_min: float
+            qz_min or kf_z_min
+        y_max: float
+            qz_max or kf_z_max
 
         Returns
         -------
@@ -134,7 +147,24 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         I: NDArray[float64],
         plot: MPLWidget,
     ):
-        """Color-paint the intensities versus appropriate X and Y coordinates."""
+        """
+        Color-paint the intensities versus appropriate X and Y coordinates.
+
+        Parameters
+        ----------
+        ki_z : NDArray[float64]
+            Array of z-component of incident wave vector
+        kf_z : NDArray[float64]
+            Array of z-component of final wave vector
+        Qx : NDArray[float64]
+            Array of x-component of momentum transfer
+        Qz : NDArray[float64]
+            Array of z-component of momentum transfer
+        I : NDArray[float64]
+            Intensity array
+        plot : MPLWidget
+            The plot object to draw on
+        """
         common_args = {
             "log": True,
             "imin": self.INTENSITY_MIN,
@@ -160,11 +190,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             return
         self.drawing = True
 
-        # Skip drawing if widget isn't visible (e.g., in tests)
-        if not self.isVisible():
-            self.drawing = False
-            return
-
         plot = self.ui.plot
         plot.clear()
         plot.set_xticks_fontsize(8)
@@ -189,8 +214,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         for item in self.data_manager.reduction_list:
             # Check if off_spec data exists
             if first_state not in item.cross_sections:
+                logger.warning(f"Cross section state '{first_state}' not found in item, skipping plot")
                 continue
             if item.cross_sections[first_state].off_spec is None:
+                logger.warning(f"No off-specular data available for state '{first_state}', skipping plot")
                 continue
 
             offspec = item.cross_sections[first_state].off_spec
@@ -226,15 +253,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self._paint_intensities(ki_z, kf_z, Qx, Qz, I, plot)
 
         # Set plot limits and labels based on selected axis type
-        if self.ui.kizmkfzVSqz.isChecked():
-            plot.canvas.ax.set_xlim([k_diff_min, k_diff_max])
-            plot.canvas.ax.set_ylim([qz_min, qz_max])
-            plot.set_xlabel("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
-            plot.set_ylabel("Q$_z$ [Å$^{-1}$]", fontsize=14)
-            x1, x2, y1, y2 = self._grid_region_coordinates(k_diff_min, k_diff_max, qz_min, qz_max)
-            sigma_pos = (0.0, Qzmax / 3.0)
-            sigma_y_enabled = False
-        elif self.ui.qxVSqz.isChecked():
+        if self.ui.qxVSqz.isChecked():
             plot.canvas.ax.set_xlim([qx_min, qx_max])
             plot.canvas.ax.set_ylim([qz_min, qz_max])
             plot.set_xlabel("Q$_x$ [Å$^{-1}$]", fontsize=14)
@@ -251,7 +270,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             sigma_pos = (Qzmax / 6.0, Qzmax / 6.0)
             sigma_y_enabled = True
         else:
-            # Default
+            # Default: k_i,z - k_f,z vs Q_z
             plot.canvas.ax.set_xlim([k_diff_min, k_diff_max])
             plot.canvas.ax.set_ylim([qz_min, qz_max])
             plot.set_xlabel("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
@@ -308,10 +327,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         # Show the plot
         if plot.cplot is not None:
             plot.cplot.set_clim([self.INTENSITY_MIN, self.INTENSITY_MAX])
-        try:
-            plot.draw()
-        except Exception:
-            pass  # Ignore drawing errors in headless environments
+        plot.draw()
 
         if self.show_smoothing:
             self.update_sigma_coupling()
@@ -340,10 +356,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         # Update rectangle data
         self.rect_region.set_data([x1, x1, x2, x2, x1], [y1, y2, y2, y1, y1])
-        try:
-            self.ui.plot.draw()
-        except Exception:
-            pass  # Ignore drawing errors in headless environments
+        self.ui.plot.draw()
 
     def update_settings(self):
         """Update smoothing sigma visualization (only called when smoothing is enabled)."""
@@ -367,10 +380,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.sigma_3.width = 6 * self.ui.sigmaX.value()
             self.sigma_3.height = 6 * self.ui.sigmaY.value()
 
-        try:
-            self.ui.plot.draw()
-        except Exception:
-            pass  # Ignore drawing errors in headless environments
+        self.ui.plot.draw()
 
         self.drawing = False
 
@@ -388,10 +398,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self.update_settings()
 
     def plot_select(self, event):
-        """Handle plot clicks to adjust region (only used for smoothing)."""
-        if not self.show_smoothing:
-            return
-
+        """Handle plot clicks to adjust the selection region."""
         if event.button == 1 and event.xdata is not None:
             x = event.xdata
             y = event.ydata
@@ -480,10 +487,12 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             coord_sys = Configuration.DELTA_KZ_VS_QZ
         settings.setValue("offspec_binned/coordinate_system", coord_sys)
 
+        # Save bins parameters (common to both binning and smoothing)
+        settings.setValue("offspec_binned/bins_x", self.ui.offspec_bins_x.value())
+        settings.setValue("offspec_binned/bins_y", self.ui.offspec_bins_y.value())
+
         # Save binning-specific parameters
         if self.show_binning:
-            settings.setValue("offspec_binned/bins_x", self.ui.offspec_bins_x.value())
-            settings.setValue("offspec_binned/bins_y", self.ui.offspec_bins_y.value())
             settings.setValue("offspec_binned/error_weighting", self.ui.error_weighting_checkbox.isChecked())
 
         # Save smoothing-specific parameters
@@ -495,9 +504,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
     def update_bin_width(self):
         """Calculate and display the Qz bin width based on current settings."""
-        if not self.show_binning:
-            return
-
         bins_y = self.ui.offspec_bins_y.value()
         y_min = self.ui.offspec_y_min.value()
         y_max = self.ui.offspec_y_max.value()
@@ -533,10 +539,12 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         params["off_spec_y_min"] = self.ui.offspec_y_min.value()
         params["off_spec_y_max"] = self.ui.offspec_y_max.value()
 
+        # Bins parameters (common to both binning and smoothing)
+        params["off_spec_nxbins"] = self.ui.offspec_bins_x.value()
+        params["off_spec_nybins"] = self.ui.offspec_bins_y.value()
+
         # Binning-specific parameters
         if self.show_binning:
-            params["off_spec_nxbins"] = self.ui.offspec_bins_x.value()
-            params["off_spec_nybins"] = self.ui.offspec_bins_y.value()
             params["off_spec_err_weight"] = self.ui.error_weighting_checkbox.isChecked()
 
         # Smoothing-specific parameters

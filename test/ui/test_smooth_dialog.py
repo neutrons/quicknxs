@@ -1,6 +1,6 @@
 """Tests for the Off-Specular Parameters dialog (combined smoothing and binning)"""
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from qtpy import QtWidgets
@@ -25,29 +25,34 @@ def mock_main_window(qtbot):
 @pytest.fixture
 def dialog_both(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with both smoothing and binning enabled."""
-    dlg = OffSpecParametersDialog(
-        mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=True
-    )
-    qtbot.addWidget(dlg)
-    return dlg
+    with patch.object(OffSpecParametersDialog, "draw_plot"):
+        dlg = OffSpecParametersDialog(
+            mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=True
+        )
+        qtbot.addWidget(dlg)
+        return dlg
 
 
 @pytest.fixture
 def dialog_smoothing_only(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with only smoothing enabled."""
-    dlg = OffSpecParametersDialog(
-        mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=False
-    )
-    qtbot.addWidget(dlg)
-    return dlg
+    with patch.object(OffSpecParametersDialog, "draw_plot"):
+        dlg = OffSpecParametersDialog(
+            mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=False
+        )
+        qtbot.addWidget(dlg)
+        return dlg
 
 
 @pytest.fixture
 def dialog_binning_only(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with only binning enabled."""
-    dlg = OffSpecParametersDialog(
-        mock_main_window, mock_main_window.data_manager, show_smoothing=False, show_binning=True
-    )
+    with patch.object(OffSpecParametersDialog, "draw_plot"):
+        dlg = OffSpecParametersDialog(
+            mock_main_window, mock_main_window.data_manager, show_smoothing=False, show_binning=True
+        )
+        qtbot.addWidget(dlg)
+        return dlg
     qtbot.addWidget(dlg)
     return dlg
 
@@ -188,9 +193,11 @@ def test_dialog_get_parameters_smoothing_only(dialog_smoothing_only):
     assert params["off_spec_sigmay"] == 0.002
     assert params["off_spec_sigmas"] == 4.0
 
-    # Binning-specific parameters should not be present
-    assert "off_spec_nxbins" not in params
-    assert "off_spec_nybins" not in params
+    # Bins are common to both smoothing and binning, so they should be present
+    assert "off_spec_nxbins" in params
+    assert "off_spec_nybins" in params
+
+    # Error weighting is binning-specific and should not be present
     assert "off_spec_err_weight" not in params
 
 
