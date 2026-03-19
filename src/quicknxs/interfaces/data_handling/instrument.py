@@ -252,31 +252,34 @@ class Instrument(object):
         This function assumes that when loading more than one data file, the files are congruent and their
         events will be added together.
 
-        Args:
-            file_path (str): absolute path to one or more data files. If more than one, paths should be concatenated with the plus symbol '+'.
-            configuration (Configuration): reduction configuration parameters
+        Parameters
+        ----------
+        file_path:
+            Absolute path to one or more data files. If more than one, paths should be
+            concatenated with the plus symbol '+'.
+        configuration:
+            Reduction configuration parameters.
 
         Returns
         -------
-        List[EventWorkspace]:
-            A list of EventWorkspaces, one for each cross-section
+        list[EventWorkspace]:
+            A list of EventWorkspaces, one for each cross-section.
 
         Raises
         ------
         CrossSectionError
-            If the data file does not contain enough events
+            If the data file does not contain enough events.
         """
         fp_instance = FilePath(file_path)
-        ws_root_name = fp_instance.run_numbers(string_representation="short")
         ws_run_numbers = fp_instance.run_numbers(string_representation="long")
 
-        # Collect cross-sections from all files
+        # Collect cross-sections from all files, keyed by the per-file workspace root name
         all_xs_lists = []
+        path_ws_names = []
         try:
-            for idx, path in enumerate(fp_instance.single_paths):
-                # Use unique workspace names for each file to avoid overwrites
-                path_fp = FilePath(path)
-                path_ws_name = path_fp.run_numbers(string_representation="short")
+            for path in fp_instance.single_paths:
+                path_ws_name = FilePath(path).run_numbers(string_representation="short")
+                path_ws_names.append(path_ws_name)
                 all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
         except CrossSectionError as err:
             raise CrossSectionError(file_path, err.message, err.min_num_events) from err
@@ -285,17 +288,26 @@ class Instrument(object):
         if len(all_xs_lists) == 1:
             xs_list = all_xs_lists[0]
         else:
+            # Build a combined root name for the merged workspaces
+            # This prevents name clashes if the individual files are loaded as well
+            first_path_root = path_ws_names[0]
+            combined_root = ws_run_numbers.replace("+", "_")
+
             # Merge cross-sections from multiple files by matching cross_section_id
-            xs_list = all_xs_lists[0]
-            for i, ws in enumerate(xs_list):
-                # Merge workspaces with matching cross_section_id from subsequent files
+            xs_list = []
+            for i, ws in enumerate(all_xs_lists[0]):
+                # Derive the per-cross-section suffix from the first file's workspace name
+                # (e.g. "42112_Off_Off" -> suffix "_Off_Off")
+                suffix = str(ws)[len(first_path_root) :]
+                output_name = combined_root + suffix
+                merged = ws
                 for xs_group in all_xs_lists[1:]:
                     merged = api.Plus(
-                        LHSWorkspace=str(ws),
+                        LHSWorkspace=str(merged),
                         RHSWorkspace=str(xs_group[i]),
-                        OutputWorkspace=str(ws),
+                        OutputWorkspace=output_name,
                     )
-                    xs_list[i] = merged  # Update the reference to the merged workspace
+                xs_list.append(merged)
 
         # Insert a log indicating which run numbers contributed to this cross-section
         for ws in xs_list:
