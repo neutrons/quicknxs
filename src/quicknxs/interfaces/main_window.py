@@ -12,9 +12,10 @@ from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.event_handlers.configuration_handler import ConfigurationHandler
 from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 from quicknxs.interfaces.event_handlers.plot_handler import PlotHandler
+from quicknxs.interfaces.offspec_slice_dialog import OffSpecSliceDialog
 from quicknxs.interfaces.plotting import PlotManager
 from quicknxs.interfaces.reduction_dialog import ReductionDialog
-from quicknxs.interfaces.smooth_dialog import SmoothDialog
+from quicknxs.interfaces.smooth_dialog import OffSpecParametersDialog
 from quicknxs.ui.deadtime_settings import DeadTimeSettingsView
 
 
@@ -91,7 +92,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # Retrieve configuration from config and enable/disable features
         self.initialize_instrument()
         self.hide_unsupported()
-        self.toggle_smoothing()
 
         self.file_loaded_signal.connect(self.file_handler.update_info)
         self.file_loaded_signal.connect(self.file_handler.update_daslog)
@@ -530,17 +530,43 @@ class MainWindow(QtWidgets.QMainWindow):
         if output_options is not None:
             self.file_handler.get_configuration_from_ui()
 
-            # Show smoothing dialog as needed
-            if output_options["export_offspec_smooth"] and self.ui.offspec_smooth_checkbox.isChecked():
-                # Make sure the off-specular has been calculated
+            # Make sure the off-specular has been calculated if needed
+            if (
+                output_options.get("apply_smoothing", False)
+                or output_options.get("export_offspec_smooth", False)
+                or output_options.get("export_offspec_slices", False)
+            ):
                 self.file_handler.compute_offspec_on_change()
-                dia = SmoothDialog(self, self.data_manager)
+
+            # Show combined parameters dialog when smoothing or binned output is requested
+            show_smoothing = output_options.get("apply_smoothing", False)
+            show_binning = output_options.get("export_offspec_smooth", False)
+
+            if show_smoothing or show_binning:
+                dia = OffSpecParametersDialog(
+                    self, self.data_manager, show_smoothing=show_smoothing, show_binning=show_binning
+                )
                 if not dia.exec_():
-                    logging.info("Skipping smoothing options")
+                    logging.info("Skipping off-specular parameters")
                     dia.destroy()
                     return
                 else:
-                    output_options = dia.update_output_options(output_options)
+                    # Get parameters and add to output options
+                    params = dia.get_parameters()
+                    output_options.update(params)
+                    dia.destroy()
+
+            # Show slice parameters dialog when off-specular slices are requested
+            if output_options.get("export_offspec_slices", False):
+                dia = OffSpecSliceDialog(self, self.data_manager)
+                if not dia.exec_():
+                    logging.info("Skipping slice parameters")
+                    dia.destroy()
+                    return
+                else:
+                    # Get slice parameters and add to output options
+                    slice_params = dia.get_parameters()
+                    output_options.update(slice_params)
                     dia.destroy()
 
             # If we want to save images, we just need to cycle through
@@ -556,14 +582,6 @@ class MainWindow(QtWidgets.QMainWindow):
             if output_options["export_gisans"]:
                 self.update_gisans_viewer.emit()
 
-    def toggle_smoothing(self):
-        if self.ui.offspec_smooth_checkbox.isChecked():
-            self.ui.binning_frame.hide()
-            self.ui.offspec_err_weight_checkbox.hide()
-        else:
-            self.ui.binning_frame.show()
-            self.ui.offspec_err_weight_checkbox.show()
-
     def loadExtraction(self):
         self.file_handler.open_reduced_file_dialog()
 
@@ -575,13 +593,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def apply_offspec_crop(self):
         self.plot_manager.plot_offspec(crop=True)
-
-    def update_offspec_qz_bin_width(self, value=None):
-        off_spec_nybins = self.ui.offspec_rebin_y_bins_spinbox.value()
-        off_spec_y_min = self.ui.offspec_y_min_spinbox.value()
-        off_spec_y_max = self.ui.offspec_y_max_spinbox.value()
-        width = (off_spec_y_max - off_spec_y_min) / off_spec_nybins
-        self.ui.offspec_qz_bin_width_label.setText("%8.6f 1/A" % width)
 
     def open_deadtime_settings(self):
         """Show the dialog for dead-time options.
