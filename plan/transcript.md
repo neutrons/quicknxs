@@ -38,11 +38,10 @@ The plan that claude proded is referenced in [fix-data-extraction-and-round-trip
 
 For the Off-Specular plots, using the 'Save plot data' does not match the plot. Consider `/SNS/REF_M/IPTS-32745/shared/autoreduce/try2/REF_M_43279+43280+43281-OffSpec-Qz-vs-Ki-Kf-Off_Off.dat` as compared with `/SNS/REF_M/IPTS-32745/shared/autoreduce/try2/REF_M_43279+43280+43281-OffSpec-Qz-vs-Ki-Kf-Off_Off.png` obtained with 'Save the figure'. Extend the testing to compare the result of using test/show.py to reconstruct the exported plot data versus exporting the figure data. A successful test for every plot is when the reconstructed plot from a data export matches the saved figure. You will need to carry thru the axes labels because they will be significant when making image comparisons.
 
-## Prompt 9 
+## Prompt 9
 
 Very nice! Please make sure that the logarithmic scale is preserved on plots rendered with test/show.py. Please make sure that all plot elements (title, axes titles, legends, etc.) are written to the header and extracted by test/show.py. Review the .dat and .png files in /home/bvacaliuc/shared/REF_M/QuickNXSv2/session8/ to see what I mean.
 
 ## Prompt 10
 
 Good progress. There are two more things: 1) The pcolormesh and Errorbar/Line plots are only rendering one surface/line whereas the Dataset for these plots contain multiple surfaces/lines. For example REF_M_43279+43280+43281_OffSpec-ki-minus-kf-vs-Qz-Off_Off.dat and REF_M_43279+43280+43281_OffSpec-ki-minus-kf-vs-Qz-Off_Off.png; I have made new extracted data and plots in /home/bvacaliuc/shared/REF_M/QuickNXSv2/session8/. Please update the extract and reconstuction code to handle all surfaces/lines that are present. 2) The Errorbar/Line reconstruction did not respect the 'yscale: log' directive in the header that the extraction code used. I have saved REF_M_43279-Reflectivity.dat and REF_M_43279-Reflectivity.png to help you, please review them.
-
