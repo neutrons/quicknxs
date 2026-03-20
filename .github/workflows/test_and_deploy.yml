@@ -97,7 +97,7 @@ jobs:
         with:
           python-version: "3.11"
           local-channel: /tmp/local-channel
-          package-name: ${{ env.PKG_NAME }}=${{ env.PKG_VERSION }} # install exact version
+          package-name: ${{ env.PKG_NAME }}
           extra-channels: neutrons mantid oncat
           extra-commands: |
             python -c "import mr_reduction"

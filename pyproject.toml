@@ -43,6 +43,7 @@ packages = ["src/quicknxs"]
 [tool.versioningit.vcs]
 method = "git"
 default-tag = "4.0.0"
+exclude = ["*rc*"]
 
 [tool.versioningit.next-version]
 method = "minor"
