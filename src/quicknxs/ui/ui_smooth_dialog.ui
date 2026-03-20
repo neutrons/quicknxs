@@ -6,24 +6,24 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>781</width>
-    <height>608</height>
+    <width>850</width>
+    <height>650</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>QuickNXS - Smooth Off-Specular</string>
+   <string>QuickNXS - Off-Specular Parameters</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../icons/icons.qrc">
     <normaloff>:/General/logo.png</normaloff>:/General/logo.png</iconset>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout_main">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="horizontalLayout_main">
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout_plot">
        <item>
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="label_preview">
          <property name="text">
           <string>Off-Specular Preview</string>
          </property>
@@ -33,7 +33,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout">
+        <layout class="QHBoxLayout" name="horizontalLayout_plot_options">
          <item>
           <widget class="QRadioButton" name="kizmkfzVSqz">
            <property name="text">
@@ -73,372 +73,392 @@
       </layout>
      </item>
      <item>
-      <widget class="QWidget" name="widget" native="true">
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="2" column="3">
-         <widget class="QDoubleSpinBox" name="gridXmax">
-          <property name="decimals">
-           <number>6</number>
-          </property>
-          <property name="minimum">
-           <double>-1.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.001000000000000</double>
-          </property>
-          <property name="value">
-           <double>0.010000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="12" column="0">
-         <widget class="QToolButton" name="sigmasCoupled">
-          <property name="icon">
-           <iconset theme="system-lock-screen">
-            <normaloff/>
-           </iconset>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="3">
-         <spacer name="verticalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Maximum</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="12" column="3">
-         <widget class="QDoubleSpinBox" name="sigmaY">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="decimals">
-           <number>6</number>
-          </property>
-          <property name="minimum">
-           <double>0.000001000000000</double>
-          </property>
-          <property name="maximum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.000250000000000</double>
-          </property>
-          <property name="value">
-           <double>0.000500000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="2">
-         <widget class="QLabel" name="label_12">
-          <property name="text">
-           <string>Y2</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="2">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>X2</string>
-          </property>
-         </widget>
-        </item>
-        <item row="10" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Sigma</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="2">
-         <widget class="QLabel" name="label_11">
-          <property name="text">
-           <string>Y1</string>
-          </property>
-         </widget>
-        </item>
-        <item row="13" column="3">
-         <spacer name="verticalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Maximum</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>15</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="16" column="0" colspan="4">
-         <widget class="QDialogButtonBox" name="buttonBox">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="standardButtons">
-           <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-          </property>
-         </widget>
-        </item>
-        <item row="12" column="2">
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>Y</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>Grid Region</string>
-          </property>
-         </widget>
-        </item>
-        <item row="10" column="2">
-         <widget class="QLabel" name="label_7">
-          <property name="text">
-           <string>X</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="3">
-         <widget class="QDoubleSpinBox" name="gridYmin">
-          <property name="decimals">
-           <number>6</number>
-          </property>
-          <property name="minimum">
-           <double>-1.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.001000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="9" column="3">
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Maximum</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="0" column="0" colspan="4">
-         <widget class="QLabel" name="label_13">
-          <property name="text">
-           <string>Smoothing Parameters</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QLabel" name="label_9">
-          <property name="text">
-           <string>X1</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="3">
-         <widget class="QDoubleSpinBox" name="gridYmax">
-          <property name="decimals">
-           <number>6</number>
-          </property>
-          <property name="minimum">
-           <double>-1.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.001000000000000</double>
-          </property>
-          <property name="value">
-           <double>0.025000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="8" column="0">
-         <widget class="QToolButton" name="gridSizeCoupled">
-          <property name="icon">
-           <iconset theme="system-lock-screen">
-            <normaloff/>
-           </iconset>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="0">
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>Grid Size</string>
-          </property>
-         </widget>
-        </item>
-        <item row="8" column="2">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Y</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="3">
-         <widget class="QSpinBox" name="gridSizeX">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="minimum">
-           <number>10</number>
-          </property>
-          <property name="maximum">
-           <number>1000</number>
-          </property>
-          <property name="singleStep">
-           <number>10</number>
-          </property>
-          <property name="value">
-           <number>200</number>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <widget class="QDoubleSpinBox" name="gridXmin">
-          <property name="decimals">
-           <number>6</number>
-          </property>
-          <property name="minimum">
-           <double>-1.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.001000000000000</double>
-          </property>
-          <property name="value">
-           <double>-0.010000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="2">
-         <widget class="QLabel" name="label_6">
-          <property name="text">
-           <string>X</string>
-          </property>
-         </widget>
-        </item>
-        <item row="10" column="3">
-         <widget class="QDoubleSpinBox" name="sigmaX">
-          <property name="decimals">
-           <number>6</number>
-          </property>
-          <property name="minimum">
-           <double>0.000001000000000</double>
-          </property>
-          <property name="maximum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.000250000000000</double>
-          </property>
-          <property name="value">
-           <double>0.000500000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="15" column="3">
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="8" column="3">
-         <widget class="QSpinBox" name="gridSizeY">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="minimum">
-           <number>10</number>
-          </property>
-          <property name="maximum">
-           <number>1000</number>
-          </property>
-          <property name="singleStep">
-           <number>10</number>
-          </property>
-          <property name="value">
-           <number>200</number>
-          </property>
-         </widget>
-        </item>
-        <item row="14" column="0">
-         <widget class="QLabel" name="label_14">
-          <property name="text">
-           <string>R [Sigmas]</string>
-          </property>
-         </widget>
-        </item>
-        <item row="14" column="3">
-         <widget class="QDoubleSpinBox" name="rSigmas">
-          <property name="minimum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>10.000000000000000</double>
-          </property>
-          <property name="value">
-           <double>3.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
+      <layout class="QVBoxLayout" name="verticalLayout_parameters">
+       <item>
+        <widget class="QLabel" name="label_parameters_title">
+         <property name="text">
+          <string>Off-Specular Parameters</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="styleSheet">
+          <string>font-weight: bold; font-size: 14px;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="region_group">
+         <property name="title">
+          <string>Region Parameters</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_region">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_x_axis">
+            <property name="text">
+             <string>X-axis:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDoubleSpinBox" name="offspec_x_min">
+            <property name="toolTip">
+             <string>Minimum X-value of the region</string>
+            </property>
+            <property name="suffix">
+             <string> 1/A</string>
+            </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-10.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.005000000000000</double>
+            </property>
+            <property name="value">
+             <double>-0.015000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <spacer name="horizontalSpacer_x">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="offspec_x_max">
+            <property name="toolTip">
+             <string>Maximum X-value of the region</string>
+            </property>
+            <property name="suffix">
+             <string> 1/A</string>
+            </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-10.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.005000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.015000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_y_axis">
+            <property name="text">
+             <string>Y-axis:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QDoubleSpinBox" name="offspec_y_min">
+            <property name="toolTip">
+             <string>Minimum Y-value of the region</string>
+            </property>
+            <property name="suffix">
+             <string> 1/A</string>
+            </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
+            <property name="minimum">
+             <double>-1.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <spacer name="horizontalSpacer_y">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="3" column="1">
+           <widget class="QDoubleSpinBox" name="offspec_y_max">
+            <property name="toolTip">
+             <string>Maximum Y-value of the region</string>
+            </property>
+            <property name="suffix">
+             <string> 1/A</string>
+            </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
+            <property name="minimum">
+             <double>-1.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.150000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="smoothing_group">
+         <property name="title">
+          <string>Smoothing Parameters</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_smoothing">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_sigma">
+            <property name="text">
+             <string>Sigma</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QToolButton" name="sigmasCoupled">
+            <property name="icon">
+             <iconset theme="system-lock-screen">
+              <normaloff/>
+             </iconset>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_sigma_x">
+            <property name="text">
+             <string>X:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QDoubleSpinBox" name="sigmaX">
+            <property name="decimals">
+             <number>6</number>
+            </property>
+            <property name="minimum">
+             <double>0.000001000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.000250000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000500000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_sigma_y">
+            <property name="text">
+             <string>Y:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QDoubleSpinBox" name="sigmaY">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="decimals">
+             <number>6</number>
+            </property>
+            <property name="minimum">
+             <double>0.000001000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.000250000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000500000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_r_sigmas">
+            <property name="text">
+             <string>R [Sigmas]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QDoubleSpinBox" name="rSigmas">
+            <property name="minimum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>3.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="binning_group">
+         <property name="title">
+          <string>Binning Parameters</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_binning">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_bins_x">
+            <property name="text">
+             <string>Bins in X:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="offspec_bins_x">
+            <property name="toolTip">
+             <string>Enter the number of bins in X</string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>1000</number>
+            </property>
+            <property name="singleStep">
+             <number>10</number>
+            </property>
+            <property name="value">
+             <number>120</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_bins_y">
+            <property name="text">
+             <string>Bins in Y:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="offspec_bins_y">
+            <property name="toolTip">
+             <string>Enter the number of bins in Y</string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>1000</number>
+            </property>
+            <property name="singleStep">
+             <number>10</number>
+            </property>
+            <property name="value">
+             <number>120</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_bin_width">
+            <property name="text">
+             <string>Qz bin width:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="qz_bin_width_label">
+            <property name="text">
+             <string>0.001250 1/A</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QCheckBox" name="error_weighting_checkbox">
+            <property name="toolTip">
+             <string>Check to use an error weighted average when binning the data, otherwise a simple average will be used</string>
+            </property>
+            <property name="text">
+             <string>Error weighting</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
@@ -446,109 +466,14 @@
   <customwidget>
    <class>MPLWidget</class>
    <extends>QWidget</extends>
-   <header>quicknxs/ui/mplwidget.h</header>
+   <header>quicknxs.ui.mplwidget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <tabstops>
-  <tabstop>gridXmin</tabstop>
-  <tabstop>gridXmax</tabstop>
-  <tabstop>gridYmin</tabstop>
-  <tabstop>gridYmax</tabstop>
-  <tabstop>gridSizeX</tabstop>
-  <tabstop>gridSizeY</tabstop>
-  <tabstop>sigmaX</tabstop>
-  <tabstop>sigmaY</tabstop>
-  <tabstop>rSigmas</tabstop>
-  <tabstop>buttonBox</tabstop>
-  <tabstop>kizmkfzVSqz</tabstop>
-  <tabstop>qxVSqz</tabstop>
-  <tabstop>kizVSkfz</tabstop>
-  <tabstop>gridSizeCoupled</tabstop>
-  <tabstop>sigmasCoupled</tabstop>
- </tabstops>
- <resources/>
+ <resources>
+  <include location="../icons/icons.qrc"/>
+ </resources>
  <connections>
-  <connection>
-   <sender>kizmkfzVSqz</sender>
-   <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
-   <slot>drawPlot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>148</x>
-     <y>36</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>92</x>
-     <y>-7</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>kizVSkfz</sender>
-   <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
-   <slot>drawPlot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>452</x>
-     <y>39</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>222</x>
-     <y>4</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>qxVSqz</sender>
-   <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
-   <slot>drawPlot()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>258</x>
-     <y>36</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>460</x>
-     <y>1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>gridSizeCoupled</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>gridSizeY</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>615</x>
-     <y>198</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>705</x>
-     <y>198</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>sigmasCoupled</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>sigmaY</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>614</x>
-     <y>278</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>731</x>
-     <y>278</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
@@ -556,12 +481,12 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>659</x>
-     <y>586</y>
+     <x>425</x>
+     <y>625</y>
     </hint>
     <hint type="destinationlabel">
-     <x>677</x>
-     <y>611</y>
+     <x>425</x>
+     <y>325</y>
     </hint>
    </hints>
   </connection>
@@ -572,163 +497,14 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>736</x>
-     <y>585</y>
+     <x>425</x>
+     <y>625</y>
     </hint>
     <hint type="destinationlabel">
-     <x>755</x>
-     <y>612</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>gridXmin</sender>
-   <signal>valueChanged(double)</signal>
-   <receiver>Dialog</receiver>
-   <slot>updateSettings()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>728</x>
-     <y>39</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>390</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>gridXmax</sender>
-   <signal>valueChanged(double)</signal>
-   <receiver>Dialog</receiver>
-   <slot>updateSettings()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>728</x>
-     <y>66</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>390</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>gridYmin</sender>
-   <signal>valueChanged(double)</signal>
-   <receiver>Dialog</receiver>
-   <slot>updateSettings()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>728</x>
-     <y>93</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>390</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>gridYmax</sender>
-   <signal>valueChanged(double)</signal>
-   <receiver>Dialog</receiver>
-   <slot>updateSettings()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>728</x>
-     <y>120</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>390</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>sigmaX</sender>
-   <signal>valueChanged(double)</signal>
-   <receiver>Dialog</receiver>
-   <slot>updateSettings()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>729</x>
-     <y>251</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>390</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>sigmaY</sender>
-   <signal>valueChanged(double)</signal>
-   <receiver>Dialog</receiver>
-   <slot>updateSettings()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>729</x>
-     <y>279</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>390</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>gridSizeCoupled</sender>
-   <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
-   <slot>updateGrid()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>609</x>
-     <y>199</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>390</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>sigmasCoupled</sender>
-   <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
-   <slot>updateSettings()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>609</x>
-     <y>279</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>390</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>gridSizeCoupled</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>gridSizeX</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>608</x>
-     <y>189</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>697</x>
-     <y>177</y>
+     <x>425</x>
+     <y>325</y>
     </hint>
    </hints>
   </connection>
  </connections>
- <slots>
-  <slot>drawPlot()</slot>
-  <slot>updateSettings()</slot>
-  <slot>updateGrid()</slot>
- </slots>
 </ui>

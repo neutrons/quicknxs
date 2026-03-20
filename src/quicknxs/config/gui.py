@@ -34,3 +34,4 @@ class QColors:
     light_grey = QColor(220, 220, 220)
     white = QColor(255, 255, 255)
     yellow = QColor(246, 213, 16)
+    red = QColor(255, 0, 0)

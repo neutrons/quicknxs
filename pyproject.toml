@@ -74,15 +74,16 @@ channels = [
 preview = ["pixi-build"]
 
 # Dependency tables
+# Note: pyjwt and tornado have known CVEs (CVE-2026-32597, CVE-2026-31958, GHSA-78cv-mqj4-43f7)
+# but the fixed versions are not yet available in conda-forge. These are transitive dependencies
+# from other packages, and we cannot override conda packages with PyPI versions without conflicts.
+# These vulnerabilities are ignored in the audit-deps task until conda-forge updates are available.
 
 [tool.pixi.dependencies]
-mr_reduction = "==2.16.0"  # requires mantid >=6.14.0,<6.15.0
+mr_reduction = "==2.17.0"  # requires mantid >=6.14.0,<6.15.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
-wheel = ">=0.46.2"         # CVE-2026-24049 fixed in 0.46.2
-cryptography = ">=46.0.5"  # CVE-2026-26007 fixed in 46.0.5
-pillow = ">=12.1.1"        # CVE-2026-25990 fixed in 12.1.1
 
 [tool.pixi.pypi-dependencies]
 quicknxs = { path = ".", editable = true }
@@ -100,7 +101,7 @@ hatchling = "*"
 versioningit = "*"
 
 [tool.pixi.package.run-dependencies]
-mr_reduction = "==2.16.0"  # requires mantid >=6.14.0,<6.15.0
+mr_reduction = "==2.17.0"  # requires mantid >=6.14.0,<6.15.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
@@ -171,7 +172,7 @@ conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .c
     "conda-build",
 ] }
 # Misc
-audit-deps = { cmd = "pip-audit --local", description = "Audit the package dependencies for vulnerabilities" }
+audit-deps = { cmd = "pip-audit --local --ignore-vuln CVE-2026-32597 --ignore-vuln CVE-2026-31958 --ignore-vuln GHSA-78cv-mqj4-43f7", description = "Audit the package dependencies for vulnerabilities (ignoring conda package version lags)" }
 clean = { cmd = 'rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__ **/_version.py', description = "Clean up various caches and build artifacts" }
 clean-conda = { cmd = "rm -f *.conda", description = "Clean the local .conda build artifacts" }
 clean-docs = { cmd = "rm -rf docs/_build", description = "Clean up documentation build artifacts" }

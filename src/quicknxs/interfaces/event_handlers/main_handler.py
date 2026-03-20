@@ -20,9 +20,11 @@ from quicknxs.config.gui import QColors
 from quicknxs.interfaces.configuration import BinningType, Configuration
 from quicknxs.interfaces.data_handling.data_manipulation import NormalizeToUnityQCutoffError
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.data_handling.diagnostic_data import DiagnosticData
 from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
-from quicknxs.interfaces.data_handling.instrument import InsufficientEventCountError
+from quicknxs.interfaces.data_handling.instrument import CrossSectionError
 from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.diagnostic_widget import DiagnosticWidget
 from quicknxs.interfaces.enums import DirectBeamTableColumn, ReductionTableColumn
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
@@ -176,13 +178,17 @@ class MainHandler:
             configuration = self.get_configuration_from_ui()
             self._data_manager.load(file_path, configuration, force=force, progress=prog)
             self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
-        except (RuntimeError, InsufficientEventCountError) as run_err:
-            self.report_message(
-                f"Error loading file(s) {self._data_manager.current_file_name} due to:\n{run_err}",
-                detailed_message=str(traceback.format_exc()),
-                pop_up=True,
-                is_error=True,
-            )
+        except (RuntimeError, CrossSectionError) as run_err:
+            if isinstance(run_err, RuntimeError):
+                self.report_message(
+                    f"Error loading file(s) {self._data_manager.current_file_name} due to:\n{run_err}",
+                    detailed_message=str(traceback.format_exc()),
+                    pop_up=True,
+                    is_error=True,
+                )
+            else:
+                self._show_diagnostic(run_err)
+
             self.main_window.auto_change_active = False
             # reset progress bar
             if prog is not None:
@@ -464,6 +470,8 @@ class MainHandler:
                     # however, the current setting self.main_window.auto_change_active == True will cause
                     # self.main_window.file_open_from_list() to return before any statement is executed
                     self.ui.file_list.setCurrentItem(listitem)
+                if item in self._data_manager.bad_files:
+                    listitem.setForeground(QColors.red)
 
         def _update_current_directory(new_dir):
             r"""Update the directory path in the main window and the path watcher."""
@@ -596,7 +604,11 @@ class MainHandler:
             self.clear_reflectivity()
             configuration = self.get_configuration_from_ui()
             prog = self.new_progress_reporter()
-            self._data_manager.load_data_from_reduced_file(file_path, configuration=configuration, progress=prog)
+            try:
+                self._data_manager.load_data_from_reduced_file(file_path, configuration=configuration, progress=prog)
+            except CrossSectionError as err:
+                self._show_diagnostic(err)
+                return
 
             # Update output directory
             file_dir, _ = os.path.split(str(file_path))
@@ -1679,25 +1691,6 @@ class MainHandler:
             configuration.off_spec_x_axis = Configuration.QX_VS_QZ
         else:
             configuration.off_spec_x_axis = Configuration.KZI_VS_KZF
-        configuration.off_spec_slice = self.ui.offspec_slice_checkbox.isChecked()
-        configuration.off_spec_slice_qz_min = self.ui.slice_qz_min_spinbox.value()
-        configuration.off_spec_slice_qz_max = self.ui.slice_qz_max_spinbox.value()
-        # try:
-        #    qz_list = self.ui.offspec_qz_list_edit.text()
-        #    if len(qz_list) > 0:
-        #        configuration.off_spec_qz_list = [float(x) for x in self.ui.offspec_qz_list_edit.text().split(',')]
-        # except:
-        #    logging.error("Could not parse off_spec_qz_list: %s", configuration.off_spec_qz_list)
-        configuration.off_spec_err_weight = self.ui.offspec_err_weight_checkbox.isChecked()
-        configuration.off_spec_nxbins = self.ui.offspec_rebin_x_bins_spinbox.value()
-        configuration.off_spec_nybins = self.ui.offspec_rebin_y_bins_spinbox.value()
-        configuration.off_spec_x_min = self.ui.offspec_x_min_spinbox.value()
-        configuration.off_spec_x_max = self.ui.offspec_x_max_spinbox.value()
-        configuration.off_spec_y_min = self.ui.offspec_y_min_spinbox.value()
-        configuration.off_spec_y_max = self.ui.offspec_y_max_spinbox.value()
-
-        # Off-spec smoothing options
-        configuration.apply_smoothing = self.ui.offspec_smooth_checkbox.isChecked()
 
         # GISANS options
         configuration.gisans_wl_min = self.ui.gisans_wl_min_spinbox.value()
@@ -1789,20 +1782,6 @@ class MainHandler:
             self.ui.qxVSqz.setChecked(True)
         else:
             self.ui.kizVSkfz.setChecked(True)
-        self.ui.offspec_slice_checkbox.setChecked(configuration.off_spec_slice)
-        # self.ui.offspec_qz_list_edit.setText(','.join([str(x) for x in configuration.off_spec_qz_list]))
-        self.ui.slice_qz_min_spinbox.setValue(configuration.off_spec_slice_qz_min)
-        self.ui.slice_qz_max_spinbox.setValue(configuration.off_spec_slice_qz_max)
-        self.ui.offspec_err_weight_checkbox.setChecked(configuration.off_spec_err_weight)
-        self.ui.offspec_rebin_x_bins_spinbox.setValue(configuration.off_spec_nxbins)
-        self.ui.offspec_rebin_y_bins_spinbox.setValue(configuration.off_spec_nybins)
-        self.ui.offspec_x_min_spinbox.setValue(configuration.off_spec_x_min)
-        self.ui.offspec_x_max_spinbox.setValue(configuration.off_spec_x_max)
-        self.ui.offspec_y_min_spinbox.setValue(configuration.off_spec_y_min)
-        self.ui.offspec_y_max_spinbox.setValue(configuration.off_spec_y_max)
-
-        # Off-spec smoothing options
-        self.ui.offspec_smooth_checkbox.setChecked(configuration.apply_smoothing)
 
         # GISANS options
         self.ui.gisans_wl_min_spinbox.setValue(configuration.gisans_wl_min)
@@ -1907,7 +1886,11 @@ class MainHandler:
         self._data_manager.clear_cached_unused_data()
         configuration = self.get_configuration_from_ui()
         prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
-        self._data_manager.reload_files(configuration, prog)
+        try:
+            self._data_manager.reload_files(configuration, prog)
+        except CrossSectionError as err:
+            self._show_diagnostic(err)
+            return
 
         # Update the tables in the UI
         self.main_window.auto_change_active = True
@@ -2048,3 +2031,16 @@ class MainHandler:
         root.setLevel(lvl)
         for handler in root.handlers:
             handler.setLevel(lvl)
+
+    def _show_diagnostic(self, error: CrossSectionError):
+        """Show diagnostic widget when no valid cross-sections can be loaded.
+
+        Parameters
+        ----------
+        error:
+            CrossSectionError exception containing diagnostic data
+        """
+        diag_data = DiagnosticData(file_path=e.file_path, message=str(e))
+        diagnostic_widget = DiagnosticWidget(parent=main_window)
+        diagnostic_widget.show(diag_data)
+        self.update_file_list()
