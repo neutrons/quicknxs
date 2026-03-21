@@ -52,4 +52,9 @@ You are working in the quicknxsv2 project in the bvacaliuc/ewm15204-triage branc
 
 Claude's response is referenced in [prompt-11-response.md](prompt-11-response.md)
 
-I will ask them to add a conftest guard that detects un-pulled LFS data and gives a helpful skip/error condition in the test.
+### Prompt 11.1
+
+Please add a conftest guard that detects un-pulled LFS data and gives a helpful skip/error condition in the test.
+
+CLaude make the changes and I asked them to create a fresh branch for the fix and to create a clean pull request for the change as a separate fix:
+https://github.com/neutrons/quicknxs/pull/272
