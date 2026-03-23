@@ -49,6 +49,8 @@ DEFAULT_OPTIONS = dict(
     email_cc="",
     email_subject="",
     email_test="",
+    off_spec_slice_qz_min=0.05,
+    off_spec_slice_qz_max=0.07,
 )
 
 
