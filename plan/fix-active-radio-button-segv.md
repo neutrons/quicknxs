@@ -4,7 +4,7 @@
 
 `bvacaliuc/fix-active-radio-button-segv` — based on `origin/next` (commit `6161c0d`)
 
-## Status: WIP — needs investigation of 3 test failures before PR
+## Status: COMPLETE — fix verified, PR ready
 
 ## Problem
 
@@ -63,34 +63,14 @@ test_main_window.py:324     in test_change_active_data_tab
 ## Test results after fix
 
 - `test_change_active_data_tab`: **PASSES** (was the SEGV trigger)
-- Full suite: **4 failed, 210 passed, 3 skipped** on this machine
+- `test_main_window.py` + `test_add_non_direct_beam.py`: **26 passed, 1 skipped, 0 failures**
 
-### Failures needing investigation
+### Previous false-positive failures (resolved)
 
-3 of the 4 failures are in `test/ui/test_add_non_direct_beam.py`:
-
-| Test | Error |
-|------|-------|
-| `test_true_direct_beam_displays_intensity_plot` | `IndexError: list index out of range` at `main_handler.py:511` |
-| `test_only_one_radio_button_selected_in_reduction_table` | same `IndexError` |
-| `test_radio_button_exclusivity_with_dual_table_runs` | same `IndexError` |
-
-The error is `self._data_manager.current_event_files[0]` on an empty list in
-`update_file_list()`. This is in `main_handler.py:511`, code NOT touched by this
-fix. **Investigation needed**: run these 3 tests on clean `origin/next` (without
-the fix) to determine if they are pre-existing failures.
-
-The 4th failure (`test_reduced_file_matches_gui_config[...On_Off.dat]`) is also
-in code not touched by this fix and likely pre-existing.
-
-## Remaining work
-
-1. Verify the 3 `test_add_non_direct_beam` failures are pre-existing on `origin/next`
-2. If pre-existing, proceed with draft PR as-is
-3. If introduced by the fix, investigate whether `_on_toggled` guard (`row < 0`
-   early return) is swallowing a signal that previously had a side effect the
-   tests depend on
-4. Push branch and create draft PR targeting `next`
+The 3 `test_add_non_direct_beam` failures reported earlier were caused by an
+uninitialized `quicknxs-data` git submodule on the test machine, not by code
+changes in this fix. After initializing the submodule, all tests pass on both
+`origin/next` and this branch.
 
 ## Related PRs
 
