@@ -49,6 +49,20 @@ DEFAULT_OPTIONS = dict(
     email_cc="",
     email_subject="",
     email_test="",
+    # Off-specular defaults (match Configuration defaults)
+    off_spec_x_axis=0,  # Configuration.DELTA_KZ_VS_QZ
+    off_spec_x_min=-0.015,
+    off_spec_x_max=0.015,
+    off_spec_y_min=0.0,
+    off_spec_y_max=0.15,
+    off_spec_nxbins=450,
+    off_spec_nybins=200,
+    off_spec_err_weight=False,
+    off_spec_sigmas=3,
+    off_spec_sigmax=0.0005,
+    off_spec_sigmay=0.0005,
+    off_spec_slice_qz_min=0.05,
+    off_spec_slice_qz_max=0.07,
 )
 
 
@@ -58,7 +72,10 @@ class ProcessingWorkflow(object):
     def __init__(self, data_manager: DataManager, output_options: Optional[dict] = None):
         """All the reduced data shall come from data manager."""
         self.data_manager = data_manager
-        self.output_options = output_options if output_options else DEFAULT_OPTIONS
+        # Merge defaults with provided options to ensure all required keys are present
+        self.output_options = DEFAULT_OPTIONS.copy()
+        if output_options:
+            self.output_options.update(output_options)
         self.exported_data_files = []
         self.exported_data_plots = []
 
