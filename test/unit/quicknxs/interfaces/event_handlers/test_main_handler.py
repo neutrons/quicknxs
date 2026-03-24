@@ -445,5 +445,129 @@ def test_show_diagnostic(mocker, qtbot):
     mock_update_file_list.assert_called_once()
 
 
+def test_get_tab_index_for_reduction_table(qtbot):
+    """Test that get_tab_index_for_reduction_table returns the correct tab index for each table widget."""
+    main_window = MainWindow()
+    handler = MainHandler(main_window)
+    data_tab_widget = main_window.ui.tabWidget
+    qtbot.addWidget(main_window)
+
+    main_data_table = data_tab_widget.widget(handler.MAIN_DATA_TAB_INDEX).findChild(QtWidgets.QTableWidget)
+
+    # With only the default tabs, the main data table should map to MAIN_DATA_TAB_INDEX
+    assert handler.get_tab_index_for_reduction_table(main_data_table) == handler.MAIN_DATA_TAB_INDEX
+
+    # Add a second data tab and verify each table maps to the correct index
+    main_window.addDataTable()
+    second_tab_index = 2
+    second_data_table = data_tab_widget.widget(second_tab_index).findChild(QtWidgets.QTableWidget)
+
+    assert handler.get_tab_index_for_reduction_table(main_data_table) == handler.MAIN_DATA_TAB_INDEX
+    assert handler.get_tab_index_for_reduction_table(second_data_table) == second_tab_index
+
+
+@pytest.mark.datarepo
+def test_active_data_changed_syncs_file_list_from_reduction_table(qtbot):
+    """Test that switching the active run in the reduction table updates the file list selection."""
+    main_window = MainWindow()
+    data_manager = main_window.data_manager
+    qtbot.addWidget(main_window)
+
+    # Add two data runs to the reduction table (row 0 = run 40785, row 1 = run 40782)
+    ui_utilities.setText(main_window.numberSearchEntry, str(40785), press_enter=True)
+    ui_utilities.set_current_file_by_run_number(main_window, 40785)
+    main_window.actionAddRefl.triggered.emit()
+    ui_utilities.set_current_file_by_run_number(main_window, 40782)
+    main_window.actionAddRefl.triggered.emit()
+
+    assert main_window.ui.reductionTable.rowCount() == 2
+
+    # Switch active run to row 0 and verify the file list highlights run 40785
+    main_window.set_active_reduction_data(True, 0)
+    assert data_manager._nexus_data == data_manager.reduction_list[0]
+    assert main_window.ui.file_list.currentItem() is not None
+    assert "40785" in main_window.ui.file_list.currentItem().text()
+
+    # Switch active run to row 1 and verify the file list highlights run 40782
+    main_window.set_active_reduction_data(True, 1)
+    assert data_manager._nexus_data == data_manager.reduction_list[1]
+    assert main_window.ui.file_list.currentItem() is not None
+    assert "40782" in main_window.ui.file_list.currentItem().text()
+
+
+@pytest.mark.datarepo
+def test_active_data_changed_syncs_file_list_from_direct_beam_table(qtbot):
+    """Test that switching the active run in the direct beam table updates the file list selection."""
+    main_window = MainWindow()
+    data_manager = main_window.data_manager
+    qtbot.addWidget(main_window)
+
+    # Add a direct beam run and a data run
+    ui_utilities.setText(main_window.numberSearchEntry, str(40786), press_enter=True)
+    ui_utilities.set_current_file_by_run_number(main_window, 40786)
+    main_window.actionAddDirectBeam.triggered.emit()
+    ui_utilities.set_current_file_by_run_number(main_window, 40785)
+    main_window.actionAddRefl.triggered.emit()
+
+    assert main_window.ui.directBeamTable.rowCount() == 1
+    assert main_window.ui.reductionTable.rowCount() == 1
+
+    # The data run should be active initially; verify file list reflects it
+    assert data_manager._nexus_data == data_manager.reduction_list[0]
+    assert main_window.ui.file_list.currentItem() is not None
+    assert "40785" in main_window.ui.file_list.currentItem().text()
+
+    # Switch active to the direct beam run and verify the file list updates
+    main_window.set_active_direct_beam(True, 0)
+    assert data_manager._nexus_data == data_manager.direct_beam_list[0]
+    assert main_window.ui.file_list.currentItem() is not None
+    assert "40786" in main_window.ui.file_list.currentItem().text()
+
+    # Switch back to the data run and verify the file list updates again
+    main_window.set_active_reduction_data(True, 0)
+    assert data_manager._nexus_data == data_manager.reduction_list[0]
+    assert main_window.ui.file_list.currentItem() is not None
+    assert "40785" in main_window.ui.file_list.currentItem().text()
+
+
+@pytest.mark.datarepo
+def test_active_data_changed_syncs_file_list_with_multiple_data_tabs(qtbot):
+    """Test that the file list syncs correctly when the active data comes from a secondary reduction tab.
+
+    Switching the active reduction list to tab 2 and calling active_data_changed() directly
+    verifies the file list sync without triggering the full tab-change event cycle.
+    """
+    main_window = MainWindow()
+    handler = MainHandler(main_window)
+    data_manager = main_window.data_manager
+    qtbot.addWidget(main_window)
+
+    # Add two data runs to the first reduction tab
+    ui_utilities.setText(main_window.numberSearchEntry, str(40785), press_enter=True)
+    ui_utilities.set_current_file_by_run_number(main_window, 40785)
+    main_window.actionAddRefl.triggered.emit()
+    ui_utilities.set_current_file_by_run_number(main_window, 40782)
+    main_window.actionAddRefl.triggered.emit()
+
+    # Add a second data tab (the runs from tab 1 are copied into it)
+    main_window.addDataTable()
+    assert len(data_manager.peak_reduction_lists[2]) == 2
+
+    # Make the second tab the active list and select its second run (40782)
+    data_manager.set_active_reduction_list_index(2)
+    data_manager.set_active_data_from_reduction_list(1)
+    handler.active_data_changed()
+
+    assert main_window.ui.file_list.currentItem() is not None
+    assert "40782" in main_window.ui.file_list.currentItem().text()
+
+    # Switch to the first run in tab 2 (40785) and verify the file list updates
+    data_manager.set_active_data_from_reduction_list(0)
+    handler.active_data_changed()
+
+    assert main_window.ui.file_list.currentItem() is not None
+    assert "40785" in main_window.ui.file_list.currentItem().text()
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
