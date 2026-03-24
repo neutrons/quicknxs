@@ -93,7 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.initialize_instrument()
         self.hide_unsupported()
 
-        self.file_loaded_signal.connect(self.file_handler.update_info)
+        self.file_loaded_signal.connect(self.file_handler.update_overview_run_info_from_active_run)
         self.file_loaded_signal.connect(self.file_handler.update_daslog)
         self.file_loaded_signal.connect(self.plotActiveTab)
 
@@ -333,13 +333,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_handler.reduction_table_right_click(pos, True)
 
     def set_active_direct_beam(self, checked: bool, row: int):
-        """Select a data set when the user double-clicks on a run number (col 0) in the direct beam table."""
+        """Select a data set when the user changes the active run radio button (col 0) in the direct beam table."""
         if not checked:
             return
         self.data_manager.set_active_data_from_direct_beam_list(row)
         self.file_loaded()
-        # TODO: why is this commented out? (Glass)
-        # self.file_handler.active_data_changed()
+        self.file_handler.active_data_changed()
 
     def direct_beam_table_right_click(self, pos: QtCore.QPoint):
         """Handle right-click on the direct beam table."""
@@ -510,9 +509,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.data_manager.update_active_direct_beam()
 
         if self.data_manager.data_sets:
-            # Note: Don't call active_data_changed() directly here - it's already called via
-            # file_loaded_signal -> update_info() -> active_data_changed()
             self.file_loaded()
+            self.file_handler.active_data_changed()
 
     ### End of data tab management
 

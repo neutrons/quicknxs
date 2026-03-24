@@ -108,6 +108,15 @@ class MainHandler:
         """Return the QTableWidget for the data tab with the given index."""
         return self.ui.tabWidget.widget(tab_index).findChild(QtWidgets.QTableWidget)
 
+    def get_tab_index_for_reduction_table(self, table_widget: QtWidgets.QTableWidget) -> int:
+        """Return the tab index that owns the given reduction table widget."""
+        for i in range(self.ui.tabWidget.count()):
+            if i == self.DIRECT_BEAM_TAB_INDEX:
+                continue
+            if self.get_reduction_table_by_index(i) is table_widget:
+                return i
+        return self.MAIN_DATA_TAB_INDEX  # safe fallback
+
     def new_progress_reporter(self):
         """Return a progress reporter."""
         return ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
@@ -216,6 +225,8 @@ class MainHandler:
         for i in range(len(cross_sections), 12):
             getattr(self.ui, "selectedCrossSection%i" % i).hide()
         self.main_window.auto_change_active = False
+
+        self.active_data_changed()
 
         # Emit signals to update the UI and plots
         self.main_window.file_loaded_signal.emit()
@@ -358,12 +369,11 @@ class MainHandler:
         else:
             self.ui.matched_direct_beam_label.setText("None")
 
-    def update_info(self):
+    def update_overview_run_info_from_active_run(self):
         """Update metadata shown in the overview tab."""
         self.main_window.auto_change_active = True
         d = self._data_manager.active_cross_section
         self.populate_from_configuration(d.configuration)
-        self.main_window.initiate_projection_plot.emit(False)
         QtWidgets.QApplication.instance().processEvents()
 
         if self.ui.set_dangle0_checkbox.isChecked():
@@ -409,8 +419,6 @@ class MainHandler:
 
         # Update reduction tables
         self.update_tables()
-
-        self.active_data_changed()
 
         self.main_window.auto_change_active = False
 
@@ -492,8 +500,7 @@ class MainHandler:
             new_list = _updated_current_list()
         # Use case 2: a composite from using Open Sum
         elif file_path.is_composite:
-            file_dir, file_name = file_path.split()
-            self._data_manager.current_file_name = file_path.basename
+            file_dir, _ = file_path.split()
             # Use case 2.1: the composite is made up of files in the current directory
             if file_dir == self._data_manager.current_directory:
                 new_list = sorted(_updated_current_list() + [file_path.basename])
@@ -508,15 +515,13 @@ class MainHandler:
                 file_dir = query_path
                 if file_dir != self._data_manager.current_directory:  # User changed directory
                     _update_current_directory(file_dir)
-                    self._data_manager.current_file_name = self._data_manager.current_event_files[0]
                     new_list = self._data_manager.current_event_files
                 else:
                     # TODO FIXME discovered from #93.  This path is not checked and thus problematic
                     new_list = None
             # Use case 3.2: a single path pointing to a file in the current or new directory
             else:
-                file_dir, file_name = file_path.split()
-                self._data_manager.current_file_name = file_name
+                file_dir, _ = file_path.split()
                 if file_dir == self._data_manager.current_directory:  # User selected a new file in the directory
                     new_list = _updated_current_list()
                 else:  # User selected a new file in a new directory
@@ -736,8 +741,8 @@ class MainHandler:
         file_path = getattr(self, dialog_opening_method)(filter_=filter_)
 
         if file_path:
-            self.update_file_list(file_path)
             self.open_file(file_path)
+            self.update_file_list(file_path)
 
     def file_open_dialog(self):
         """GUI callback for backend MainHandler._file_open_dialog."""
@@ -873,12 +878,19 @@ class MainHandler:
         """
         self.main_window.auto_change_active = True
 
-        # Get the current tab index to use the correct button group
-        current_tab_index = self.ui.tabWidget.currentIndex()
+        # Resolve the button group for the tab that owns this table
+        current_tab_index = self.get_tab_index_for_reduction_table(table_widget)
         if current_tab_index not in self.reduction_table_button_groups:
             self.reduction_table_button_groups[current_tab_index] = QtWidgets.QButtonGroup(self.main_window)
 
         button_group = self.reduction_table_button_groups[current_tab_index]
+
+        # Remove the old radio button from the group before replacing the cell widget
+        existing = table_widget.cellWidget(idx, ReductionTableColumn.ACTIVE)
+        if existing is not None:
+            old_btn = existing.findChild(QtWidgets.QRadioButton)
+            if old_btn is not None:
+                button_group.removeButton(old_btn)
 
         # radio button for active data (layout inside a widget to center it)
         radio_widget = ActiveDataRadioButton(self, is_active=(data == self._data_manager.active_cross_section), idx=idx)
@@ -967,6 +979,8 @@ class MainHandler:
                 continue
             tab_widget = self.get_reduction_table_by_index(itab)
             tab_widget.setRowCount(0)
+        # reset button groups so stale entries don't accumulate across load cycles
+        self.reduction_table_button_groups = {self.MAIN_DATA_TAB_INDEX: QtWidgets.QButtonGroup(self.main_window)}
         # remove additional data tabs
         self.main_window.reset_data_tabs()
 
@@ -1113,7 +1127,7 @@ class MainHandler:
         # If the changed data set is the active data, also change the UI
         if self._data_manager.is_active(refl):
             self.main_window.auto_change_active = True
-            self.update_info()
+            self.update_overview_run_info_from_active_run()
             self.main_window.auto_change_active = False
         elif not refl.is_direct_beam():
             # If the changed data set is another data run, only need to update the UI reduction table,
@@ -1199,6 +1213,8 @@ class MainHandler:
         """Remove all items from the direct beam list."""
         self._data_manager.clear_direct_beam_list()
         self.ui.directBeamTable.setRowCount(0)
+        # reset the button group so stale entries don't accumulate across load cycles
+        self.direct_beam_button_group = QtWidgets.QButtonGroup(self.main_window)
         self.ui.direct_beam_list_label.setText("None")
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 
@@ -1240,6 +1256,13 @@ class MainHandler:
         """
         # Block signals to prevent recursion
         self.main_window.auto_change_active = True
+
+        # Explicitly remove the old radio button from the group before replacing the cell widget
+        existing = self.ui.directBeamTable.cellWidget(idx, DirectBeamTableColumn.ACTIVE)
+        if existing is not None:
+            old_btn = existing.findChild(QtWidgets.QRadioButton)
+            if old_btn is not None:
+                self.direct_beam_button_group.removeButton(old_btn)
 
         # radio button for active data (layout inside a widget to center it)
         radio_widget = ActiveDataRadioButton(
@@ -1328,7 +1351,7 @@ class MainHandler:
         # Update UI if this data set is the active one
         if self._data_manager.is_active(data):
             self.main_window.auto_change_active = True
-            self.update_info()
+            self.update_overview_run_info_from_active_run()
             self.main_window.auto_change_active = False
 
         # Recalculate reflectivity for runs with this direct beam
@@ -1347,7 +1370,16 @@ class MainHandler:
         self.main_window.initiate_projection_plot.emit(True)
 
     def active_data_changed(self):
-        """Actions to be taken once the active data set has changed."""
+        """Actions to be taken once the active data set has changed.
+
+        Updates the UI to highlight the active data set in the reduction and
+        direct beam tables, and updates the radio button states.
+
+        Also syncs the highlighted file in the file list.
+        """
+        if self._data_manager.active_cross_section is None:
+            return
+        logging.info(f"Active data changed to {self._data_manager.active_cross_section.number}")
         # If we update an entry, it's because that data is currently active.
         # Highlight it and un-highlight the other ones.
         self.main_window.auto_change_active = True
@@ -1362,9 +1394,8 @@ class MainHandler:
                     run_num.setBackground(QColors.white)
             # Set the radio button states
             active_cell = self.reduction_table.cellWidget(i, ReductionTableColumn.ACTIVE)
-            if active_cell is not None:
-                radio_button = active_cell.findChild(QtWidgets.QRadioButton)
-                radio_button.setChecked(i == idx)
+            if active_cell is not None and isinstance(active_cell, ActiveDataRadioButton):
+                active_cell.set_checked_block_signals(i == idx)
 
         idx = self._data_manager.find_active_direct_beam_id()
         for i in range(self.ui.directBeamTable.rowCount()):
@@ -1377,9 +1408,20 @@ class MainHandler:
                     item.setBackground(QColors.white)
             # Set the radio button states
             active_cell = self.ui.directBeamTable.cellWidget(i, DirectBeamTableColumn.ACTIVE)
-            if active_cell is not None:
-                radio_button = active_cell.findChild(QtWidgets.QRadioButton)
-                radio_button.setChecked(i == idx)
+            if active_cell is not None and isinstance(active_cell, ActiveDataRadioButton):
+                active_cell.set_checked_block_signals(i == idx)
+
+        # Find the file corresponding to the active data and highlight it in the file list
+        current_file_name = self._data_manager.current_file_name
+        for i in range(self.ui.file_list.count()):
+            list_item = self.ui.file_list.item(i)
+            if list_item is not None:
+                list_item_file_name = list_item.text()
+                if list_item_file_name == current_file_name:
+                    self.ui.file_list.blockSignals(True)
+                    self.ui.file_list.setCurrentRow(i)
+                    self.ui.file_list.blockSignals(False)
+                    break
 
         self.main_window.auto_change_active = False
 

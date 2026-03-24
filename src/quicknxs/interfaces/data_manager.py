@@ -26,8 +26,6 @@ class DataManager(object):
     ----------
     current_directory
         Current directory
-    current_file_name
-        Current file name, used for file list table to set the current item
     _nexus_data
         Current data set
     active_cross_section
@@ -56,7 +54,6 @@ class DataManager(object):
 
     def __init__(self, current_directory: str):
         self.current_directory: str = current_directory
-        self.current_file_name: Optional[str] = None
         self._nexus_data: Optional[NexusData] = None
 
         self.active_cross_section: Optional[CrossSectionData] = None
@@ -99,6 +96,12 @@ class DataManager(object):
         if self._nexus_data is None:
             return None
         return self._nexus_data.file_path
+
+    @property
+    def current_file_name(self):
+        if self._nexus_data is None:
+            return None
+        return self._nexus_data.file_name
 
     @property
     def reduction_list(self) -> list[NexusData]:
@@ -493,7 +496,7 @@ class DataManager(object):
         # Actions taken in this function:
         # 1. Find if the file has been loaded in the past. Retrieve the cache when force==False
         # 2. If file not in cache, or if force==True: invoke NexusData.load()
-        # 3. Update attributes _nexus_data, current_directory, and current_file_name
+        # 3. Update attributes _nexus_data and current_directory
         # 4. If we're overwriting cached data that was allocated in the reduction_list and direct_beam_list,
         #    then assign the new data to the proper indexes in lists reduction_list and direct_beam_list
         # 5. Compute reflectivity if data is loaded from file
@@ -507,16 +510,19 @@ class DataManager(object):
         if progress is not None:
             progress(10, "Loading data...")
 
-        # Check whether the file has already been loaded (in cache)
-        for i in range(len(self._cache)):
-            if self._cache[i].file_path == file_path:
+        # Search through current reduction list, direct beam list, and cache for the file path.
+        # If found and force is False, the matching data will become the active data in the UI.
+        nexus_data_search_list = self.reduction_list + self.direct_beam_list + self._cache
+        for _nxs_data in nexus_data_search_list:
+            if _nxs_data.file_path == file_path:
                 if force:
                     # Check whether the data is in the reduction list before removing it
-                    reduction_list_id = self.find_data_in_reduction_list(self._cache[i])
-                    direct_beam_list_id = self.find_data_in_direct_beam_list(self._cache[i])
-                    self._cache.pop(i)
+                    reduction_list_id = self.find_data_in_reduction_list(_nxs_data)
+                    direct_beam_list_id = self.find_data_in_direct_beam_list(_nxs_data)
+                    if _nxs_data in self._cache:
+                        self._cache.remove(_nxs_data)
                 else:
-                    nexus_data = self._cache[i]
+                    nexus_data = _nxs_data
                     is_from_cache = True
                 break
 
@@ -533,13 +539,14 @@ class DataManager(object):
         if progress is not None:
             progress(80, "Calculating...")
 
+        # Set the current data to the loaded data, whether from cache or from file
         self._nexus_data = nexus_data
+
         # Example: '/SNS/REF_M/IPTS-25531/nexus/REF_M_38198.nxs.h5+/SNS/REF_M/IPTS-25531/nexus/REF_M_38199.nxs.h5'
         # will be split into directory='/SNS/REF_M/IPTS-25531/nexus' and
         # file_name='REF_M_38198.nxs.h5+REF_M_38199.nxs.h5'
         directory, file_name = FilePath(file_path).split()
         self.current_directory = directory
-        self.current_file_name = file_name
         self.set_active_cross_section(0)
 
         # If we didn't get this data set from our cache, add it and compute its reflectivity.
