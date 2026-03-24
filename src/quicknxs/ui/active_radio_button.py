@@ -41,25 +41,30 @@ class ActiveDataRadioButton(QWidget):
         """Initialize the UI components."""
 
         self.radio_button = NoToggleRadioButton()
-        self.radio_button.setChecked(self.is_active)
 
-        # Connect to the appropriate method based on whether this is a direct beam or reduction table
-        if self.is_direct_beam:
-            self.radio_button.toggled.connect(
-                lambda checked: self.parent_handler.main_window.set_active_direct_beam(checked, self._get_current_row())
-            )
-        else:
-            self.radio_button.toggled.connect(
-                lambda checked: self.parent_handler.main_window.set_active_reduction_data(
-                    checked, self._get_current_row()
-                )
-            )
+        # Block signals during setChecked to prevent the toggled signal from firing
+        # before the widget is added to its table (see _get_current_row).
+        self.radio_button.blockSignals(True)
+        self.radio_button.setChecked(self.is_active)
+        self.radio_button.blockSignals(False)
+
+        self.radio_button.toggled.connect(self._on_toggled)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.radio_button)
         self.setLayout(layout)
+
+    def _on_toggled(self, checked: bool):
+        """Handle the toggled signal from the radio button."""
+        row = self._get_current_row()
+        if row < 0:
+            return
+        if self.is_direct_beam:
+            self.parent_handler.main_window.set_active_direct_beam(checked, row)
+        else:
+            self.parent_handler.main_window.set_active_reduction_data(checked, row)
 
     def _get_current_row(self):
         """Find the current row index of this widget in the table."""

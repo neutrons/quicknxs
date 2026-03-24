@@ -880,6 +880,13 @@ class MainHandler:
 
         button_group = self.reduction_table_button_groups[current_tab_index]
 
+        # Remove the old radio button from the group before replacing the cell widget.
+        # setCellWidget deletes the old widget, which would leave a dangling pointer in
+        # the button group and cause a segfault on the next group interaction.
+        old_widget = table_widget.cellWidget(idx, ReductionTableColumn.ACTIVE)
+        if old_widget is not None and hasattr(old_widget, "radio_button"):
+            button_group.removeButton(old_widget.radio_button)
+
         # radio button for active data (layout inside a widget to center it)
         radio_widget = ActiveDataRadioButton(self, is_active=(data == self._data_manager.active_cross_section), idx=idx)
         button_group.addButton(radio_widget.radio_button)
@@ -1240,6 +1247,13 @@ class MainHandler:
         """
         # Block signals to prevent recursion
         self.main_window.auto_change_active = True
+
+        # Remove the old radio button from the group before replacing the cell widget.
+        # setCellWidget deletes the old widget, which would leave a dangling pointer in
+        # the button group and cause a segfault on the next group interaction.
+        old_widget = self.ui.directBeamTable.cellWidget(idx, DirectBeamTableColumn.ACTIVE)
+        if old_widget is not None and hasattr(old_widget, "radio_button"):
+            self.direct_beam_button_group.removeButton(old_widget.radio_button)
 
         # radio button for active data (layout inside a widget to center it)
         radio_widget = ActiveDataRadioButton(
