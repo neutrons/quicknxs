@@ -37,21 +37,23 @@ artifacts = ["*.yml", "*.yaml", "*.ini", "*.gx", "*.json", "*.ui"]
 source-file = "src/quicknxs/_version.py"
 build-file = "quicknxs/_version.py"
 
+[tool.hatch.build.targets.sdist]
+include = ["tools/"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/quicknxs"]
 
 [tool.versioningit.vcs]
 method = "git"
 default-tag = "4.0.0"
-exclude = ["*rc*"]
 
 [tool.versioningit.next-version]
-method = "minor"
+method = {module = "_next_version", value = "next_version", module-dir = "tools"}
 
 [tool.versioningit.format]
-distance = "{next_version}.dev{distance}"
+distance = "{next_version}.dev{committer_date:%Y%m%d%H%M%S}"
 dirty = "{version}"
-distance-dirty = "{next_version}.dev{distance}"
+distance-dirty = "{next_version}.dev{committer_date:%Y%m%d%H%M%S}"
 
 [tool.versioningit.write]
 file = "src/quicknxs/_version.py"
