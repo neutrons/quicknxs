@@ -181,7 +181,7 @@ clean-all = { description = "Clean all artifacts", depends-on = [
     "clean-conda",
     "clean-docs",
 ] }
-sync-version = { cmd = 'version=$(python -m versioningit); toml set tool.pixi.package.version "$version" --toml-path pyproject.toml', description = "Sync pyproject.toml version with Git version" }
+sync-version = { cmd = '''bash -c 'RC_TAG=$(git tag --points-at HEAD | grep rc | head -1); if [ -n "$RC_TAG" ]; then version="${RC_TAG#v}"; else version=$(python -m versioningit); fi; toml set tool.pixi.package.version "$version" --toml-path pyproject.toml' ''', description = "Sync pyproject.toml version with Git version (uses RC tag directly if on one, otherwise uses versioningit)" }
 reset-version = { cmd = "toml set tool.pixi.package.version \"0.0.0\" --toml-path pyproject.toml", description = "Reset the package version to 0.0.0" }
 
 ##########################
