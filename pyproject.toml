@@ -43,15 +43,14 @@ packages = ["src/quicknxs"]
 [tool.versioningit.vcs]
 method = "git"
 default-tag = "4.0.0"
-exclude = ["*rc*"]
 
 [tool.versioningit.next-version]
 method = "minor"
 
 [tool.versioningit.format]
-distance = "{next_version}.dev{distance}"
+distance = "{next_version}.dev{committer_date:%Y%m%d%H%M%S}"
 dirty = "{version}"
-distance-dirty = "{next_version}.dev{distance}"
+distance-dirty = "{next_version}.dev{committer_date:%Y%m%d%H%M%S}"
 
 [tool.versioningit.write]
 file = "src/quicknxs/_version.py"
