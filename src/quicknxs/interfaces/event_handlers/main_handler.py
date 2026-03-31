@@ -741,8 +741,8 @@ class MainHandler:
         file_path = getattr(self, dialog_opening_method)(filter_=filter_)
 
         if file_path:
-            self.open_file(file_path)
             self.update_file_list(file_path)
+            self.open_file(file_path)
 
     def file_open_dialog(self):
         """GUI callback for backend MainHandler._file_open_dialog."""
