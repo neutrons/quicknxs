@@ -221,12 +221,18 @@ def main_window_with_mock_runs(qtbot, mocker, tmp_path):
     names = ["REF_M_40785.nxs.h5", "REF_M_40782.nxs.h5", "REF_M_40786.nxs.h5", "REF_M_40787.nxs.h5"]
     for name in names:
         (tmp_path / name).touch()
+    # add summed file to file list
+    names.append("REF_M_40782.nxs.h5+REF_M_40785.nxs.h5")
 
     run_a = NexusData(str(tmp_path / "REF_M_40785.nxs.h5"), config)
     run_a.cross_sections["Off_Off"] = xs
 
-    run_b = NexusData(str(tmp_path / "REF_M_40782.nxs.h5"), config)
+    # run created with Open & Sum Multiple Files
+    run_b = NexusData(str(tmp_path / "REF_M_40782.nxs.h5") + "+" + str(tmp_path / "REF_M_40785.nxs.h5"), config)
     run_b.cross_sections["Off_Off"] = xs
+
+    run_c = NexusData(str(tmp_path / "REF_M_40782.nxs.h5"), config)
+    run_c.cross_sections["Off_Off"] = xs
 
     run_db = NexusData(str(tmp_path / "REF_M_40786.nxs.h5"), config)
     run_db.cross_sections["Off_Off"] = xs
@@ -240,7 +246,7 @@ def main_window_with_mock_runs(qtbot, mocker, tmp_path):
 
     dm = main_window.data_manager
     dm.current_directory = str(tmp_path)
-    dm.peak_reduction_lists[dm.active_reduction_list_index] = [run_a, run_b]
+    dm.peak_reduction_lists[dm.active_reduction_list_index] = [run_a, run_b, run_c]
     dm.direct_beam_list = [run_db, run_db2]
     # Set an initial active run so that initialize_additional_reduction_table can read
     # active_cross_section.name if addDataTable() is called during a test.

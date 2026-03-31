@@ -478,13 +478,13 @@ class TestActiveDataChangedSyncsFileList:
         main_window.set_active_reduction_data(True, 0)
         assert data_manager._nexus_data == data_manager.reduction_list[0]
         assert main_window.ui.file_list.currentItem() is not None
-        assert "40785" in main_window.ui.file_list.currentItem().text()
+        assert main_window.ui.file_list.currentItem().text() == "REF_M_40785.nxs.h5"
 
         # Switch active run to row 1 and verify the file list highlights run 40782
         main_window.set_active_reduction_data(True, 1)
         assert data_manager._nexus_data == data_manager.reduction_list[1]
         assert main_window.ui.file_list.currentItem() is not None
-        assert "40782" in main_window.ui.file_list.currentItem().text()
+        assert main_window.ui.file_list.currentItem().text() == "REF_M_40782.nxs.h5+REF_M_40785.nxs.h5"
 
     def test_select_run_from_direct_beam_table(self, main_window_with_mock_runs):
         """Test that switching the active run in the direct beam table updates the file list selection."""
@@ -495,13 +495,13 @@ class TestActiveDataChangedSyncsFileList:
         main_window.set_active_direct_beam(True, 0)
         assert data_manager._nexus_data == data_manager.direct_beam_list[0]
         assert main_window.ui.file_list.currentItem() is not None
-        assert "40786" in main_window.ui.file_list.currentItem().text()
+        assert main_window.ui.file_list.currentItem().text() == "REF_M_40786.nxs.h5"
 
         # Switch to the data run and verify the file list highlights run 40787
         main_window.set_active_direct_beam(True, 1)
         assert data_manager._nexus_data == data_manager.direct_beam_list[1]
         assert main_window.ui.file_list.currentItem() is not None
-        assert "40787" in main_window.ui.file_list.currentItem().text()
+        assert main_window.ui.file_list.currentItem().text() == "REF_M_40787.nxs.h5"
 
     def test_select_run_from_file_list(self, main_window_with_mock_runs):
         """Test that selecting a file in the list updates the active run radio button"""
@@ -524,7 +524,7 @@ class TestActiveDataChangedSyncsFileList:
         assert _checked_row() == 0
 
         # Click on the second data run in the file list and verify that the correct row is checked
-        item = main_window.ui.file_list.findItems("40782", QtCore.Qt.MatchContains)[0]
+        item = main_window.ui.file_list.findItems("REF_M_40782.nxs.h5+REF_M_40785.nxs.h5", QtCore.Qt.MatchContains)[0]
         main_window.ui.file_list.setCurrentItem(item)
         assert data_manager._nexus_data == data_manager.reduction_list[1]
         assert _checked_row() == 1
@@ -539,13 +539,13 @@ class TestActiveDataChangedSyncsFileList:
         data_tab_widget.setCurrentIndex(main_window.file_handler.DIRECT_BEAM_TAB_INDEX)
         assert data_manager._nexus_data == data_manager.direct_beam_list[0]
         assert main_window.ui.file_list.currentItem() is not None
-        assert "40786" in main_window.ui.file_list.currentItem().text()
+        assert main_window.ui.file_list.currentItem().text() == "REF_M_40786.nxs.h5"
 
         # Switch to the main data tab and verify the file list highlights the active data run (40785)
         data_tab_widget.setCurrentIndex(main_window.file_handler.MAIN_DATA_TAB_INDEX)
         assert data_manager._nexus_data == data_manager.reduction_list[0]
         assert main_window.ui.file_list.currentItem() is not None
-        assert "40785" in main_window.ui.file_list.currentItem().text()
+        assert main_window.ui.file_list.currentItem().text() == "REF_M_40785.nxs.h5"
 
     def test_switching_between_multiple_data_tabs(self, main_window_with_mock_runs):
         """Test that the file list syncs correctly when the active data comes from a secondary reduction tab.
@@ -559,17 +559,17 @@ class TestActiveDataChangedSyncsFileList:
 
         # Add a second data tab; the runs from tab 1 are deep-copied into it
         main_window.addDataTable()
-        assert len(data_manager.peak_reduction_lists[2]) == 2
+        assert len(data_manager.peak_reduction_lists[2]) == 3
 
         # Make the second tab the active list and verify the first run is active
         data_tab_widget.setCurrentIndex(2)
         assert main_window.ui.file_list.currentItem() is not None
-        assert "40785" in main_window.ui.file_list.currentItem().text()
+        assert main_window.ui.file_list.currentItem().text() == "REF_M_40785.nxs.h5"
 
         # Switch to the second run in tab 2 (40782) and verify the file list updates
         main_window.set_active_reduction_data(True, 1)
         assert main_window.ui.file_list.currentItem() is not None
-        assert "40782" in main_window.ui.file_list.currentItem().text()
+        assert main_window.ui.file_list.currentItem().text() == "REF_M_40782.nxs.h5+REF_M_40785.nxs.h5"
 
 
 if __name__ == "__main__":
