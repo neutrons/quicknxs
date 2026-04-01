@@ -1158,6 +1158,7 @@ class MainHandler:
 
         self.main_window.plotActiveTab()
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
+        self.main_window.initiate_projection_plot.emit(False)
         self.main_window.update_specular_viewer.emit()
 
     def add_direct_beam(self, silent=False):
