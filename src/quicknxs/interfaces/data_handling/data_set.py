@@ -684,7 +684,9 @@ class NexusData(object):
         configuration: Configuration
             Reduction configuration
         """
-        self.file_path = FilePath(file_path).path  # sort the paths if more than one
+        fp = FilePath(file_path)
+        self.file_path = fp.path  # sort the paths if more than one
+        self.file_name = fp.basename
         self.number: str = ""  # can be a single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.configuration = configuration
         self.cross_sections: Dict[str, CrossSectionData] = {}
@@ -895,8 +897,9 @@ class NexusData(object):
         ws = api.Scale(InputWorkspace=output_ws, OutputWorkspace=output_ws, factor=quicknxs_scale, Operation="Multiply")
         _ws = ws if len(ws_list) > 1 else [ws]
         for xs in _ws:
-            # add suffix to avoid overwriting ws in mantid data service, needed for multiple peaks
-            api.RenameWorkspace(str(xs), str(xs) + ws_suffix)
+            # add suffix to avoid overwriting ws in mantid data service, needed for multiple peaks and summed runs
+            # for example: 42112_On_Off__reflectivity -> 42112_On_Off__reflectivity_42112+42113_1
+            api.RenameWorkspace(str(xs), str(xs) + "_" + self.number + ws_suffix)
             xs_id = xs.getRun().getProperty("cross_section_id").value
             self.cross_sections[xs_id].q = xs.readX(0)[:].copy()
             self.cross_sections[xs_id]._r = np.ma.masked_equal(xs.readY(0)[:].copy(), 0)

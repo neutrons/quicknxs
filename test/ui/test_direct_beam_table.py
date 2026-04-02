@@ -60,7 +60,7 @@ def test_table_connections(qtbot, data_server):
     # Change the reference position and width in the main window
     main_window.ui.refXPos.setValue(200)
     main_window.ui.refXWidth.setValue(100)
-    main_window.file_handler.update_info()
+    main_window.file_handler.update_overview_run_info_from_active_run()
     assert main_window.ui.refXPos.value() == float(table.item(0, DBTableCols.PEAK_POSITION).text())
     assert main_window.ui.refXWidth.value() == float(table.item(0, DBTableCols.PEAK_WIDTH).text())
 

@@ -9,17 +9,6 @@ if TYPE_CHECKING:
     from quicknxs.interfaces.event_handlers.main_handler import MainHandler
 
 
-class NoToggleRadioButton(QRadioButton):
-    """A QRadioButton that cannot be toggled off once selected."""
-
-    def mousePressEvent(self, event):
-        """Override mouse press event to prevent toggling off."""
-        if self.isChecked():
-            event.ignore()
-        else:
-            super().mousePressEvent(event)
-
-
 class ActiveDataRadioButton(QWidget):
     """A QWidget that represents the active data selection."""
 
@@ -40,7 +29,7 @@ class ActiveDataRadioButton(QWidget):
     def initUI(self):
         """Initialize the UI components."""
 
-        self.radio_button = NoToggleRadioButton()
+        self.radio_button = QRadioButton()
         self.radio_button.setChecked(self.is_active)
 
         # Connect to the appropriate method based on whether this is a direct beam or reduction table
@@ -60,6 +49,12 @@ class ActiveDataRadioButton(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.radio_button)
         self.setLayout(layout)
+
+    def set_checked_block_signals(self, checked: bool) -> None:
+        """Set radio button state without emitting signals."""
+        self.radio_button.blockSignals(True)
+        self.radio_button.setChecked(checked)
+        self.radio_button.blockSignals(False)
 
     def _get_current_row(self):
         """Find the current row index of this widget in the table."""
