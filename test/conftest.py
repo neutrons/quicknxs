@@ -3,14 +3,18 @@ r"""Fixtures for pytest."""
 # standard imports
 # 3rd-party imports
 import glob
+import logging
 import os
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 from PyQt5.QtCore import QSettings
+from qtpy import QtWidgets
 
 from quicknxs.interfaces.configuration import Configuration
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import RunNumbers
 from quicknxs.interfaces.data_handling.instrument import Instrument
 from quicknxs.interfaces.data_manager import DataManager
@@ -20,6 +24,18 @@ from test.ui import ui_utilities
 pytest_plugins = ["mantid.fixtures"]
 
 this_module_path = sys.modules[__name__].__file__
+
+
+def pytest_configure(config):
+    """Suppress debug logging from pyvirtualdisplay.
+
+    pytest-xvfb tears down the virtual display after pytest has already closed
+    its log-capture streams.  pyvirtualdisplay emits several log.debug() calls
+    during that teardown, which hit the closed stream and print harmless but
+    noisy '--- Logging error ---' tracebacks to stderr.  Raising the logger
+    level to WARNING filters those messages before they ever reach a handler.
+    """
+    logging.getLogger("pyvirtualdisplay").setLevel(logging.WARNING)
 
 
 ################################################
@@ -180,3 +196,82 @@ def data_manager_with_data_factory(data_server):
         return manager
 
     return _create
+
+
+@pytest.fixture
+def main_window_with_mock_runs(qtbot, mocker, tmp_path):
+    """MainWindow with two mock reflected runs and two mock direct beam runs.
+
+    Injects NexusData objects directly into the DataManager (no Nexus file content is read),
+    and pre-populates the file list widget with their file names.
+
+    Empty placeholder files are created in tmp_path so that open_file()'s existence check
+    passes when the file list selection signal triggers file_open_from_list().
+    DataManager.load() finds each NexusData by its full path in direct_beam_list /
+    reduction_list, so no actual Nexus data is ever parsed.
+
+    Both MainWindow.file_loaded and MainHandler.file_loaded are patched out so that
+    the plotting machinery is not triggered. set_active_reduction_data still calls
+    active_data_changed() explicitly after file_loaded returns.
+    """
+    config = Configuration()
+    xs = CrossSectionData("Off_Off", config)
+    xs.tof_edges = np.array([0.1, 0.2, 0.3, 0.4])
+
+    names = ["REF_M_40785.nxs.h5", "REF_M_40782.nxs.h5", "REF_M_40786.nxs.h5", "REF_M_40787.nxs.h5"]
+    for name in names:
+        (tmp_path / name).touch()
+    # add summed file to file list
+    names.append("REF_M_40782.nxs.h5+REF_M_40785.nxs.h5")
+
+    run_a = NexusData(str(tmp_path / "REF_M_40785.nxs.h5"), config)
+    run_a.cross_sections["Off_Off"] = xs
+
+    # run created with Open & Sum Multiple Files
+    run_b = NexusData(str(tmp_path / "REF_M_40782.nxs.h5") + "+" + str(tmp_path / "REF_M_40785.nxs.h5"), config)
+    run_b.cross_sections["Off_Off"] = xs
+
+    run_c = NexusData(str(tmp_path / "REF_M_40782.nxs.h5"), config)
+    run_c.cross_sections["Off_Off"] = xs
+
+    run_db = NexusData(str(tmp_path / "REF_M_40786.nxs.h5"), config)
+    run_db.cross_sections["Off_Off"] = xs
+
+    run_db2 = NexusData(str(tmp_path / "REF_M_40787.nxs.h5"), config)
+    run_db2.cross_sections["Off_Off"] = xs
+
+    main_window = MainWindow()
+    qtbot.addWidget(main_window)
+    handler = main_window.file_handler
+
+    dm = main_window.data_manager
+    dm.current_directory = str(tmp_path)
+    dm.peak_reduction_lists[dm.active_reduction_list_index] = [run_a, run_b, run_c]
+    dm.direct_beam_list = [run_db, run_db2]
+    # Set an initial active run so that initialize_additional_reduction_table can read
+    # active_cross_section.name if addDataTable() is called during a test.
+    dm._nexus_data = run_a
+    dm.active_cross_section = xs
+
+    for name in names:
+        QtWidgets.QListWidgetItem(name, main_window.ui.file_list)
+
+    # Bypass the plotting machinery triggered by both call paths into file_loaded:
+    # - MainWindow.file_loaded() is called by set_active_reduction_data / set_active_direct_beam
+    # - MainHandler.file_loaded() is called directly by open_file (via file_open_from_list)
+    mocker.patch.object(main_window, "file_loaded")
+    # Retain only the call to active_data_changed to ensure the radio button state is updated
+    mocker.patch.object(handler, "file_loaded", side_effect=handler.active_data_changed)
+
+    # Populate the reduction table with the mock runs
+    xs_name = dm.active_cross_section.name
+    handler.reduction_table.setRowCount(len(dm.reduction_list))
+    for i, run in enumerate(dm.reduction_list):
+        handler.update_reduction_table(handler.reduction_table, i, run.cross_sections[xs_name])
+
+    # Populate the direct beam table with the mock runs
+    handler.direct_beam_table.setRowCount(len(dm.direct_beam_list))
+    for i, run in enumerate(dm.direct_beam_list):
+        handler.update_direct_beam_table(i, run.cross_sections[xs_name])
+
+    return main_window
