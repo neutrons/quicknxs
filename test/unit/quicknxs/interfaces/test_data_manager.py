@@ -4,7 +4,7 @@ import pytest
 
 import quicknxs.interfaces.data_handling.data_manipulation as dm
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.instrument import Instrument
+from quicknxs.interfaces.data_handling.instrument import CrossSectionError, Instrument
 from quicknxs.interfaces.data_manager import DataManager
 
 
@@ -264,6 +264,33 @@ class TestDataManagerTest(object):
         assert len(manager.reduction_list) == 1
         assert manager.reduction_states is not None
         assert len(manager.reduction_states) > 0
+
+    @pytest.mark.datarepo
+    def test_bad_files_list(self, data_server, mocker):
+        """Test that files that fail to load are tracked in the bad_files list."""
+        manager = DataManager(data_server.directory)
+
+        # Mock loading the file, but use data_server to get the path for the error message
+        mock_exception = CrossSectionError(data_server.path_to("REF_M_43670"))
+        mocker.patch("quicknxs.interfaces.data_manager.NexusData.load", side_effect=mock_exception)
+        with pytest.raises(CrossSectionError):
+            manager.load(data_server.path_to("REF_M_43670"), Configuration())
+        assert len(manager.bad_files) == 1
+        assert "REF_M_43670.nxs.h5" in manager.bad_files
+
+        # Test loading the same bad file again - the bad files list should not grow
+        with pytest.raises(CrossSectionError):
+            manager.load(data_server.path_to("REF_M_43670"), Configuration())
+        assert len(manager.bad_files) == 1
+        assert "REF_M_43670.nxs.h5" in manager.bad_files
+
+        # Test loading a different bad file - should be added to the list
+        mock_exception = CrossSectionError(data_server.path_to("REF_M_42537"))
+        mocker.patch("quicknxs.interfaces.data_manager.NexusData.load", side_effect=mock_exception)
+        with pytest.raises(CrossSectionError):
+            manager.load(data_server.path_to("REF_M_42537"), Configuration())
+        assert len(manager.bad_files) == 2
+        assert "REF_M_42537.nxs.h5" in manager.bad_files
 
 
 if __name__ == "__main__":

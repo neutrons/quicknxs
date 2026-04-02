@@ -163,7 +163,7 @@ class Instrument(object):
                 analyzer > 0 and self.ana_state not in event_ws.getRun()
             ):
                 use_slow_flipper_log = True
-                print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
+                logging.warning("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n")
             # Delete the temporary workspace as split_events will reload it
             api.DeleteWorkspace("raw_events")
         elif not is_pre_epics and not file_path.endswith(".nxs.h5"):
@@ -234,7 +234,7 @@ class Instrument(object):
                             )
                             path_xs_list.append(_ws)
                     if not is_found:
-                        print("Could not find error events for [%s]" % xs_name)
+                        logging.warning(f"Could not find error events for [{xs_name}]")
                         _ws = apply_dead_time_correction(
                             ws,
                             configuration.paralyzable_deadtime,
