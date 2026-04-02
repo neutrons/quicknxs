@@ -56,12 +56,8 @@ class DataManager(object):
 
     def __init__(self, current_directory: str):
         self.current_directory: str = current_directory
-<<<<<<< HEAD
         self.current_file_name: str | None = None
         self._nexus_data: NexusData | None = None
-=======
-        self._nexus_data: Optional[NexusData] = None
->>>>>>> next
 
         self.active_cross_section: CrossSectionData | None = None
         self.active_reduction_list_index: int = 1
@@ -554,16 +550,10 @@ class DataManager(object):
             if _nxs_data.file_path == file_path:
                 if force:
                     # Check whether the data is in the reduction list before removing it
-<<<<<<< HEAD
-                    reduction_list_id = self.find_run_number_in_reduction_list(self._cache[i])
-                    direct_beam_list_id = self.find_run_number_in_direct_beam_list(self._cache[i])
-                    self._cache.pop(i)
-=======
                     reduction_list_id = self.find_data_in_reduction_list(_nxs_data)
                     direct_beam_list_id = self.find_data_in_direct_beam_list(_nxs_data)
                     if _nxs_data in self._cache:
                         self._cache.remove(_nxs_data)
->>>>>>> next
                 else:
                     nexus_data = _nxs_data
                     is_from_cache = True
