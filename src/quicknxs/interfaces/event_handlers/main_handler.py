@@ -1703,25 +1703,6 @@ class MainHandler:
             configuration.off_spec_x_axis = Configuration.QX_VS_QZ
         else:
             configuration.off_spec_x_axis = Configuration.KZI_VS_KZF
-        configuration.off_spec_slice = self.ui.offspec_slice_checkbox.isChecked()
-        configuration.off_spec_slice_qz_min = self.ui.slice_qz_min_spinbox.value()
-        configuration.off_spec_slice_qz_max = self.ui.slice_qz_max_spinbox.value()
-        # try:
-        #    qz_list = self.ui.offspec_qz_list_edit.text()
-        #    if len(qz_list) > 0:
-        #        configuration.off_spec_qz_list = [float(x) for x in self.ui.offspec_qz_list_edit.text().split(',')]
-        # except:
-        #    logging.error("Could not parse off_spec_qz_list: %s", configuration.off_spec_qz_list)
-        configuration.off_spec_err_weight = self.ui.offspec_err_weight_checkbox.isChecked()
-        configuration.off_spec_nxbins = self.ui.offspec_rebin_x_bins_spinbox.value()
-        configuration.off_spec_nybins = self.ui.offspec_rebin_y_bins_spinbox.value()
-        configuration.off_spec_x_min = self.ui.offspec_x_min_spinbox.value()
-        configuration.off_spec_x_max = self.ui.offspec_x_max_spinbox.value()
-        configuration.off_spec_y_min = self.ui.offspec_y_min_spinbox.value()
-        configuration.off_spec_y_max = self.ui.offspec_y_max_spinbox.value()
-
-        # Off-spec smoothing options
-        configuration.apply_smoothing = self.ui.offspec_smooth_checkbox.isChecked()
 
         # GISANS options
         configuration.gisans_wl_min = self.ui.gisans_wl_min_spinbox.value()
@@ -1813,20 +1794,6 @@ class MainHandler:
             self.ui.qxVSqz.setChecked(True)
         else:
             self.ui.kizVSkfz.setChecked(True)
-        self.ui.offspec_slice_checkbox.setChecked(configuration.off_spec_slice)
-        # self.ui.offspec_qz_list_edit.setText(','.join([str(x) for x in configuration.off_spec_qz_list]))
-        self.ui.slice_qz_min_spinbox.setValue(configuration.off_spec_slice_qz_min)
-        self.ui.slice_qz_max_spinbox.setValue(configuration.off_spec_slice_qz_max)
-        self.ui.offspec_err_weight_checkbox.setChecked(configuration.off_spec_err_weight)
-        self.ui.offspec_rebin_x_bins_spinbox.setValue(configuration.off_spec_nxbins)
-        self.ui.offspec_rebin_y_bins_spinbox.setValue(configuration.off_spec_nybins)
-        self.ui.offspec_x_min_spinbox.setValue(configuration.off_spec_x_min)
-        self.ui.offspec_x_max_spinbox.setValue(configuration.off_spec_x_max)
-        self.ui.offspec_y_min_spinbox.setValue(configuration.off_spec_y_min)
-        self.ui.offspec_y_max_spinbox.setValue(configuration.off_spec_y_max)
-
-        # Off-spec smoothing options
-        self.ui.offspec_smooth_checkbox.setChecked(configuration.apply_smoothing)
 
         # GISANS options
         self.ui.gisans_wl_min_spinbox.setValue(configuration.gisans_wl_min)
@@ -2085,7 +2052,7 @@ class MainHandler:
         error:
             CrossSectionError exception containing diagnostic data
         """
-        diag_data = DiagnosticData(file_path=e.file_path, message=str(e))
-        diagnostic_widget = DiagnosticWidget(parent=main_window)
+        diag_data = DiagnosticData(file_path=error.file_path, message=str(error))
+        diagnostic_widget = DiagnosticWidget(parent=self.main_window)
         diagnostic_widget.show(diag_data)
         self.update_file_list()

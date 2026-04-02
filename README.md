@@ -1,7 +1,6 @@
 <!-- Badges -->
 
-![Build Status](https://github.uom/neutrons/quicknxs/actions/workflows/package.yml/badge.svg)
-![Test Pipeline](https://github.com/neutrons/quicknxs/actions/workflows/test.yml/badge.svg)
+![Test Pipeline](https://github.com/neutrons/quicknxs/actions/workflows/test_and_deploy.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/reflectivity-ui/badge/?version=latest)](https://reflectivity-ui.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/neutrons/quicknxs/branch/master/graph/badge.svg)](https://codecov.io/gh/neutrons/quicknxs)
 

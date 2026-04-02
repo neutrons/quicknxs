@@ -49,6 +49,20 @@ DEFAULT_OPTIONS = dict(
     email_cc="",
     email_subject="",
     email_test="",
+    # Off-specular defaults (match Configuration defaults)
+    off_spec_x_axis=0,  # Configuration.DELTA_KZ_VS_QZ
+    off_spec_x_min=-0.015,
+    off_spec_x_max=0.015,
+    off_spec_y_min=0.0,
+    off_spec_y_max=0.15,
+    off_spec_nxbins=450,
+    off_spec_nybins=200,
+    off_spec_err_weight=False,
+    off_spec_sigmas=3,
+    off_spec_sigmax=0.0005,
+    off_spec_sigmay=0.0005,
+    off_spec_slice_qz_min=0.05,
+    off_spec_slice_qz_max=0.07,
 )
 
 
@@ -58,7 +72,10 @@ class ProcessingWorkflow(object):
     def __init__(self, data_manager: DataManager, output_options: Optional[dict] = None):
         """All the reduced data shall come from data manager."""
         self.data_manager = data_manager
-        self.output_options = output_options if output_options else DEFAULT_OPTIONS
+        # Merge defaults with provided options to ensure all required keys are present
+        self.output_options = DEFAULT_OPTIONS.copy()
+        if output_options:
+            self.output_options.update(output_options)
         self.exported_data_files = []
         self.exported_data_plots = []
 
@@ -81,11 +98,20 @@ class ProcessingWorkflow(object):
                     progress(10, "Computing reflectivity")
                 self.specular_reflectivity()
 
-            if self.output_options["export_offspec"] or self.output_options["export_offspec_smooth"]:
+            # Process off-specular if any off-spec output is requested
+            if (
+                self.output_options["export_offspec"]
+                or self.output_options["export_offspec_smooth"]
+                or self.output_options.get("apply_smoothing", False)
+                or self.output_options.get("export_offspec_slices", False)
+            ):
                 if progress is not None:
                     progress(20, "Computing off-specular reflectivity")
                 self.offspec(
-                    raw=self.output_options["export_offspec"], binned=self.output_options["export_offspec_smooth"]
+                    raw=self.output_options["export_offspec"],
+                    binned=self.output_options["export_offspec_smooth"],
+                    smooth=self.output_options.get("apply_smoothing", False),
+                    slices=self.output_options.get("export_offspec_slices", False),
                 )
 
             if self.output_options["export_gisans"]:
@@ -343,7 +369,7 @@ class ProcessingWorkflow(object):
         if progress is not None:
             progress(100, "GISANS complete")
 
-    def offspec(self, raw: bool = True, binned: bool = False):
+    def offspec(self, raw: bool = True, binned: bool = False, smooth: bool = False, slices: bool = False):
         """Export off-specular reflectivity.
 
         Parameters
@@ -351,7 +377,11 @@ class ProcessingWorkflow(object):
         raw:
             If true, the raw results will be saved
         binned:
-            If true, the raw results will be binned and saved
+            If true, the results will be binned and saved
+        smooth:
+            If true, the results will be smoothed and saved
+        slices:
+            If true, Qz slices will be extracted and saved
         """
         run_list = [str(item.number) for item in self.data_manager.reduction_list]
 
@@ -359,48 +389,59 @@ class ProcessingWorkflow(object):
         self.data_manager.cached_offspec = None
         self.data_manager.reduce_offspec()
 
-        if raw or binned:
+        # Get off-specular data for processing
+        if raw or binned or smooth or slices:
             output_data = self.get_offspec_data()
+
         # Export raw result
         if raw:
             # QuickNXS format
             output_file_base = self.get_file_name(run_list, process_type="OffSpec")
             self.write_quicknxs(output_data, output_file_base, include_offspec=True)
 
-        # Export binned result
-        if binned:
-            if self.data_manager.active_cross_section.configuration.apply_smoothing:
-                # "Smooth" version
-                try:
-                    smooth_output, slice_data_dict = self.smooth_offspec(output_data)
-                    output_file_base = self.get_file_name(run_list, process_type="OffSpecSmooth")
-                    self.write_quicknxs(smooth_output, output_file_base, include_offspec=True)
-                    if slice_data_dict is not None and "cross_sections" in slice_data_dict:
-                        output_file_base = self.get_file_name(run_list, process_type="OffSpecSmoothSlice")
-                        self.write_quicknxs(
-                            slice_data_dict,
-                            output_file_base,
-                            xs=slice_data_dict["cross_sections"].keys(),
-                            include_offspec=True,
-                        )
-                    self.data_manager.cached_offspec = smooth_output
-                except:
-                    raise
-                    logging.error("Problem writing smooth off-spec output")
-            else:
-                # Binned version
-                binned_data, slice_data_dict = self.get_rebinned_offspec_data()
-                # QuickNXS format ['smooth' is an odd name but we keep it for backward compatibility]
-                output_file_base = self.get_file_name(run_list, process_type="OffSpecBinned")
-                self.write_quicknxs(binned_data, output_file_base, include_offspec=True)
-                if slice_data_dict is not None and "cross_sections" in slice_data_dict:
-                    output_file_base = self.get_file_name(run_list, process_type="OffSpecSlice")
+        # Export smoothed result
+        if smooth:
+            try:
+                smooth_output, slice_data_dict = self.smooth_offspec(output_data)
+                output_file_base = self.get_file_name(run_list, process_type="OffSpecSmooth")
+                self.write_quicknxs(smooth_output, output_file_base, include_offspec=True)
+                # Only output smooth slices if both smooth and slices are requested
+                if slices and slice_data_dict is not None and "cross_sections" in slice_data_dict:
+                    output_file_base = self.get_file_name(run_list, process_type="OffSpecSmoothSlice")
                     self.write_quicknxs(
                         slice_data_dict,
                         output_file_base,
                         xs=slice_data_dict["cross_sections"].keys(),
                         include_offspec=True,
                     )
+                # Cache smooth output if no binned output requested, otherwise cache binned
+                if not binned:
+                    self.data_manager.cached_offspec = smooth_output
+            except:
+                logging.error("Problem writing smooth off-spec output")
+                raise
+
+        # Export binned result and/or slices
+        if binned or slices:
+            binned_data, slice_data_dict = self.get_rebinned_offspec_data()
+
+            # Write binned output if requested
+            if binned:
+                output_file_base = self.get_file_name(run_list, process_type="OffSpecBinned")
+                self.write_quicknxs(binned_data, output_file_base, include_offspec=True)
+
+            # Write slice output if requested
+            if slices and slice_data_dict is not None and "cross_sections" in slice_data_dict:
+                output_file_base = self.get_file_name(run_list, process_type="OffSpecSlice")
+                self.write_quicknxs(
+                    slice_data_dict,
+                    output_file_base,
+                    xs=slice_data_dict["cross_sections"].keys(),
+                    include_offspec=True,
+                )
+
+            # Cache binned output if it was generated, otherwise cache smooth or raw
+            if binned:
                 self.data_manager.cached_offspec = binned_data
 
     def get_rebinned_offspec_data(self):
@@ -414,17 +455,18 @@ class ProcessingWorkflow(object):
             return {}
 
         for pol_state in self.data_manager.reduction_states:
+            # All parameters now come from the OffSpecParametersDialog
             r, dr, x, y, labels = off_specular.rebin_extract(
                 self.data_manager.reduction_list,
                 pol_state,
-                axes=self.data_manager.active_cross_section.configuration.off_spec_x_axis,
-                use_weights=self.data_manager.active_cross_section.configuration.off_spec_err_weight,
-                n_bins_x=self.data_manager.active_cross_section.configuration.off_spec_nxbins,
-                n_bins_y=self.data_manager.active_cross_section.configuration.off_spec_nybins,
-                x_min=self.data_manager.active_cross_section.configuration.off_spec_x_min,
-                x_max=self.data_manager.active_cross_section.configuration.off_spec_x_max,
-                y_min=self.data_manager.active_cross_section.configuration.off_spec_y_min,
-                y_max=self.data_manager.active_cross_section.configuration.off_spec_y_max,
+                axes=self.output_options["off_spec_x_axis"],
+                use_weights=self.output_options["off_spec_err_weight"],
+                n_bins_x=self.output_options["off_spec_nxbins"],
+                n_bins_y=self.output_options["off_spec_nybins"],
+                x_min=self.output_options["off_spec_x_min"],
+                x_max=self.output_options["off_spec_x_max"],
+                y_min=self.output_options["off_spec_y_min"],
+                y_max=self.output_options["off_spec_y_max"],
             )
             if data_dict is None:
                 data_dict = dict(
@@ -606,7 +648,8 @@ class ProcessingWorkflow(object):
         Tuple[dict, dict]
             A tuple containing the smoothed data dictionary and a slice data dictionary.
         """
-        axes = self.data_manager.active_cross_section.configuration.off_spec_x_axis
+        # Coordinate system comes from the OffSpecParametersDialog
+        axes = self.output_options["off_spec_x_axis"]
         output_data = {
             "units": [],
             "columns": [],
@@ -672,8 +715,9 @@ class ProcessingWorkflow(object):
         if slice_data_dict == {}:
             slice_data_dict = dict(units=["1/A", "a.u.", "a.u."], columns=[label, "I", "dI"], cross_sections={})
 
-        q_min = self.data_manager.active_cross_section.configuration.off_spec_slice_qz_min
-        q_max = self.data_manager.active_cross_section.configuration.off_spec_slice_qz_max
+        # Slice parameters come from the OffSpecSliceDialog
+        q_min = self.output_options["off_spec_slice_qz_min"]
+        q_max = self.output_options["off_spec_slice_qz_max"]
         result, error = off_specular.get_slice(qz, r, dr, q_min, q_max)
         if error is not None:
             # Is x what we need here, or the middle of the bin

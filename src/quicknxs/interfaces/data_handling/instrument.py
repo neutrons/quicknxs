@@ -95,6 +95,7 @@ class CrossSectionError(Exception):
     def __init__(self, file_path: str | list[str] | None = None, message: str | None = None, min_num_evts: int = 100):
         self.min_num_events = min_num_evts
         self.file_path = file_path
+        self.file_name = FilePath(file_path, sort=True).basename if file_path else None
 
         if message is None:
             message = f"No valid cross-sections found in file: {file_path}"
@@ -162,7 +163,7 @@ class Instrument(object):
                 analyzer > 0 and self.ana_state not in event_ws.getRun()
             ):
                 use_slow_flipper_log = True
-                print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
+                logging.warning("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n")
             # Delete the temporary workspace as split_events will reload it
             api.DeleteWorkspace("raw_events")
         elif not is_pre_epics and not file_path.endswith(".nxs.h5"):
@@ -171,13 +172,9 @@ class Instrument(object):
         # Use mr_reduction's split_events to load and filter cross-sections
         try:
             # Create PolarizationLogs with custom log names matching REF_M
-            # Note: PolarizationLogs doesn't support initialization with parameters,
-            # so we set attributes individually. This could be improved in mr_reduction.
-            pol_logs = PolarizationLogs()
-            pol_logs.POL_STATE = self.pol_state
-            pol_logs.ANA_STATE = self.ana_state
-            pol_logs.POL_VETO = self.pol_veto
-            pol_logs.ANA_VETO = self.ana_veto
+            pol_logs = PolarizationLogs(
+                pol_state=self.pol_state, ana_state=self.ana_state, pol_veto=self.pol_veto, ana_veto=self.ana_veto
+            )
 
             _path_xs_list = split_events(
                 file_path=file_path,
@@ -206,11 +203,9 @@ class Instrument(object):
         # Dead-time correction only applies to post-epics data
         if configuration is not None and configuration.apply_deadtime and not is_pre_epics:
             # Create PolarizationLogs with custom log names matching REF_M
-            pol_logs = PolarizationLogs()
-            pol_logs.POL_STATE = self.pol_state
-            pol_logs.ANA_STATE = self.ana_state
-            pol_logs.POL_VETO = self.pol_veto
-            pol_logs.ANA_VETO = self.ana_veto
+            pol_logs = PolarizationLogs(
+                pol_state=self.pol_state, ana_state=self.ana_state, pol_veto=self.pol_veto, ana_veto=self.ana_veto
+            )
 
             # Use mr_reduction's split_error_events to load and filter error events
             _err_list = split_error_events(
@@ -239,7 +234,7 @@ class Instrument(object):
                             )
                             path_xs_list.append(_ws)
                     if not is_found:
-                        print("Could not find error events for [%s]" % xs_name)
+                        logging.warning(f"Could not find error events for [{xs_name}]")
                         _ws = apply_dead_time_correction(
                             ws,
                             configuration.paralyzable_deadtime,
@@ -258,31 +253,34 @@ class Instrument(object):
         This function assumes that when loading more than one data file, the files are congruent and their
         events will be added together.
 
-        Args:
-            file_path (str): absolute path to one or more data files. If more than one, paths should be concatenated with the plus symbol '+'.
-            configuration (Configuration): reduction configuration parameters
+        Parameters
+        ----------
+        file_path:
+            Absolute path to one or more data files. If more than one, paths should be
+            concatenated with the plus symbol '+'.
+        configuration:
+            Reduction configuration parameters.
 
         Returns
         -------
-        List[EventWorkspace]:
-            A list of EventWorkspaces, one for each cross-section
+        list[EventWorkspace]:
+            A list of EventWorkspaces, one for each cross-section.
 
         Raises
         ------
         CrossSectionError
-            If the data file does not contain enough events
+            If the data file does not contain enough events.
         """
         fp_instance = FilePath(file_path)
-        ws_root_name = fp_instance.run_numbers(string_representation="short")
         ws_run_numbers = fp_instance.run_numbers(string_representation="long")
 
-        # Collect cross-sections from all files
+        # Collect cross-sections from all files, keyed by the per-file workspace root name
         all_xs_lists = []
+        path_ws_names = []
         try:
-            for idx, path in enumerate(fp_instance.single_paths):
-                # Use unique workspace names for each file to avoid overwrites
-                path_fp = FilePath(path)
-                path_ws_name = path_fp.run_numbers(string_representation="short")
+            for path in fp_instance.single_paths:
+                path_ws_name = FilePath(path).run_numbers(string_representation="short")
+                path_ws_names.append(path_ws_name)
                 all_xs_lists.append(self._get_xs_list(path, path_ws_name, configuration))
         except CrossSectionError as err:
             raise CrossSectionError(file_path, err.message, err.min_num_events) from err
@@ -291,17 +289,26 @@ class Instrument(object):
         if len(all_xs_lists) == 1:
             xs_list = all_xs_lists[0]
         else:
+            # Build a combined root name for the merged workspaces
+            # This prevents name clashes if the individual files are loaded as well
+            first_path_root = path_ws_names[0]
+            combined_root = ws_run_numbers.replace("+", "_")
+
             # Merge cross-sections from multiple files by matching cross_section_id
-            xs_list = all_xs_lists[0]
-            for i, ws in enumerate(xs_list):
-                # Merge workspaces with matching cross_section_id from subsequent files
+            xs_list = []
+            for i, ws in enumerate(all_xs_lists[0]):
+                # Derive the per-cross-section suffix from the first file's workspace name
+                # (e.g. "42112_Off_Off" -> suffix "_Off_Off")
+                suffix = str(ws)[len(first_path_root) :]
+                output_name = combined_root + suffix
+                merged = ws
                 for xs_group in all_xs_lists[1:]:
                     merged = api.Plus(
-                        LHSWorkspace=str(ws),
+                        LHSWorkspace=str(merged),
                         RHSWorkspace=str(xs_group[i]),
-                        OutputWorkspace=str(ws),
+                        OutputWorkspace=output_name,
                     )
-                    xs_list[i] = merged  # Update the reference to the merged workspace
+                xs_list.append(merged)
 
         # Insert a log indicating which run numbers contributed to this cross-section
         for ws in xs_list:

@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from mantid.simpleapi import mtd
 
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.instrument import CrossSectionError
@@ -72,8 +73,12 @@ def test_load_data_insufficient_event_count(data_server):
     conf = Configuration()
     file_path = data_server.path_to("REF_M_43670")
 
-    with pytest.raises(CrossSectionError):
+    with pytest.raises(CrossSectionError) as excinfo:
         conf.instrument.load_data(file_path, conf)
+
+    assert excinfo.value.min_num_events == 100
+    assert excinfo.value.file_name == "REF_M_43670.nxs.h5"
+    assert "REF_M_43670.nxs.h5" in excinfo.value.file_path
 
 
 @pytest.mark.parametrize(
@@ -102,13 +107,14 @@ def test_load_data_sum_two_files(data_server):
     # Use files 42112 and 42113 which are known to work individually
     file_path = data_server.path_to("REF_M_42112") + "+" + data_server.path_to("REF_M_42113")
 
-    ws_list = conf.instrument.load_data(file_path, conf)
+    ws_obj_list = conf.instrument.load_data(file_path, conf)
+    ws_list = [str(ws) for ws in ws_obj_list]
 
     # Should have 4 cross-sections (not 8 - that would indicate concatenation not merging)
-    assert len(ws_list) == 4, f"Expected 4 cross-sections, got {len(ws_list)}"
+    assert len(ws_obj_list) == 4, f"Expected 4 cross-sections, got {len(ws_obj_list)}"
 
     # Verify run_numbers property exists and is correct
-    for ws in ws_list:
+    for ws in ws_obj_list:
         run = ws.getRun()
         assert run.hasProperty("run_numbers"), "run_numbers property not found"
         run_numbers = run.getProperty("run_numbers").value
@@ -116,13 +122,18 @@ def test_load_data_sum_two_files(data_server):
 
     # Load individual files to compare event counts
     conf_single = Configuration()
-    ws_list_42112 = conf_single.instrument.load_data(data_server.path_to("REF_M_42112"), conf_single)
-    ws_list_42113 = conf_single.instrument.load_data(data_server.path_to("REF_M_42113"), conf_single)
+    ws_obj_list_42112 = conf_single.instrument.load_data(data_server.path_to("REF_M_42112"), conf_single)
+    ws_list_42112 = [str(ws) for ws in ws_obj_list_42112]
+    ws_obj_list_42113 = conf_single.instrument.load_data(data_server.path_to("REF_M_42113"), conf_single)
+    ws_list_42113 = [str(ws) for ws in ws_obj_list_42113]
 
     # Verify events are summed correctly for each cross-section
+    # Note: the workspaces are compared by name as a regression test to a previous issue where the
+    # name of the merged workspace was the same as one of the individual files, however, the issue
+    # was not seen when comparing by workspace handle, only by name in the ADS.
     for i in range(4):
-        expected_events = ws_list_42112[i].getNumberEvents() + ws_list_42113[i].getNumberEvents()
-        actual_events = ws_list[i].getNumberEvents()
+        expected_events = mtd[ws_list_42112[i]].getNumberEvents() + mtd[ws_list_42113[i]].getNumberEvents()
+        actual_events = mtd[ws_list[i]].getNumberEvents()
         assert actual_events == expected_events, (
             f"Cross-section {i}: expected {expected_events} events, got {actual_events}"
         )

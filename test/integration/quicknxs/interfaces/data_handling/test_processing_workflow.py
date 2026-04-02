@@ -56,3 +56,70 @@ def test_orso_output(data_server, tmpdir):
         datasets = load_orso(os.path.join(tmpdir, file))
         for i, dataset in enumerate(datasets):
             assert len(dataset.data) == reflectivity_data_lengths[i]
+
+
+@pytest.mark.datarepo
+def test_smoothing_without_slice_export(data_server, tmpdir):
+    """Regression test for KeyError when smoothing without exporting slices.
+
+    Reproduces the exact scenario reported by Marie:
+    - User checks "Apply intensity smoothing" but NOT "Export off-spec slices"
+    - Smooth dialog opens and adds most off-spec params (x_axis, region, bins, sigmas)
+    - Slice dialog does NOT open, so slice params (qz_min/max) are never added
+    - smooth_offspec() internally needs slice params for internal calculations
+
+    This verifies that DEFAULT_OPTIONS provides missing parameters via merge pattern.
+    """
+    Configuration.setup_default_values()
+    conf = Configuration()
+    conf.cut_first_n_points = 0
+    conf.cut_last_n_points = 0
+    manager = DataManager(data_server.directory)
+
+    # Simulate the exact state after ReductionDialog + OffSpecParametersDialog:
+    # ReductionDialog.get_options() returns basic flags
+    output_options = {
+        "export_specular": False,
+        "export_offspec": False,
+        "apply_smoothing": True,  # User checked this
+        "export_offspec_smooth": True,
+        "export_offspec_slices": False,  # User did NOT check this
+        "output_directory": str(tmpdir),
+    }
+
+    # OffSpecParametersDialog.get_parameters() adds these (simulate dialog opening):
+    output_options.update(
+        {
+            "off_spec_x_axis": 0,  # DELTA_KZ_VS_QZ
+            "off_spec_x_min": -0.1,
+            "off_spec_x_max": 0.1,
+            "off_spec_y_min": 0.0,
+            "off_spec_y_max": 0.15,
+            "off_spec_nxbins": 120,
+            "off_spec_nybins": 120,
+            "off_spec_sigmas": 3,
+            "off_spec_sigmax": 0.001,
+            "off_spec_sigmay": 0.001,
+            # NOTE: off_spec_slice_qz_min/max are intentionally MISSING
+            # because OffSpecSliceDialog never opened (export_offspec_slices=False)
+        }
+    )
+
+    # This simulates the exact dict passed to ProcessingWorkflow in the bug scenario
+    pw = ProcessingWorkflow(manager, output_options)
+
+    # Verify the merge pattern filled in the missing slice parameters
+    assert pw.output_options["off_spec_slice_qz_min"] == 0.05  # from DEFAULT_OPTIONS
+    assert pw.output_options["off_spec_slice_qz_max"] == 0.07  # from DEFAULT_OPTIONS
+
+    # Verify user-provided values were NOT overwritten by defaults
+    assert pw.output_options["off_spec_x_min"] == -0.1  # user's value preserved
+    assert pw.output_options["off_spec_sigmas"] == 3  # user's value preserved
+
+    # Load test data
+    file_path = data_server.path_to("REF_M_42112.nxs.h5")
+    manager.load(file_path, conf)
+    manager.add_active_to_reduction()
+
+    # This should NOT raise KeyError: 'off_spec_slice_qz_min'
+    pw.offspec(raw=False, binned=False, smooth=True, slices=False)

@@ -426,5 +426,24 @@ def test_stitch_reflectivity_updates_reduction_table(mocker, qtbot):
     assert handler.reduction_table.item(1, ReductionTableColumn.SCALE_FACTOR).text() == str(scale1)
 
 
+def test_show_diagnostic(mocker, qtbot):
+    """Test that _show_diagnostic creates DiagnosticData and DiagnosticWidget, shows the widget, and updates the file list."""
+    main_window = MainWindow()
+    handler = MainHandler(main_window)
+    qtbot.addWidget(main_window)
+
+    mock_diag_data_cls = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.DiagnosticData")
+    mock_diag_widget_cls = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.DiagnosticWidget")
+    mock_update_file_list = mocker.patch("quicknxs.interfaces.event_handlers.main_handler.MainHandler.update_file_list")
+
+    error = CrossSectionError(file_path=None, message="test diagnostic message")
+    handler._show_diagnostic(error)
+
+    mock_diag_data_cls.assert_called_once_with(file_path=error.file_path, message=str(error))
+    mock_diag_widget_cls.assert_called_once_with(parent=main_window)
+    mock_diag_widget_cls.return_value.show.assert_called_once_with(mock_diag_data_cls.return_value)
+    mock_update_file_list.assert_called_once()
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
