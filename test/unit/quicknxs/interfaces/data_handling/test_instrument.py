@@ -73,8 +73,12 @@ def test_load_data_insufficient_event_count(data_server):
     conf = Configuration()
     file_path = data_server.path_to("REF_M_43670")
 
-    with pytest.raises(CrossSectionError):
+    with pytest.raises(CrossSectionError) as excinfo:
         conf.instrument.load_data(file_path, conf)
+
+    assert excinfo.value.min_num_events == 100
+    assert excinfo.value.file_name == "REF_M_43670.nxs.h5"
+    assert "REF_M_43670.nxs.h5" in excinfo.value.file_path
 
 
 @pytest.mark.parametrize(

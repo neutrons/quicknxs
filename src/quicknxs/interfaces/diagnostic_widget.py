@@ -1,5 +1,6 @@
 from qtpy import QtWidgets
 
+from quicknxs.config.gui import QColors
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.diagnostic_data import DiagnosticData
 

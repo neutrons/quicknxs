@@ -2040,7 +2040,7 @@ class MainHandler:
         error:
             CrossSectionError exception containing diagnostic data
         """
-        diag_data = DiagnosticData(file_path=e.file_path, message=str(e))
-        diagnostic_widget = DiagnosticWidget(parent=main_window)
+        diag_data = DiagnosticData(file_path=error.file_path, message=str(error))
+        diagnostic_widget = DiagnosticWidget(parent=self.main_window)
         diagnostic_widget.show(diag_data)
         self.update_file_list()

@@ -95,6 +95,7 @@ class CrossSectionError(Exception):
     def __init__(self, file_path: str | list[str] | None = None, message: str | None = None, min_num_evts: int = 100):
         self.min_num_events = min_num_evts
         self.file_path = file_path
+        self.file_name = FilePath(file_path, sort=True).basename if file_path else None
 
         if message is None:
             message = f"No valid cross-sections found in file: {file_path}"
@@ -162,7 +163,7 @@ class Instrument(object):
                 analyzer > 0 and self.ana_state not in event_ws.getRun()
             ):
                 use_slow_flipper_log = True
-                print("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n\n")
+                logging.warning("\n\nMISSING POLARIZER/ANALYZER META-DATA: USING SLOW LOGS\n")
             # Delete the temporary workspace as split_events will reload it
             api.DeleteWorkspace("raw_events")
         elif not is_pre_epics and not file_path.endswith(".nxs.h5"):
@@ -233,7 +234,7 @@ class Instrument(object):
                             )
                             path_xs_list.append(_ws)
                     if not is_found:
-                        print("Could not find error events for [%s]" % xs_name)
+                        logging.warning(f"Could not find error events for [{xs_name}]")
                         _ws = apply_dead_time_correction(
                             ws,
                             configuration.paralyzable_deadtime,
