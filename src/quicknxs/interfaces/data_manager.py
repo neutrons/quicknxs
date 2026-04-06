@@ -56,7 +56,6 @@ class DataManager(object):
 
     def __init__(self, current_directory: str):
         self.current_directory: str = current_directory
-        self.current_file_name: str | None = None
         self._nexus_data: NexusData | None = None
 
         self.active_cross_section: CrossSectionData | None = None
