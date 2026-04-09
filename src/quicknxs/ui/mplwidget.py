@@ -101,7 +101,8 @@ def _extract_errorbar_data(ax):
             # Matplotlib stores empty (0,) segments for NaN/masked data points;
             # return NaN as the error for those points.
             error = np.array(
-                [(seg[1, 1] - seg[0, 1]) / 2.0 if seg.ndim >= 2 and seg.shape[0] >= 2 else np.nan for seg in segments]
+                [abs(seg[1, 1] - seg[0, 1]) / 2.0 if seg.ndim == 2 and seg.shape == (2, 2) else np.nan
+                 for seg in segments]
             )
         else:
             error = np.zeros_like(y)
