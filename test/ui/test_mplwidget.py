@@ -137,6 +137,22 @@ class TestNavigationToolbar:
         _compare_lines_data(lines, gold_data, is_q4_plot=True)
         _compare_error_bar_data(collections, gold_data, is_q4_plot=True)
 
+    def test_reflectivity_toolbar_q4_with_nan(self, qtbot):
+        """Q^4 toggle does not crash when errorbar data contains NaN (empty segments)."""
+        w = MPLWidget()
+        qtbot.addWidget(w)
+        x = np.array([1.0, 2.0, 3.0, 4.0])
+        y = np.array([10.0, np.nan, 30.0, 40.0])
+        e = np.array([0.5, 1.0, np.nan, 2.0])
+        w.errorbar(x, y, yerr=e)
+        toolbar = w.toolbar
+        # Toggle Q^4 on — should not raise
+        _toggle_toolbar_button(toolbar, "RQ4")
+        assert toolbar.q_pow_4_button.isChecked()
+        # Toggle Q^4 off — should not raise
+        _toggle_toolbar_button(toolbar, "RQ4")
+        assert not toolbar.q_pow_4_button.isChecked()
+
 
 class TestSaveData:
     """Test save_data() across all plot types and output formats."""
@@ -609,6 +625,23 @@ class TestSaveData:
         text = open(out).read()
         assert "Dataset 0: Active" in text
         assert "Dataset 1: 43279" in text
+
+    def test_save_errorbar_with_nan_dat(self, qtbot, tmp_path, monkeypatch):
+        """Errorbar data with NaN values (empty matplotlib segments) saves without error."""
+        w = self._make_widget(qtbot)
+        x = np.array([1.0, 2.0, 3.0, 4.0])
+        y = np.array([10.0, np.nan, 30.0, 40.0])
+        e = np.array([0.5, 1.0, 1.5, np.nan])
+        w.errorbar(x, y, yerr=e)
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        loaded = np.loadtxt(out)
+        assert_allclose(loaded[:, 0], x)
+        # Valid points should have correct data; NaN points produce NaN error
+        assert_allclose(loaded[0, 1], 10.0)
+        assert_allclose(loaded[2, 1], 30.0)
+        assert loaded.shape[0] == 4
 
     def test_pcolormesh_title_labels_in_dat(self, qtbot, tmp_path, monkeypatch):
         """Title and axis labels are written to the pcolormesh .dat header."""
