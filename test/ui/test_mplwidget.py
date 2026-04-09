@@ -244,7 +244,7 @@ class TestSaveData:
         w = self._make_widget(qtbot)
         w.errorbar([1, 2], [3, 4], yerr=[0.1, 0.2])
         out = str(tmp_path / "test.pkl")
-        self._mock_dialog(monkeypatch, out, "Pickle (*.pkl)")
+        self._mock_dialog(monkeypatch, out, "Pickle [trusted sources only] (*.pkl)")
         w.toolbar.save_data()
         with open(out, "rb") as f:
             payload = pickle.load(f)
