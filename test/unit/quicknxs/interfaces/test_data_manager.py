@@ -79,6 +79,7 @@ class TestDataManagerTest(object):
         manager = DataManager(data_server.directory)
         manager.load_data_from_reduced_file(data_server.path_to("REF_M_29160_Specular_++.dat"))
 
+    @pytest.mark.datarepo
     def test_clear_cached_unused_data(self, data_server):
         """Test helper function clear_cached_unused_data."""
         manager = DataManager(data_server.directory)

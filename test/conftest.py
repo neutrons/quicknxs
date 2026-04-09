@@ -21,6 +21,20 @@ pytest_plugins = ["mantid.fixtures"]
 
 this_module_path = sys.modules[__name__].__file__
 
+# Path to NeXus data files required by @pytest.mark.datarepo tests
+_QUICKNXS_DATA_DIR = Path(__file__).parent / "data" / "quicknxs-data"
+_has_datarepo = any(_QUICKNXS_DATA_DIR.glob("*.nxs*"))
+
+
+def pytest_collection_modifyitems(config, items):
+    """Auto-skip tests marked with @pytest.mark.datarepo when NeXus data files are missing."""
+    if _has_datarepo:
+        return
+    skip_datarepo = pytest.mark.skip(reason=f"NeXus test data not found in {_QUICKNXS_DATA_DIR}")
+    for item in items:
+        if "datarepo" in item.keywords:
+            item.add_marker(skip_datarepo)
+
 
 ################################################
 # FIXTURES AUTOMATICALLY APPLIED TO EVERY TEST #

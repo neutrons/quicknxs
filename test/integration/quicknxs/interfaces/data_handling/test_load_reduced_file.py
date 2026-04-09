@@ -24,6 +24,7 @@ def assert_config_equal(conf_a, conf_b):
             assert val_a == val_b, f"Config mismatch on '{key}':\n  GUI conf:  {val_a!r}\n  File conf: {val_b!r}"
 
 
+@pytest.mark.datarepo
 @pytest.mark.parametrize(
     "filename", ["REF_M_42536+42537_peak1_Specular_On_Off.dat", "REF_M_42536+42537_peak1_Specular_Off_Off.dat"]
 )

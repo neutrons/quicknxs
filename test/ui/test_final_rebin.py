@@ -30,6 +30,7 @@ def _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=
     main_window.set_active_reduction_data(True, 0)
 
 
+@pytest.mark.datarepo
 def test_clicking_apply_binning_button_updates_reduction_table(qtbot):
     """Test that the button to apply binning options globally updates the reduction table"""
     main_window = MainWindow()
@@ -69,6 +70,7 @@ def test_clicking_apply_binning_button_updates_reduction_table(qtbot):
     assert main_window.ui.q_rebin_spinbox_run.value() == -0.020
 
 
+@pytest.mark.datarepo
 def test_editing_run_rebin_spinbox_updates_reduction_table(qtbot):
     """Test that editing the run rebin Q-step spinbox updates the reduction table and vice versa."""
 
@@ -100,6 +102,7 @@ def test_editing_run_rebin_spinbox_updates_reduction_table(qtbot):
     assert reduction_table.item(1, ReductionTableColumn.Q_STEPS).text() == "-0.020"
 
 
+@pytest.mark.datarepo
 def test_editing_run_binning_type_updates_reduction_table(qtbot):
     """Test that editing the run binning type selection updates the reduction table and vice versa."""
     main_window = MainWindow()
@@ -125,6 +128,7 @@ def test_editing_run_binning_type_updates_reduction_table(qtbot):
     assert bin_type_combobox.currentIndex() == BinningType.CONST_Q
 
 
+@pytest.mark.datarepo
 def test_editing_rebin_q_step_triggers_replotting(qtbot, mocker):
     """
     Test that editing the run Q-step spinbox value triggers replotting.
@@ -153,6 +157,7 @@ def test_editing_rebin_q_step_triggers_replotting(qtbot, mocker):
     assert mock_plot_refl.call_count == plot_refl_call_count + 1
 
 
+@pytest.mark.datarepo
 def test_changing_binning_type_triggers_replotting(qtbot, mocker):
     """
     Test that changing the binning type triggers replotting.
@@ -188,6 +193,7 @@ def test_changing_binning_type_triggers_replotting(qtbot, mocker):
         (BinningType.CONST_Q, QColors.black),
     ],
 )
+@pytest.mark.datarepo
 def test_setting_binning_type_none_disables_q_steps(qtbot, binning_type, foreground):
     """Test that the Q steps table entry is greyed out when the binning type is set to None."""
     main_window = MainWindow()

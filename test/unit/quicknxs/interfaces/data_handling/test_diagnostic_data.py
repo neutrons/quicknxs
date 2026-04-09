@@ -3,6 +3,7 @@ import pytest
 from quicknxs.interfaces.data_handling.diagnostic_data import DiagnosticData
 
 
+@pytest.mark.datarepo
 class TestDiagnosticData:
     """Tests for the DiagnosticData class"""
 

@@ -5,6 +5,7 @@ import pytest
 from quicknxs.interfaces.main_window import MainWindow
 
 
+@pytest.mark.datarepo
 def test_metadata_roi_updates_ui(data_server, qtbot):
     main_window = MainWindow()
     qtbot.addWidget(main_window)
@@ -34,6 +35,7 @@ def test_metadata_roi_disables_peak_finder(qtbot):
     assert main_window.ui.actionAutoYROI.isEnabled() is True
 
 
+@pytest.mark.datarepo
 def test_peak_finder_settings_persist(data_server, qtbot):
     def _assert_peak_finder_config():
         """Assert that the peak finder config is as expected."""
