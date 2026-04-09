@@ -660,3 +660,47 @@ class TestSaveData:
         assert "title: Off_Off" in text
         assert "xlabel: k$" in text
         assert "ylabel: Q$" in text
+
+    # -- coverage for edge cases --
+
+    def test_save_errorbar_no_yerr_dat(self, qtbot, tmp_path, monkeypatch):
+        """Errorbar plotted without yerr produces zero error column."""
+        w = self._make_widget(qtbot)
+        w.canvas.ax.errorbar([1, 2, 3], [4, 5, 6])  # no yerr → no bar collections
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        loaded = np.loadtxt(out)
+        assert_allclose(loaded[:, 2], [0, 0, 0])
+
+    def test_save_multi_line_dat(self, qtbot, tmp_path, monkeypatch):
+        """Multiple line datasets are separated by blank lines in .dat."""
+        w = self._make_widget(qtbot)
+        w.plot([1, 2], [3, 4], label="a")
+        w.plot([5, 6], [7, 8], label="b")
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "Dataset 0: a" in text
+        assert "Dataset 1: b" in text
+        assert "\n\n" in text  # blank line separator
+
+    def test_save_replaces_unrecognized_extension(self, qtbot, tmp_path, monkeypatch):
+        """Unrecognized extension is replaced, not appended."""
+        w = self._make_widget(qtbot)
+        w.plot([1, 2], [3, 4])
+        out = str(tmp_path / "test.txt")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        assert (tmp_path / "test.dat").exists()
+        assert not (tmp_path / "test.txt.dat").exists()
+
+    def test_save_appends_extension_when_none(self, qtbot, tmp_path, monkeypatch):
+        """Extension is appended when the filename has none."""
+        w = self._make_widget(qtbot)
+        w.plot([1, 2], [3, 4])
+        out = str(tmp_path / "myfile")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        assert (tmp_path / "myfile.dat").exists()
