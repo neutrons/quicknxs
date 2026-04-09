@@ -98,7 +98,11 @@ def _extract_errorbar_data(ax):
         bar_collections = container[2]
         if bar_collections:
             segments = bar_collections[0].get_segments()
-            error = np.array([(seg[1, 1] - seg[0, 1]) / 2.0 for seg in segments])
+            # Matplotlib stores empty (0,) segments for NaN/masked data points;
+            # return NaN as the error for those points.
+            error = np.array(
+                [(seg[1, 1] - seg[0, 1]) / 2.0 if seg.ndim >= 2 and seg.shape[0] >= 2 else np.nan for seg in segments]
+            )
         else:
             error = np.zeros_like(y)
         label = container.get_label() or f"dataset_{len(datasets)}"
@@ -627,17 +631,21 @@ class NavigationToolbarReflectivity(NavigationToolbar):
             else:
                 line.set_ydata(y / x**4)
 
-        # scale the error bar data
+        # scale the error bar data (skip empty segments from NaN/masked points)
         for c in ax.collections:
             segments = c.get_segments()
             scaled_segments = []
             for segment in segments:
-                if is_yaxis_q_pow_4:
-                    segment[0][1] = segment[0][1] * segment[0][0] ** 4
-                    segment[1][1] = segment[1][1] * segment[1][0] ** 4
-                else:
-                    segment[0][1] = segment[0][1] / segment[0][0] ** 4
-                    segment[1][1] = segment[1][1] / segment[1][0] ** 4
+                if segment.ndim >= 2 and segment.shape[0] >= 2:
+                    if is_yaxis_q_pow_4:
+                        segment[0][1] = segment[0][1] * segment[0][0] ** 4
+                        segment[1][1] = segment[1][1] * segment[1][0] ** 4
+                    else:
+                        segment[0][1] = segment[0][1] / segment[0][0] ** 4
+                        segment[1][1] = segment[1][1] / segment[1][0] ** 4
+                elif segment.ndim < 2:
+                    # Reshape 1D empty segments to (0, 2) so set_segments/Path accepts them
+                    segment = np.empty((0, 2))
                 scaled_segments.append(segment)
             c.set_segments(scaled_segments)
 
