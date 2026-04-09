@@ -16,6 +16,7 @@ import matplotlib.colors
 import numpy as np
 from matplotlib.backends.backend_qt import NavigationToolbar2QT
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.collections import QuadMesh
 from matplotlib.colors import LogNorm, Normalize
 from matplotlib.figure import Figure
 from qtpy import QtCore, QtGui, QtPrintSupport, QtWidgets
@@ -76,7 +77,7 @@ def _detect_plot_type(ax):
     """
     if len(ax.images) > 0:
         return "imshow"
-    if any(c.__class__.__name__ == "QuadMesh" for c in ax.collections):
+    if any(isinstance(c, QuadMesh) for c in ax.collections):
         return "pcolormesh"
     if len(_errorbar_containers(ax)) > 0:
         return "errorbar"
@@ -147,7 +148,7 @@ def _extract_pcolormesh_data(ax):
     GISANS data use irregular grids where each cell has unique (x, y).
     Multiple surfaces (one per run file) are captured as a list.
     """
-    quadmeshes = [c for c in ax.collections if c.__class__.__name__ == "QuadMesh"]
+    quadmeshes = [c for c in ax.collections if isinstance(c, QuadMesh)]
     qm0 = quadmeshes[0]
     norm = qm0.norm
 
@@ -501,17 +502,18 @@ class NavigationToolbar(NavigationToolbar2QT):
             }
             extracted = extractor[plot_type](ax)
 
-            filters = "ASCII data (*.dat);;Numpy archive (*.npz);;Pickle (*.pkl)"
+            filters = "ASCII data (*.dat);;Numpy archive (*.npz);;Pickle [trusted sources only] (*.pkl)"
             fname, selected_filter = QtWidgets.QFileDialog.getSaveFileName(self, "Save plot data", "", filters)
             if not fname:
                 return
 
-            _, ext = os.path.splitext(fname)
+            base, ext = os.path.splitext(fname)
             ext = ext.lower()
             if ext not in (".dat", ".npz", ".pkl"):
                 for candidate in (".dat", ".npz", ".pkl"):
                     if f"*{candidate}" in selected_filter:
-                        fname += candidate
+                        # Replace unrecognized extension; append only when none was given
+                        fname = (base if ext else fname) + candidate
                         ext = candidate
                         break
                 else:
@@ -527,7 +529,7 @@ class NavigationToolbar(NavigationToolbar2QT):
             logging.info(f"Saved {plot_type} data to {fname}")
 
         except Exception as e:
-            logging.error(f"Error saving data: {e}")
+            logging.exception("Error saving data")
             QtWidgets.QMessageBox.critical(
                 self,
                 "Error saving data",
@@ -549,7 +551,7 @@ class NavigationToolbarGeneric(NavigationToolbar):
 
     def toggle_log(self, *args):
         ax = self.canvas.ax
-        if len(ax.images) == 0 and all([c.__class__.__name__ != "QuadMesh" for c in ax.collections]):
+        if len(ax.images) == 0 and all(not isinstance(c, QuadMesh) for c in ax.collections):
             logstate = ax.get_yscale()
             if logstate == "linear":
                 ax.set_yscale("log")
@@ -557,7 +559,7 @@ class NavigationToolbarGeneric(NavigationToolbar):
                 ax.set_yscale("linear")
             self.canvas.draw()
         else:
-            imgs = ax.images + [c for c in ax.collections if c.__class__.__name__ == "QuadMesh"]
+            imgs = ax.images + [c for c in ax.collections if isinstance(c, QuadMesh)]
             norm = imgs[0].norm
             if norm.__class__ is LogNorm:
                 for img in imgs:
