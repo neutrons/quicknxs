@@ -3283,6 +3283,8 @@ packages:
   - libdeflate >=1.25,<1.26.0a0
   - openjph >=0.27.0,<0.28.0a0
   - imath >=3.2.2,<3.2.3.0a0
+  - libzlib >=1.3.2,<2.0a0
+  - libdeflate >=1.25,<1.26.0a0
   license: BSD-3-Clause
   license_family: BSD
   purls: []
@@ -3926,6 +3928,7 @@ packages:
   depends:
   - python
   - qt6-main 6.11.0.*
+  - __glibc >=2.17,<3.0.a0
   - libstdcxx >=14
   - libgcc >=14
   - __glibc >=2.17,<3.0.a0
@@ -4514,7 +4517,6 @@ packages:
   constrains:
   - __glibc >=2.17
   license: MIT
-  license_family: MIT
   purls:
   - pkg:pypi/ruff?source=compressed-mapping
   size: 9327937
@@ -4643,7 +4645,7 @@ packages:
   license: Apache-2.0
   license_family: Apache
   purls:
-  - pkg:pypi/sniffio?source=hash-mapping
+  - pkg:pypi/sniffio?source=compressed-mapping
   size: 15698
   timestamp: 1762941572482
 - conda: https://conda.anaconda.org/conda-forge/noarch/snowballstemmer-3.0.1-pyhd8ed1ab_0.conda
@@ -5110,7 +5112,6 @@ packages:
   - typing_extensions >=4.13.2
   - python
   license: MIT
-  license_family: MIT
   purls:
   - pkg:pypi/virtualenv?source=compressed-mapping
   size: 4659433
