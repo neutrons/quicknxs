@@ -599,24 +599,30 @@ class ProcessingWorkflow(object):
                 offspec = item.cross_sections[pol_state].off_spec
                 Qx, Qz, ki_z, kf_z, S, dS = (offspec.Qx, offspec.Qz, offspec.ki_z, offspec.kf_z, offspec.S, offspec.dS)
 
-                n_total = len(S[0])
-                # P_0 and P_N are the number of points to cut in TOF on each side
-                p_0 = item.cross_sections[pol_state].configuration.cut_first_n_points
-                p_n = n_total - item.cross_sections[pol_state].configuration.cut_last_n_points
+                try:
+                    n_total = len(S[0])
+                    # P_0 and P_N are the number of points to cut in TOF on each side
+                    p_0 = item.cross_sections[pol_state].configuration.cut_first_n_points
+                    p_n = n_total - item.cross_sections[pol_state].configuration.cut_last_n_points
 
-                rdata = np.array(
-                    [
-                        Qx[:, p_0:p_n],
-                        Qz[:, p_0:p_n],
-                        ki_z[:, p_0:p_n],
-                        kf_z[:, p_0:p_n],
-                        ki_z[:, p_0:p_n] - kf_z[:, p_0:p_n],
-                        S[:, p_0:p_n],
-                        dS[:, p_0:p_n],
-                    ]
-                ).transpose((1, 2, 0))
-                combined_data.append(rdata)
-                ki_max = max(ki_max, ki_z.max())
+                    rdata = np.array(
+                        [
+                            Qx[:, p_0:p_n],
+                            Qz[:, p_0:p_n],
+                            ki_z[:, p_0:p_n],
+                            kf_z[:, p_0:p_n],
+                            ki_z[:, p_0:p_n] - kf_z[:, p_0:p_n],
+                            S[:, p_0:p_n],
+                            dS[:, p_0:p_n],
+                        ]
+                    ).transpose((1, 2, 0))
+                    combined_data.append(rdata)
+                    ki_max = max(ki_max, ki_z.max())
+                except TypeError:
+                    logging.warning(
+                        f"Off-specular data for {pol_state} in run {item.number} is not available, skipping this run."
+                    )
+                    continue
 
             if pol_state in self.data_manager.reduction_list[0].cross_sections:
                 _pol_state = self.data_manager.reduction_list[0].cross_sections[pol_state].cross_section_label
@@ -624,6 +630,7 @@ class ProcessingWorkflow(object):
                 _pol_state = pol_state
             data_dict[pol_state] = combined_data
             data_dict["cross_sections"][pol_state] = _pol_state
+
         data_dict["ki_max"] = ki_max
         return data_dict
 
@@ -658,6 +665,8 @@ class ProcessingWorkflow(object):
         slice_data_dict = {}
 
         for xs in data_dict["cross_sections"].keys():
+            if not data_dict[xs]:
+                continue
             data = np.hstack(data_dict[xs])
             I = data[:, :, 5].flatten()
             Qzmax = data[:, :, 2].max() * 2.0

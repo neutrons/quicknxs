@@ -38,12 +38,15 @@ logging.getLogger().addHandler(sh)
 
 
 def no_abort_excepthook(exc_type, value, tback):
-    # log the exception here
-    logging.error("Abort-type of error %s:\n%s", value, tback)
-    # then call the default handler
-    sys.__excepthook__(exc_type, value, tback)
+    """Catch uncaught exceptions and log them instead of aborting."""
+    logging.error(
+        "Encountered uncaught exception:",
+        exc_info=(exc_type, value, tback),
+    )
 
 
+# Override the default sys.excepthook to prevent the application from aborting on uncaught exceptions
+# and instead log the exception details to the log file and console.
 sys.excepthook = no_abort_excepthook
 
 

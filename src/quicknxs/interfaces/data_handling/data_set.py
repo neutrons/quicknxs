@@ -293,7 +293,6 @@ class CrossSectionData(object):
     def active_area_y(self, value):
         self._active_area_y = value
 
-    # pylint: enable=missing-docstring
     # Properties for easy data access #
     def collect_info(self, workspace):
         """
@@ -648,7 +647,8 @@ class CrossSectionData(object):
         if direct_beam:
             direct_beam.prepare_plot_data()
         self.off_spec = OffSpecular(self)
-        return self.off_spec(direct_beam)
+        self.off_spec(direct_beam)
+        return
 
     def gisans(self, direct_beam: Optional["CrossSectionData"] = None):
         """Compute GISANS.
