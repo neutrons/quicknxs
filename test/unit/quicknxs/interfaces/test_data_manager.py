@@ -148,7 +148,7 @@ class TestDataManagerTest(object):
         assert manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(manager.reduction_list) == 1
 
-        # Try to add the same run again - should return 1 (indicating already in list)
+        # Try to add the same run again - should return AddToReductionResult.ALREADY_IN_LIST
         assert manager.add_active_to_reduction() == AddToReductionResult.ALREADY_IN_LIST
         assert len(manager.reduction_list) == 1
 
