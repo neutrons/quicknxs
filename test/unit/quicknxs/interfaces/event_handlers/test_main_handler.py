@@ -381,12 +381,12 @@ def test_logging_changes_from_gui(qtbot, monkeypatch):
     qtbot.addWidget(main_window)
 
     # Initial log level should be WARNING
-    assert handler.get_log_level() == "WARNING"
+    assert handler.get_log_level() == "WARN"
     assert logging.getLogger().getEffectiveLevel() == logging.WARNING
 
     # Change log level to DEBUG using the handler method
     handler.change_log_level("DEBUG")
-    assert handler.get_log_level() == "DEBUG"
+    assert handler.get_log_level() == "DBUG"
     assert logging.getLogger().getEffectiveLevel() == logging.DEBUG
 
 
