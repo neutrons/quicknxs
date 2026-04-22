@@ -25,7 +25,12 @@ from quicknxs.interfaces.data_handling.filepath import FilePath, RunNumbers
 from quicknxs.interfaces.data_handling.instrument import CrossSectionError
 from quicknxs.interfaces.data_manager import DataManager
 from quicknxs.interfaces.diagnostic_widget import DiagnosticWidget
-from quicknxs.interfaces.enums import AddToReductionResult, DirectBeamTableColumn, ReductionTableColumn
+from quicknxs.interfaces.enums import (
+    AddToDirectBeamResult,
+    AddToReductionResult,
+    DirectBeamTableColumn,
+    ReductionTableColumn,
+)
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 from quicknxs.interfaces.event_handlers.status_bar_handler import StatusBarHandler
 from quicknxs.interfaces.event_handlers.widgets import AcceptRejectDialog
@@ -861,6 +866,7 @@ class MainHandler:
                 self.report_message(msg, pop_up=True)
             return False
 
+        # Reduction list has been updated at this point - now update the UI
         self.main_window.auto_change_active = True
 
         idx = self._data_manager.find_run_number_in_reduction_list(self._data_manager._nexus_data)
@@ -1181,24 +1187,24 @@ class MainHandler:
             self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        add_result = self._data_manager.add_active_to_direct_beam_list()
-
-        if add_result == 0:
-            # Run was not added (already in the list)
-            if not silent:
-                self.report_message("(Add direct beam) Data already in the list.", pop_up=True)
-            return False
-        elif add_result == 1:
-            # Run was added but is not a true direct beam
-            if not silent:
-                self.report_message(
-                    f"Run {self._data_manager._nexus_data.number} added to direct beam list.\n\n"
-                    "Note: This run is not labeled as a direct beam in the metadata "
+        result = self._data_manager.add_active_to_direct_beam_list()
+        _pop_up = False
+        match result:
+            case AddToDirectBeamResult.ALREADY_IN_LIST:
+                msg = "(Add direct beam) Data already in the list."
+                _pop_up = True
+            case AddToDirectBeamResult.SUCCESS_REFLECTED:
+                msg = (
+                    f"Run {self._data_manager._nexus_data.number} added to direct beam list."
+                    "Note: This run is labeled as a reflected beam in the metadata "
                     "(data_type PV ≠ 1). This may occur for runs started with 'Start RUN' "
-                    "command in EPICS.",
-                    pop_up=False,
+                    "command in EPICS."
                 )
-        # else: add_result == 2, run was added and is a true direct beam (no warning needed)
+            case AddToDirectBeamResult.SUCCESS:
+                msg = "(Add direct beam) Run added to the list."
+
+        if not silent:
+            self.report_message(msg, pop_up=_pop_up)
 
         # The direct beam list has been appended with a new direct beam - add it to the UI table
         direct_beam_count = len(self._data_manager.direct_beam_list)
@@ -1318,6 +1324,16 @@ class MainHandler:
         # Unblock signals
         self.main_window.auto_change_active = False
 
+    def _sync_current_nexus_data_parameter(self, source_data: NexusData, parameter: str, value: float) -> None:
+        """Mirror parameter edits onto the currently loaded run when it represents the same run number."""
+        current_data = self._data_manager._nexus_data
+        if current_data is None or current_data is source_data:
+            return
+        if current_data.number != source_data.number:
+            return
+        current_data.set_parameter(parameter, value)
+        current_data.update_calculated_values()
+
     def direct_beam_table_changed(self, item: QtWidgets.QTableWidgetItem):
         """Perform action upon change in direct beam list."""
         if self.main_window.auto_change_active:
@@ -1342,7 +1358,8 @@ class MainHandler:
             return
 
         try:
-            data.set_parameter(keys[col], float(item.text()))
+            new_value = float(item.text())
+            data.set_parameter(keys[col], new_value)
         except ValueError:
             self.report_message(
                 f"Invalid value for {keys[col]}:\n\t{item.text()}\nPlease enter a valid number.",
@@ -1353,6 +1370,8 @@ class MainHandler:
             old_value = getattr(self._data_manager.active_cross_section.configuration, keys[col])
             item.setText(str(old_value))
             return
+
+        self._sync_current_nexus_data_parameter(data, keys[col], new_value)
 
         # If peak position changed, also update direct pixel overwrite in all reflectivity runs using this direct beam
         if col == DirectBeamTableColumn.PEAK_POSITION:
@@ -1882,14 +1901,11 @@ class MainHandler:
                 is_error=True,
             )
         else:
-            for i in range(len(self._data_manager.reduction_list)):
-                xs = self._data_manager.active_cross_section.name
-                d = self._data_manager.reduction_list[i].cross_sections[xs]
-                self.reduction_table.setItem(
-                    i,
-                    ReductionTableColumn.SCALE_FACTOR,
-                    QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)),
-                )
+            self.main_window.auto_change_active = True
+            xs_name = self._data_manager.active_cross_section.name
+            for i, nexus_data in enumerate(self._data_manager.reduction_list):
+                self.update_reduction_table(self.reduction_table, i, nexus_data.cross_sections[xs_name])
+            self.main_window.auto_change_active = False
 
             self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 

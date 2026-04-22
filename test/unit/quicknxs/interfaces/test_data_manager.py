@@ -4,7 +4,7 @@ import quicknxs.interfaces.data_handling.data_manipulation as dm
 from quicknxs.interfaces.configuration import Configuration
 from quicknxs.interfaces.data_handling.instrument import CrossSectionError, Instrument
 from quicknxs.interfaces.data_manager import DataManager
-from quicknxs.interfaces.enums import AddToReductionResult
+from quicknxs.interfaces.enums import AddToDirectBeamResult, AddToReductionResult
 
 
 @pytest.fixture()
@@ -31,7 +31,7 @@ class TestDataManagerTest(object):
         q_range = manager._nexus_data.get_q_range()
         assert q_range[0:2] == pytest.approx([0.034, 0.068], abs=0.05)
 
-        assert manager.add_active_to_direct_beam_list() == 1
+        assert manager.add_active_to_direct_beam_list() == AddToDirectBeamResult.SUCCESS_REFLECTED
         # Now it's in the list, so remove should work
         assert manager.remove_active_from_direct_beam_list() == 0
 

@@ -17,7 +17,7 @@ from quicknxs.interfaces.data_handling import data_manipulation, gisans, quicknx
 from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.instrument import CrossSectionError
-from quicknxs.interfaces.enums import AddToReductionResult
+from quicknxs.interfaces.enums import AddToDirectBeamResult, AddToReductionResult, NexusDataType
 from quicknxs.interfaces.event_handlers.progress_reporter import ProgressReporter
 
 
@@ -178,7 +178,7 @@ class DataManager(object):
 
     def is_active(self, data_set: NexusData):
         """Check if the given data set is the active data set."""
-        return data_set == self._nexus_data
+        return data_set.number == self._nexus_data.number
 
     def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: list[NexusData]) -> bool:
         """Determine if the data set is compatible with the data sets in the reduction list.
@@ -246,7 +246,7 @@ class DataManager(object):
         return None
 
     def find_data_in_reduction_list(self, nexus_data: NexusData) -> int | None:
-        """Look for the given data in the active reduction list.
+        """Return the index of the given data in the active reduction list, or None if not found.
 
         Returns
         -------
@@ -259,7 +259,7 @@ class DataManager(object):
         return None
 
     def find_data_in_direct_beam_list(self, nexus_data: NexusData | None) -> int | None:
-        """Look for the given data in the direct beam list.
+        """Return the index of the given data in the direct beam list, or None if not found.
 
         Returns
         -------
@@ -365,6 +365,7 @@ class DataManager(object):
         Returns
         -------
         AddToReductionResult
+            Result of the add operation, including success or reason for failure.
         """
         reduction_list = self.peak_reduction_lists[peak_index]
 
@@ -381,17 +382,16 @@ class DataManager(object):
             self.reduction_states = list(self.data_sets.keys())
 
         # Create a deepcopy to allow adding the same run to the reduction list(s) and direct beam list without sharing state
+        # Ensure data added to reduction list is marked as reflected, even if original data is a direct beam
         nexus_data = copy.deepcopy(self._nexus_data)
-        is_true_direct_beam = nexus_data.is_direct_beam()
-        nexus_data.set_is_direct_beam(
-            False
-        )  # ensure data added to reduction list is not marked as direct beam, even if original data is
+        nexus_data.set_is_direct_beam(False)
+        nexus_data.recreate_workspaces(data_type=NexusDataType.REFLECTED)
 
         result = self._insert_into_reduction_list_by_q(nexus_data, reduction_list)
         if not result:
             return AddToReductionResult.OTHER_ERROR
 
-        if is_true_direct_beam:
+        if self._nexus_data.is_direct_beam():
             logging.warning(f"Run {nexus_data.number} was added to the reduction list but is labeled as a direct beam.")
             return AddToReductionResult.SUCCESS_DIRECT_BEAM
         else:
@@ -435,40 +435,33 @@ class DataManager(object):
 
         Returns
         -------
-        int
-            2 if the run was added and is a true direct beam (data_type == 1)
-            1 if the run was added but is NOT a true direct beam (data_type != 1)
-            0 if the run was not added (already in the list)
+        AddToDirectBeamResult
+            Result of the add operation, including success or reason for failure.
         """
         # Check if already in list by run number (since we may have deepcopied objects)
         if self.find_run_number_in_direct_beam_list(self._nexus_data) is not None:
-            return 0
+            return AddToDirectBeamResult.ALREADY_IN_LIST
 
-        is_true_direct_beam = self._nexus_data.is_direct_beam()
+        # Create a deepcopy to allow adding the same run to the direct beam and data lists without sharing state
+        # ensure data added to direct beam list is marked as direct beam, even if original data is reflected
+        nexus_data = copy.deepcopy(self._nexus_data)
+        nexus_data.set_is_direct_beam(True)
+        nexus_data.recreate_workspaces(data_type=NexusDataType.DIRECT_BEAM)
+        self.direct_beam_list.append(nexus_data)
 
-        if is_true_direct_beam:
-            # True direct beam - add directly
-            self.direct_beam_list.append(self._nexus_data)
-            return 2
+        if self._nexus_data.is_direct_beam():
+            return AddToDirectBeamResult.SUCCESS
         else:
-            # Not a true direct beam - make a deep copy and change the data type of the copy
-            # This makes it possible to add the same run also as a data run while preventing them sharing state
-            direct_beam_nexus_data = copy.deepcopy(self._nexus_data)
-            direct_beam_nexus_data.set_is_direct_beam(True)
-            self.direct_beam_list.append(direct_beam_nexus_data)
-
             logging.warning(
-                "Run %s was added to the direct beam list but is not labeled as a direct beam "
-                "(data_type PV != 1). This run may have been started with 'Start RUN' command.",
-                self._nexus_data.number,
+                f"Run {self._nexus_data.number} was added to the direct beam list but is not labeled as a direct beam "
+                "(data_type PV ≠ 1). This run may have been started with 'Start RUN' command."
             )
-            return 1
+            return AddToDirectBeamResult.SUCCESS_REFLECTED
 
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list.
 
-        Uses run number comparison to find the entry, since the active data may be
-        the original object while the list contains a deepcopy.
+        Uses run number comparison to find the entry.
         """
         index = self.find_run_number_in_direct_beam_list(self._nexus_data)
         if index is not None:
@@ -544,19 +537,23 @@ class DataManager(object):
 
         # Search through current reduction list, direct beam list, and cache for the file path.
         # If found and force is False, the matching data will become the active data in the UI.
-        nexus_data_search_list = self.reduction_list + self.direct_beam_list + self._cache
-        for _nxs_data in nexus_data_search_list:
-            if _nxs_data.file_path == file_path:
-                if force:
-                    # Check whether the data is in the reduction list before removing it
-                    reduction_list_id = self.find_data_in_reduction_list(_nxs_data)
-                    direct_beam_list_id = self.find_data_in_direct_beam_list(_nxs_data)
-                    if _nxs_data in self._cache:
-                        self._cache.remove(_nxs_data)
-                else:
-                    nexus_data = _nxs_data
-                    is_from_cache = True
-                break
+        nexus_data_search = set(self.reduction_list + self.direct_beam_list + self._cache)
+        file_paths_in_search_list = {data.file_path: data for data in nexus_data_search}
+        if file_path in file_paths_in_search_list:
+            logging.info(f"DataManager.load: found {file_path} in cache of previously loaded data")
+            _nxs_data = file_paths_in_search_list[file_path]
+            if force:
+                logging.info(f"DataManager.load: force=True - reloading {file_path} from file and replacing cache")
+                # Check whether the data is in the reduction list before removing it
+                reduction_list_id = self.find_data_in_reduction_list(_nxs_data)
+                direct_beam_list_id = self.find_data_in_direct_beam_list(_nxs_data)
+                # If the data is in the cache, remove it
+                if _nxs_data in self._cache:
+                    self._cache.remove(_nxs_data)
+            else:
+                logging.info(f"DataManager.load: force=False - using cached data for {file_path}")
+                nexus_data = _nxs_data
+                is_from_cache = True
 
         # If we don't have the data, load it
         if nexus_data is None:
@@ -1109,7 +1106,9 @@ class DataManager(object):
             t_0 = time.time()
         n_loaded = 0
         n_total = len(db_files) + len(data_files)
+        # Add direct beam runs
         for r_id, run_file, conf, slice_value in db_files:
+            logging.info(f"LOADING DIR BEAM FILE: {run_file}")
             t_i = time.time()
             if os.path.isfile(run_file):
                 is_from_cache = self.load(run_file, conf, force=force, update_parameters=False)
@@ -1127,7 +1126,10 @@ class DataManager(object):
                 if progress:
                     progress.set_value(n_loaded, message="ERROR: %s does not exist" % run_file, out_of=n_total)
             n_loaded += 1
+
+        # Add reflectivity runs
         for r_id, run_file, conf, slice_value in data_files:
+            logging.info(f"LOADING REF FILE: {run_file}")
             t_i = time.time()
             do_files_exist = []
             for name in run_file.split("+"):
@@ -1276,8 +1278,10 @@ class DataManager(object):
         Tries to maintain the previously selected direct beam row index if available,
         otherwise defaults to the first direct beam.
         """
-        # If the current active data is already in the direct beam list, keep it
-        active_direct_beam_idx = self.find_active_direct_beam_id()
+        # Keep the current object only if it is already the direct beam copy.
+        # The same run number can exist in both the reduction and direct beam lists
+        # as separate deep-copied objects with different workspace types.
+        active_direct_beam_idx = self.find_data_in_direct_beam_list(self._nexus_data)
         if active_direct_beam_idx is not None:
             # Update the tracked index to match current selection
             self.last_selected_direct_beam_row = active_direct_beam_idx

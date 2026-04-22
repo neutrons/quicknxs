@@ -302,8 +302,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     try:
                         self.data_manager.calculate_reflectivity(configuration=configuration, active_only=active_only)
                     except Exception:
-                        self.file_handler.report_message("There was a problem updating the reflectivity", pop_up=False)
-                        logging.error("There was a problem updating the reflectivity")
+                        self.file_handler.report_message(
+                            "There was a problem updating the reflectivity", pop_up=False, is_error=True
+                        )
                 self.initiate_reflectivity_or_intensity_plot.emit()
                 self.update_specular_viewer.emit()
 
@@ -399,8 +400,9 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 self.data_manager.calculate_reflectivity()
             except Exception:
-                self.file_handler.report_message("There was a problem updating the reflectivity", pop_up=False)
-                logging.error("There was a problem updating the reflectivity")
+                self.file_handler.report_message(
+                    "There was a problem updating the reflectivity", pop_up=False, is_error=True
+                )
 
             self.initiate_reflectivity_or_intensity_plot.emit()
 
@@ -486,17 +488,20 @@ class MainWindow(QtWidgets.QMainWindow):
     def reset_data_tabs(self):
         """Reset UI to one visible data tab."""
         self.min_data_tab_count = 1
-        self.max_data_tab_count = 4
+        self.max_data_tab_count = max(self.min_data_tab_count, self.ui.tabWidget.count() - 1)
         self.data_tab_count = 1
 
         # Initially enable the add button and disable the remove button
         self.ui.addTabButton.setEnabled(True)
         self.ui.removeTabButton.setEnabled(False)
 
+        # Ensure the current tab remains visible while hiding the optional peak tabs.
+        if self.ui.tabWidget.currentIndex() > self.data_tab_count:
+            self.ui.tabWidget.setCurrentIndex(self.data_tab_count)
+
         # Initially hide the tabs used for multiple peaks
-        self.ui.tabWidget.setTabVisible(2, False)
-        self.ui.tabWidget.setTabVisible(3, False)
-        self.ui.tabWidget.setTabVisible(4, False)
+        for tab_index in range(self.data_tab_count + 1, self.ui.tabWidget.count()):
+            self.ui.tabWidget.setTabVisible(tab_index, False)
 
     def current_table_changed(self, tab_index: int):
         """Update the state for active data set and the UI."""
@@ -511,6 +516,14 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.data_manager.data_sets:
             self.file_loaded()
             self.file_handler.active_data_changed()
+
+        # >>>>> GLASS DEBUG BLOCK >>>>>
+        data = self.data_manager._nexus_data
+        if data is not None and data.main_cross_section is not None:
+            main_xs = data.main_cross_section
+            xs = data.cross_sections[main_xs]
+            print(f"\n\nCurrent table index: {tab_index}\n{xs._event_workspace=}\n\n")
+        # <<<<< GLASS DEBUG BLOCK <<<<<
 
     ### End of data tab management
 

@@ -20,6 +20,7 @@ from quicknxs.interfaces.data_handling.filepath import FilePath
 from quicknxs.interfaces.data_handling.gisans import GISANS
 from quicknxs.interfaces.data_handling.instrument import CrossSectionError
 from quicknxs.interfaces.data_handling.off_specular import OffSpecular
+from quicknxs.interfaces.enums import NexusDataType
 
 if TYPE_CHECKING:
     from quicknxs.interfaces.configuration import Configuration
@@ -960,6 +961,37 @@ class NexusData(object):
                 logging.error(detailed_msg)
         if has_errors:
             raise RuntimeError(detailed_msg)
+
+    def recreate_workspaces(self, data_type: NexusDataType):
+        """Clone and rename cross-section workspaces in Mantid data service.
+
+        Typically used when adding a NexusData object to a direct beam or reduction list
+        to ensure that the workspaces have unique names in the Mantid data service.
+
+        Parameters
+        ----------
+        data_type: NexusDataType
+            The type of data to recreate workspaces for (i.e. reflected, direct-beam, or unknown)
+        """
+        for xs in self.cross_sections:
+            try:
+                current_name = self.cross_sections[xs]._event_workspace
+                if current_name is None:
+                    logging.warning(f"No event workspace for {xs}, skipping workspace recreation")
+                    continue
+                # if current name already has _REFLECTED, _DIRECT_BEAM, or _UNKNOWN suffix, remove it before adding the new suffix
+                if current_name.endswith("_REFLECTED"):
+                    current_name = current_name[: -len("_REFLECTED")]
+                elif current_name.endswith("_DIRECT_BEAM"):
+                    current_name = current_name[: -len("_DIRECT_BEAM")]
+                elif current_name.endswith("_UNKNOWN"):
+                    current_name = current_name[: -len("_UNKNOWN")]
+                new_name = f"{current_name}_{data_type.name}"
+                api.CloneWorkspace(current_name, OutputWorkspace=new_name)
+                self.cross_sections[xs]._event_workspace = new_name
+                logging.info(f"Cloned workspace {current_name} to {new_name} for {xs}")
+            except Exception as err:
+                logging.error(f"Could not recreate workspaces for {xs}: {err}")
 
     def update_configuration(self, configuration):
         """Update the configuration for all cross sections."""

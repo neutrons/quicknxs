@@ -409,6 +409,8 @@ def test_stitch_reflectivity_updates_reduction_table(mocker, qtbot):
     data_manager = main_window.data_manager
     qtbot.addWidget(main_window)
 
+    handler.change_log_level("ERROR")
+
     # Add two data runs
     ui_utilities.setText(main_window.numberSearchEntry, str(42112), press_enter=True)
     ui_utilities.set_current_file_by_run_number(main_window, 42112)
