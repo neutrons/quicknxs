@@ -42,12 +42,9 @@ def test_show_deadtime_settings_updated_values(mocker, qtbot):
     def update_deadtime_settings():
         # update the values in the deadtime settings dialog and close the dialog
         dialog = QtWidgets.QApplication.activeModalWidget()
-        paralyzable_checkbox = dialog.findChild(QtWidgets.QCheckBox)
-        paralyzable_checkbox.setChecked(new_paralyzable)
-        deadtime_spinbox = dialog.findChild(QtWidgets.QDoubleSpinBox, "dead_time_value")
-        deadtime_spinbox.setValue(new_dead_time)
-        tof_spinbox = dialog.findChild(QtWidgets.QDoubleSpinBox, "dead_time_tof")
-        tof_spinbox.setValue(new_tof_step)
+        dialog.ui.use_paralyzable.setChecked(new_paralyzable)
+        dialog.ui.dead_time_value.setValue(new_dead_time)
+        dialog.ui.dead_time_tof.setValue(new_tof_step)
         # press Enter to accept (click Ok)
         qtbot.keyClick(dialog, QtCore.Qt.Key_Enter, delay=1)
 

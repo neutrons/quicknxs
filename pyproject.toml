@@ -31,7 +31,7 @@ requires = ["hatchling", "versioningit"]
 source = "versioningit"
 
 [tool.hatch.build]
-artifacts = ["*.yml", "*.yaml", "*.ini", "*.gx", "*.json", "*.ui"]
+artifacts = ["*.yml", "*.yaml", "*.ini", "*.gx", "*.json", "*.ui", "*.qml"]
 
 [tool.hatch.build.hooks.versioningit-onbuild]
 source-file = "src/quicknxs/_version.py"
