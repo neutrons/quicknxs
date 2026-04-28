@@ -1,7 +1,7 @@
 import mantid.simpleapi as api
 import numpy as np
 
-from quicknxs.interfaces.data_handling import instrument
+from quicknxs.data_handling import instrument
 
 
 def load_data(run="REF_M_30769"):

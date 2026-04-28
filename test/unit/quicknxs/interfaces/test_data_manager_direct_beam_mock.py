@@ -4,9 +4,9 @@ from unittest import mock
 
 import pytest
 
-from quicknxs.interfaces.data_handling.data_set import NexusData
-from quicknxs.interfaces.data_manager import DataManager
-from quicknxs.interfaces.enums import AddToDirectBeamResult, NexusDataType
+from quicknxs.enums import AddToDirectBeamResult
+from quicknxs.models.data_set import NexusData
+from quicknxs.presenters.data_presenter import DataPresenter
 
 
 class TestDirectBeamFeatureMocked:
@@ -14,7 +14,7 @@ class TestDirectBeamFeatureMocked:
 
     def test_add_non_direct_beam_run_returns_1(self):
         """Test that adding a non-direct-beam run returns 1."""
-        manager = DataManager("/tmp")
+        manager = DataPresenter("/tmp")
 
         # Create a mock NexusData that is NOT a direct beam
         mock_nexus = mock.Mock(spec=NexusData)
@@ -34,7 +34,7 @@ class TestDirectBeamFeatureMocked:
 
     def test_add_true_direct_beam_run_returns_2(self):
         """Test that adding a true direct beam run returns 2."""
-        manager = DataManager("/tmp")
+        manager = DataPresenter("/tmp")
 
         # Create a mock NexusData that IS a direct beam
         mock_nexus = mock.Mock(spec=NexusData)
@@ -52,7 +52,7 @@ class TestDirectBeamFeatureMocked:
 
     def test_add_duplicate_run_returns_0(self):
         """Test that adding the same run twice returns 0."""
-        manager = DataManager("/tmp")
+        manager = DataPresenter("/tmp")
 
         # Create a mock NexusData
         mock_nexus = mock.Mock(spec=NexusData)
@@ -72,7 +72,7 @@ class TestDirectBeamFeatureMocked:
 
     def test_mixed_direct_beam_list(self):
         """Test that direct beam list can contain both true and non-true direct beams."""
-        manager = DataManager("/tmp")
+        manager = DataPresenter("/tmp")
 
         # Add a true direct beam
         mock_true_db = mock.Mock(spec=NexusData)
@@ -99,7 +99,7 @@ class TestDirectBeamFeatureMocked:
 
     def test_remove_non_direct_beam_from_list(self):
         """Test that a non-direct-beam run can be removed from the direct beam list."""
-        manager = DataManager("/tmp")
+        manager = DataPresenter("/tmp")
 
         # Mock a non-direct-beam run
         mock_nexus = mock.Mock(spec=NexusData)
@@ -116,7 +116,7 @@ class TestDirectBeamFeatureMocked:
 
     def test_backward_compatibility_with_existing_code(self):
         """Test that existing code calling add_active_to_direct_beam_list still works."""
-        manager = DataManager("/tmp")
+        manager = DataPresenter("/tmp")
 
         # Create a mock NexusData
         mock_nexus = mock.Mock(spec=NexusData)
@@ -135,7 +135,7 @@ class TestDirectBeamFeatureMocked:
 
     def test_update_active_direct_beam_switches_to_direct_beam_copy(self):
         """Switching to the direct beam tab should swap in the direct beam copy of a shared run."""
-        manager = DataManager("/tmp")
+        manager = DataPresenter("/tmp")
 
         reflected_copy = mock.Mock(spec=NexusData)
         reflected_copy.number = "12352"

@@ -1,7 +1,7 @@
 import pytest
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.data_handling.data_set import CrossSectionData, NexusData
 from quicknxs.interfaces.main_window import MainWindow
 from test.ui import ui_utilities
 
@@ -15,15 +15,15 @@ def _initialize_test_data(main_window):
     nexus_data.main_cross_section = "Off_Off"
     nexus_data.cross_sections["Off_Off"] = off_off
     nexus_data.cross_sections["On_Off"] = on_off
-    main_window.data_manager._nexus_data = nexus_data
-    main_window.data_manager.set_active_cross_section(0)
-    main_window.data_manager.add_active_to_reduction()
+    main_window.data_presenter._nexus_data = nexus_data
+    main_window.data_presenter.set_active_cross_section(0)
+    main_window.data_presenter.add_active_to_reduction()
 
 
 def _assert_configuration_value(main_window, param_name, gold_value):
     """Check parameter value through the data hierarchy."""
-    assert getattr(main_window.data_manager.active_cross_section.configuration, param_name) is gold_value
-    for nexus_data in main_window.data_manager.reduction_list:
+    assert getattr(main_window.data_presenter.active_cross_section.configuration, param_name) is gold_value
+    for nexus_data in main_window.data_presenter.reduction_list:
         assert getattr(nexus_data.configuration, param_name) is gold_value
         for xs_data in nexus_data.cross_sections.values():
             assert getattr(xs_data.configuration, param_name) is gold_value
@@ -31,8 +31,8 @@ def _assert_configuration_value(main_window, param_name, gold_value):
 
 def _assert_configuration_float_value(main_window, param_name, gold_value):
     """Check float parameter value through the data hierarchy."""
-    assert getattr(main_window.data_manager.active_cross_section.configuration, param_name) == pytest.approx(gold_value)
-    for nexus_data in main_window.data_manager.reduction_list:
+    assert getattr(main_window.data_presenter.active_cross_section.configuration, param_name) == pytest.approx(gold_value)
+    for nexus_data in main_window.data_presenter.reduction_list:
         assert getattr(nexus_data.configuration, param_name) == pytest.approx(gold_value)
         for xs_data in nexus_data.cross_sections.values():
             assert getattr(xs_data.configuration, param_name) == pytest.approx(gold_value)
@@ -89,9 +89,9 @@ def test_reflectivity_recalculated_on_config_change(mocker, qtbot):
     qtbot.addWidget(main_window)
 
     # use mock and wrap to call function while also getting call count
-    data_manager = main_window.data_manager
+    data_presenter = main_window.data_presenter
     mock_calculate_reflectivity = mocker.patch.object(
-        data_manager, "calculate_reflectivity", wraps=data_manager.calculate_reflectivity
+        data_presenter, "calculate_reflectivity", wraps=data_presenter.calculate_reflectivity
     )
 
     # add two runs to the reduction table

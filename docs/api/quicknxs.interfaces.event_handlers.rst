@@ -21,7 +21,7 @@ quicknxs.interfaces.event\_handlers.configuration\_handler module
 quicknxs.interfaces.event\_handlers.main\_handler module
 ----------------------------------------------------------------
 
-.. automodule:: quicknxs.interfaces.event_handlers.main_handler
+.. automodule:: quicknxs.interfaces.event_handlers.main_presenter
    :members:
    :undoc-members:
    :show-inheritance:
@@ -29,7 +29,7 @@ quicknxs.interfaces.event\_handlers.main\_handler module
 quicknxs.interfaces.event\_handlers.plot\_handler module
 ----------------------------------------------------------------
 
-.. automodule:: quicknxs.interfaces.event_handlers.plot_handler
+.. automodule:: quicknxs.interfaces.event_handlers.plot_presenter
    :members:
    :undoc-members:
    :show-inheritance:

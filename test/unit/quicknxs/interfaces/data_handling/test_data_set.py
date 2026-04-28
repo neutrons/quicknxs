@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
-from quicknxs.interfaces.enums import NexusDataType
+from quicknxs.enums import NexusDataType
+from quicknxs.models.configuration import Configuration
+from quicknxs.models.data_set import CrossSectionData, NexusData
 
 
 def _get_cross_section_data():

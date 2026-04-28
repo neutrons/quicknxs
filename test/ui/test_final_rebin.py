@@ -134,7 +134,7 @@ def test_editing_rebin_q_step_triggers_replotting(qtbot, mocker):
     redraw method and checks that it increments upon editing the spinbox value.
     """
     mock_plot_refl = mocker.patch(
-        "quicknxs.interfaces.plotting.PlotManager.plot_reflectivity_or_intensity", return_value=True
+        "quicknxs.interfaces.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True
     )
 
     main_window = MainWindow()
@@ -162,7 +162,7 @@ def test_changing_binning_type_triggers_replotting(qtbot, mocker):
     redraw method and checks that it increments upon editing the spinbox value.
     """
     mock_plot_refl = mocker.patch(
-        "quicknxs.interfaces.plotting.PlotManager.plot_reflectivity_or_intensity", return_value=True
+        "quicknxs.interfaces.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True
     )
 
     main_window = MainWindow()

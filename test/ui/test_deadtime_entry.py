@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt  # type: ignore
 
 # local imports
 from quicknxs.interfaces.main_window import MainWindow
-from quicknxs.ui.deadtime_entry import DeadTimeEntryPoint  # Make sure to import your class correctly
+from quicknxs.views.deadtime_entry import DeadTimeEntryPoint  # Make sure to import your class correctly
 from test.ui import ui_utilities
 
 
@@ -23,7 +23,7 @@ def test_initial_state(dead_time_entry_point):
 def test_checkbox_interaction(mocker, dead_time_entry_point, qtbot):
     # Mock modal dialog
     mocker.patch(
-        "quicknxs.ui.deadtime_entry.DeadTimeEntryPoint.VerifyChangeCheckBox.ask_user_ok_to_reload_files",
+        "quicknxs.views.deadtime_entry.DeadTimeEntryPoint.VerifyChangeCheckBox.ask_user_ok_to_reload_files",
         return_value=True,
     )
     # Simulate checking the checkbox
@@ -37,7 +37,7 @@ def test_checkbox_interaction(mocker, dead_time_entry_point, qtbot):
 def test_uncheck_checkbox(mocker, dead_time_entry_point, qtbot):
     # Mock modal dialog
     mocker.patch(
-        "quicknxs.ui.deadtime_entry.DeadTimeEntryPoint.VerifyChangeCheckBox.ask_user_ok_to_reload_files",
+        "quicknxs.views.deadtime_entry.DeadTimeEntryPoint.VerifyChangeCheckBox.ask_user_ok_to_reload_files",
         return_value=True,
     )
     # First, check the checkbox
@@ -54,7 +54,7 @@ def test_uncheck_checkbox(mocker, dead_time_entry_point, qtbot):
 def test_checkbox_change_reload_files(mocker, qtbot):
     # Mock modal dialog
     mocker.patch(
-        "quicknxs.ui.deadtime_entry.DeadTimeEntryPoint.VerifyChangeCheckBox.ask_user_ok_to_reload_files",
+        "quicknxs.views.deadtime_entry.DeadTimeEntryPoint.VerifyChangeCheckBox.ask_user_ok_to_reload_files",
         return_value=True,
     )
     mock_reload_files = mocker.patch("quicknxs.interfaces.main_window.MainWindow.reload_all_files")

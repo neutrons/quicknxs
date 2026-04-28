@@ -1,10 +1,11 @@
 import pytest
 
-import quicknxs.interfaces.data_handling.data_manipulation as dm
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.instrument import CrossSectionError, Instrument
-from quicknxs.interfaces.data_manager import DataManager
-from quicknxs.interfaces.enums import AddToDirectBeamResult, AddToReductionResult
+import quicknxs.models.data_manipulation as dm
+from quicknxs.enums import AddToDirectBeamResult, AddToReductionResult
+from quicknxs.exceptions import CrossSectionError
+from quicknxs.models.configuration import Configuration
+from quicknxs.models.instrument import Instrument
+from quicknxs.presenters.data_presenter import DataPresenter
 
 
 @pytest.fixture()
@@ -14,12 +15,12 @@ def setup_method():
     Instrument.USE_SLOW_FLIPPER_LOG = False
 
 
-class TestDataManagerTest(object):
-    """Test DataManager class."""
+class TestDataPresenterTest(object):
+    """Test DataPresenter class."""
 
     @pytest.mark.datarepo
     def test_manager(self, data_server, setup_method):
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
         manager.load(data_server.path_to("REF_M_29160"), Configuration())
 
         assert manager.current_file == data_server.path_to("REF_M_29160")
@@ -50,7 +51,7 @@ class TestDataManagerTest(object):
     @pytest.mark.skip(reason="WIP")
     def test_add_ordermanager(self, data_server):
         # load up files for testing
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
         try:
             file_paths = data_server.get_file_paths("39743")
             if len(file_paths) < 1:
@@ -75,12 +76,12 @@ class TestDataManagerTest(object):
             assert theta <= _theta
 
     def test_load_reduced(self, data_server):
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
         manager.load_data_from_reduced_file(data_server.path_to("REF_M_29160_Specular_++.dat"))
 
     def test_clear_cached_unused_data(self, data_server):
         """Test helper function clear_cached_unused_data."""
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
         manager.add_active_to_reduction()
         manager.load(data_server.path_to("REF_M_42113"), Configuration())
@@ -98,7 +99,7 @@ class TestDataManagerTest(object):
 
     @pytest.mark.datarepo
     def test_add_additional_reduction_list(self, data_server):
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
         manager.load(data_server.path_to("REF_M_40782"), Configuration())
         manager.add_active_to_reduction()
         manager.load(data_server.path_to("REF_M_40785"), Configuration())
@@ -122,9 +123,9 @@ class TestDataManagerTest(object):
         assert manager.active_reduction_list_index == 1
 
     @pytest.mark.datarepo
-    def test_reduce_spec(self, mocker, data_manager_with_data_factory):
+    def test_reduce_spec(self, mocker, data_presenter_with_data_factory):
         """Test function reduce_spec."""
-        manager = data_manager_with_data_factory()
+        manager = data_presenter_with_data_factory()
         spy_calc_refl_run1 = mocker.spy(manager.reduction_list[0], "calculate_reflectivity")
         spy_calc_refl_run2 = mocker.spy(manager.reduction_list[1], "calculate_reflectivity")
 
@@ -141,7 +142,7 @@ class TestDataManagerTest(object):
     @pytest.mark.datarepo
     def test_add_active_to_reduction_no_duplicates(self, data_server, setup_method):
         """Test that add_active_to_reduction prevents duplicate entries."""
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
 
         # Add run once
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
@@ -155,7 +156,7 @@ class TestDataManagerTest(object):
     @pytest.mark.datarepo
     def test_copy_nexus_data_prevents_duplicates(self, data_server, setup_method):
         """Test that copy_nexus_data_to_reduction prevents duplicate run numbers."""
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
 
         # Setup main reduction list
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
@@ -186,7 +187,7 @@ class TestDataManagerTest(object):
         REF_M_42113: Q ~ 0.02-0.05 (highest Q)
         REF_M_40782: Q ~ 0.01-0.03 (middle Q)
         """
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
 
         # Add highest Q run first
         manager.load(data_server.path_to("REF_M_42113"), Configuration())
@@ -221,7 +222,7 @@ class TestDataManagerTest(object):
     @pytest.mark.datarepo
     def test_q_ordering_copy_nexus_data_to_reduction(self, data_server, setup_method):
         """Test that copy_nexus_data_to_reduction maintains Q ordering."""
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
 
         # Setup main reduction list (tab 1)
         manager.load(data_server.path_to("REF_M_42113"), Configuration())
@@ -255,7 +256,7 @@ class TestDataManagerTest(object):
     @pytest.mark.datarepo
     def test_q_ordering_empty_list(self, data_server, setup_method):
         """Test that the first run added to an empty list initializes properly."""
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
 
         # Add to empty list
         manager.load(data_server.path_to("REF_M_42112"), Configuration())
@@ -267,11 +268,11 @@ class TestDataManagerTest(object):
     @pytest.mark.datarepo
     def test_bad_files_list(self, data_server, mocker):
         """Test that files that fail to load are tracked in the bad_files list."""
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
 
         # Mock loading the file, but use data_server to get the path for the error message
         mock_exception = CrossSectionError(data_server.path_to("REF_M_43670"))
-        mocker.patch("quicknxs.interfaces.data_manager.NexusData.load", side_effect=mock_exception)
+        mocker.patch("quicknxs.interfaces.data_presenter.NexusData.load", side_effect=mock_exception)
         with pytest.raises(CrossSectionError):
             manager.load(data_server.path_to("REF_M_43670"), Configuration())
         assert len(manager.bad_files) == 1
@@ -285,7 +286,7 @@ class TestDataManagerTest(object):
 
         # Test loading a different bad file - should be added to the list
         mock_exception = CrossSectionError(data_server.path_to("REF_M_42537"))
-        mocker.patch("quicknxs.interfaces.data_manager.NexusData.load", side_effect=mock_exception)
+        mocker.patch("quicknxs.interfaces.data_presenter.NexusData.load", side_effect=mock_exception)
         with pytest.raises(CrossSectionError):
             manager.load(data_server.path_to("REF_M_42537"), Configuration())
         assert len(manager.bad_files) == 2

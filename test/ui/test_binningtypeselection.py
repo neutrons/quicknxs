@@ -1,5 +1,5 @@
-from quicknxs.interfaces.configuration import BinningType
-from quicknxs.ui.binningtype_combobox import BinningTypeSelection
+from quicknxs.models.configuration import BinningType
+from quicknxs.views.widgets.binning_type_combobox import BinningTypeSelection
 
 
 class TestBinningTypeSelection:

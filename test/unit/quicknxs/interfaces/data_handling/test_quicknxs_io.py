@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
-from quicknxs.interfaces.data_handling.quicknxs_io import (
+from quicknxs.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.data_handling.quicknxs_io import (
     _assign_config_value,
     _sort_keys_with_file_last,
     determine_which_files_to_sum,

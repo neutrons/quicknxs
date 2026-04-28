@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from quicknxs.interfaces.configuration import BinningType, Configuration
-from quicknxs.interfaces.data_handling.data_manipulation import (
+from quicknxs.data_handling.data_manipulation import (
     NormalizeToUnityQCutoffError,
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
@@ -14,8 +14,8 @@ from quicknxs.interfaces.data_handling.data_manipulation import (
     generate_short_script,
     stitch_reflectivity,
 )
-from quicknxs.interfaces.data_handling.data_set import NexusData
-from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.data_handling.data_set import NexusData
+from quicknxs.interfaces.data_presenter import DataPresenter
 
 mock_reduced_file_str = (
     "# Datafile created by QuickNXS 3.1.0.dev2\n"
@@ -119,7 +119,7 @@ class TestDataManipulation(object):
 
     @pytest.mark.datarepo
     def test_stitch_reflectivity(self, data_server, mocker_file_open, stitching_config):
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
             raise IOError("Files missing.")
@@ -133,7 +133,7 @@ class TestDataManipulation(object):
         stitching_config.binning_type_run = BinningType.CONST_Q
         stitching_config.binning_q_step_run = -0.01
 
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
             raise IOError("Files missing.")
@@ -299,7 +299,7 @@ class TestDataManipulation(object):
     )
     def test_extract_metadata(self, data_server, data_file, expected):
         """Test the extract_metadata function."""
-        manager = DataManager(data_server.directory)
+        manager = DataPresenter(data_server.directory)
         fp = f"{data_server.directory}/quicknxs-data/{data_file}"
         metadata = extract_metadata(fp)
         assert metadata.mid_q == expected["mid_q"]
@@ -335,7 +335,7 @@ class TestDataManipulation(object):
         beam3 = self.make_mock_run(4, lam, (0.8, 1.1, 0.9))
 
         # make the mock data manager
-        manager = DataManager("mock_dir")
+        manager = DataPresenter("mock_dir")
         manager.direct_beam_list = [beam1, beam2, beam3]
         manager.active_cross_section = scatter
         manager._nexus_data = mock.Mock(set_parameter=mock.Mock())

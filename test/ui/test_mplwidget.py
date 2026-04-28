@@ -6,8 +6,8 @@ from matplotlib.lines import Line2D
 from numpy.testing import assert_allclose
 from PyQt5 import QtWidgets
 
-from quicknxs.interfaces.main_window import MainWindow
-from quicknxs.ui.mplwidget import (
+from quicknxs.views.main_window import MainWindow
+from quicknxs.views.widgets.mplwidget import (
     MPLWidget,
     NavigationToolbar,
     NavigationToolbarGeneric,

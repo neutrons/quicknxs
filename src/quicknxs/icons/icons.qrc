@@ -22,6 +22,9 @@
     <file>tthZero.png</file>
     <file>addDirectBeam.png</file>
     <file>delDirectBeam.png</file>
+    <file>plus.png</file>
+    <file>minus.png</file>
+    <file>reset.png</file>
   </qresource>
   <qresource prefix="MPL Toolbar">
     <file>document-open-reduced.png</file>

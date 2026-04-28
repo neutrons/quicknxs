@@ -1,8 +1,8 @@
 import pytest
 from qtpy import QtWidgets
 
-from quicknxs.interfaces.data_handling.quicknxs_io import read_reduced_file
-from quicknxs.interfaces.main_window import MainWindow
+from quicknxs.models.quicknxs_io import read_reduced_file
+from quicknxs.views.main_window import MainWindow
 
 
 def assert_config_equal(conf_a, conf_b):
