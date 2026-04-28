@@ -14,4 +14,4 @@ Subpackages
 
    quicknxs.config
    quicknxs.interfaces
-   quicknxs.ui
+   quicknxs.views

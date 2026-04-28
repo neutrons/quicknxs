@@ -4,7 +4,7 @@ import pytest
 from mantid.simpleapi import mtd
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.instrument import CrossSectionError
+from quicknxs.data_handling.instrument import CrossSectionError
 
 
 @pytest.mark.datarepo

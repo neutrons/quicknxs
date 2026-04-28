@@ -4,9 +4,9 @@ from copy import deepcopy
 import pytest
 from orsopy.fileio import load_orso
 
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.processing_workflow import DEFAULT_OPTIONS, ProcessingWorkflow
-from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.models.configuration import Configuration
+from quicknxs.models.processing_workflow import DEFAULT_OPTIONS, ProcessingWorkflow
+from quicknxs.presenters.data_presenter import DataPresenter
 
 
 @pytest.mark.datarepo
@@ -16,7 +16,7 @@ def test_orso_output(data_server, tmpdir):
     conf = Configuration()
     conf.cut_first_n_points = 0
     conf.cut_last_n_points = 0
-    manager = DataManager(data_server.directory)
+    manager = DataPresenter(data_server.directory)
     output_options = deepcopy(DEFAULT_OPTIONS)
     output_options["output_directory"] = str(tmpdir)
     pw = ProcessingWorkflow(manager, output_options)
@@ -74,7 +74,7 @@ def test_smoothing_without_slice_export(data_server, tmpdir):
     conf = Configuration()
     conf.cut_first_n_points = 0
     conf.cut_last_n_points = 0
-    manager = DataManager(data_server.directory)
+    manager = DataPresenter(data_server.directory)
 
     # Simulate the exact state after ReductionDialog + OffSpecParametersDialog:
     # ReductionDialog.get_options() returns basic flags

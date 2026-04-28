@@ -1,6 +1,6 @@
 import pytest
 
-from quicknxs.interfaces.data_handling.diagnostic_data import DiagnosticData
+from quicknxs.data_handling.diagnostic_data import DiagnosticData
 
 
 class TestDiagnosticData:

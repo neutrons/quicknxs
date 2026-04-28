@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData
+from quicknxs.data_handling.data_set import CrossSectionData
 
 
 def _get_cross_section_data():

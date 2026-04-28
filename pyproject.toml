@@ -17,7 +17,7 @@ repository = "https://github.com/neutrons/quicknxs"
 issues = "https://github.com/neutrons/quicknxs/issues"
 
 [project.gui-scripts]
-quicknxs-gui = "quicknxs.gui:main"
+quicknxs-gui = "quicknxs.main:gui"
 
 ####################
 ### Build config ###

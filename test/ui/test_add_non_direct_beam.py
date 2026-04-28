@@ -1,14 +1,12 @@
 """UI tests for adding non-direct-beam runs to the direct beam table."""
 
-# 3rd-party imports
 import pytest
 from qtpy import QtWidgets
 from qtpy.QtWidgets import QApplication
 
-# local imports
-from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.enums import DirectBeamTableColumn as DBTableCols
-from quicknxs.interfaces.main_window import MainWindow
+from quicknxs.enums import DirectBeamTableColumn as DBTableCols
+from quicknxs.models.configuration import Configuration
+from quicknxs.views.main_window import MainWindow
 
 
 @pytest.mark.datarepo
@@ -25,7 +23,7 @@ def test_add_non_direct_beam_run_shows_warning(qtbot, data_server, mocker):
     window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
 
     # Verify it's not a direct beam
-    assert not window_main.data_manager._nexus_data.is_direct_beam()
+    assert not window_main.data_presenter._nexus_data.is_direct_beam()
 
     # Add it to the direct beam table
     window_main.actionAddDirectBeam.triggered.emit()
@@ -60,7 +58,7 @@ def test_add_true_direct_beam_run_no_warning(qtbot, data_server, mocker):
     window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
 
     # Verify it IS a direct beam
-    assert window_main.data_manager._nexus_data.is_direct_beam()
+    assert window_main.data_presenter._nexus_data.is_direct_beam()
 
     # Add it to the direct beam table
     window_main.actionAddDirectBeam.triggered.emit()
@@ -92,13 +90,13 @@ def test_non_direct_beam_can_normalize_scattering_data(qtbot, data_server):
     window_main.actionAddRefl.triggered.emit()
 
     # Set the "direct beam" for this run
-    window_main.data_manager._nexus_data.set_parameter("direct_beam", "42112")
+    window_main.data_presenter._nexus_data.set_parameter("direct_beam", "42112")
 
     # Calculate reflectivity - this should work without errors
-    window_main.data_manager.calculate_reflectivity()
+    window_main.data_presenter.calculate_reflectivity()
 
     # Verify the reduction list has the correct direct beam set
-    run_in_reduction = window_main.data_manager.reduction_list[0]
+    run_in_reduction = window_main.data_presenter.reduction_list[0]
     assert (
         run_in_reduction.cross_sections[list(run_in_reduction.cross_sections.keys())[0]].configuration.direct_beam
         == "42112"
@@ -149,7 +147,7 @@ def test_non_direct_beam_displays_intensity_plot(qtbot, data_server):
     window_main.file_handler.open_file(data_server.path_to("REF_M_42113"))
 
     # Verify it's not a direct beam
-    assert not window_main.data_manager._nexus_data.is_direct_beam()
+    assert not window_main.data_presenter._nexus_data.is_direct_beam()
 
     # Add it to the direct beam table
     window_main.actionAddDirectBeam.triggered.emit()
@@ -162,7 +160,7 @@ def test_non_direct_beam_displays_intensity_plot(qtbot, data_server):
     assert plot_title == "Intensity", f"Expected 'Intensity' plot but got '{plot_title}'"
 
     # Also verify that the active data is indeed in the direct beam list
-    assert window_main.data_manager.find_active_direct_beam_id() is not None
+    assert window_main.data_presenter.find_active_direct_beam_id() is not None
 
 
 @pytest.mark.datarepo
@@ -176,7 +174,7 @@ def test_true_direct_beam_displays_intensity_plot(qtbot, data_server):
     window_main.file_handler.open_file(data_server.path_to("REF_M_42099"))
 
     # Verify it IS a direct beam
-    assert window_main.data_manager._nexus_data.is_direct_beam()
+    assert window_main.data_presenter._nexus_data.is_direct_beam()
 
     # Add it to the direct beam table
     window_main.actionAddDirectBeam.triggered.emit()
@@ -307,7 +305,7 @@ def test_non_direct_beam_saved_and_loaded(qtbot, data_server, tmp_path):
     window_main.actionAddRefl.triggered.emit()
 
     # Reduce the data
-    from quicknxs.interfaces.data_handling.processing_workflow import DEFAULT_OPTIONS, ProcessingWorkflow
+    from quicknxs.data_handling.processing_workflow import DEFAULT_OPTIONS, ProcessingWorkflow
 
     output_dir = str(tmp_path)
     output_options = DEFAULT_OPTIONS.copy()
@@ -320,7 +318,7 @@ def test_non_direct_beam_saved_and_loaded(qtbot, data_server, tmp_path):
         }
     )
 
-    workflow = ProcessingWorkflow(window_main.data_manager, output_options)
+    workflow = ProcessingWorkflow(window_main.data_presenter, output_options)
     workflow.execute()
 
     # Find the saved .dat file
@@ -370,18 +368,18 @@ def test_non_direct_beam_saved_and_loaded(qtbot, data_server, tmp_path):
     Configuration.setup_default_values()
 
     # Load the reduced file - this should restore both the direct beam and data runs
-    from quicknxs.interfaces.data_handling.processing_workflow import ProgressReporter
+    from quicknxs.data_handling.processing_workflow import ProgressReporter
 
-    new_window.data_manager.load_data_from_reduced_file(saved_file, Configuration(), ProgressReporter())
+    new_window.data_presenter.load_data_from_reduced_file(saved_file, Configuration(), ProgressReporter())
 
     # Verify the direct beam list was loaded and contains run 42112
-    assert len(new_window.data_manager.direct_beam_list) > 0, "Direct beam list is empty after loading"
-    db_numbers = [str(db.number) for db in new_window.data_manager.direct_beam_list]
+    assert len(new_window.data_presenter.direct_beam_list) > 0, "Direct beam list is empty after loading"
+    db_numbers = [str(db.number) for db in new_window.data_presenter.direct_beam_list]
     assert "42112" in db_numbers, f"Run 42112 not in direct beam list after loading. Found: {db_numbers}"
 
     # Verify the reduction list was loaded and contains run 42113
-    assert len(new_window.data_manager.reduction_list) > 0, "Reduction list is empty after loading"
-    refl_numbers = [str(r.number) for r in new_window.data_manager.reduction_list]
+    assert len(new_window.data_presenter.reduction_list) > 0, "Reduction list is empty after loading"
+    refl_numbers = [str(r.number) for r in new_window.data_presenter.reduction_list]
     assert "42113" in refl_numbers, f"Run 42113 not in reduction list after loading. Found: {refl_numbers}"
 
 
@@ -486,7 +484,7 @@ def test_radio_button_indices_after_q_reordering(qtbot, data_server):
     QApplication.processEvents()
 
     # Step 4: Verify that run 42113 is now the active run (not 42112)
-    active_run_number = window_main.data_manager._nexus_data.number
+    active_run_number = window_main.data_presenter._nexus_data.number
     assert active_run_number == "42113", (
         f"Expected active run to be 42113, but it is {active_run_number}. "
         "This indicates the radio button is using an outdated row index."

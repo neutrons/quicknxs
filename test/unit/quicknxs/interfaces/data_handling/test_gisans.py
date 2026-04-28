@@ -3,13 +3,13 @@
 import pytest
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.data_presenter import DataPresenter
 
 
 @pytest.mark.datarepo
 def test_gisans(data_server):
     """Test of the GISANS calculation."""
-    manager = DataManager(data_server.directory)
+    manager = DataPresenter(data_server.directory)
     manager.load(data_server.path_to("REF_M_42112"), Configuration())
     manager.add_active_to_reduction()
     manager.load(data_server.path_to("REF_M_42100"), Configuration())

@@ -1,7 +1,7 @@
-quicknxs.ui package
+quicknxs.views package
 ===========================
 
-.. automodule:: quicknxs.ui
+.. automodule:: quicknxs.views
    :members:
    :undoc-members:
    :show-inheritance:
@@ -10,18 +10,18 @@ quicknxs.ui package
 Submodules
 ----------
 
-quicknxs.ui.binningtype\_combobox module
+quicknxs.views.binningtype\_combobox module
 ------------------------------------------
 
-.. automodule:: quicknxs.ui.binningtype_combobox
+.. automodule:: quicknxs.views.widgets.binning_type_combobox
    :members:
    :undoc-members:
    :show-inheritance:
 
-quicknxs.ui.compare\_plots module
+quicknxs.views.compare\_plots module
 ------------------------------------------
 
-.. automodule:: quicknxs.ui.compare_plots
+.. automodule:: quicknxs.views.compare_plots
    :members:
    :undoc-members:
    :show-inheritance:

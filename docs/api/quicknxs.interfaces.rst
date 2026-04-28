@@ -31,7 +31,7 @@ quicknxs.interfaces.configuration. module
 quicknxs.interfaces.data\_manager module
 ------------------------------------------------
 
-.. automodule:: quicknxs.interfaces.data_manager
+.. automodule:: quicknxs.interfaces.data_presenter
    :members:
    :undoc-members:
    :show-inheritance:
