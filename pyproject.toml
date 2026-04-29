@@ -79,7 +79,7 @@ preview = ["pixi-build"]
 # These vulnerabilities are ignored in the audit-deps task until conda-forge updates are available.
 
 [tool.pixi.dependencies]
-mr_reduction = "==2.17.0"  # requires mantid >=6.14.0,<6.15.0
+mr_reduction = "==2.17.0" # requires mantid >=6.14.0,<6.15.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
@@ -100,7 +100,7 @@ hatchling = "*"
 versioningit = "*"
 
 [tool.pixi.package.run-dependencies]
-mr_reduction = "==2.17.0"  # requires mantid >=6.14.0,<6.15.0
+mr_reduction = "==2.17.0" # requires mantid >=6.14.0,<6.15.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
@@ -131,13 +131,13 @@ versioningit = ">=3.2.0"
 toml-cli = "*"
 
 [tool.pixi.feature.dev.dependencies]
-pip = ">=26.0"            # CVE-2026-1703 fixed in version 26.0
+pip = ">=26.0"
 pip-audit = ">=2.9.0"
 pre-commit = ">=4.2.0"
 ruff = "*"
 versioningit = ">=3.2.0"
-virtualenv = ">=20.36.1"  # CVE-2026-22702 fixed in version 20.36.1
-filelock = ">=3.20.3"     # CVE-2026-22701 fixed in version 3.20.3
+virtualenv = ">=20.36.1" # CVE-2026-22702 fixed in version 20.36.1
+filelock = ">=3.20.3"    # CVE-2026-22701 fixed in version 3.20.3
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = ">=8"
@@ -171,7 +171,7 @@ conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .c
     "conda-build",
 ] }
 # Misc
-audit-deps = { cmd = "pip-audit --local --ignore-vuln CVE-2026-34073", description = "Audit the package dependencies for vulnerabilities (ignoring conda package version lags)" }
+audit-deps = { cmd = "pip-audit --local --ignore-vuln CVE-2026-3219", description = "Audit the package dependencies for vulnerabilities (ignoring conda package version lags)" }
 clean = { cmd = 'rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__ **/_version.py', description = "Clean up various caches and build artifacts" }
 clean-conda = { cmd = "rm -f *.conda", description = "Clean the local .conda build artifacts" }
 clean-docs = { cmd = "rm -rf docs/_build", description = "Clean up documentation build artifacts" }
