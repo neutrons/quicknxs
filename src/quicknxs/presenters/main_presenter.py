@@ -2012,7 +2012,7 @@ class MainPresenter:
 
     def show_results(self):
         """Pop up the result viewer."""
-        from quicknxs.interfaces.result_viewer import ResultViewer
+        from quicknxs.views.result_viewer import ResultViewer
 
         dialog = ResultViewer(self.main_window, self._data_presenter)
         dialog.specular_compare_widget.ui.refl_preview_checkbox.setChecked(True)

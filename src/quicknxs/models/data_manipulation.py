@@ -11,6 +11,7 @@ import mantid.simpleapi as api
 import numpy as np
 from mantid.api import MatrixWorkspace
 
+from quicknxs.exceptions import NormalizeToUnityQCutoffError
 from quicknxs.models.data_set import NexusData, NexusMetaData
 from quicknxs.models.instrument import Instrument
 
