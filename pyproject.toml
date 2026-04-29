@@ -189,11 +189,11 @@ reset-version = { cmd = "toml set tool.pixi.package.version \"0.0.0\" --toml-pat
 
 [tool.coverage.run]
 source = ["src/quicknxs"]
-omit = ["test/*"]
+omit = ["tests/*"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src", "scripts"]
-testpaths = ["test/"]
+testpaths = ["tests/"]
 python_files = ["test*.py"]
 norecursedirs = [
     ".git",
@@ -212,7 +212,7 @@ qt_log_format = "{rec.when} {rec.type_name}: {rec.message}"
 
 [tool.ruff]
 line-length = 120
-extend-exclude = ["notebooks/*", "icons/*", "test/notebooks/*"]
+extend-exclude = ["notebooks/*", "icons/*", "tests/notebooks/*"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

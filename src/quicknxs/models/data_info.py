@@ -11,6 +11,7 @@ import mantid.simpleapi as api
 import numpy as np
 import scipy.optimize as opt
 from scipy import ndimage
+from scipy.constants import h, m_n
 
 from quicknxs.models.peak_finding import find_peaks, peak_prominences, peak_widths
 
@@ -87,12 +88,10 @@ class DataInfo(object):
 
         source_detector_distance = source_sample_distance + sample_detector_distance
 
-        h = 6.626e-34  # m^2 kg s^-1
-        m = 1.675e-27  # kg
         wl = run_object.getProperty("LambdaRequest").value[0]
         chopper_speed = run_object.getProperty("SpeedRequest1").value[0]
         wl_offset = 0
-        cst = source_detector_distance / h * m
+        cst = source_detector_distance / h * m_n
         half_width = self.wl_bandwidth / 2.0
         tof_min = cst * (wl + wl_offset * 60.0 / chopper_speed - half_width * 60.0 / chopper_speed) * 1e-4
         tof_max = cst * (wl + wl_offset * 60.0 / chopper_speed + half_width * 60.0 / chopper_speed) * 1e-4

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Optional, Union
 import mantid.simpleapi as api
 import numpy as np
 from mantid.dataobjects import Workspace2D
+from scipy.constants import h, m_n
 
 from quicknxs.enums import BinningType
 from quicknxs.exceptions import CrossSectionError
@@ -266,10 +267,8 @@ class CrossSectionData(object):
 
     @property
     def wavelength(self):
-        h = 6.626e-34  # m^2 kg s^-1
-        m = 1.675e-27  # kg
         v_n = self.dist_mod_det / self.tof * 1e6  # m/s
-        return h / m / v_n * 1e10  # A
+        return h / m_n / v_n * 1e10  # A
 
     @property
     def active_area_x(self):
