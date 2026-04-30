@@ -1,5 +1,3 @@
-# local imports
-# 3rd-party imports
 import pytest
 
 import quicknxs.interfaces.data_handling.data_manipulation as dm
