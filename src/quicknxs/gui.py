@@ -1,40 +1,20 @@
 #!/usr/bin/env python
 """Start script for reduction application."""
 
-# Set Qt5Agg now so matplotlib doesn't complain later
-import os
-
-os.environ["QT_API"] = "pyqt5"
-import matplotlib
-
-matplotlib.use("Qt5Agg")
-
 import logging
-import logging.handlers
+import os
 import sys
 
-# Log Level as environment variable
-log_level = os.environ.get("QUICKNXS_LOGLEVEL", "INFO").upper()
-if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
-    log_level = "INFO"
+import matplotlib
 
-# Set log level
-logging.getLogger().setLevel(log_level)
+from quicknxs.config.logging import setup_logging
 
-# Formatter
-ft = logging.Formatter("%(levelname)s:%(asctime)-15s %(message)s")
-# Create a log file handler
-fh = logging.handlers.TimedRotatingFileHandler(
-    os.path.join(os.path.expanduser("~"), "quicknxs.log"), when="midnight", backupCount=15
-)
-fh.setLevel(log_level)
-fh.setFormatter(ft)
-logging.getLogger().addHandler(fh)
+# Set Qt5Agg now so matplotlib doesn't complain later
+os.environ["QT_API"] = "pyqt5"
+matplotlib.use("Qt5Agg")
 
-sh = logging.StreamHandler(sys.stdout)
-sh.setLevel(log_level)
-sh.setFormatter(ft)
-logging.getLogger().addHandler(sh)
+
+setup_logging()
 
 
 def no_abort_excepthook(exc_type, value, tback):
