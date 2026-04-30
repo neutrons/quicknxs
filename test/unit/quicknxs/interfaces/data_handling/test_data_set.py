@@ -57,8 +57,8 @@ class TestCrossSectionData:
 class TestNexusData:
     """Test NexusData class."""
 
-    def test_recreate_workspaces(self, data_server):
-        """Test that NexusData.recreate_workspaces() creates Mantid workspaces with expected names and types."""
+    def test_clone_and_rename_event_workspaces(self, data_server):
+        """Test that NexusData.clone_and_rename_event_workspaces() creates Mantid workspaces with expected names and types."""
 
         config = Configuration()
         filepath = data_server.path_to("REF_M_40785.nxs.h5")
@@ -66,18 +66,18 @@ class TestNexusData:
         for xs in nexus_data.cross_sections:
             current_name = xs._event_workspace
             assert current_name.startswith("REF_M_40785")
-        nexus_data.recreate_workspaces(NexusDataType.REFLECTED)
+        nexus_data.clone_and_rename_event_workspaces(NexusDataType.REFLECTED)
         for xs in nexus_data.cross_sections:
             current_name = xs._event_workspace
             assert current_name.startswith("REF_M_40785")
             assert current_name.endswith("_REFLECTED")
-        nexus_data.recreate_workspaces(NexusDataType.DIRECT_BEAM)
+        nexus_data.clone_and_rename_event_workspaces(NexusDataType.DIRECT_BEAM)
         for xs in nexus_data.cross_sections:
             current_name = xs._event_workspace
             assert current_name.startswith("REF_M_40785")
             assert current_name.endswith("_DIRECT_BEAM")
             assert "_REFLECTED" not in current_name
-        nexus_data.recreate_workspaces(NexusDataType.UNDEFINED)
+        nexus_data.clone_and_rename_event_workspaces(NexusDataType.UNDEFINED)
         for xs in nexus_data.cross_sections:
             current_name = xs._event_workspace
             assert current_name.startswith("REF_M_40785")

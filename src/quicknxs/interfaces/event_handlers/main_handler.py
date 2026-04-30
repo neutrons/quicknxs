@@ -1085,7 +1085,7 @@ class MainHandler:
                     self.main_window.auto_change_active = True
                     item.setText("none")
                     self.main_window.auto_change_active = False
-                    # TODO: reset dpix overwrite to DAS value? (Glass)
+                    # TODO (Glass): reset dpix overwrite to DAS value?
 
             case ReductionTableColumn.Q_STEPS:
                 try:
@@ -1151,7 +1151,7 @@ class MainHandler:
             # If the changed data set is another data run, only need to update the UI reduction table,
             # to take into account changes in one column affecting another column
             table_widget = self.reduction_table
-            idx = self._data_manager.find_run_number_in_reduction_list(refl)
+            idx = self._data_manager.find_data_in_reduction_list(refl)
             active_cross_section_name: str = self._data_manager.active_cross_section.name
             active_cross_section = refl.cross_sections[active_cross_section_name]
             self.update_reduction_table(table_widget, idx, active_cross_section)
@@ -1257,7 +1257,7 @@ class MainHandler:
             # only update the UI table for runs with set_direct_pixel ("overwrite") enabled,
             # if it is disabled, the value from the DAS will be used and shown instead
             if refl.get_parameter("set_direct_pixel"):
-                idx = self._data_manager.find_run_number_in_reduction_list(refl)
+                idx = self._data_manager.find_data_in_reduction_list(refl)
                 dpix_item = self.reduction_table.item(idx, ReductionTableColumn.DPIX)
                 self.main_window.auto_change_active = True
                 dpix_item.setText(str(dpix))
@@ -1324,16 +1324,6 @@ class MainHandler:
         # Unblock signals
         self.main_window.auto_change_active = False
 
-    def _sync_current_nexus_data_parameter(self, source_data: NexusData, parameter: str, value: float) -> None:
-        """Mirror parameter edits onto the currently loaded run when it represents the same run number."""
-        current_data = self._data_manager._nexus_data
-        if current_data is None or current_data is source_data:
-            return
-        if current_data.number != source_data.number:
-            return
-        current_data.set_parameter(parameter, value)
-        current_data.update_calculated_values()
-
     def direct_beam_table_changed(self, item: QtWidgets.QTableWidgetItem):
         """Perform action upon change in direct beam list."""
         if self.main_window.auto_change_active:
@@ -1370,8 +1360,6 @@ class MainHandler:
             old_value = getattr(self._data_manager.active_cross_section.configuration, keys[col])
             item.setText(str(old_value))
             return
-
-        self._sync_current_nexus_data_parameter(data, keys[col], new_value)
 
         # If peak position changed, also update direct pixel overwrite in all reflectivity runs using this direct beam
         if col == DirectBeamTableColumn.PEAK_POSITION:

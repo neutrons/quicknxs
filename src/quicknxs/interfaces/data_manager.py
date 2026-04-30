@@ -245,7 +245,7 @@ class DataManager(object):
                 return i
         return None
 
-    def find_data_in_reduction_list(self, nexus_data: NexusData) -> int | None:
+    def find_data_in_reduction_list(self, nexus_data: NexusData | None) -> int | None:
         """Return the index of the given data in the active reduction list, or None if not found.
 
         Returns
@@ -253,6 +253,8 @@ class DataManager(object):
         int | None:
             The index within the reduction list, or none.
         """
+        if nexus_data is None:
+            return None
         for i in range(len(self.reduction_list)):
             if nexus_data == self.reduction_list[i]:
                 return i
@@ -385,7 +387,7 @@ class DataManager(object):
         # Ensure data added to reduction list is marked as reflected, even if original data is a direct beam
         nexus_data = copy.deepcopy(self._nexus_data)
         nexus_data.set_is_direct_beam(False)
-        nexus_data.recreate_workspaces(data_type=NexusDataType.REFLECTED)
+        nexus_data.clone_and_rename_event_workspaces(data_type=NexusDataType.REFLECTED)
 
         result = self._insert_into_reduction_list_by_q(nexus_data, reduction_list)
         if not result:
@@ -446,7 +448,7 @@ class DataManager(object):
         # ensure data added to direct beam list is marked as direct beam, even if original data is reflected
         nexus_data = copy.deepcopy(self._nexus_data)
         nexus_data.set_is_direct_beam(True)
-        nexus_data.recreate_workspaces(data_type=NexusDataType.DIRECT_BEAM)
+        nexus_data.clone_and_rename_event_workspaces(data_type=NexusDataType.DIRECT_BEAM)
         self.direct_beam_list.append(nexus_data)
 
         if self._nexus_data.is_direct_beam():

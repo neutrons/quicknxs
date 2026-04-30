@@ -517,14 +517,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.file_loaded()
             self.file_handler.active_data_changed()
 
-        # >>>>> GLASS DEBUG BLOCK >>>>>
-        data = self.data_manager._nexus_data
-        if data is not None and data.main_cross_section is not None:
-            main_xs = data.main_cross_section
-            xs = data.cross_sections[main_xs]
-            print(f"\n\nCurrent table index: {tab_index}\n{xs._event_workspace=}\n\n")
-        # <<<<< GLASS DEBUG BLOCK <<<<<
-
     ### End of data tab management
 
     def reduceDatasets(self):

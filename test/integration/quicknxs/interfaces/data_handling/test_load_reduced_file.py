@@ -13,7 +13,7 @@ def assert_config_equal(conf_a, conf_b):
         if key == "final_rebin_step_run" and not conf_a.do_final_rebin_run:
             continue
         if key == "direct_pixel_overwrite":
-            # TODO: The direct_pixel_overwrite should be compared to the peak_position of the direct beam it's matched to. (Glass)
+            # TODO (Glass): The direct_pixel_overwrite should be compared to the peak_position of the direct beam it's matched to.
             continue
         val_a = getattr(conf_a, key)
         val_b = getattr(conf_b, key)
@@ -48,7 +48,6 @@ def test_reduced_file_matches_gui_config(filename, data_server, qtbot, monkeypat
     main_window.auto_change_active = False
 
 
-# TODO (GLASS): Add test for loading db as ref run reduced data file
 def test_db_as_ref_run_reduced_file(data_server, qtbot, monkeypatch):
     filename = "db_as_ref_REF_M_42099+42100_peak1_Specular_Off_On.dat"
     file_path = data_server.path_to(filename)

@@ -962,7 +962,7 @@ class NexusData(object):
         if has_errors:
             raise RuntimeError(detailed_msg)
 
-    def recreate_workspaces(self, data_type: NexusDataType):
+    def clone_and_rename_event_workspaces(self, data_type: NexusDataType):
         """Clone and rename cross-section workspaces in Mantid data service.
 
         Typically used when adding a NexusData object to a direct beam or reduction list
@@ -971,7 +971,7 @@ class NexusData(object):
         Parameters
         ----------
         data_type: NexusDataType
-            The type of data to recreate workspaces for (i.e. reflected, direct-beam, or unknown)
+            The type of data to clone and rename workspaces for (i.e. reflected, direct-beam, or unknown)
         """
         for xs in self.cross_sections:
             try:
@@ -987,11 +987,15 @@ class NexusData(object):
                 elif current_name.endswith("_UNKNOWN"):
                     current_name = current_name[: -len("_UNKNOWN")]
                 new_name = f"{current_name}_{data_type.name}"
+                # Existing workspaces from prior loads/tests can cause clone collisions.
+                # Replace stale entries so the expected name is always assigned.
+                if str(new_name) in api.mtd:
+                    api.DeleteWorkspace(new_name)
                 api.CloneWorkspace(current_name, OutputWorkspace=new_name)
                 self.cross_sections[xs]._event_workspace = new_name
                 logging.info(f"Cloned workspace {current_name} to {new_name} for {xs}")
             except Exception as err:
-                logging.error(f"Could not recreate workspaces for {xs}: {err}")
+                logging.error(f"Could not clone and rename workspaces for {xs}: {err}")
 
     def update_configuration(self, configuration):
         """Update the configuration for all cross sections."""
