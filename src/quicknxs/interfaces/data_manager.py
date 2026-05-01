@@ -316,7 +316,7 @@ class DataManager(object):
         int | None:
             The index within the direct beam list or none.
         """
-        return self.find_run_number_in_direct_beam_list(self._nexus_data)
+        return self.find_data_in_direct_beam_list(self._nexus_data)
 
     def _insert_into_reduction_list_by_q(self, nexus_data: NexusData, reduction_list: list[NexusData]) -> bool:
         """Insert NexusData into reduction list in ascending Q order.
