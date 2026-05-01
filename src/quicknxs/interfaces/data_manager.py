@@ -178,7 +178,7 @@ class DataManager(object):
 
     def is_active(self, data_set: NexusData):
         """Check if the given data set is the active data set."""
-        return data_set.number == self._nexus_data.number
+        return data_set == self._nexus_data
 
     def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: list[NexusData]) -> bool:
         """Determine if the data set is compatible with the data sets in the reduction list.
@@ -306,7 +306,7 @@ class DataManager(object):
         int | None:
             The index within the reduction list or none.
         """
-        return self.find_run_number_in_reduction_list(self._nexus_data)
+        return self.find_data_in_reduction_list(self._nexus_data)
 
     def find_active_direct_beam_id(self) -> int | None:
         """Look for the active data in the direct beam list.
@@ -395,9 +395,12 @@ class DataManager(object):
 
         if self._nexus_data.is_direct_beam():
             logging.warning(f"Run {nexus_data.number} was added to the reduction list but is labeled as a direct beam.")
-            return AddToReductionResult.SUCCESS_DIRECT_BEAM
+            result = AddToReductionResult.SUCCESS_DIRECT_BEAM
         else:
-            return AddToReductionResult.SUCCESS
+            result = AddToReductionResult.SUCCESS
+
+        self._nexus_data = nexus_data
+        return result
 
     def copy_nexus_data_to_reduction(self, nexus_data_to_copy: NexusData, peak_index: int):
         """Add data set to the reduction list specified by `peak_index`.
@@ -452,13 +455,16 @@ class DataManager(object):
         self.direct_beam_list.append(nexus_data)
 
         if self._nexus_data.is_direct_beam():
-            return AddToDirectBeamResult.SUCCESS
+            result = AddToDirectBeamResult.SUCCESS
         else:
             logging.warning(
                 f"Run {self._nexus_data.number} was added to the direct beam list but is not labeled as a direct beam "
                 "(data_type PV ≠ 1). This run may have been started with 'Start RUN' command."
             )
-            return AddToDirectBeamResult.SUCCESS_REFLECTED
+            result = AddToDirectBeamResult.SUCCESS_REFLECTED
+
+        self._nexus_data = nexus_data
+        return result
 
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list.

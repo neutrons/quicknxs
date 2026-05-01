@@ -1157,7 +1157,7 @@ class MainHandler:
             self.update_reduction_table(table_widget, idx, active_cross_section)
 
         # Update the direct beam table if this data set is in it
-        idx = self._data_manager.find_run_number_in_direct_beam_list(refl)
+        idx = self._data_manager.find_data_in_direct_beam_list(refl)
         if idx is not None:
             cross_sections = list(refl.cross_sections.keys())
             self.update_direct_beam_table(idx, refl.cross_sections[cross_sections[0]])
