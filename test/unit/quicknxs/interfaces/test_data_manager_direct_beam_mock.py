@@ -12,8 +12,8 @@ from quicknxs.interfaces.enums import AddToDirectBeamResult, NexusDataType
 class TestDirectBeamFeatureMocked:
     """Test the feature that allows adding any run as a direct beam using mocks."""
 
-    def test_add_non_direct_beam_run_returns_1(self):
-        """Test that adding a non-direct-beam run returns 1."""
+    def test_add_non_direct_beam_run(self):
+        """Test that adding a non-direct-beam run returns correct result."""
         manager = DataManager("/tmp")
 
         # Create a mock NexusData that is NOT a direct beam
@@ -32,8 +32,8 @@ class TestDirectBeamFeatureMocked:
         # It should be a different object (deepcopied)
         assert manager.direct_beam_list[0] is not mock_nexus
 
-    def test_add_true_direct_beam_run_returns_2(self):
-        """Test that adding a true direct beam run returns 2."""
+    def test_add_true_direct_beam_run(self):
+        """Test that adding a true direct beam run returns correct result."""
         manager = DataManager("/tmp")
 
         # Create a mock NexusData that IS a direct beam

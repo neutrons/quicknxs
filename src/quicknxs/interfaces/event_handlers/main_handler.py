@@ -1399,7 +1399,7 @@ class MainHandler:
         """
         if self._data_manager.active_cross_section is None:
             return
-        logging.info(f"Active data changed to {self._data_manager.active_cross_section.number}")
+        logging.info(f"Active data changed to {self._data_manager.active_cross_section._event_workspace}")
         # If we update an entry, it's because that data is currently active.
         # Highlight it and un-highlight the other ones.
         self.main_window.auto_change_active = True
