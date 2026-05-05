@@ -101,7 +101,6 @@ class ProcessingWorkflow(object):
             # Process off-specular if any off-spec output is requested
             if (
                 self.output_options["export_offspec"]
-                or self.output_options["export_offspec_smooth"]
                 or self.output_options.get("apply_smoothing", False)
                 or self.output_options.get("export_offspec_slices", False)
             ):
@@ -109,7 +108,6 @@ class ProcessingWorkflow(object):
                     progress(20, "Computing off-specular reflectivity")
                 self.offspec(
                     raw=self.output_options["export_offspec"],
-                    binned=self.output_options["export_offspec_smooth"],
                     smooth=self.output_options.get("apply_smoothing", False),
                     slices=self.output_options.get("export_offspec_slices", False),
                 )
