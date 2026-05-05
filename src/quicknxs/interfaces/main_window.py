@@ -529,20 +529,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.file_handler.get_configuration_from_ui()
 
             # Make sure the off-specular has been calculated if needed
-            if (
-                output_options.get("apply_smoothing", False)
-                or output_options.get("export_offspec_smooth", False)
-                or output_options.get("export_offspec_slices", False)
-            ):
+            if output_options.get("apply_smoothing", False) or output_options.get("export_offspec_slices", False):
                 self.file_handler.compute_offspec_on_change()
 
             # Show combined parameters dialog when smoothing or binned output is requested
             show_smoothing = output_options.get("apply_smoothing", False)
-            show_binning = output_options.get("export_offspec_smooth", False)
 
-            if show_smoothing or show_binning:
+            if show_smoothing:
                 dia = OffSpecParametersDialog(
-                    self, self.data_manager, show_smoothing=show_smoothing, show_binning=show_binning
+                    self,
+                    self.data_manager,
+                    show_smoothing=show_smoothing,
                 )
                 if not dia.exec_():
                     logging.info("Skipping off-specular parameters")
