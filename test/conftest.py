@@ -262,8 +262,10 @@ def main_window_with_mock_runs(qtbot, mocker, tmp_path):
     # Bypass the plotting machinery triggered by both call paths into file_loaded:
     # - MainWindow.file_loaded() is called by set_active_reduction_data / set_active_direct_beam
     # - MainHandler.file_loaded() is called directly by open_file (via file_open_from_list)
-    mocker.patch.object(main_window, "file_loaded")
-    # Retain only the call to active_data_changed to ensure the radio button state is updated
+    # Retain only the call to active_data_changed to ensure the radio button state is updated.
+    # MainWindow.file_loaded -> MainHandler.file_loaded -> active_data_changed in production;
+    # both are patched here to skip plotting but preserve the active_data_changed side effect.
+    mocker.patch.object(main_window, "file_loaded", side_effect=handler.active_data_changed)
     mocker.patch.object(handler, "file_loaded", side_effect=handler.active_data_changed)
 
     # Populate the reduction table with the mock runs

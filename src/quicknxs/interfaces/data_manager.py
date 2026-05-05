@@ -545,7 +545,11 @@ class DataManager(object):
 
         # Search through current reduction list, direct beam list, and cache for the file path.
         # If found and force is False, the matching data will become the active data in the UI.
-        nexus_data_search = set(self.reduction_list + self.direct_beam_list + self._cache)
+        # Cache entries are iterated last so they take priority over reduction/direct beam list copies
+        # that share the same file_path (e.g. deep copies created when adding a run to multiple lists).
+        # This prevents force-reloading from accidentally replacing a direct beam list entry with a
+        # freshly-loaded object that lacks the _DIRECT_BEAM workspace suffix.
+        nexus_data_search = self.reduction_list + self.direct_beam_list + self._cache
         file_paths_in_search_list = {data.file_path: data for data in nexus_data_search}
         if file_path in file_paths_in_search_list:
             logging.info(f"DataManager.load: found {file_path} in cache of previously loaded data")

@@ -323,7 +323,6 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.data_manager.set_active_data_from_reduction_list(row)
         self.file_loaded()
-        self.file_handler.active_data_changed()
 
     def reductionTableChanged(self, item):
         """Perform action upon change in data reduction list."""
@@ -339,7 +338,6 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.data_manager.set_active_data_from_direct_beam_list(row)
         self.file_loaded()
-        self.file_handler.active_data_changed()
 
     def direct_beam_table_right_click(self, pos: QtCore.QPoint):
         """Handle right-click on the direct beam table."""
@@ -515,7 +513,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if self.data_manager.data_sets:
             self.file_loaded()
-            self.file_handler.active_data_changed()
 
     ### End of data tab management
 
