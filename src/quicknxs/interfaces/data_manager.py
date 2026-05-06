@@ -545,7 +545,7 @@ class DataManager(object):
 
         # Search through current reduction list, direct beam list, and cache for the file path.
         # If found and force is False, the matching data will become the active data in the UI.
-        # Cache entries are iterated last so they take priority over reduction/direct beam list copies
+        # Cache entries are iterated last so they don't take priority over reduction/direct beam list copies
         # that share the same file_path (e.g. deep copies created when adding a run to multiple lists).
         # This prevents force-reloading from accidentally replacing a direct beam list entry with a
         # freshly-loaded object that lacks the _DIRECT_BEAM workspace suffix.

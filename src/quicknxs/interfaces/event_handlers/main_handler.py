@@ -869,7 +869,7 @@ class MainHandler:
         # Reduction list has been updated at this point - now update the UI
         self.main_window.auto_change_active = True
 
-        idx = self._data_manager.find_run_number_in_reduction_list(self._data_manager._nexus_data)
+        idx = self._data_manager.find_data_in_reduction_list(self._data_manager._nexus_data)
         if idx is None:
             raise RuntimeError(
                 "We just added this data to the reduction list, so it should be there! Something went wrong"
