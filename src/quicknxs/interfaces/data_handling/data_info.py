@@ -29,7 +29,6 @@ class DataInfo(object):
         self.cross_section = cross_section
         self.run_number = ws.getRunNumber()
         self.is_direct_beam = False
-        self.data_type = 1
         self.peak_position = 0
         self.peak_range = [0, 0]
         self.low_res_range = [0, 0]
@@ -201,7 +200,6 @@ class DataInfo(object):
         """Inspect the data and determine peak locations and data type."""
         # Skip empty data entries
         if ws.getNumberEvents() < self.n_events_cutoff:
-            self.data_type = -1
             logging.info("No data for %s %s" % (self.run_number, self.cross_section))
             return
 
@@ -259,10 +257,8 @@ class DataInfo(object):
         run_object = ws.getRun()
         try:
             self.is_direct_beam = run_object.getProperty("data_type").value[0] == 1
-            self.data_type = 0 if self.is_direct_beam else 1
         except:
             self.is_direct_beam = False
-            self.data_type = 1
 
 
 def chi2(data, model):

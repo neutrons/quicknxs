@@ -1,4 +1,12 @@
-from enum import IntEnum
+from enum import IntEnum, StrEnum, auto
+
+
+class NexusDataType(IntEnum):
+    """Types of data that can be loaded."""
+
+    REFLECTED = 0
+    DIRECT_BEAM = 1
+    UNDEFINED = -1
 
 
 class ReductionTableColumn(IntEnum):
@@ -35,3 +43,23 @@ class DirectBeamTableColumn(IntEnum):
     BCK_POSITION = 6
     BCK_WIDTH = 7
     WAVELENGTH = 8
+
+
+class AddToReductionResult(StrEnum):
+    """Result codes for adding a run to the reduction list."""
+
+    SUCCESS = auto()
+    SUCCESS_DIRECT_BEAM = auto()
+    ALREADY_IN_LIST = auto()
+    INCOMPATIBLE = auto()
+    OTHER_ERROR = auto()
+
+
+class AddToDirectBeamResult(StrEnum):
+    """Result codes for adding a run to the direct beam list."""
+
+    SUCCESS = auto()
+    SUCCESS_REFLECTED = auto()
+    ALREADY_IN_LIST = auto()
+    INCOMPATIBLE = auto()
+    OTHER_ERROR = auto()

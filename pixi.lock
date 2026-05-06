@@ -436,6 +436,7 @@ packages:
   - requests
   - semver <4
   constrains:
+  - conda >=23.9.0
   - anaconda-cloud-auth >=0.8
   - conda >=23.9.0
   - conda-token >=0.7.0
@@ -1456,7 +1457,6 @@ packages:
   - libstdcxx >=14
   - libzlib >=1.3.2,<2.0a0
   license: MIT
-  license_family: MIT
   purls: []
   size: 2333599
   timestamp: 1776778392713
@@ -1699,7 +1699,6 @@ packages:
   - backports.tarfile
   - python
   license: MIT
-  license_family: MIT
   purls:
   - pkg:pypi/jaraco-context?source=compressed-mapping
   size: 16222
@@ -4362,8 +4361,8 @@ packages:
   timestamp: 1743692373820
 - pypi: ./
   name: quicknxs
-  version: 4.18.0.dev20260505003518
-  sha256: 87e2a0c24dc3e13035b9186304002cc3508ba40ce0046036d445dbf5455ad949
+  version: 4.18.0.dev20260505211005
+  sha256: 42a3e9add16133540662a6d9612ee0bb1481173b1fe6b3fab28c3611be439487
   requires_python: '>=3.10,<3.13'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/rapidjson-1.1.0.post20240409-h3f2d84a_2.conda
   sha256: f87f265263a1ddbc50b98e2c2bcaa2bac63da3acc09267815dd0f4bd614cd902
@@ -5123,6 +5122,7 @@ packages:
   - typing_extensions >=4.13.2
   - python
   license: MIT
+  license_family: MIT
   purls:
   - pkg:pypi/virtualenv?source=compressed-mapping
   size: 5154970

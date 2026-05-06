@@ -1,6 +1,7 @@
 # pylint: disable=too-many-locals, too-many-arguments
 """Class to execute and hold the off-specular reflectivity calculation."""
 
+from typing import Type
 import logging
 from functools import reduce
 from multiprocessing import Pool
@@ -47,7 +48,13 @@ class OffSpecular(object):
         """
         # TODO: correct for detector sensitivity
         x_pos = self.data_set.configuration.peak_position
-        scale = 1.0 / self.data_set.proton_charge
+        if self.data_set.proton_charge > 0:
+            scale = 1.0 / self.data_set.proton_charge
+        else:
+            logging.warning(
+                f"Proton charge is zero - not calculating off-specular reflectivity for {self.data_set.number} {self.data_set.entry_name}."
+            )
+            return
 
         # Range in low-res direction
         y_min, y_max = self.data_set.configuration.low_res_roi
@@ -147,24 +154,29 @@ def merge(reduction_list: List["NexusData"], pol_state: str) -> Tuple[np.ndarray
         offspec = item.cross_sections[pol_state].off_spec
         Qx, Qz, ki_z, kf_z, S, dS = (offspec.Qx, offspec.Qz, offspec.ki_z, offspec.kf_z, offspec.S, offspec.dS)
 
-        n_total = len(S[0])
-        p_0 = item.cross_sections[pol_state].configuration.cut_first_n_points
-        p_n = n_total - item.cross_sections[pol_state].configuration.cut_last_n_points
+        try:
+            n_total = len(S[0])
+            p_0 = item.cross_sections[pol_state].configuration.cut_first_n_points
+            p_n = n_total - item.cross_sections[pol_state].configuration.cut_last_n_points
 
-        # NOTE: need to unravel the arrays from [TOF][pixel] to [q_points]
-        Qx = np.ravel(Qx[:, p_0:p_n])
-        Qz = np.ravel(Qz[:, p_0:p_n])
-        ki_z = np.ravel(ki_z[:, p_0:p_n])
-        kf_z = np.ravel(kf_z[:, p_0:p_n])
-        S = np.ravel(S[:, p_0:p_n])
-        dS = np.ravel(dS[:, p_0:p_n])
+            # NOTE: need to unravel the arrays from [TOF][pixel] to [q_points]
+            Qx = np.ravel(Qx[:, p_0:p_n])
+            Qz = np.ravel(Qz[:, p_0:p_n])
+            ki_z = np.ravel(ki_z[:, p_0:p_n])
+            kf_z = np.ravel(kf_z[:, p_0:p_n])
+            S = np.ravel(S[:, p_0:p_n])
+            dS = np.ravel(dS[:, p_0:p_n])
 
-        _qx = np.concatenate((_qx, Qx))
-        _qz = np.concatenate((_qz, Qz))
-        _ki_z = np.concatenate((_ki_z, ki_z))
-        _kf_z = np.concatenate((_kf_z, kf_z))
-        _s = np.concatenate((_s, S))
-        _ds = np.concatenate((_ds, dS))
+            _qx = np.concatenate((_qx, Qx))
+            _qz = np.concatenate((_qz, Qz))
+            _ki_z = np.concatenate((_ki_z, ki_z))
+            _kf_z = np.concatenate((_kf_z, kf_z))
+            _s = np.concatenate((_s, S))
+            _ds = np.concatenate((_ds, dS))
+        except TypeError:
+            logging.warning(
+                f"Off-specular data for {pol_state} in run {item.number} is not available, skipping this run."
+            )
 
     return _qx, _qz, _ki_z, _kf_z, _ki_z - _kf_z, _s, _ds
 
