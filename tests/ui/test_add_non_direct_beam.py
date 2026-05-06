@@ -37,7 +37,7 @@ def test_add_non_direct_beam_run_shows_warning(qtbot, data_server, mocker):
 
     # Verify that a warning message was shown (non-blocking, so pop_up=False)
     # report_message is called multiple times (for file loading too), so check for the warning call
-    warning_calls = [call for call in mock_report.call_args_list if "not labeled as a direct beam" in str(call)]
+    warning_calls = [call for call in mock_report.call_args_list if "labeled as a reflected beam" in str(call)]
     assert len(warning_calls) == 1
     # Check the warning message content
     warning_call = warning_calls[0]
@@ -100,8 +100,8 @@ def test_non_direct_beam_can_normalize_scattering_data(qtbot, data_server):
     # Verify the reduction list has the correct direct beam set
     run_in_reduction = window_main.data_presenter.reduction_list[0]
     assert (
-        run_in_reduction.cross_sections[list(run_in_reduction.cross_sections.keys())[0]].configuration.direct_beam
-        == "42112"
+        int(run_in_reduction.cross_sections[list(run_in_reduction.cross_sections.keys())[0]].configuration.direct_beam)
+        == 42112
     )
 
 

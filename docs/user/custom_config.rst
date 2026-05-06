@@ -25,7 +25,6 @@ The following parameters are used in the reduction dialog and can be customized 
   export_asym             boolean   Export spin-asymmetry
   export_gisans           boolean   Export GISANS data
   export_offspec          boolean   Export raw off-specular data
-  export_offspec_smooth   boolean   Export binned off-specular data
   export_specular         boolean   Export specular reflectivity
   format_5cols            boolean   Include theta column in output file(s)
   format_mantid           boolean   Export Mantid script

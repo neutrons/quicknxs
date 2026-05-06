@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from qtpy import QtCore, QtWidgets
 
 from quicknxs import __version__ as quicknxs_version
+from quicknxs.models.processing_workflow import ProcessingWorkflow
 from quicknxs.presenters.configuration_handler import ConfigurationHandler
 from quicknxs.presenters.data_presenter import DataPresenter
 from quicknxs.presenters.main_presenter import MainPresenter
@@ -301,8 +302,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     try:
                         self.data_presenter.calculate_reflectivity(configuration=configuration, active_only=active_only)
                     except Exception:
-                        self.file_handler.report_message("There was a problem updating the reflectivity", pop_up=False)
-                        logging.error("There was a problem updating the reflectivity")
+                        self.file_handler.report_message(
+                            "There was a problem updating the reflectivity", pop_up=False, is_error=True
+                        )
                 self.initiate_reflectivity_or_intensity_plot.emit()
                 self.update_specular_viewer.emit()
 
@@ -321,7 +323,6 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.data_presenter.set_active_data_from_reduction_list(row)
         self.file_loaded()
-        self.file_handler.active_data_changed()
 
     def reductionTableChanged(self, item):
         """Perform action upon change in data reduction list."""
@@ -337,7 +338,6 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.data_presenter.set_active_data_from_direct_beam_list(row)
         self.file_loaded()
-        self.file_handler.active_data_changed()
 
     def direct_beam_table_right_click(self, pos: QtCore.QPoint):
         """Handle right-click on the direct beam table."""
@@ -398,8 +398,9 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 self.data_presenter.calculate_reflectivity()
             except Exception:
-                self.file_handler.report_message("There was a problem updating the reflectivity", pop_up=False)
-                logging.error("There was a problem updating the reflectivity")
+                self.file_handler.report_message(
+                    "There was a problem updating the reflectivity", pop_up=False, is_error=True
+                )
 
             self.initiate_reflectivity_or_intensity_plot.emit()
 
@@ -485,17 +486,20 @@ class MainWindow(QtWidgets.QMainWindow):
     def reset_data_tabs(self):
         """Reset UI to one visible data tab."""
         self.min_data_tab_count = 1
-        self.max_data_tab_count = 4
+        self.max_data_tab_count = max(self.min_data_tab_count, self.ui.tabWidget.count() - 1)
         self.data_tab_count = 1
 
         # Initially enable the add button and disable the remove button
         self.ui.addTabButton.setEnabled(True)
         self.ui.removeTabButton.setEnabled(False)
 
+        # Ensure the current tab remains visible while hiding the optional peak tabs.
+        if self.ui.tabWidget.currentIndex() > self.data_tab_count:
+            self.ui.tabWidget.setCurrentIndex(self.data_tab_count)
+
         # Initially hide the tabs used for multiple peaks
-        self.ui.tabWidget.setTabVisible(2, False)
-        self.ui.tabWidget.setTabVisible(3, False)
-        self.ui.tabWidget.setTabVisible(4, False)
+        for tab_index in range(self.data_tab_count + 1, self.ui.tabWidget.count()):
+            self.ui.tabWidget.setTabVisible(tab_index, False)
 
     def current_table_changed(self, tab_index: int):
         """Update the state for active data set and the UI."""
@@ -509,7 +513,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if self.data_presenter.data_sets:
             self.file_loaded()
-            self.file_handler.active_data_changed()
 
     ### End of data tab management
 
@@ -528,20 +531,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.file_handler.get_configuration_from_ui()
 
             # Make sure the off-specular has been calculated if needed
-            if (
-                output_options.get("apply_smoothing", False)
-                or output_options.get("export_offspec_smooth", False)
-                or output_options.get("export_offspec_slices", False)
-            ):
+            if output_options.get("apply_smoothing", False) or output_options.get("export_offspec_slices", False):
                 self.file_handler.compute_offspec_on_change()
 
             # Show combined parameters dialog when smoothing or binned output is requested
             show_smoothing = output_options.get("apply_smoothing", False)
-            show_binning = output_options.get("export_offspec_smooth", False)
 
-            if show_smoothing or show_binning:
+            if show_smoothing:
                 dia = OffSpecParametersDialog(
-                    self, self.data_presenter, show_smoothing=show_smoothing, show_binning=show_binning
+                    self,
+                    self.data_presenter,
+                    show_smoothing=show_smoothing,
                 )
                 if not dia.exec_():
                     logging.info("Skipping off-specular parameters")
@@ -568,8 +568,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # If we want to save images, we just need to cycle through
             # and call: self.canvas.print_figure(unicode(fname[0]))
-            from ..data_handling.processing_workflow import ProcessingWorkflow
-
             wrk = ProcessingWorkflow(self.data_presenter, output_options)
             wrk.execute(self.file_handler.new_progress_reporter())
 

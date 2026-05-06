@@ -500,6 +500,7 @@ class PlotView(object):
                     k_diff_max = max(k_diff_max, (ki_z - kf_z)[S > 0].max())
                 except:
                     logging.error("Error computing ranges: %s", sys.exc_info()[1])
+                    continue
                 if self.main_window.ui.kizmkfzVSqz.isChecked():
                     plot.pcolormesh(
                         (ki_z - kf_z)[:, P0:PN],
@@ -533,6 +534,7 @@ class PlotView(object):
                         cmap=self.color,
                         shading="gouraud",
                     )
+        # Set axes labels and limits after after plotting
         for i, xs in enumerate(data_set_keys):
             plot = plots[i]
             if self.main_window.ui.kizmkfzVSqz.isChecked():

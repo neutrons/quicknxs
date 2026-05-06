@@ -12,6 +12,7 @@ def _initialize_test_data(main_window):
     nexus_data = NexusData("file/path", config)
     off_off = CrossSectionData("Off_Off", config)
     on_off = CrossSectionData("On_Off", config)
+    nexus_data.main_cross_section = "Off_Off"
     nexus_data.cross_sections["Off_Off"] = off_off
     nexus_data.cross_sections["On_Off"] = on_off
     main_window.data_presenter._nexus_data = nexus_data

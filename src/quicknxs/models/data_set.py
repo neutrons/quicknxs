@@ -13,7 +13,7 @@ import numpy as np
 from mantid.dataobjects import Workspace2D
 from scipy.constants import h, m_n
 
-from quicknxs.enums import BinningType
+from quicknxs.enums import BinningType, NexusDataType
 from quicknxs.exceptions import CrossSectionError
 from quicknxs.models.configuration import Configuration, get_direct_beam_low_res_roi
 from quicknxs.models.data_info import DataInfo
@@ -644,7 +644,8 @@ class CrossSectionData(object):
         if direct_beam:
             direct_beam.prepare_plot_data()
         self.off_spec = OffSpecular(self)
-        return self.off_spec(direct_beam)
+        self.off_spec(direct_beam)
+        return
 
     def gisans(self, direct_beam: Optional["CrossSectionData"] = None):
         """Compute GISANS.
@@ -686,7 +687,7 @@ class NexusData(object):
         self.number: str = ""  # can be a single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.configuration = configuration
         self.cross_sections: Dict[str, CrossSectionData] = {}
-        self.main_cross_section: str = None
+        self.main_cross_section: str | None = None
         self.slice: int = 0  # slice index for multiple slices per run (default 0)
 
     def get_highest_cross_section(self, n_points=10):
@@ -741,7 +742,7 @@ class NexusData(object):
         return None
 
     def set_parameter(self, param, value):
-        """Loop through the cross-section data sets and update a parameter."""
+        """Loop through the cross-section data sets and update a configuration parameter."""
         has_changed = False
         try:
             for xs in self.cross_sections:
@@ -957,6 +958,41 @@ class NexusData(object):
         if has_errors:
             raise RuntimeError(detailed_msg)
 
+    def clone_and_rename_event_workspaces(self, data_type: NexusDataType):
+        """Clone and rename cross-section workspaces in Mantid data service.
+
+        Typically used when adding a NexusData object to a direct beam or reduction list
+        to ensure that the workspaces have unique names in the Mantid data service.
+
+        Parameters
+        ----------
+        data_type: NexusDataType
+            The type of data to clone and rename workspaces for (i.e. reflected, direct-beam, or unknown)
+        """
+        for xs in self.cross_sections:
+            try:
+                current_name = self.cross_sections[xs]._event_workspace
+                if current_name is None:
+                    logging.warning(f"No event workspace for {xs}, skipping workspace recreation")
+                    continue
+                # if current name already has _REFLECTED, _DIRECT_BEAM, or _UNKNOWN suffix, remove it before adding the new suffix
+                if current_name.endswith("_REFLECTED"):
+                    current_name = current_name[: -len("_REFLECTED")]
+                elif current_name.endswith("_DIRECT_BEAM"):
+                    current_name = current_name[: -len("_DIRECT_BEAM")]
+                elif current_name.endswith("_UNKNOWN"):
+                    current_name = current_name[: -len("_UNKNOWN")]
+                new_name = f"{current_name}_{data_type.name}"
+                # Existing workspaces from prior loads/tests can cause clone collisions.
+                # Replace stale entries so the expected name is always assigned.
+                if str(new_name) in api.mtd:
+                    api.DeleteWorkspace(new_name)
+                api.CloneWorkspace(current_name, OutputWorkspace=new_name)
+                self.cross_sections[xs]._event_workspace = new_name
+                logging.info(f"Cloned workspace {current_name} to {new_name} for {xs}")
+            except Exception as err:
+                logging.error(f"Could not clone and rename workspaces for {xs}: {err}")
+
     def update_configuration(self, configuration):
         """Update the configuration for all cross sections."""
         for xs in self.cross_sections:
@@ -1054,7 +1090,10 @@ class NexusData(object):
         return self.cross_sections[self.main_cross_section].is_direct_beam
 
     def set_is_direct_beam(self, is_direct_beam: bool):
-        """Sets the value of `is_direct_beam` for all cross-sections."""
+        """Sets the value of `is_direct_beam` for all cross-sections.
+
+        Note that this changes the value on the cross-sections directly, not in the configuration.
+        """
         for xs in self.cross_sections:
             self.cross_sections[xs].is_direct_beam = is_direct_beam
 

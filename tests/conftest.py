@@ -71,7 +71,7 @@ Instrument.file_search_template = str(Path(__file__).parent / "data" / "quicknxs
 def data_server(DATA_DIR):
     r"""Object containing info and functionality for data files."""
 
-    class _DataServe(object):
+    class _DataServer(object):
         _directory = str(DATA_DIR)
         _h5_path = "quicknxs-data"
 
@@ -123,7 +123,7 @@ def data_server(DATA_DIR):
 
             return file_list
 
-    return _DataServe()
+    return _DataServer()
 
 
 @pytest.fixture
@@ -224,19 +224,24 @@ def main_window_with_mock_runs(qtbot, mocker, tmp_path):
 
     run_a = NexusData(str(tmp_path / "REF_M_40785.nxs.h5"), config)
     run_a.cross_sections["Off_Off"] = xs
+    run_a.number = "40785"
 
     # run created with Open & Sum Multiple Files
     run_b = NexusData(str(tmp_path / "REF_M_40782.nxs.h5") + "+" + str(tmp_path / "REF_M_40785.nxs.h5"), config)
     run_b.cross_sections["Off_Off"] = xs
+    run_b.number = "40782"
 
     run_c = NexusData(str(tmp_path / "REF_M_40782.nxs.h5"), config)
     run_c.cross_sections["Off_Off"] = xs
+    run_c.number = "40782"
 
     run_db = NexusData(str(tmp_path / "REF_M_40786.nxs.h5"), config)
     run_db.cross_sections["Off_Off"] = xs
+    run_db.number = "40786"
 
     run_db2 = NexusData(str(tmp_path / "REF_M_40787.nxs.h5"), config)
     run_db2.cross_sections["Off_Off"] = xs
+    run_db2.number = "40787"
 
     main_window = MainWindow()
     qtbot.addWidget(main_window)
@@ -256,9 +261,11 @@ def main_window_with_mock_runs(qtbot, mocker, tmp_path):
 
     # Bypass the plotting machinery triggered by both call paths into file_loaded:
     # - MainWindow.file_loaded() is called by set_active_reduction_data / set_active_direct_beam
-    # - MainPresenter.file_loaded() is called directly by open_file (via file_open_from_list)
-    mocker.patch.object(main_window, "file_loaded")
-    # Retain only the call to active_data_changed to ensure the radio button state is updated
+    # - MainHandler.file_loaded() is called directly by open_file (via file_open_from_list)
+    # Retain only the call to active_data_changed to ensure the radio button state is updated.
+    # MainWindow.file_loaded -> MainHandler.file_loaded -> active_data_changed in production;
+    # both are patched here to skip plotting but preserve the active_data_changed side effect.
+    mocker.patch.object(main_window, "file_loaded", side_effect=handler.active_data_changed)
     mocker.patch.object(handler, "file_loaded", side_effect=handler.active_data_changed)
 
     # Populate the reduction table with the mock runs

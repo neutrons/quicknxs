@@ -14,7 +14,13 @@ from qtpy import QtCore, QtWidgets
 
 from quicknxs.config import OPEN_SUM_TOLERANCES
 from quicknxs.config.gui import QColors
-from quicknxs.enums import BinningType, DirectBeamTableColumn, ReductionTableColumn
+from quicknxs.enums import (
+    AddToDirectBeamResult,
+    AddToReductionResult,
+    BinningType,
+    DirectBeamTableColumn,
+    ReductionTableColumn,
+)
 from quicknxs.exceptions import CrossSectionError, NormalizeToUnityQCutoffError
 from quicknxs.models.configuration import Configuration
 from quicknxs.models.data_set import CrossSectionData, NexusData
@@ -841,15 +847,28 @@ class MainPresenter:
             self._data_presenter.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        if not self._data_presenter.add_active_to_reduction():
+        result = self._data_presenter.add_active_to_reduction()
+        match result:
+            case AddToReductionResult.ALREADY_IN_LIST:
+                msg = "Data already in the list."
+            case AddToReductionResult.INCOMPATIBLE:
+                msg = "This data is incompatible with existing data in the list."
+            case AddToReductionResult.OTHER_ERROR:
+                msg = "Something went wrong - could not add data."
+
+        if result not in [AddToReductionResult.SUCCESS, AddToReductionResult.SUCCESS_DIRECT_BEAM]:
             if not silent:
-                self.report_message("(Add reflectivity) Data incompatible or already in the list.", pop_up=True)
+                self.report_message(msg, pop_up=True)
             return False
+
+        # Reduction list has been updated at this point - now update the UI
         self.main_window.auto_change_active = True
 
         idx = self._data_presenter.find_data_in_reduction_list(self._data_presenter._nexus_data)
         if idx is None:
-            raise RuntimeError("It could be None but not likely")
+            raise RuntimeError(
+                "We just added this data to the reduction list, so it should be there! Something went wrong"
+            )
         self.ui.reductionTable.insertRow(idx)
         self.update_tables()
 
@@ -887,7 +906,9 @@ class MainPresenter:
                 button_group.removeButton(old_btn)
 
         # radio button for active data (layout inside a widget to center it)
-        radio_widget = ActiveDataRadioButton(self, is_active=(data == self._data_presenter.active_cross_section), idx=idx)
+        radio_widget = ActiveDataRadioButton(
+            self, is_active=(data == self._data_presenter.active_cross_section), idx=idx
+        )
         button_group.addButton(radio_widget.radio_button)
         table_widget.setCellWidget(idx, ReductionTableColumn.ACTIVE, radio_widget)
 
@@ -1061,7 +1082,7 @@ class MainPresenter:
                     self.main_window.auto_change_active = True
                     item.setText("none")
                     self.main_window.auto_change_active = False
-                    # TODO: reset dpix overwrite to DAS value? (Glass)
+                    # TODO (Glass): reset dpix overwrite to DAS value?
 
             case ReductionTableColumn.Q_STEPS:
                 try:
@@ -1163,24 +1184,24 @@ class MainPresenter:
             self._data_presenter.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        add_result = self._data_presenter.add_active_to_direct_beam_list()
-
-        if add_result == 0:
-            # Run was not added (already in the list)
-            if not silent:
-                self.report_message("(Add direct beam) Data already in the list.", pop_up=True)
-            return False
-        elif add_result == 1:
-            # Run was added but is not a true direct beam
-            if not silent:
-                self.report_message(
-                    f"Run {self._data_presenter._nexus_data.number} added to direct beam list.\n\n"
-                    "Note: This run is not labeled as a direct beam in the metadata "
+        result = self._data_presenter.add_active_to_direct_beam_list()
+        _pop_up = False
+        match result:
+            case AddToDirectBeamResult.ALREADY_IN_LIST:
+                msg = "(Add direct beam) Data already in the list."
+                _pop_up = True
+            case AddToDirectBeamResult.SUCCESS_REFLECTED:
+                msg = (
+                    f"Run {self._data_presenter._nexus_data.number} added to direct beam list."
+                    "Note: This run is labeled as a reflected beam in the metadata "
                     "(data_type PV ≠ 1). This may occur for runs started with 'Start RUN' "
-                    "command in EPICS.",
-                    pop_up=False,
+                    "command in EPICS."
                 )
-        # else: add_result == 2, run was added and is a true direct beam (no warning needed)
+            case AddToDirectBeamResult.SUCCESS:
+                msg = "(Add direct beam) Run added to the list."
+
+        if not silent:
+            self.report_message(msg, pop_up=_pop_up)
 
         # The direct beam list has been appended with a new direct beam - add it to the UI table
         direct_beam_count = len(self._data_presenter.direct_beam_list)
@@ -1324,7 +1345,8 @@ class MainPresenter:
             return
 
         try:
-            data.set_parameter(keys[col], float(item.text()))
+            new_value = float(item.text())
+            data.set_parameter(keys[col], new_value)
         except ValueError:
             self.report_message(
                 f"Invalid value for {keys[col]}:\n\t{item.text()}\nPlease enter a valid number.",
@@ -1374,7 +1396,7 @@ class MainPresenter:
         """
         if self._data_presenter.active_cross_section is None:
             return
-        logging.info(f"Active data changed to {self._data_presenter.active_cross_section.number}")
+        logging.info(f"Active data changed to {self._data_presenter.active_cross_section._event_workspace}")
         # If we update an entry, it's because that data is currently active.
         # Highlight it and un-highlight the other ones.
         self.main_window.auto_change_active = True
@@ -1454,7 +1476,7 @@ class MainPresenter:
                     if self._data_presenter.copy_nexus_data_to_reduction(nexus_data, ipeak):
                         # get widget for target reduction table
                         target_widget = self.get_reduction_table_by_index(ipeak)
-                        idx = self._data_presenter.find_run_number_in_reduction_list(nexus_data.number, peak_data)
+                        idx = self._data_presenter.find_run_number_in_reduction_list(nexus_data, peak_data)
                         if idx is None:
                             raise RuntimeError("Run number not in reduction list")
                         target_widget.insertRow(idx)
@@ -1864,14 +1886,11 @@ class MainPresenter:
                 is_error=True,
             )
         else:
-            for i in range(len(self._data_presenter.reduction_list)):
-                xs = self._data_presenter.active_cross_section.name
-                d = self._data_presenter.reduction_list[i].cross_sections[xs]
-                self.reduction_table.setItem(
-                    i,
-                    ReductionTableColumn.SCALE_FACTOR,
-                    QtWidgets.QTableWidgetItem("%.4f" % (d.configuration.scaling_factor)),
-                )
+            self.main_window.auto_change_active = True
+            xs_name = self._data_presenter.active_cross_section.name
+            for i, nexus_data in enumerate(self._data_presenter.reduction_list):
+                self.update_reduction_table(self.reduction_table, i, nexus_data.cross_sections[xs_name])
+            self.main_window.auto_change_active = False
 
             self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 

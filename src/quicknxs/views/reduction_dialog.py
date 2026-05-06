@@ -31,7 +31,6 @@ class ReductionDialog(QtWidgets.QDialog):
         self.ui.exportGISANS.setChecked(self._verify_true("export_gisans", False))
         self.ui.exportOffSpecular.setChecked(self._verify_true("export_offspec", False))
         self.ui.intensitySmoothingCheckbox.setChecked(self._verify_true("apply_smoothing", False))
-        self.ui.exportOffSpecularSmoothed.setChecked(self._verify_true("export_offspec_smooth", False))
         self.ui.exportOffSpecularSlices.setChecked(self._verify_true("export_offspec_slices", False))
 
         # Formats
@@ -72,7 +71,6 @@ class ReductionDialog(QtWidgets.QDialog):
             export_gisans=self.ui.exportGISANS.isChecked(),
             export_offspec=self.ui.exportOffSpecular.isChecked(),
             apply_smoothing=self.ui.intensitySmoothingCheckbox.isChecked(),
-            export_offspec_smooth=self.ui.exportOffSpecularSmoothed.isChecked(),
             export_offspec_slices=self.ui.exportOffSpecularSlices.isChecked(),
             format_matlab=self.ui.matlab.isChecked(),
             format_mantid=self.ui.mantid_script_checkbox.isChecked(),
@@ -112,7 +110,6 @@ class ReductionDialog(QtWidgets.QDialog):
         self.settings.setValue("export_gisans", self.ui.exportGISANS.isChecked())
         self.settings.setValue("export_offspec", self.ui.exportOffSpecular.isChecked())
         self.settings.setValue("apply_smoothing", self.ui.intensitySmoothingCheckbox.isChecked())
-        self.settings.setValue("export_offspec_smooth", self.ui.exportOffSpecularSmoothed.isChecked())
         self.settings.setValue("export_offspec_slices", self.ui.exportOffSpecularSlices.isChecked())
 
         # Save format checkboxes

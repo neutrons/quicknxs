@@ -1,4 +1,12 @@
-from enum import IntEnum
+from enum import IntEnum, StrEnum, auto
+
+
+class NexusDataType(IntEnum):
+    """Types of data that can be loaded."""
+
+    REFLECTED = 0
+    DIRECT_BEAM = 1
+    UNDEFINED = -1
 
 
 class BinningType(IntEnum):
@@ -58,3 +66,23 @@ class ReductionTableColumn(IntEnum):
     DIRECT_BEAM = 14
     BINNING_TYPE = 15
     Q_STEPS = 16
+
+
+class AddToReductionResult(StrEnum):
+    """Result codes for adding a run to the reduction list."""
+
+    SUCCESS = auto()
+    SUCCESS_DIRECT_BEAM = auto()
+    ALREADY_IN_LIST = auto()
+    INCOMPATIBLE = auto()
+    OTHER_ERROR = auto()
+
+
+class AddToDirectBeamResult(StrEnum):
+    """Result codes for adding a run to the direct beam list."""
+
+    SUCCESS = auto()
+    SUCCESS_REFLECTED = auto()
+    ALREADY_IN_LIST = auto()
+    INCOMPATIBLE = auto()
+    OTHER_ERROR = auto()

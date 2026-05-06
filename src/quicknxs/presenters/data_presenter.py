@@ -6,10 +6,12 @@ import logging
 import os
 import sys
 import time
-from typing import Callable, Dict, List, Optional, Set, Union
+from bisect import insort_left
+from typing import Callable, Set
 
 import numpy as np
 
+from quicknxs.enums import AddToDirectBeamResult, AddToReductionResult, NexusDataType
 from quicknxs.exceptions import CrossSectionError
 from quicknxs.models import Configuration, data_manipulation, gisans, quicknxs_io
 from quicknxs.models.data_set import CrossSectionData, NexusData
@@ -52,32 +54,32 @@ class DataPresenter(object):
 
     def __init__(self, current_directory: str):
         self.current_directory: str = current_directory
-        self._nexus_data: Optional[NexusData] = None
+        self._nexus_data: NexusData | None = None
 
-        self.active_cross_section: Optional[CrossSectionData] = None
+        self.active_cross_section: CrossSectionData | None = None
         self.active_reduction_list_index: int = 1
 
         # Main data structure holding the reduction list for each ROI/peak
         #    key: reduction list index, corresponds to the reduction table tab in the UI
         #    value: list of NexusData
-        self.peak_reduction_lists: Dict[int, List[NexusData]] = {self.active_reduction_list_index: []}
+        self.peak_reduction_lists: dict[int, list[NexusData]] = {self.active_reduction_list_index: []}
 
-        self.direct_beam_list: List[NexusData] = []
+        self.direct_beam_list: list[NexusData] = []
 
         # Track the last selected row index for each reduction table tab and the direct beam tab
         # This allows us to maintain the selection when switching between tabs
-        self.last_selected_reduction_row: Dict[int, int] = {}  # key: tab index, value: row index
+        self.last_selected_reduction_row: dict[int, int] = {}  # key: tab index, value: row index
         self.last_selected_direct_beam_row: int = 0
 
         # List of cross-sections common to all reduced data sets
-        self.reduction_states: List[str] = []
+        self.reduction_states: list[str] = []
 
         self.final_merged_reflectivity = {}
 
         # TODO: cache could be improved to be a dict or named tuple with file_path as key (Glass)
-        self._cache: List[NexusData] = list()
-        self.cached_offspec: Optional[dict] = None
-        self.cached_gisans: Optional[dict] = None
+        self._cache: list[NexusData] = list()
+        self.cached_offspec: dict | None = None
+        self.cached_gisans: dict | None = None
 
         # List of bad files that can't be loaded due to insufficient event count or other failure
         self.bad_files: Set[str] = set()
@@ -125,8 +127,8 @@ class DataPresenter(object):
         """Delete cached files that are not in the reduction list or direct beam list."""
 
         def is_used_in_reduction(f: NexusData):
-            return (self.find_data_in_reduction_list(f) is not None) or (
-                self.find_data_in_direct_beam_list(f) is not None
+            return (self.find_run_number_in_reduction_list(f) is not None) or (
+                self.find_run_number_in_direct_beam_list(f) is not None
             )
 
         self._cache[:] = [file for file in self._cache if is_used_in_reduction(file)]
@@ -176,7 +178,7 @@ class DataPresenter(object):
         """Check if the given data set is the active data set."""
         return data_set == self._nexus_data
 
-    def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: List[NexusData]) -> bool:
+    def is_nexus_data_compatible(self, nexus_data: NexusData, reduction_list: list[NexusData]) -> bool:
         """Determine if the data set is compatible with the data sets in the reduction list.
 
         A data set is compatible if the polarization cross-section states matches those of the
@@ -218,34 +220,46 @@ class DataPresenter(object):
                 return False
         return True
 
-    def find_run_number_in_reduction_list(self, run_number: int, reduction_list: list[NexusData]):
-        """Look for the given run number in the reduction list.
+    def find_run_number_in_reduction_list(
+        self,
+        nexus_data: NexusData | None,
+        reduction_list: list[NexusData] | None = None,
+    ) -> int | None:
+        """Look for the given run number in a reduction list, or the active reduction list if None.
 
         Returns
         -------
         int | None
             The index in the reduction list or None
         """
-        for i, nexus_data in enumerate(reduction_list):
-            if nexus_data.number == run_number:
+        if nexus_data is None:
+            return None
+
+        if reduction_list is None:
+            reduction_list = self.reduction_list
+
+        for i, _nexus_data in enumerate(reduction_list):
+            if _nexus_data.number == nexus_data.number:
                 return i
         return None
 
-    def find_data_in_reduction_list(self, nexus_data):
-        """Look for the given data in the reduction list.
+    def find_data_in_reduction_list(self, nexus_data: NexusData | None) -> int | None:
+        """Return the index of the given data in the active reduction list, or None if not found.
 
         Returns
         -------
         int | None:
             The index within the reduction list, or none.
         """
+        if nexus_data is None:
+            return None
         for i in range(len(self.reduction_list)):
             if nexus_data == self.reduction_list[i]:
                 return i
         return None
 
-    def find_data_in_direct_beam_list(self, nexus_data: NexusData | None) -> Optional[int]:
-        """Look for the given data in the direct beam list.
+    def find_data_in_direct_beam_list(self, nexus_data: NexusData | None) -> int | None:
+        """Return the index of the given data in the direct beam list, or None if not found.
 
         Returns
         -------
@@ -259,7 +273,7 @@ class DataPresenter(object):
                 return i
         return None
 
-    def find_run_number_in_direct_beam_list(self, nexus_data: NexusData | None) -> Optional[int]:
+    def find_run_number_in_direct_beam_list(self, nexus_data: NexusData | None) -> int | None:
         """Look for data with the same run number in the direct beam list.
 
         This method compares by run number rather than object identity, which is useful
@@ -282,7 +296,7 @@ class DataPresenter(object):
                 return i
         return None
 
-    def find_active_data_id(self) -> Optional[int]:
+    def find_active_data_id(self) -> int | None:
         """Look for the active data in the reduction list.
 
         Returns
@@ -292,7 +306,7 @@ class DataPresenter(object):
         """
         return self.find_data_in_reduction_list(self._nexus_data)
 
-    def find_active_direct_beam_id(self) -> Optional[int]:
+    def find_active_direct_beam_id(self) -> int | None:
         """Look for the active data in the direct beam list.
 
         Returns
@@ -302,7 +316,7 @@ class DataPresenter(object):
         """
         return self.find_data_in_direct_beam_list(self._nexus_data)
 
-    def _insert_into_reduction_list_by_q(self, nexus_data: NexusData, reduction_list: List[NexusData]) -> bool:
+    def _insert_into_reduction_list_by_q(self, nexus_data: NexusData, reduction_list: list[NexusData]) -> bool:
         """Insert NexusData into reduction list in ascending Q order.
 
         Parameters
@@ -318,23 +332,25 @@ class DataPresenter(object):
             True if successfully inserted, False if Q range is unavailable
         """
         q_min, _ = nexus_data.get_q_range()
+
         if q_min is None:
-            logging.error("Could not get q range information")
+            # Try calculating reflectivity to get Q range if not already available
+            try:
+                self.calculate_reflectivity(nexus_data=nexus_data)
+                q_min, _ = nexus_data.get_q_range()
+            except Exception:  # TODO (Glass): determine specific exceptions to catch here
+                logging.exception(f"Error calculating reflectivity for data set {nexus_data.number}")
+
+        # If we still don't have q range information, we can't insert in order
+        if q_min is None:
+            logging.error(f"Could not get q range for data set {nexus_data.number}, cannot insert in order.")
             return False
 
-        # Find insertion point to maintain ascending Q order
-        is_inserted = False
-        for i in range(len(reduction_list)):
-            _q_min, _ = reduction_list[i].get_q_range()
-            if q_min <= _q_min:
-                reduction_list.insert(i, nexus_data)
-                is_inserted = True
-                break
-        if not is_inserted:
-            reduction_list.append(nexus_data)
+        # Use binary search to find the correct insertion point to keep the list sorted by q_min
+        insort_left(reduction_list, nexus_data, key=lambda x: x.get_q_range()[0])
         return True
 
-    def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX) -> bool:
+    def add_active_to_reduction(self, peak_index=MAIN_REDUCTION_LIST_INDEX) -> AddToReductionResult:
         """Add active data set to reduction list.
 
         New data sets are always added to the main reduction list. Data sets are added to secondary
@@ -348,19 +364,41 @@ class DataPresenter(object):
 
         Returns
         -------
-        bool
-            True if the active data set was added to the reduction list, False if it was not added
+        AddToReductionResult
+            Result of the add operation, including success or reason for failure.
         """
         reduction_list = self.peak_reduction_lists[peak_index]
 
-        if self._nexus_data not in reduction_list:
-            if self.is_nexus_data_compatible(self._nexus_data, reduction_list):
-                if len(reduction_list) == 0:
-                    self.reduction_states = list(self.data_sets.keys())
-                return self._insert_into_reduction_list_by_q(self._nexus_data, reduction_list)
-            else:
-                logging.error("The data you are trying to add has different cross-sections")
-        return False
+        # Check if already in list by run number (since we may have deepcopied objects)
+        if self.find_run_number_in_reduction_list(self._nexus_data, reduction_list) is not None:
+            logging.warning(f"Data set {self._nexus_data.number} is already in the reduction list.")
+            return AddToReductionResult.ALREADY_IN_LIST
+
+        if not self.is_nexus_data_compatible(self._nexus_data, reduction_list):
+            logging.error("The data you are trying to add has different cross-sections")
+            return AddToReductionResult.INCOMPATIBLE
+
+        if len(reduction_list) == 0:
+            self.reduction_states = list(self.data_sets.keys())
+
+        # Create a deepcopy to allow adding the same run to the reduction list(s) and direct beam list without sharing state
+        # Ensure data added to reduction list is marked as reflected, even if original data is a direct beam
+        nexus_data = copy.deepcopy(self._nexus_data)
+        nexus_data.set_is_direct_beam(False)
+        nexus_data.clone_and_rename_event_workspaces(data_type=NexusDataType.REFLECTED)
+
+        result = self._insert_into_reduction_list_by_q(nexus_data, reduction_list)
+        if not result:
+            return AddToReductionResult.OTHER_ERROR
+
+        if self._nexus_data.is_direct_beam():
+            logging.warning(f"Run {nexus_data.number} was added to the reduction list but is labeled as a direct beam.")
+            result = AddToReductionResult.SUCCESS_DIRECT_BEAM
+        else:
+            result = AddToReductionResult.SUCCESS
+
+        self._nexus_data = nexus_data
+        return result
 
     def copy_nexus_data_to_reduction(self, nexus_data_to_copy: NexusData, peak_index: int):
         """Add data set to the reduction list specified by `peak_index`.
@@ -400,41 +438,36 @@ class DataPresenter(object):
 
         Returns
         -------
-        int
-            2 if the run was added and is a true direct beam (data_type == 1)
-            1 if the run was added but is NOT a true direct beam (data_type != 1)
-            0 if the run was not added (already in the list)
+        AddToDirectBeamResult
+            Result of the add operation, including success or reason for failure.
         """
         # Check if already in list by run number (since we may have deepcopied objects)
         if self.find_run_number_in_direct_beam_list(self._nexus_data) is not None:
-            return 0
+            return AddToDirectBeamResult.ALREADY_IN_LIST
 
-        is_true_direct_beam = self._nexus_data.is_direct_beam()
+        # Create a deepcopy to allow adding the same run to the direct beam and data lists without sharing state
+        # ensure data added to direct beam list is marked as direct beam, even if original data is reflected
+        nexus_data = copy.deepcopy(self._nexus_data)
+        nexus_data.set_is_direct_beam(True)
+        nexus_data.clone_and_rename_event_workspaces(data_type=NexusDataType.DIRECT_BEAM)
+        self.direct_beam_list.append(nexus_data)
 
-        if is_true_direct_beam:
-            # True direct beam - add directly
-            self.direct_beam_list.append(self._nexus_data)
+        if self._nexus_data.is_direct_beam():
+            result = AddToDirectBeamResult.SUCCESS
         else:
-            # Not a true direct beam - make a deep copy and change the data type of the copy
-            # This makes it possible to add the same run also as a data run while preventing them sharing state
-            direct_beam_nexus_data = copy.deepcopy(self._nexus_data)
-            direct_beam_nexus_data.set_is_direct_beam(True)
-            self.direct_beam_list.append(direct_beam_nexus_data)
-
             logging.warning(
-                "Run %s was added to the direct beam list but is not labeled as a direct beam "
-                "(data_type PV != 1). This run may have been started with 'Start RUN' command.",
-                self._nexus_data.number,
+                f"Run {self._nexus_data.number} was added to the direct beam list but is not labeled as a direct beam "
+                "(data_type PV ≠ 1). This run may have been started with 'Start RUN' command."
             )
-            return 1
+            result = AddToDirectBeamResult.SUCCESS_REFLECTED
 
-        return 2
+        self._nexus_data = nexus_data
+        return result
 
     def remove_active_from_direct_beam_list(self):
         """Remove the active data set from the direct beam list.
 
-        Uses run number comparison to find the entry, since the active data may be
-        the original object while the list contains a deepcopy.
+        Uses run number comparison to find the entry.
         """
         index = self.find_run_number_in_direct_beam_list(self._nexus_data)
         if index is not None:
@@ -468,7 +501,7 @@ class DataPresenter(object):
         configuration: Configuration,
         force: bool = False,
         update_parameters: bool = True,
-        progress: Optional[Callable] = None,
+        progress: Callable | None = None,
     ) -> bool:
         """Load one or more Nexus data files.
 
@@ -499,7 +532,7 @@ class DataPresenter(object):
         #    then assign the new data to the proper indexes in lists reduction_list and direct_beam_list
         # 5. Compute reflectivity if data is loaded from file
 
-        nexus_data = None  # type: Optional[NexusData]
+        nexus_data = None  # type: NexusData | None
         is_from_cache = False  # if True, the file has been loaded before
         reduction_list_id = None
         direct_beam_list_id = None
@@ -510,19 +543,27 @@ class DataPresenter(object):
 
         # Search through current reduction list, direct beam list, and cache for the file path.
         # If found and force is False, the matching data will become the active data in the UI.
-        nexus_data_search_list = self.reduction_list + self.direct_beam_list + self._cache
-        for _nxs_data in nexus_data_search_list:
-            if _nxs_data.file_path == file_path:
-                if force:
-                    # Check whether the data is in the reduction list before removing it
-                    reduction_list_id = self.find_data_in_reduction_list(_nxs_data)
-                    direct_beam_list_id = self.find_data_in_direct_beam_list(_nxs_data)
-                    if _nxs_data in self._cache:
-                        self._cache.remove(_nxs_data)
-                else:
-                    nexus_data = _nxs_data
-                    is_from_cache = True
-                break
+        # Cache entries are iterated last so they don't take priority over reduction/direct beam list copies
+        # that share the same file_path (e.g. deep copies created when adding a run to multiple lists).
+        # This prevents force-reloading from accidentally replacing a direct beam list entry with a
+        # freshly-loaded object that lacks the _DIRECT_BEAM workspace suffix.
+        nexus_data_search = self.reduction_list + self.direct_beam_list + self._cache
+        file_paths_in_search_list = {data.file_path: data for data in nexus_data_search}
+        if file_path in file_paths_in_search_list:
+            logging.info(f"DataManager.load: found {file_path} in cache of previously loaded data")
+            _nxs_data = file_paths_in_search_list[file_path]
+            if force:
+                logging.info(f"DataManager.load: force=True - reloading {file_path} from file and replacing cache")
+                # Check whether the data is in the reduction list before removing it
+                reduction_list_id = self.find_data_in_reduction_list(_nxs_data)
+                direct_beam_list_id = self.find_data_in_direct_beam_list(_nxs_data)
+                # If the data is in the cache, remove it
+                if _nxs_data in self._cache:
+                    self._cache.remove(_nxs_data)
+            else:
+                logging.info(f"DataManager.load: force=False - using cached data for {file_path}")
+                nexus_data = _nxs_data
+                is_from_cache = True
 
         # If we don't have the data, load it
         if nexus_data is None:
@@ -581,7 +622,7 @@ class DataPresenter(object):
             progress(100)
         return is_from_cache
 
-    def update_configuration(self, configuration, active_only: bool = False, nexus_data: Optional[NexusData] = None):
+    def update_configuration(self, configuration, active_only: bool = False, nexus_data: NexusData | None = None):
         """Update configuration."""
         if active_only:
             if self.active_cross_section is None:
@@ -597,7 +638,7 @@ class DataPresenter(object):
         """Return the direct beam data object for the active data."""
         return self._find_direct_beam(self._nexus_data)
 
-    def update_direct_pixel_from_direct_beam(self) -> Optional[float]:
+    def update_direct_pixel_from_direct_beam(self) -> float | None:
         """Set `direct_pixel_overwrite` based on the matched direct beam peak position."""
         if self._nexus_data is None:
             return None
@@ -651,7 +692,7 @@ class DataPresenter(object):
         run_direct_beam = self._find_direct_beam(nexus_data)
         return run_direct_beam is not None and self.is_same_run(run_direct_beam.number, direct_beam_run)
 
-    def _find_direct_beam(self, nexus_data: Union[NexusData, CrossSectionData]) -> Optional[CrossSectionData]:
+    def _find_direct_beam(self, nexus_data: NexusData | CrossSectionData) -> CrossSectionData | None:
         """Attempt to find a direct beam data set for a given reflectivity data set.
 
         Returns
@@ -693,7 +734,7 @@ class DataPresenter(object):
 
         return direct_beam
 
-    def find_direct_beam_by_name(self, direct_beam_name: str) -> Optional[NexusData]:
+    def find_direct_beam_by_name(self, direct_beam_name: str) -> NexusData | None:
         """Find a direct beam data set by its name.
 
         Parameters
@@ -763,7 +804,7 @@ class DataPresenter(object):
                 return False
         return True
 
-    def reduce_spec(self, direct_beam: Optional[str | int] = None):
+    def reduce_spec(self, direct_beam: str | int | None = None):
         """
         Calculate reflectivity for all runs in all reduction lists.
 
@@ -771,7 +812,7 @@ class DataPresenter(object):
 
         Parameters
         ----------
-        direct_beam : Optional[str | int]
+        direct_beam : str | int | None
             Direct beam run number
         """
         for reduct_list in self.peak_reduction_lists.values():
@@ -842,7 +883,7 @@ class DataPresenter(object):
         # pick the run with a matching wavelength and lowest euclidean slit difference
         active_xs = self.active_cross_section
         active_instrument = active_xs.configuration.instrument
-        closeness: Dict[int, float] = {}
+        closeness: dict[int, float] = {}
         for item in self.direct_beam_list:
             item_number = int(item.number)
             xs_keys = list(item.cross_sections.keys())
@@ -866,7 +907,7 @@ class DataPresenter(object):
                 return False
         return False
 
-    def get_trim_values(self) -> Optional[List[int]]:
+    def get_trim_values(self) -> list[int] | None:
         """Cut the start and end of the active data set to 5% of its maximum intensity."""
         if (
             self.active_cross_section is not None
@@ -908,7 +949,7 @@ class DataPresenter(object):
         normalize_to_unity: bool = True,
         q_cutoff: float = 0.01,
         global_stitching: bool = False,
-        poly_degree: Optional[int] = None,
+        poly_degree: int | None = None,
         poly_points: int = 3,
     ):
         """Determine scaling factors for each data set.
@@ -1016,7 +1057,10 @@ class DataPresenter(object):
         return data_manipulation.extract_metadata(cross_section_data=self.active_cross_section)
 
     def load_data_from_reduced_file(
-        self, file_path: str, configuration: Optional[Configuration] = None, progress: ProgressReporter = None
+        self,
+        file_path: str,
+        configuration: Configuration | None = None,
+        progress: ProgressReporter | None = None,
     ):
         """Load the information from a reduced file, the load the data.
 
@@ -1041,13 +1085,13 @@ class DataPresenter(object):
 
     def load_direct_beam_and_data_files(
         self,
-        db_files: List[tuple],
-        data_files: List[tuple],
-        additional_peaks: Optional[list] = None,
-        configuration: Optional[Configuration] = None,
-        progress: Optional[ProgressReporter] = None,
+        db_files: list[tuple],
+        data_files: list[tuple],
+        additional_peaks: list | None = None,
+        configuration: Configuration | None = None,
+        progress: ProgressReporter | None = None,
         force: bool = False,
-        t_0: Optional[float] = None,
+        t_0: float | None = None,
     ):
         """Load direct beam and data files and add them to the direct beam list and reduction list, respectively.
 
@@ -1072,7 +1116,9 @@ class DataPresenter(object):
             t_0 = time.time()
         n_loaded = 0
         n_total = len(db_files) + len(data_files)
+        # Add direct beam runs
         for r_id, run_file, conf, slice_value in db_files:
+            logging.info(f"LOADING DIR BEAM FILE: {run_file}")
             t_i = time.time()
             if os.path.isfile(run_file):
                 is_from_cache = self.load(run_file, conf, force=force, update_parameters=False)
@@ -1090,7 +1136,10 @@ class DataPresenter(object):
                 if progress:
                     progress.set_value(n_loaded, message="ERROR: %s does not exist" % run_file, out_of=n_total)
             n_loaded += 1
+
+        # Add reflectivity runs
         for r_id, run_file, conf, slice_value in data_files:
+            logging.info(f"LOADING REF FILE: {run_file}")
             t_i = time.time()
             do_files_exist = []
             for name in run_file.split("+"):
@@ -1104,16 +1153,17 @@ class DataPresenter(object):
                     self.calculate_reflectivity()
                 # Set the slice value on the NexusData object
                 self._nexus_data.slice = slice_value
-                if self.add_active_to_reduction():
-                    logging.info("%s loaded: %s sec [%s]", r_id, time.time() - t_i, time.time() - t_0)
+                result = self.add_active_to_reduction()
+                if result in [AddToReductionResult.SUCCESS, AddToReductionResult.SUCCESS_DIRECT_BEAM]:
+                    logging.info(f"{r_id} loaded: {time.time() - t_i} sec [{time.time() - t_0}]")
                 else:
-                    logging.error("Could not load %s", r_id)
+                    logging.error(f"Could not add run {r_id} to reduction table: {result.value}")
                 if progress:
                     progress.set_value(n_loaded, message="%s loaded" % os.path.basename(run_file), out_of=n_total)
             else:
-                logging.error("File does not exist: %s", run_file)
+                logging.error(f"File does not exist: {run_file}")
                 if progress:
-                    progress.set_value(n_loaded, message="ERROR: %s does not exist" % run_file, out_of=n_total)
+                    progress.set_value(n_loaded, message=f"ERROR: {run_file} does not exist", out_of=n_total)
             n_loaded += 1
         if progress:
             progress.set_value(n_total, message="Done", out_of=n_total)
@@ -1136,7 +1186,7 @@ class DataPresenter(object):
                 self.add_active_to_reduction(peak_index)
 
     @property
-    def current_event_files(self) -> List[str]:
+    def current_event_files(self) -> list[str]:
         """Sorted list of event files in the current directory.
 
         Return only file names with pattern '*event.nxs' or '*.nxs.h5'
@@ -1146,7 +1196,7 @@ class DataPresenter(object):
         event_file_list.extend(h5_file_list)
         return sorted([os.path.basename(name) for name in event_file_list])
 
-    def reload_files(self, configuration: Optional[Configuration] = None, progress=None):
+    def reload_files(self, configuration: Configuration | None = None, progress=None):
         """Force reload of files in the reduction lists and direct beam list."""
 
         def _get_nexus_conf(nexus_data: NexusData) -> Configuration:
@@ -1238,8 +1288,10 @@ class DataPresenter(object):
         Tries to maintain the previously selected direct beam row index if available,
         otherwise defaults to the first direct beam.
         """
-        # If the current active data is already in the direct beam list, keep it
-        active_direct_beam_idx = self.find_active_direct_beam_id()
+        # Keep the current object only if it is already the direct beam copy.
+        # The same run number can exist in both the reduction and direct beam lists
+        # as separate deep-copied objects with different workspace types.
+        active_direct_beam_idx = self.find_data_in_direct_beam_list(self._nexus_data)
         if active_direct_beam_idx is not None:
             # Update the tracked index to match current selection
             self.last_selected_direct_beam_row = active_direct_beam_idx
