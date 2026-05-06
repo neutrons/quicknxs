@@ -1,21 +1,19 @@
 """Unit tests for the ability to add non-direct-beam runs to the direct beam list (using mocks)."""
 
-# standard library imports
 from unittest import mock
 
-# 3rd-party imports
 import pytest
 
-# local imports
 from quicknxs.interfaces.data_handling.data_set import NexusData
 from quicknxs.interfaces.data_manager import DataManager
+from quicknxs.interfaces.enums import AddToDirectBeamResult, NexusDataType
 
 
 class TestDirectBeamFeatureMocked:
     """Test the feature that allows adding any run as a direct beam using mocks."""
 
-    def test_add_non_direct_beam_run_returns_1(self):
-        """Test that adding a non-direct-beam run returns 1."""
+    def test_add_non_direct_beam_run(self):
+        """Test that adding a non-direct-beam run returns correct result."""
         manager = DataManager("/tmp")
 
         # Create a mock NexusData that is NOT a direct beam
@@ -26,7 +24,7 @@ class TestDirectBeamFeatureMocked:
 
         # Should return 1 (added but not a true direct beam)
         result = manager.add_active_to_direct_beam_list()
-        assert result == 1
+        assert result == AddToDirectBeamResult.SUCCESS_REFLECTED
 
         # Should be in the direct beam list (as a deepcopy with same run number)
         assert len(manager.direct_beam_list) == 1
@@ -34,8 +32,8 @@ class TestDirectBeamFeatureMocked:
         # It should be a different object (deepcopied)
         assert manager.direct_beam_list[0] is not mock_nexus
 
-    def test_add_true_direct_beam_run_returns_2(self):
-        """Test that adding a true direct beam run returns 2."""
+    def test_add_true_direct_beam_run(self):
+        """Test that adding a true direct beam run returns correct result."""
         manager = DataManager("/tmp")
 
         # Create a mock NexusData that IS a direct beam
@@ -46,11 +44,11 @@ class TestDirectBeamFeatureMocked:
 
         # Should return 2 (added and is a true direct beam)
         result = manager.add_active_to_direct_beam_list()
-        assert result == 2
+        assert result == AddToDirectBeamResult.SUCCESS
 
         # Should be in the direct beam list
         assert len(manager.direct_beam_list) == 1
-        assert manager.direct_beam_list[0] == mock_nexus
+        assert manager.direct_beam_list[0].number == mock_nexus.number
 
     def test_add_duplicate_run_returns_0(self):
         """Test that adding the same run twice returns 0."""
@@ -64,12 +62,12 @@ class TestDirectBeamFeatureMocked:
 
         # Add it the first time
         result1 = manager.add_active_to_direct_beam_list()
-        assert result1 == 1
+        assert result1 == AddToDirectBeamResult.SUCCESS_REFLECTED
         assert len(manager.direct_beam_list) == 1
 
         # Try to add it again
         result2 = manager.add_active_to_direct_beam_list()
-        assert result2 == 0  # Already in list
+        assert result2 == AddToDirectBeamResult.ALREADY_IN_LIST
         assert len(manager.direct_beam_list) == 1  # Still only one entry
 
     def test_mixed_direct_beam_list(self):
@@ -83,7 +81,7 @@ class TestDirectBeamFeatureMocked:
         mock_true_db.file_path = "/tmp/test_12348.nxs"
         manager._nexus_data = mock_true_db
         result1 = manager.add_active_to_direct_beam_list()
-        assert result1 == 2
+        assert result1 == AddToDirectBeamResult.SUCCESS
 
         # Add a non-direct-beam run
         mock_not_db = mock.Mock(spec=NexusData)
@@ -92,7 +90,7 @@ class TestDirectBeamFeatureMocked:
         mock_not_db.file_path = "/tmp/test_12349.nxs"
         manager._nexus_data = mock_not_db
         result2 = manager.add_active_to_direct_beam_list()
-        assert result2 == 1
+        assert result2 == AddToDirectBeamResult.SUCCESS_REFLECTED
 
         # Both should be in the list
         assert len(manager.direct_beam_list) == 2
@@ -132,10 +130,28 @@ class TestDirectBeamFeatureMocked:
         # Should work fine
         assert len(manager.direct_beam_list) == 1
 
-        # Truthiness check should still work (non-zero is truthy)
         result = manager.add_active_to_direct_beam_list()
-        assert result == 0  # Already in list
-        # Even 0 can be checked as "if result == 0" in new code
+        assert result == AddToDirectBeamResult.ALREADY_IN_LIST
+
+    def test_update_active_direct_beam_switches_to_direct_beam_copy(self):
+        """Switching to the direct beam tab should swap in the direct beam copy of a shared run."""
+        manager = DataManager("/tmp")
+
+        reflected_copy = mock.Mock(spec=NexusData)
+        reflected_copy.number = "12352"
+
+        direct_beam_copy = mock.Mock(spec=NexusData)
+        direct_beam_copy.number = "12352"
+
+        manager._nexus_data = reflected_copy
+        manager.direct_beam_list = [direct_beam_copy]
+        manager.set_active_cross_section = mock.Mock(return_value=True)
+
+        manager.update_active_direct_beam()
+
+        assert manager._nexus_data is direct_beam_copy
+        assert manager.last_selected_direct_beam_row == 0
+        manager.set_active_cross_section.assert_called_once_with(0)
 
 
 if __name__ == "__main__":

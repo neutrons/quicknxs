@@ -1,5 +1,3 @@
-# package imports
-# standard imports
 import importlib
 import logging
 import os
@@ -8,8 +6,6 @@ import sys
 import numpy as np
 import pytest
 from PyQt5.QtCore import QTimer
-
-# 3rd-party imports
 from PyQt5.QtWidgets import QApplication
 from qtpy import QtCore, QtWidgets
 
@@ -413,6 +409,8 @@ def test_stitch_reflectivity_updates_reduction_table(mocker, qtbot):
     data_manager = main_window.data_manager
     qtbot.addWidget(main_window)
 
+    handler.change_log_level("ERROR")
+
     # Add two data runs
     ui_utilities.setText(main_window.numberSearchEntry, str(42112), press_enter=True)
     ui_utilities.set_current_file_by_run_number(main_window, 42112)
@@ -537,13 +535,13 @@ class TestActiveDataChangedSyncsFileList:
 
         # Switch to the direct beam tab and verify the file list highlights the active direct beam run (40786)
         data_tab_widget.setCurrentIndex(main_window.file_handler.DIRECT_BEAM_TAB_INDEX)
-        assert data_manager._nexus_data == data_manager.direct_beam_list[0]
+        assert data_manager._nexus_data.number == data_manager.direct_beam_list[0].number
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40786.nxs.h5"
 
         # Switch to the main data tab and verify the file list highlights the active data run (40785)
         data_tab_widget.setCurrentIndex(main_window.file_handler.MAIN_DATA_TAB_INDEX)
-        assert data_manager._nexus_data == data_manager.reduction_list[0]
+        assert data_manager._nexus_data.number == data_manager.reduction_list[0].number
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40785.nxs.h5"
 

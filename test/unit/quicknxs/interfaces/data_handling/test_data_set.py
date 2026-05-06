@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 from quicknxs.interfaces.configuration import Configuration
-from quicknxs.interfaces.data_handling.data_set import CrossSectionData
+from quicknxs.interfaces.data_handling.data_set import CrossSectionData, NexusData
+from quicknxs.interfaces.enums import NexusDataType
 
 
 def _get_cross_section_data():
@@ -23,7 +24,7 @@ def _get_cross_section_data():
     return xs
 
 
-class TestCrossSectionData(object):
+class TestCrossSectionData:
     """Test CrossSectionData class."""
 
     def test_r_scaling_factor(self):
@@ -51,6 +52,38 @@ class TestCrossSectionData(object):
         assert data_table[0][4] == pytest.approx(13.0, rel_tol)  # counts
         assert data_table[0][5] == pytest.approx(2.0, rel_tol)  # counts error
         assert data_table[0][6] == 4  # size of ROI
+
+
+class TestNexusData:
+    """Test NexusData class."""
+
+    def test_clone_and_rename_event_workspaces(self, data_server):
+        """Test that NexusData.clone_and_rename_event_workspaces() creates Mantid workspaces with expected names and types."""
+
+        config = Configuration()
+        filepath = data_server.path_to("REF_M_40785.nxs.h5")
+        nexus_data = NexusData(filepath, config)
+        for xs in nexus_data.cross_sections:
+            current_name = xs._event_workspace
+            assert current_name.startswith("REF_M_40785")
+        nexus_data.clone_and_rename_event_workspaces(NexusDataType.REFLECTED)
+        for xs in nexus_data.cross_sections:
+            current_name = xs._event_workspace
+            assert current_name.startswith("REF_M_40785")
+            assert current_name.endswith("_REFLECTED")
+        nexus_data.clone_and_rename_event_workspaces(NexusDataType.DIRECT_BEAM)
+        for xs in nexus_data.cross_sections:
+            current_name = xs._event_workspace
+            assert current_name.startswith("REF_M_40785")
+            assert current_name.endswith("_DIRECT_BEAM")
+            assert "_REFLECTED" not in current_name
+        nexus_data.clone_and_rename_event_workspaces(NexusDataType.UNDEFINED)
+        for xs in nexus_data.cross_sections:
+            current_name = xs._event_workspace
+            assert current_name.startswith("REF_M_40785")
+            assert current_name.endswith("_UNKNOWN")
+            assert "_REFLECTED" not in current_name
+            assert "_DIRECT_BEAM" not in current_name
 
 
 if __name__ == "__main__":
