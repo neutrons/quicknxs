@@ -979,13 +979,10 @@ class NexusData(object):
                 if current_name is None:
                     logging.warning(f"No event workspace for {xs}, skipping workspace recreation")
                     continue
-                # if current name already has _REFLECTED, _DIRECT_BEAM, or _UNKNOWN suffix, remove it before adding the new suffix
-                if current_name.endswith("_REFLECTED"):
-                    current_name = current_name[: -len("_REFLECTED")]
-                elif current_name.endswith("_DIRECT_BEAM"):
-                    current_name = current_name[: -len("_DIRECT_BEAM")]
-                elif current_name.endswith("_UNKNOWN"):
-                    current_name = current_name[: -len("_UNKNOWN")]
+                # if current name already has _REFLECTED, _DIRECT_BEAM, or _UNDEFINED suffix, remove it before adding the new suffix
+                for t in NexusDataType:
+                    if current_name.endswith(f"_{t.name}"):
+                        current_name = current_name[: -len(f"_{t.name}")]
                 new_name = f"{current_name}_{data_type.name}"
                 # Existing workspaces from prior loads/tests can cause clone collisions.
                 # Replace stale entries so the expected name is always assigned.
