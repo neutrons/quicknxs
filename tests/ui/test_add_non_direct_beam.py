@@ -5,8 +5,8 @@ from qtpy import QtWidgets
 from qtpy.QtWidgets import QApplication
 
 from quicknxs.enums import DirectBeamTableColumn as DBTableCols
-from quicknxs.models.configuration import Configuration
-from quicknxs.models.processing_workflow import DEFAULT_OPTIONS, ProcessingWorkflow
+from quicknxs.models.configuration import Configuration, OutputOptions
+from quicknxs.models.processing_workflow import ProcessingWorkflow
 from quicknxs.presenters.progress_reporter import ProgressReporter
 from quicknxs.views.main_window import MainWindow
 
@@ -307,16 +307,11 @@ def test_non_direct_beam_saved_and_loaded(qtbot, data_server, tmp_path):
     window_main.actionAddRefl.triggered.emit()
 
     output_dir = str(tmp_path)
-    output_options = DEFAULT_OPTIONS.copy()
-    output_options.update(
-        {
-            "export_dir": output_dir,
-            "output_directory": output_dir,
-            "format_5cols": True,
-            "format_numpy": False,
-        }
+    output_options = OutputOptions(
+        output_directory=output_dir,
+        format_5cols=True,
+        format_numpy=False,
     )
-
     workflow = ProcessingWorkflow(window_main.data_presenter, output_options)
     workflow.execute()
 

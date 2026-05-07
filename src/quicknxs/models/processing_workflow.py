@@ -23,57 +23,18 @@ from mr_reduction.types import MantidWorkspace
 
 from quicknxs.config import SMTP_SERVER
 from quicknxs.models import data_manipulation, gisans, off_specular, quicknxs_io
-from quicknxs.models.configuration import Configuration
+from quicknxs.models.configuration import Configuration, OutputOptions
 from quicknxs.presenters.data_presenter import DataPresenter
 from quicknxs.presenters.progress_reporter import ProgressReporter
-
-DEFAULT_OPTIONS = dict(
-    export_specular=True,
-    export_asym=False,
-    export_gisans=False,
-    export_offspec=False,
-    export_offspec_smooth=False,
-    format_matlab=False,
-    format_mantid=True,
-    format_numpy=False,
-    format_5cols=False,
-    output_sample_size=10,
-    output_directory="",
-    output_file_template="{instrument}_{numbers}_{peak}_{item}_{state}.{type}",
-    email_send=False,
-    email_zip_data=False,
-    email_send_plots=False,
-    email_send_data=False,
-    email_to="",
-    email_cc="",
-    email_subject="",
-    # Off-specular defaults (match Configuration defaults)
-    off_spec_x_axis=0,  # Configuration.DELTA_KZ_VS_QZ
-    off_spec_x_min=-0.015,
-    off_spec_x_max=0.015,
-    off_spec_y_min=0.0,
-    off_spec_y_max=0.15,
-    off_spec_nxbins=450,
-    off_spec_nybins=200,
-    off_spec_err_weight=False,
-    off_spec_sigmas=3,
-    off_spec_sigmax=0.0005,
-    off_spec_sigmay=0.0005,
-    off_spec_slice_qz_min=0.05,
-    off_spec_slice_qz_max=0.07,
-)
 
 
 class ProcessingWorkflow(object):
     """Carry out the reduction process for a set of data runs and manages outputs."""
 
-    def __init__(self, data_presenter: DataPresenter, output_options: Optional[dict] = None):
+    def __init__(self, data_presenter: DataPresenter, output_options: OutputOptions | None = None):
         """All the reduced data shall come from data manager."""
         self.data_presenter = data_presenter
-        # Merge defaults with provided options to ensure all required keys are present
-        self.output_options = DEFAULT_OPTIONS.copy()
-        if output_options:
-            self.output_options.update(output_options)
+        self.output_options = output_options if output_options is not None else OutputOptions()
         self.exported_data_files = []
         self.exported_data_plots = []
 
@@ -91,26 +52,28 @@ class ProcessingWorkflow(object):
             self.data_presenter.set_active_reduction_list_index(peak_index)
             self.data_presenter.set_active_data_from_reduction_list(0)
 
-            if self.output_options["export_specular"]:
+            if self.output_options.export_specular:
                 if progress is not None:
                     progress(10, "Computing reflectivity")
                 self.specular_reflectivity()
 
             # Process off-specular if any off-spec output is requested
             if (
-                self.output_options["export_offspec"]
-                or self.output_options.get("apply_smoothing", False)
-                or self.output_options.get("export_offspec_slices", False)
+                self.output_options.export_offspec
+                # or self.output_options.export_offspec_smooth  # Temporarily disabled
+                or self.output_options.apply_smoothing
+                or self.output_options.export_offspec_slices
             ):
                 if progress is not None:
                     progress(20, "Computing off-specular reflectivity")
                 self.offspec(
-                    raw=self.output_options["export_offspec"],
-                    smooth=self.output_options.get("apply_smoothing", False),
-                    slices=self.output_options.get("export_offspec_slices", False),
+                    raw=self.output_options.export_offspec,
+                    # binned=self.output_options.export_offspec_smooth,  # Temporarily disabled
+                    smooth=self.output_options.apply_smoothing,
+                    slices=self.output_options.export_offspec_slices,
                 )
 
-            if self.output_options["export_gisans"]:
+            if self.output_options.export_gisans:
                 if progress is not None:
                     progress(60, "Computing GISANS")
                 # FIXME 66 - could be an AttributeError from self.gisans().  Catch it!
@@ -125,7 +88,7 @@ class ProcessingWorkflow(object):
         if active_data_index is not None:
             self.data_presenter.set_active_data_from_reduction_list(active_data_index)
 
-        if self.output_options["email_send"]:
+        if self.output_options.email_send:
             self.send_email()
 
         if progress is not None:
@@ -153,7 +116,7 @@ class ProcessingWorkflow(object):
         """
         if run_list is None:
             run_list = []
-        base_name = self.output_options["output_file_template"].replace("{numbers}", "+".join(run_list))
+        base_name = self.output_options.output_file_template.replace("{numbers}", "+".join(run_list))
         base_name = base_name.replace(
             "{instrument}", self.data_presenter.active_cross_section.configuration.instrument.instrument_name
         )
@@ -162,7 +125,7 @@ class ProcessingWorkflow(object):
             base_name = base_name.replace("{state}", pol_state)
         base_name = base_name.replace("{type}", data_type)
         base_name = base_name.replace("{peak}", f"peak{self.data_presenter.active_reduction_list_index}")
-        return os.path.join(self.output_options["output_directory"], base_name)
+        return os.path.join(self.output_options.output_directory, base_name)
 
     def write_quicknxs(
         self,
@@ -197,7 +160,7 @@ class ProcessingWorkflow(object):
             output_states = xs
         else:
             output_states = copy.copy(self.data_presenter.reduction_states)
-            if self.output_options["export_asym"] and "SA" in output_data:
+            if self.output_options.export_asym and "SA" in output_data:
                 output_states.append("SA")
 
         # Sanity check
@@ -205,7 +168,7 @@ class ProcessingWorkflow(object):
             return
 
         # Write out the cross-section data
-        five_cols = self.output_options["format_5cols"]
+        five_cols = self.output_options.format_5cols
         for pol_state in output_states:
             # The cross-sections might have different names
             if pol_state in self.data_presenter.reduction_list[0].cross_sections:
@@ -295,7 +258,7 @@ class ProcessingWorkflow(object):
         # The following would be used to recalculate it:
         #    self.data_presenter.calculate_reflectivity(specular=True)
 
-        # self.data_presenter.merge_data_sets(asymmetry=self.output_options['export_asym'])
+        # self.data_presenter.merge_data_sets(asymmetry=self.output_options.export_asym)
 
         run_list = [str(item.number) for item in self.data_presenter.reduction_list]
 
@@ -309,13 +272,13 @@ class ProcessingWorkflow(object):
         self.write_orso(output_data)
 
         # Numpy arrays
-        if self.output_options["format_numpy"]:
+        if self.output_options.format_numpy:
             output_file = self.get_file_name(run_list, data_type="npz", pol_state="all")
             np.savez(output_file, **output_data)
             self.exported_data_files.append(output_file)
 
         # Matlab output
-        if self.output_options["format_matlab"]:
+        if self.output_options.format_matlab:
             try:
                 from scipy.io import savemat
 
@@ -325,7 +288,7 @@ class ProcessingWorkflow(object):
             except:
                 logging.error("Could not save in matlab format: %s", sys.exc_info([1]))
 
-        if self.output_options["format_mantid"]:
+        if self.output_options.format_mantid:
             output_file = self.get_file_name(run_list, data_type="py", pol_state="all")
             script = data_manipulation.generate_short_script(self.data_presenter.reduction_list)
             with open(output_file, "w") as file_object:
@@ -455,19 +418,21 @@ class ProcessingWorkflow(object):
             r, dr, x, y, labels = off_specular.rebin_extract(
                 self.data_presenter.reduction_list,
                 pol_state,
-                axes=self.output_options["off_spec_x_axis"],
-                use_weights=self.output_options["off_spec_err_weight"],
-                n_bins_x=self.output_options["off_spec_nxbins"],
-                n_bins_y=self.output_options["off_spec_nybins"],
-                x_min=self.output_options["off_spec_x_min"],
-                x_max=self.output_options["off_spec_x_max"],
-                y_min=self.output_options["off_spec_y_min"],
-                y_max=self.output_options["off_spec_y_max"],
+                axes=self.output_options.off_spec_x_axis,
+                use_weights=self.output_options.off_spec_err_weight,
+                n_bins_x=self.output_options.off_spec_nxbins,
+                n_bins_y=self.output_options.off_spec_nybins,
+                x_min=self.output_options.off_spec_x_min,
+                x_max=self.output_options.off_spec_x_max,
+                y_min=self.output_options.off_spec_y_min,
+                y_max=self.output_options.off_spec_y_max,
             )
             if data_dict is None:
-                data_dict = dict(
-                    units=["1/A", "1/A", "a.u.", "a.u."], columns=[labels[0], labels[1], "I", "dI"], cross_sections={}
-                )
+                data_dict = {
+                    "units": ["1/A", "1/A", "a.u.", "a.u."],
+                    "columns": [labels[0], labels[1], "I", "dI"],
+                    "cross_sections": {},
+                }
 
             # Create array of x-values
             x_tiled = np.tile(x, len(y))
@@ -652,7 +617,7 @@ class ProcessingWorkflow(object):
             A tuple containing the smoothed data dictionary and a slice data dictionary.
         """
         # Coordinate system comes from the OffSpecParametersDialog
-        axes = self.output_options["off_spec_x_axis"]
+        axes = self.output_options.off_spec_x_axis
         output_data = {
             "units": [],
             "columns": [],
@@ -694,15 +659,15 @@ class ProcessingWorkflow(object):
                 x,
                 y,
                 I,
-                sigmas=self.output_options["off_spec_sigmas"],
-                gridx=self.output_options["off_spec_nxbins"],
-                gridy=self.output_options["off_spec_nybins"],
-                sigmax=self.output_options["off_spec_sigmax"],
-                sigmay=self.output_options["off_spec_sigmay"],
-                x1=self.output_options["off_spec_x_min"],
-                x2=self.output_options["off_spec_x_max"],
-                y1=self.output_options["off_spec_y_min"],
-                y2=self.output_options["off_spec_y_max"],
+                sigmas=self.output_options.off_spec_sigmas,
+                gridx=self.output_options.off_spec_nxbins,
+                gridy=self.output_options.off_spec_nybins,
+                sigmax=self.output_options.off_spec_sigmax,
+                sigmay=self.output_options.off_spec_sigmay,
+                x1=self.output_options.off_spec_x_min,
+                x2=self.output_options.off_spec_x_max,
+                y1=self.output_options.off_spec_y_min,
+                y2=self.output_options.off_spec_y_max,
                 axis_sigma_scaling=axis_sigma_scaling,
                 xysigma0=xysigma0,
             )
@@ -721,8 +686,8 @@ class ProcessingWorkflow(object):
             slice_data_dict = dict(units=["1/A", "a.u.", "a.u."], columns=[label, "I", "dI"], cross_sections={})
 
         # Slice parameters come from the OffSpecSliceDialog
-        q_min = self.output_options["off_spec_slice_qz_min"]
-        q_max = self.output_options["off_spec_slice_qz_max"]
+        q_min = self.output_options.off_spec_slice_qz_min
+        q_max = self.output_options.off_spec_slice_qz_max
         result, error = off_specular.get_slice(qz, r, dr, q_min, q_max)
         if error is not None:
             # Is x what we need here, or the middle of the bin
@@ -815,7 +780,7 @@ class ProcessingWorkflow(object):
             data_dict["cross_sections"][pol_state] = _pol_state
 
         # Asymmetry
-        if self.output_options["export_asym"]:
+        if self.output_options.export_asym:
             p_state, m_state = self.data_presenter.determine_asymmetry_states()
             if p_state and m_state:
                 # Get the list of workspaces
@@ -858,22 +823,22 @@ class ProcessingWorkflow(object):
     def send_email(self):
         """Collect all files and send them to the user via smtp mail."""
         msg = MIMEMultipart()
-        msg["Subject"] = self._email_replace(self.output_options["email_subject"])
+        msg["Subject"] = self._email_replace(self.output_options.email_subject)
         msg["From"] = "BL4A@ornl.gov"
-        msg["To"] = self.output_options["email_to"].replace(";", ", ")
-        msg["CC"] = self.output_options["email_cc"].replace(";", ", ")
-        text = self._email_replace(self.output_options["email_text"])
+        msg["To"] = self.output_options.email_to.replace(";", ", ")
+        msg["CC"] = self.output_options.email_cc.replace(";", ", ")
+        text = self._email_replace(self.output_options.email_text)
         msg.preamble = text
         msg.attach(MIMEText(text))
 
-        if self.output_options["email_send_data"]:
+        if self.output_options.email_send_data:
             exported_files = self.exported_data_files
-        elif self.output_options["email_send_plots"]:
+        elif self.output_options.email_send_plots:
             exported_files = self.exported_data_plots
         else:
             exported_files = self.exported_data_files
             exported_files.extend(self.exported_data_plots)
-        if self.output_options["email_zip_data"]:
+        if self.output_options.email_zip_data:
             # Create an in-memory zip file which gets attached to the mail
             fobj = io.BytesIO()
             _file = zipfile.ZipFile(fobj, "w", zipfile.ZIP_DEFLATED)

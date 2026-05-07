@@ -192,13 +192,13 @@ def rebin_extract(
     reduction_list,
     pol_state,
     axes=None,
-    use_weights=True,
-    n_bins_x=350,
-    n_bins_y=350,
-    x_min=-0.015,
-    x_max=0.015,
-    y_min=0,
-    y_max=0.1,
+    use_weights: bool = True,
+    n_bins_x: int = 350,
+    n_bins_y: int = 350,
+    x_min: float = -0.015,
+    x_max: float = 0.015,
+    y_min: float = 0,
+    y_max: float = 0.1,
 ):
     """Rebin off-specular data and extract cut at given Qz values.
 

@@ -1,15 +1,63 @@
 """Application configuration, including reduction options."""
 
+from dataclasses import dataclass
 from typing import List, Optional
 
 from quicknxs.enums import BinningType
 from quicknxs.models.instrument import Instrument
 
+
+@dataclass
+class OutputOptions:
+    """Hold output options for the reduction."""
+
+    export_specular: bool = True
+    export_asym: bool = False
+    export_gisans: bool = False
+    export_offspec: bool = False
+    apply_smoothing: bool = False
+    export_offspec_smooth: bool = False
+    export_offspec_slices: bool = False
+
+    # Output formats
+    format_matlab: bool = False
+    format_mantid: bool = True
+    format_numpy: bool = False
+    format_5cols: bool = False
+
+    output_sample_size: int = 10
+    output_directory: str = ""
+    output_file_template: str = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
+
+    # Email options
+    email_send: bool = False
+    email_zip_data: bool = False
+    email_send_plots: bool = False
+    email_send_data: bool = False
+    email_to: str = ""
+    email_cc: str = ""
+    email_subject: str = ""
+    email_text: str = ""
+
+    # Off-specular defaults (match Configuration defaults)
+    off_spec_x_axis: int = 0  # Configuration.DELTA_KZ_VS_QZ
+    off_spec_x_min: float = -0.015
+    off_spec_x_max: float = 0.015
+    off_spec_y_min: float = 0.0
+    off_spec_y_max: float = 0.15
+    off_spec_nxbins: int = 450
+    off_spec_nybins: int = 200
+    off_spec_err_weight: bool = False
+    off_spec_sigmas: int = 3
+    off_spec_sigmax: float = 0.0005
+    off_spec_sigmay: float = 0.0005
+    off_spec_slice_qz_min: float = 0.05
+    off_spec_slice_qz_max: float = 0.07
+
+
 # TODO: extract to file based parameter setting
 # TODO: add docstring for Configuration attributes
-
-
-class Configuration(object):
+class Configuration:
     """Hold reduction options.
 
     Class Attributes

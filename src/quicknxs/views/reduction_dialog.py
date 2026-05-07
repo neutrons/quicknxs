@@ -3,10 +3,12 @@
 Dialog to select reduction options to choose which outputs are needed
 and in which formats to write them.
 """
+
 import os
 
 from qtpy import QtCore, QtWidgets
 
+from quicknxs.models.configuration import OutputOptions
 from quicknxs.views.load_ui import load_ui
 
 
@@ -65,7 +67,7 @@ class ReductionDialog(QtWidgets.QDialog):
         """Return the reduction options as a dict."""
         if self.is_accepted is False:
             return None
-        return dict(
+        return OutputOptions(
             export_specular=self.ui.exportSpecular.isChecked(),
             export_asym=self.ui.export_SA.isChecked(),
             export_gisans=self.ui.exportGISANS.isChecked(),

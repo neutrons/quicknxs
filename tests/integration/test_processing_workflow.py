@@ -4,8 +4,8 @@ from copy import deepcopy
 import pytest
 from orsopy.fileio import load_orso
 
-from quicknxs.models.configuration import Configuration
-from quicknxs.models.processing_workflow import DEFAULT_OPTIONS, ProcessingWorkflow
+from quicknxs.models.configuration import Configuration, OutputOptions
+from quicknxs.models.processing_workflow import ProcessingWorkflow
 from quicknxs.presenters.data_presenter import DataPresenter
 
 
@@ -17,8 +17,8 @@ def test_orso_output(data_server, tmpdir):
     conf.cut_first_n_points = 0
     conf.cut_last_n_points = 0
     manager = DataPresenter(data_server.directory)
-    output_options = deepcopy(DEFAULT_OPTIONS)
-    output_options["output_directory"] = str(tmpdir)
+    output_options = OutputOptions()
+    output_options.output_directory = str(tmpdir)
     pw = ProcessingWorkflow(manager, output_options)
 
     def _load_to_reduction_list(filename):
@@ -60,15 +60,14 @@ def test_orso_output(data_server, tmpdir):
 
 @pytest.mark.datarepo
 def test_smoothing_without_slice_export(data_server, tmpdir):
-    """Regression test for KeyError when smoothing without exporting slices.
+    """Regression test for error when smoothing without exporting slices.
 
     Reproduces the exact scenario reported by Marie:
     - User checks "Apply intensity smoothing" but NOT "Export off-spec slices"
-    - Smooth dialog opens and adds most off-spec params (x_axis, region, bins, sigmas)
-    - Slice dialog does NOT open, so slice params (qz_min/max) are never added
+    - Slice dialog does NOT open, so slice params (qz_min/max) come from OutputOptions defaults
     - smooth_offspec() internally needs slice params for internal calculations
 
-    This verifies that DEFAULT_OPTIONS provides missing parameters via merge pattern.
+    This verifies that OutputOptions default values cover the missing slice parameters.
     """
     Configuration.setup_default_values()
     conf = Configuration()
@@ -77,49 +76,43 @@ def test_smoothing_without_slice_export(data_server, tmpdir):
     manager = DataPresenter(data_server.directory)
 
     # Simulate the exact state after ReductionDialog + OffSpecParametersDialog:
-    # ReductionDialog.get_options() returns basic flags
-    output_options = {
-        "export_specular": False,
-        "export_offspec": False,
-        "apply_smoothing": True,  # User checked this
-        "export_offspec_smooth": True,
-        "export_offspec_slices": False,  # User did NOT check this
-        "output_directory": str(tmpdir),
-    }
-
-    # OffSpecParametersDialog.get_parameters() adds these (simulate dialog opening):
-    output_options.update(
-        {
-            "off_spec_x_axis": 0,  # DELTA_KZ_VS_QZ
-            "off_spec_x_min": -0.1,
-            "off_spec_x_max": 0.1,
-            "off_spec_y_min": 0.0,
-            "off_spec_y_max": 0.15,
-            "off_spec_nxbins": 120,
-            "off_spec_nybins": 120,
-            "off_spec_sigmas": 3,
-            "off_spec_sigmax": 0.001,
-            "off_spec_sigmay": 0.001,
-            # NOTE: off_spec_slice_qz_min/max are intentionally MISSING
-            # because OffSpecSliceDialog never opened (export_offspec_slices=False)
-        }
+    # User checked "Apply intensity smoothing" but NOT "Export off-spec slices"
+    output_options = OutputOptions(
+        export_specular=False,
+        export_offspec=False,
+        apply_smoothing=True,
+        export_offspec_smooth=True,
+        export_offspec_slices=False,  # User did NOT check this
+        output_directory=str(tmpdir),
+        # Off-spec params from OffSpecParametersDialog:
+        off_spec_x_axis=0,  # DELTA_KZ_VS_QZ
+        off_spec_x_min=-0.1,
+        off_spec_x_max=0.1,
+        off_spec_y_min=0.0,
+        off_spec_y_max=0.15,
+        off_spec_nxbins=120,
+        off_spec_nybins=120,
+        off_spec_sigmas=3,
+        off_spec_sigmax=0.001,
+        off_spec_sigmay=0.001,
+        # off_spec_slice_qz_min/max come from OutputOptions defaults since
+        # OffSpecSliceDialog never opened (export_offspec_slices=False)
     )
 
-    # This simulates the exact dict passed to ProcessingWorkflow in the bug scenario
     pw = ProcessingWorkflow(manager, output_options)
 
-    # Verify the merge pattern filled in the missing slice parameters
-    assert pw.output_options["off_spec_slice_qz_min"] == 0.05  # from DEFAULT_OPTIONS
-    assert pw.output_options["off_spec_slice_qz_max"] == 0.07  # from DEFAULT_OPTIONS
+    # Verify slice parameters are available via OutputOptions defaults
+    assert pw.output_options.off_spec_slice_qz_min == 0.05
+    assert pw.output_options.off_spec_slice_qz_max == 0.07
 
-    # Verify user-provided values were NOT overwritten by defaults
-    assert pw.output_options["off_spec_x_min"] == -0.1  # user's value preserved
-    assert pw.output_options["off_spec_sigmas"] == 3  # user's value preserved
+    # Verify user-provided values were preserved
+    assert pw.output_options.off_spec_x_min == -0.1
+    assert pw.output_options.off_spec_sigmas == 3
 
     # Load test data
     file_path = data_server.path_to("REF_M_42112.nxs.h5")
     manager.load(file_path, conf)
     manager.add_active_to_reduction()
 
-    # This should NOT raise KeyError: 'off_spec_slice_qz_min'
+    # This should NOT raise an error due to missing slice parameters
     pw.offspec(raw=False, binned=False, smooth=True, slices=False)

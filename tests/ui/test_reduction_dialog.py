@@ -44,9 +44,7 @@ class TestReductionDialog:
         dialog.accept()
         options = dialog.get_options()
 
-        assert options is not None
-        assert "apply_smoothing" in options
-        assert options["apply_smoothing"] is False
+        assert options is not None and options.apply_smoothing is False
 
     def test_apply_smoothing_true_when_checked(self, qtbot):
         """Test that apply_smoothing is True when checkbox is checked."""
@@ -58,8 +56,7 @@ class TestReductionDialog:
         dialog.accept()
         options = dialog.get_options()
 
-        assert options is not None
-        assert options["apply_smoothing"] is True
+        assert options is not None and options.apply_smoothing is True
 
     def test_settings_persistence(self, qtbot, qsettings_tmp_path):
         """Test that the intensity smoothing setting persists across dialog instances."""
