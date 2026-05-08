@@ -184,12 +184,12 @@ def data_presenter_with_data_factory(data_server):
         conf1.match_direct_beam = True
         manager.load(data_server.path_to("REF_M_42112"), conf1)
         manager.add_active_to_reduction()
-        assert manager.get_active_direct_beam().number == "42099"
+        assert manager.get_active_direct_beam().run_number == "42099"
         conf2 = Configuration()
         conf2.match_direct_beam = True
         manager.load(data_server.path_to("REF_M_42113"), conf2)
         manager.add_active_to_reduction()
-        assert manager.get_active_direct_beam().number == "42100"
+        assert manager.get_active_direct_beam().run_number == "42100"
 
         return manager
 
@@ -224,24 +224,24 @@ def main_window_with_mock_runs(qtbot, mocker, tmp_path):
 
     run_a = NexusData(str(tmp_path / "REF_M_40785.nxs.h5"), config)
     run_a.cross_sections["Off_Off"] = xs
-    run_a.number = "40785"
+    run_a.run_number = "40785"
 
     # run created with Open & Sum Multiple Files
     run_b = NexusData(str(tmp_path / "REF_M_40782.nxs.h5") + "+" + str(tmp_path / "REF_M_40785.nxs.h5"), config)
     run_b.cross_sections["Off_Off"] = xs
-    run_b.number = "40782"
+    run_b.run_number = "40782"
 
     run_c = NexusData(str(tmp_path / "REF_M_40782.nxs.h5"), config)
     run_c.cross_sections["Off_Off"] = xs
-    run_c.number = "40782"
+    run_c.run_number = "40782"
 
     run_db = NexusData(str(tmp_path / "REF_M_40786.nxs.h5"), config)
     run_db.cross_sections["Off_Off"] = xs
-    run_db.number = "40786"
+    run_db.run_number = "40786"
 
     run_db2 = NexusData(str(tmp_path / "REF_M_40787.nxs.h5"), config)
     run_db2.cross_sections["Off_Off"] = xs
-    run_db2.number = "40787"
+    run_db2.run_number = "40787"
 
     main_window = MainWindow()
     qtbot.addWidget(main_window)

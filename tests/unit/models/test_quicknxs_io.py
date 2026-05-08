@@ -173,7 +173,7 @@ def mock_nexus_data(tmp_path, temp_workspace_name):
         on_off._reflectivity_workspace = str(ws)
         nexus_data.cross_sections["Off_Off"] = off_off
         nexus_data.cross_sections["On_Off"] = on_off
-        nexus_data.number = run_number
+        nexus_data.run_number = run_number
 
         return nexus_data
 
@@ -218,7 +218,7 @@ class TestDataWriter(object):
             on_off._reflectivity_workspace = str(ws)
             nexus_data.cross_sections["Off_Off"] = off_off
             nexus_data.cross_sections["On_Off"] = on_off
-            nexus_data.number = run_number
+            nexus_data.run_number = run_number
             return nexus_data
 
         # Create direct beams

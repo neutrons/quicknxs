@@ -534,13 +534,13 @@ class TestActiveDataChangedSyncsFileList:
 
         # Switch to the direct beam tab and verify the file list highlights the active direct beam run (40786)
         data_tab_widget.setCurrentIndex(main_window.file_handler.DIRECT_BEAM_TAB_INDEX)
-        assert data_presenter._nexus_data.number == data_presenter.direct_beam_list[0].number
+        assert data_presenter._nexus_data.run_number == data_presenter.direct_beam_list[0].run_number
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40786.nxs.h5"
 
         # Switch to the main data tab and verify the file list highlights the active data run (40785)
         data_tab_widget.setCurrentIndex(main_window.file_handler.MAIN_DATA_TAB_INDEX)
-        assert data_presenter._nexus_data.number == data_presenter.reduction_list[0].number
+        assert data_presenter._nexus_data.run_number == data_presenter.reduction_list[0].run_number
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40785.nxs.h5"
 

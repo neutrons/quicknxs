@@ -239,7 +239,7 @@ class DataPresenter(object):
             reduction_list = self.reduction_list
 
         for i, _nexus_data in enumerate(reduction_list):
-            if _nexus_data.number == nexus_data.number:
+            if _nexus_data.run_number == nexus_data.run_number:
                 return i
         return None
 
@@ -292,7 +292,7 @@ class DataPresenter(object):
         if nexus_data is None:
             return None
         for i in range(len(self.direct_beam_list)):
-            if nexus_data.number == self.direct_beam_list[i].number:
+            if nexus_data.run_number == self.direct_beam_list[i].run_number:
                 return i
         return None
 
@@ -339,11 +339,11 @@ class DataPresenter(object):
                 self.calculate_reflectivity(nexus_data=nexus_data)
                 q_min, _ = nexus_data.get_q_range()
             except Exception:  # TODO (Glass): determine specific exceptions to catch here
-                logging.exception(f"Error calculating reflectivity for data set {nexus_data.number}")
+                logging.exception(f"Error calculating reflectivity for data set {nexus_data.run_number}")
 
         # If we still don't have q range information, we can't insert in order
         if q_min is None:
-            logging.error(f"Could not get q range for data set {nexus_data.number}, cannot insert in order.")
+            logging.error(f"Could not get q range for data set {nexus_data.run_number}, cannot insert in order.")
             return False
 
         # Use binary search to find the correct insertion point to keep the list sorted by q_min
@@ -371,7 +371,7 @@ class DataPresenter(object):
 
         # Check if already in list by run number (since we may have deepcopied objects)
         if self.find_run_number_in_reduction_list(self._nexus_data, reduction_list) is not None:
-            logging.warning(f"Data set {self._nexus_data.number} is already in the reduction list.")
+            logging.warning(f"Data set {self._nexus_data.run_number} is already in the reduction list.")
             return AddToReductionResult.ALREADY_IN_LIST
 
         if not self.is_nexus_data_compatible(self._nexus_data, reduction_list):
@@ -392,7 +392,7 @@ class DataPresenter(object):
             return AddToReductionResult.OTHER_ERROR
 
         if self._nexus_data.is_direct_beam():
-            logging.warning(f"Run {nexus_data.number} was added to the reduction list but is labeled as a direct beam.")
+            logging.warning(f"Run {nexus_data.run_number} was added to the reduction list but is labeled as a direct beam.")
             result = AddToReductionResult.SUCCESS_DIRECT_BEAM
         else:
             result = AddToReductionResult.SUCCESS
@@ -418,7 +418,7 @@ class DataPresenter(object):
         reduction_list = self.peak_reduction_lists[peak_index]
 
         # check if run already exists in this reduction list
-        if any(run_data.number == nexus_data_to_copy.number for run_data in reduction_list):
+        if any(run_data.run_number == nexus_data_to_copy.run_number for run_data in reduction_list):
             return False
 
         nexus_data = copy.deepcopy(nexus_data_to_copy)
@@ -456,7 +456,7 @@ class DataPresenter(object):
             result = AddToDirectBeamResult.SUCCESS
         else:
             logging.warning(
-                f"Run {self._nexus_data.number} was added to the direct beam list but is not labeled as a direct beam "
+                f"Run {self._nexus_data.run_number} was added to the direct beam list but is not labeled as a direct beam "
                 "(data_type PV ≠ 1). This run may have been started with 'Start RUN' command."
             )
             result = AddToDirectBeamResult.SUCCESS_REFLECTED
@@ -690,7 +690,7 @@ class DataPresenter(object):
             Direct beam run number
         """
         run_direct_beam = self._find_direct_beam(nexus_data)
-        return run_direct_beam is not None and self.is_same_run(run_direct_beam.number, direct_beam_run)
+        return run_direct_beam is not None and self.is_same_run(run_direct_beam.run_number, direct_beam_run)
 
     def _find_direct_beam(self, nexus_data: NexusData | CrossSectionData) -> CrossSectionData | None:
         """Attempt to find a direct beam data set for a given reflectivity data set.
@@ -719,11 +719,11 @@ class DataPresenter(object):
             return direct_beam
         data_xs_direct_beam = data_xs.configuration.direct_beam
         for direct_beam_item in self.direct_beam_list:
-            if not self.is_same_run(direct_beam_item.number, data_xs_direct_beam):
+            if not self.is_same_run(direct_beam_item.run_number, data_xs_direct_beam):
                 continue
             keys = list(direct_beam_item.cross_sections.keys())
             if not keys:
-                logging.error(f"Direct beam {direct_beam_item.number} has no cross-sections")
+                logging.error(f"Direct beam {direct_beam_item.run_number} has no cross-sections")
                 continue
             if len(keys) > 1:
                 logging.error("More than one cross-section for the direct beam, using the first one")
@@ -748,7 +748,7 @@ class DataPresenter(object):
             The direct beam data set if found, otherwise None.
         """
         for db in self.direct_beam_list:
-            if db.number == str(direct_beam_name):
+            if db.run_number == str(direct_beam_name):
                 return db
         return None
 
@@ -767,7 +767,7 @@ class DataPresenter(object):
                 if progress is not None:
                     progress(100.0 / len(self.reduction_list) * (i + 1))
             except:
-                logging.error("Could not compute GISANS for %s\n  %s", nexus_data.number, sys.exc_info()[1])
+                logging.error("Could not compute GISANS for %s\n  %s", nexus_data.run_number, sys.exc_info()[1])
         if progress is not None:
             progress(100)
 
@@ -784,7 +784,7 @@ class DataPresenter(object):
             return False
 
         nexus_data.calculate_gisans(direct_beam=direct_beam, progress=progress)
-        logging.info("Calculate GISANS: %s %s sec", nexus_data.number, (time.time() - t_0))
+        logging.info("Calculate GISANS: %s %s sec", nexus_data.run_number, (time.time() - t_0))
         return True
 
     def is_offspec_available(self):
@@ -822,7 +822,7 @@ class DataPresenter(object):
                 try:
                     self.calculate_reflectivity(nexus_data=nexus_data)
                 except:
-                    logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.number, sys.exc_info()[1])
+                    logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.run_number, sys.exc_info()[1])
 
     def reduce_offspec(self, progress=None):
         """Calculate off-specular reflectivity for all datasets in all reduction list.
@@ -835,7 +835,7 @@ class DataPresenter(object):
             try:
                 self.calculate_reflectivity(nexus_data=nexus_data, specular=False)
             except:
-                logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.number, sys.exc_info()[1])
+                logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.run_number, sys.exc_info()[1])
 
     def rebin_gisans(self, pol_state, wl_min=0, wl_max=100, qy_npts=50, qz_npts=50, use_pf=False):
         """Merge all the off-specular reflectivity data and rebin."""
@@ -885,7 +885,7 @@ class DataPresenter(object):
         active_instrument = active_xs.configuration.instrument
         closeness: dict[int, float] = {}
         for item in self.direct_beam_list:
-            item_number = int(item.number)
+            item_number = int(item.run_number)
             xs_keys = list(item.cross_sections.keys())
             if len(xs_keys) > 0:
                 xs = item.cross_sections[xs_keys[0]]
@@ -897,7 +897,7 @@ class DataPresenter(object):
         if len(self.direct_beam_list) > 0:
             closest = min(closeness.items(), key=lambda item: item[1])[0]
 
-        logging.info(f"Best direct beam for run {self._nexus_data.number} is {closest}")
+        logging.info(f"Best direct beam for run {self._nexus_data.run_number} is {closest}")
         if closest is not None:
             try:
                 self._nexus_data.set_parameter("direct_beam", closest)
@@ -1205,18 +1205,18 @@ class DataPresenter(object):
 
         # Get files to reload
         db_files = [
-            (nexus.number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice) for nexus in self.direct_beam_list
+            (nexus.run_number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice) for nexus in self.direct_beam_list
         ]
         data_files = []
         additional_peaks = []
         for ipeak, reduction_list in self.peak_reduction_lists.items():
             if ipeak == self.MAIN_REDUCTION_LIST_INDEX:
                 data_files = [
-                    (nexus.number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice) for nexus in reduction_list
+                    (nexus.run_number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice) for nexus in reduction_list
                 ]
             else:
                 additional_peaks = [
-                    (ipeak, nexus.number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice)
+                    (ipeak, nexus.run_number, nexus.file_path, _get_nexus_conf(nexus), nexus.slice)
                     for nexus in reduction_list
                 ]
         # Clear the lists

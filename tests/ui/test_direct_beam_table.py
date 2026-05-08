@@ -116,9 +116,9 @@ def test_peak_position_updates_direct_pixel(qtbot, data_server):
 
     # Assert reflected runs are using the direct beam
     refl_run0 = main_window.data_presenter.reduction_list[0]
-    assert str(refl_run0.get_parameter("direct_beam")) == str(main_window.data_presenter.direct_beam_list[0].number)
+    assert str(refl_run0.get_parameter("direct_beam")) == str(main_window.data_presenter.direct_beam_list[0].run_number)
     refl_run1 = main_window.data_presenter.reduction_list[1]
-    assert str(refl_run1.get_parameter("direct_beam")) == str(main_window.data_presenter.direct_beam_list[0].number)
+    assert str(refl_run1.get_parameter("direct_beam")) == str(main_window.data_presenter.direct_beam_list[0].run_number)
 
     # Verify that the column DPix is initially populated with the value from the DAS
     table_reduction: QtWidgets.QTableWidget = main_window.ui.reductionTable

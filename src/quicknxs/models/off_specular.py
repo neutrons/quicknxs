@@ -51,7 +51,7 @@ class OffSpecular(object):
             scale = 1.0 / self.data_set.proton_charge
         else:
             logging.warning(
-                f"Proton charge is zero - not calculating off-specular reflectivity for {self.data_set.number} {self.data_set.entry_name}."
+                f"Proton charge is zero - not calculating off-specular reflectivity for {self.data_set.run_number} {self.data_set.entry_name}."
             )
             return
 
@@ -174,7 +174,7 @@ def merge(reduction_list: List["NexusData"], pol_state: str) -> Tuple[np.ndarray
             _ds = np.concatenate((_ds, dS))
         except TypeError:
             logging.warning(
-                f"Off-specular data for {pol_state} in run {item.number} is not available, skipping this run."
+                f"Off-specular data for {pol_state} in run {item.run_number} is not available, skipping this run."
             )
 
     return _qx, _qz, _ki_z, _kf_z, _ki_z - _kf_z, _s, _ds

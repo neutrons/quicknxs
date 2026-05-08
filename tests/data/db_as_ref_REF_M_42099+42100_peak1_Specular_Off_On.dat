@@ -5,10 +5,13 @@
 # Type: Specular
 # Input file indices: 42099,42100
 # Extracted states: ++
+# NOTES:
+# - This file is used to test adding direct beam runs to the reduction list
+# - It is also used to test that new and old column names are properly mapped and load correctly
 #
 # [Direct Beam Runs]
-#  DB_ID  P0  PN  bg_pos  bck_roi  bg_width  r_Qsteps  r_final_rebin  P0  PN  direct_angle_offset_overwrite direct_beam  dpix  y_pos low_res_roi  y_width  match_direct_beam metadata_roi_bck metadata_roi_peak number  x_pos   peak_roi  x_width  scale_err  scale  set_direct_angle_offset  set_direct_pixel  slice  subtract_background  tof_bin_type  bin_width                                tof_range  tth  use_dangle                                   File
-#      0   0   0    27.5 [17, 38]      21.0     -0.02              0   1   1                            0.0        None 194.0  128.6   [50, 207]    156.8               True         [17, 38]        [225, 246]  42099  192.2 [182, 203]     21.0        0.0    1.0                    False             False      0                 True             0        400 [11413.560217325685, 45388.809236341694]    0       False       quicknxs-data/REF_M_42099.nxs.h5
+#  DB_ID  P0  PN  bg_pos  bck_roi  bg_width  r_Qsteps  r_final_rebin  P0  PN  direct_angle_offset_overwrite direct_beam  dpix  y_pos low_res_roi  y_width  match_direct_beam metadata_roi_bck metadata_roi_peak run_number  x_pos   peak_roi  x_width  scale_err  scale  set_direct_angle_offset  set_direct_pixel  slice  subtract_background  tof_bin_type  bin_width                                tof_range  tth  use_dangle                                   File
+#      0   0   0    27.5 [17, 38]      21.0     -0.02              0   1   1                            0.0        None 194.0  128.6   [50, 207]    156.8               True         [17, 38]        [225, 246]      42099  192.2 [182, 203]     21.0        0.0    1.0                    False             False      0                 True             0        400 [11413.560217325685, 45388.809236341694]    0       False       quicknxs-data/REF_M_42099.nxs.h5
 #
 # [Data Runs]
 #  DB_ID  bg_pos  bck_roi  bg_width  r_Qsteps  r_final_rebin  P0  PN  direct_angle_offset_overwrite  direct_beam  dpix   fan  y_pos low_res_roi  y_width  match_direct_beam metadata_roi_bck metadata_roi_peak number  x_pos   peak_roi  x_width  scale_err  scale  set_direct_angle_offset  set_direct_pixel  slice  subtract_background  tof_bin_type  bin_width                                tof_range      tth  use_dangle                                File

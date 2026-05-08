@@ -13,7 +13,7 @@ import numpy as np
 from mantid.dataobjects import Workspace2D
 from scipy.constants import h, m_n
 
-from quicknxs.enums import QBinningType, NexusDataType
+from quicknxs.enums import NexusDataType, QBinningType
 from quicknxs.exceptions import CrossSectionError
 from quicknxs.models.configuration import Configuration, get_direct_beam_low_res_roi
 from quicknxs.models.data_info import DataInfo
@@ -109,7 +109,7 @@ class CrossSectionData(object):
         self.cross_section_label = entry_name
         self.measurement_type = "polarized"
         self.configuration = copy.deepcopy(configuration)
-        self.number: str = ""  # can be single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
+        self.run_number: str = ""  # can be single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.q = None
         self._r = None
         self._dr = None
@@ -328,7 +328,7 @@ class CrossSectionData(object):
         self.total_time = data["duration"].value
 
         self.experiment = str(data["experiment_identifier"].value)
-        self.number = workspace.getRun().getProperty("run_numbers").value
+        self.run_number = workspace.getRun().getProperty("run_numbers").value
         self.merge_warnings = ""
 
         # Retrieve instrument-specific information
@@ -536,9 +536,9 @@ class CrossSectionData(object):
 
         logging.info(
             "%s:%s Reduction with DB: %s [config: %s]",
-            self.number,
+            self.run_number,
             self.entry_name,
-            direct_beam.number,
+            direct_beam.run_number,
             self.configuration.direct_beam,
         )
         angle_offset = 0  # Offset from dangle0, in radians
@@ -546,7 +546,7 @@ class CrossSectionData(object):
         def _as_ints(a):
             return [int(round(a[0])), int(round(a[1]))]
 
-        output_ws = "r%s_%s" % (self.number, str(self.entry_name))
+        output_ws = "r%s_%s" % (self.run_number, str(self.entry_name))
 
         ws_norm = None
         if apply_norm and direct_beam._event_workspace is not None:
@@ -562,7 +562,7 @@ class CrossSectionData(object):
         _dirpix = configuration.direct_pixel_overwrite if configuration.set_direct_pixel else None
         _dangle0 = configuration.direct_angle_offset_overwrite if configuration.set_direct_angle_offset else None
 
-        direct_beam_low_res_roi = get_direct_beam_low_res_roi(conf, direct_beam.configuration)
+        direct_beam_low_res_roi = get_direct_beam_low_res_roi(self.configuration, direct_beam.configuration)
 
         ws = api.MagnetismReflectometryReduction(
             InputWorkspace=self._event_workspace,
@@ -684,7 +684,7 @@ class NexusData(object):
         fp = FilePath(file_path)
         self.file_path = fp.path  # sort the paths if more than one
         self.file_name = fp.basename
-        self.number: str = ""  # can be a single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
+        self.run_number: str = ""  # can be a single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.configuration = configuration
         self.cross_sections: Dict[str, CrossSectionData] = {}
         self.main_cross_section: str | None = None
@@ -797,14 +797,14 @@ class NexusData(object):
             direct_beam = CrossSectionData("none", self.configuration, "none")
 
         logging.info(
-            "%s Reduction with DB: %s [config: %s]", self.number, direct_beam.number, self.configuration.direct_beam
+            "%s Reduction with DB: %s [config: %s]", self.run_number, direct_beam.run_number, self.configuration.direct_beam
         )
         angle_offset = 0  # Offset from dangle0, in radians
 
         def _as_ints(a):
             return [int(round(a[0])), int(round(a[1])) - 1]
 
-        output_ws = "r%s_%s" % (self.number, ws_suffix)
+        output_ws = "r%s_%s" % (self.run_number, ws_suffix)
 
         ws_norm = None
         if apply_norm and direct_beam._event_workspace is not None:
@@ -896,7 +896,7 @@ class NexusData(object):
         for xs in _ws:
             # add suffix to avoid overwriting ws in mantid data service, needed for multiple peaks and summed runs
             # for example: 42112_On_Off__reflectivity -> 42112_On_Off__reflectivity_42112+42113_1
-            api.RenameWorkspace(str(xs), str(xs) + "_" + self.number + ws_suffix)
+            api.RenameWorkspace(str(xs), str(xs) + "_" + self.run_number + ws_suffix)
             xs_id = xs.getRun().getProperty("cross_section_id").value
             self.cross_sections[xs_id].q = xs.readX(0)[:].copy()
             self.cross_sections[xs_id]._r = np.ma.masked_equal(xs.readY(0)[:].copy(), 0)
@@ -1052,7 +1052,7 @@ class NexusData(object):
             name = ws.getRun().getProperty("cross_section_id").value
             cross_section = CrossSectionData(name, self.configuration, entry_name=xs_id, workspace=ws)
             self.cross_sections[name] = cross_section
-            self.number = cross_section.number  # e.g '1234:1238+1239' if more than one run made up this cross section
+            self.run_number = cross_section.run_number  # e.g '1234:1238+1239' if more than one run made up this cross section
             if cross_section.total_counts > _max_counts:
                 _max_counts = cross_section.total_counts
                 _max_xs = name

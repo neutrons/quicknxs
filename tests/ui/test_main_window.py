@@ -350,10 +350,10 @@ class TestMainGui:
 
         reduction_lists = window_main.data_presenter.peak_reduction_lists
         assert len(reduction_lists[1]) == 2
-        assert reduction_lists[1][0].number == "42112"
-        assert reduction_lists[1][1].number == "42113"
+        assert reduction_lists[1][0].run_number == "42112"
+        assert reduction_lists[1][1].run_number == "42113"
         assert len(reduction_lists[2]) == 1
-        assert reduction_lists[2][0].number == "42113"
+        assert reduction_lists[2][0].run_number == "42113"
 
         # add new run to the second peak tab using right-click action
         table = getattr(window_main.ui, "reductionTable")

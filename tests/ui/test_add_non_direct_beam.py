@@ -366,12 +366,12 @@ def test_non_direct_beam_saved_and_loaded(qtbot, data_server, tmp_path):
 
     # Verify the direct beam list was loaded and contains run 42112
     assert len(new_window.data_presenter.direct_beam_list) > 0, "Direct beam list is empty after loading"
-    db_numbers = [str(db.number) for db in new_window.data_presenter.direct_beam_list]
+    db_numbers = [str(db.run_number) for db in new_window.data_presenter.direct_beam_list]
     assert "42112" in db_numbers, f"Run 42112 not in direct beam list after loading. Found: {db_numbers}"
 
     # Verify the reduction list was loaded and contains run 42113
     assert len(new_window.data_presenter.reduction_list) > 0, "Reduction list is empty after loading"
-    refl_numbers = [str(r.number) for r in new_window.data_presenter.reduction_list]
+    refl_numbers = [str(r.run_number) for r in new_window.data_presenter.reduction_list]
     assert "42113" in refl_numbers, f"Run 42113 not in reduction list after loading. Found: {refl_numbers}"
 
 
@@ -476,7 +476,7 @@ def test_radio_button_indices_after_q_reordering(qtbot, data_server):
     QApplication.processEvents()
 
     # Step 4: Verify that run 42113 is now the active run (not 42112)
-    active_run_number = window_main.data_presenter._nexus_data.number
+    active_run_number = window_main.data_presenter._nexus_data.run_number
     assert active_run_number == "42113", (
         f"Expected active run to be 42113, but it is {active_run_number}. "
         "This indicates the radio button is using an outdated row index."

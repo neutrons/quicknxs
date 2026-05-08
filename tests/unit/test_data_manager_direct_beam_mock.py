@@ -19,7 +19,7 @@ class TestDirectBeamFeatureMocked:
         # Create a mock NexusData that is NOT a direct beam
         mock_nexus = mock.Mock(spec=NexusData)
         mock_nexus.is_direct_beam.return_value = False
-        mock_nexus.number = "12345"
+        mock_nexus.run_number = "12345"
         data_presenter._nexus_data = mock_nexus
 
         # Should return 1 (added but not a true direct beam)
@@ -28,7 +28,7 @@ class TestDirectBeamFeatureMocked:
 
         # Should be in the direct beam list (as a deepcopy with same run number)
         assert len(data_presenter.direct_beam_list) == 1
-        assert data_presenter.direct_beam_list[0].number == mock_nexus.number
+        assert data_presenter.direct_beam_list[0].run_number == mock_nexus.run_number
         # It should be a different object (deepcopied)
         assert data_presenter.direct_beam_list[0] is not mock_nexus
 
@@ -39,7 +39,7 @@ class TestDirectBeamFeatureMocked:
         # Create a mock NexusData that IS a direct beam
         mock_nexus = mock.Mock(spec=NexusData)
         mock_nexus.is_direct_beam.return_value = True
-        mock_nexus.number = "12346"
+        mock_nexus.run_number = "12346"
         data_presenter._nexus_data = mock_nexus
 
         # Should return 2 (added and is a true direct beam)
@@ -48,7 +48,7 @@ class TestDirectBeamFeatureMocked:
 
         # Should be in the direct beam list
         assert len(data_presenter.direct_beam_list) == 1
-        assert data_presenter.direct_beam_list[0].number == mock_nexus.number
+        assert data_presenter.direct_beam_list[0].run_number == mock_nexus.run_number
 
     def test_add_duplicate_run(self):
         """Test that adding the same run twice returns the correct result."""
@@ -57,7 +57,7 @@ class TestDirectBeamFeatureMocked:
         # Create a mock NexusData
         mock_nexus = mock.Mock(spec=NexusData)
         mock_nexus.is_direct_beam.return_value = False
-        mock_nexus.number = "12347"
+        mock_nexus.run_number = "12347"
         data_presenter._nexus_data = mock_nexus
 
         # Add it the first time
@@ -77,7 +77,7 @@ class TestDirectBeamFeatureMocked:
         # Add a true direct beam
         mock_true_db = mock.Mock(spec=NexusData)
         mock_true_db.is_direct_beam.return_value = True
-        mock_true_db.number = "12348"
+        mock_true_db.run_number = "12348"
         mock_true_db.file_path = "/tmp/test_12348.nxs"
         data_presenter._nexus_data = mock_true_db
         result1 = data_presenter.add_active_to_direct_beam_list()
@@ -86,7 +86,7 @@ class TestDirectBeamFeatureMocked:
         # Add a non-direct-beam run
         mock_not_db = mock.Mock(spec=NexusData)
         mock_not_db.is_direct_beam.return_value = False
-        mock_not_db.number = "12349"
+        mock_not_db.run_number = "12349"
         mock_not_db.file_path = "/tmp/test_12349.nxs"
         data_presenter._nexus_data = mock_not_db
         result2 = data_presenter.add_active_to_direct_beam_list()
@@ -104,7 +104,7 @@ class TestDirectBeamFeatureMocked:
         # Mock a non-direct-beam run
         mock_nexus = mock.Mock(spec=NexusData)
         mock_nexus.is_direct_beam.return_value = False
-        mock_nexus.number = "12351"
+        mock_nexus.run_number = "12351"
         data_presenter._nexus_data = mock_nexus
         data_presenter.add_active_to_direct_beam_list()
         assert len(data_presenter.direct_beam_list) == 1
@@ -121,7 +121,7 @@ class TestDirectBeamFeatureMocked:
         # Create a mock NexusData
         mock_nexus = mock.Mock(spec=NexusData)
         mock_nexus.is_direct_beam.return_value = True
-        mock_nexus.number = "12351"
+        mock_nexus.run_number = "12351"
         data_presenter._nexus_data = mock_nexus
 
         # Call without checking return value (like existing code does)
@@ -138,10 +138,10 @@ class TestDirectBeamFeatureMocked:
         data_presenter = DataPresenter("/tmp")
 
         reflected_copy = mock.Mock(spec=NexusData)
-        reflected_copy.number = "12352"
+        reflected_copy.run_number = "12352"
 
         direct_beam_copy = mock.Mock(spec=NexusData)
-        direct_beam_copy.number = "12352"
+        direct_beam_copy.run_number = "12352"
 
         data_presenter._nexus_data = reflected_copy
         data_presenter.direct_beam_list = [direct_beam_copy]

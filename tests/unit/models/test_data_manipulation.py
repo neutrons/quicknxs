@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from quicknxs.exceptions import NormalizeToUnityQCutoffError
-from quicknxs.models.configuration import QBinningType, Configuration
+from quicknxs.models.configuration import Configuration, QBinningType
 from quicknxs.models.data_manipulation import (
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
@@ -26,13 +26,13 @@ mock_reduced_file_str = (
     "# Extracted states: -+\n"
     "#\n"
     "# [Direct Beam Runs]\n"
-    "#    DB_ID        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width      dpix       tth    number      File\n"  # noqa: E501
+    "#    DB_ID        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width      dpix       tth    run_number      File\n"  # noqa: E501
     "#        1         0         0       195        12     126.5       155        55        24       194         0     42099  data/quicknxs-data/REF_M_42099.nxs.h5\n"  # noqa: E501
     "#        2         0         0       195        12       127       154        55        24       194         0     42100  data/quicknxs-data/REF_M_42100.nxs.h5\n"  # noqa: E501
     "#        3         0         0       195        12       127       154        55        24       194         0     42100  data/quicknxs-data/REF_M_42100.nxs.h5\n"  # noqa: E501
     "#\n"
     "# [Data Runs]\n"
-    "#    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    number     DB_ID      File\n"  # noqa: E501
+    "#    scale        P0        PN     x_pos   x_width     y_pos   y_width    bg_pos  bg_width       fan      dpix       tth    run_number     DB_ID      File\n"  # noqa: E501
     "#        1        15        10       167        12     163.5      72.9        55        24     False       194  0.00653668     42112         1  data/quicknxs-data/REF_M_42112.nxs.h5\n"  # noqa: E501
     "# 0.183654        15        10     189.3        12     162.2      68.3        55        24     False       194  0.799577     42116           2  data/quicknxs-data/REF_M_42116.nxs.h5\n"  # noqa: E501
     "#   0.1375        15        10     167.5        12     159.9      67.4        55        24     False       194  0.798876     42113           3  data/quicknxs-data/REF_M_42113.nxs.h5\n"  # noqa: E501
@@ -248,7 +248,7 @@ class TestDataManipulation(object):
                 cross_sections={
                     "XS1": mocker.MagicMock(
                         _reflectivity_workspacegroup=wsg,
-                        number=1,
+                        run_number=1,
                         configuration=mocker.MagicMock(cut_first_n_points=5, cut_last_n_points=10, scaling_factor=1.5),
                     )
                 }
@@ -260,7 +260,7 @@ class TestDataManipulation(object):
                 cross_sections={
                     "XS1": mocker.MagicMock(
                         _reflectivity_workspacegroup=ws2,
-                        number=1,
+                        run_number=1,
                         configuration=mocker.MagicMock(cut_first_n_points=5, cut_last_n_points=10, scaling_factor=1.5),
                     )
                 }
@@ -305,19 +305,19 @@ class TestDataManipulation(object):
         assert metadata.mid_q == expected["mid_q"]
         assert metadata.is_direct_beam == expected["is_direct_beam"]
 
-    def make_mock_xs(self, number, wavelength, slitwidth):
+    def make_mock_xs(self, run_number, wavelength, slitwidth):
         return mock.Mock(
-            number=number,
+            run_number=run_number,
             lambda_center=wavelength,
             slit1_width=slitwidth[0],
             slit2_width=slitwidth[1],
             slit3_width=slitwidth[2],
         )
 
-    def make_mock_run(self, number, wavelength, slitwidth):
+    def make_mock_run(self, run_number, wavelength, slitwidth):
         return mock.Mock(
-            number=number,
-            cross_sections={"Off_Off": self.make_mock_xs(number, wavelength, slitwidth)},
+            run_number=run_number,
+            cross_sections={"Off_Off": self.make_mock_xs(run_number, wavelength, slitwidth)},
         )
 
     def test_find_best_direct_beam(self):
@@ -342,7 +342,7 @@ class TestDataManipulation(object):
 
         # run the function -- should set with beam1
         manager.find_best_direct_beam()
-        manager._nexus_data.set_parameter.assert_called_once_with("direct_beam", beam1.number)
+        manager._nexus_data.set_parameter.assert_called_once_with("direct_beam", beam1.run_number)
 
 
 if __name__ == "__main__":

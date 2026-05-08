@@ -52,7 +52,7 @@ def generate_short_script(reduction_list):
         # short-hand it
         ws_iterable = [api.mtd[ws_name]] if contain_single_crosssection else api.mtd[ws_name]
 
-        script += "# Run:%s\n" % reduction_list[i].cross_sections[xs].number
+        script += "# Run:%s\n" % reduction_list[i].cross_sections[xs].run_number
         script_text = api.GeneratePythonScript(ws_iterable[0])
         script += script_text.replace(", ", ",\n                                ")
         script += "\n\n"

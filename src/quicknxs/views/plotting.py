@@ -481,7 +481,7 @@ class PlotView(object):
                 plot = plots[i]
                 plot.show()
                 selected_data = nexus_data.cross_sections[xs]
-                progress(i_run + i / 4.0, message="Processed run %s %s" % (selected_data.number, xs), out_of=n_total)
+                progress(i_run + i / 4.0, message="Processed run %s %s" % (selected_data.run_number, xs), out_of=n_total)
 
                 PN = len(selected_data.tof) - selected_data.configuration.cut_first_n_points
                 P0 = selected_data.configuration.cut_last_n_points
@@ -720,7 +720,7 @@ class PlotView(object):
                 refli.cross_sections[xs_name].q[P0i:PNi],
                 ynormed,
                 yerr=refli.cross_sections[xs_name].dr[P0i:PNi],
-                label=str(refli.number),
+                label=str(refli.run_number),
                 capsize=1,
                 color=self._refl_color_list[i % len(self._refl_color_list)],
             )

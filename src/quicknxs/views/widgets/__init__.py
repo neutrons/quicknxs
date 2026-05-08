@@ -6,8 +6,8 @@ from quicknxs.views.widgets.binning_type_combobox import BinningTypeSelection
 from quicknxs.views.widgets.mplwidget import MPLWidget
 
 _all__ = [
-    "AcceptRejectDialog",
-    "ActiveDataRadioButton",
-    "BinningTypeSelection",
-    "MPLWidget",
+    AcceptRejectDialog,
+    ActiveDataRadioButton,
+    BinningTypeSelection,
+    MPLWidget,
 ]

@@ -193,30 +193,30 @@ class TestDataPresenterTest(object):
         data_presenter.load(data_server.path_to("REF_M_42113"), Configuration())
         assert data_presenter.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(data_presenter.reduction_list) == 1
-        assert data_presenter.reduction_list[0].number == "42113"
+        assert data_presenter.reduction_list[0].run_number == "42113"
 
         # Add lowest Q run - should be inserted at the beginning
         data_presenter.load(data_server.path_to("REF_M_42112"), Configuration())
         assert data_presenter.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(data_presenter.reduction_list) == 2
-        assert data_presenter.reduction_list[0].number == "42112"
-        assert data_presenter.reduction_list[1].number == "42113"
+        assert data_presenter.reduction_list[0].run_number == "42112"
+        assert data_presenter.reduction_list[1].run_number == "42113"
 
         # Add middle Q run - should be inserted in the middle
         data_presenter.load(data_server.path_to("REF_M_40782"), Configuration())
         assert data_presenter.add_active_to_reduction() == AddToReductionResult.SUCCESS
         assert len(data_presenter.reduction_list) == 3
-        assert data_presenter.reduction_list[0].number == "42112"
-        assert data_presenter.reduction_list[1].number == "40782"
-        assert data_presenter.reduction_list[2].number == "42113"
+        assert data_presenter.reduction_list[0].run_number == "42112"
+        assert data_presenter.reduction_list[1].run_number == "40782"
+        assert data_presenter.reduction_list[2].run_number == "42113"
 
         # Verify Q values are in ascending order
         for i in range(len(data_presenter.reduction_list) - 1):
             q_min_current, _ = data_presenter.reduction_list[i].get_q_range()
             q_min_next, _ = data_presenter.reduction_list[i + 1].get_q_range()
             assert q_min_current <= q_min_next, (
-                f"Q ordering violated: run {data_presenter.reduction_list[i].number} "
-                f"(Q={q_min_current}) should be <= run {data_presenter.reduction_list[i + 1].number} (Q={q_min_next})"
+                f"Q ordering violated: run {data_presenter.reduction_list[i].run_number} "
+                f"(Q={q_min_current}) should be <= run {data_presenter.reduction_list[i + 1].run_number} (Q={q_min_next})"
             )
 
     @pytest.mark.datarepo
@@ -244,8 +244,8 @@ class TestDataPresenterTest(object):
         # Add low Q run - should be inserted before high Q
         assert data_presenter.copy_nexus_data_to_reduction(nexus_data_low_q, peak_index=2)
         assert len(data_presenter.peak_reduction_lists[2]) == 2
-        assert data_presenter.peak_reduction_lists[2][0].number == "42112"
-        assert data_presenter.peak_reduction_lists[2][1].number == "42113"
+        assert data_presenter.peak_reduction_lists[2][0].run_number == "42112"
+        assert data_presenter.peak_reduction_lists[2][1].run_number == "42113"
 
         # Verify Q values are in ascending order
         for i in range(len(data_presenter.peak_reduction_lists[2]) - 1):

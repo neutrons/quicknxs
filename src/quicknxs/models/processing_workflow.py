@@ -215,7 +215,7 @@ class ProcessingWorkflow(object):
         # Save the individual runs to ORSO
         individual_paths = {}
         for nexus_data in self.data_presenter.reduction_list:
-            run = str(nexus_data.number)
+            run = str(nexus_data.run_number)
             reflectivity_workspaces = nexus_data.get_reflectivity_workspace_group()
             filepath = self.get_file_name([run], "all", "ort")
             io_orso.save_cross_sections(reflectivity_workspaces, filepath)
@@ -249,7 +249,7 @@ class ProcessingWorkflow(object):
             combined_reflectivity_workspaces.append(ws_combined)
 
         # Save the combined reflectivity to ORSO
-        run_list = [str(item.number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
         combined_path = self.get_file_name(run_list, "all", "ort")
         io_orso.save_cross_sections(combined_reflectivity_workspaces, combined_path)
 
@@ -261,7 +261,7 @@ class ProcessingWorkflow(object):
 
         # self.data_presenter.merge_data_sets(asymmetry=self.output_options.export_asym)
 
-        run_list = [str(item.number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
 
         output_data = self.get_output_data()
 
@@ -298,7 +298,7 @@ class ProcessingWorkflow(object):
 
     def gisans(self, progress=None):
         """Export GISANS."""
-        run_list = [str(item.number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
 
         # Refresh the reflectivity calculation
         if progress is not None:
@@ -343,7 +343,7 @@ class ProcessingWorkflow(object):
         slices:
             If true, Qz slices will be extracted and saved
         """
-        run_list = [str(item.number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
 
         # Refresh the reflectivity calculation
         self.data_presenter.cached_offspec = None
@@ -582,7 +582,7 @@ class ProcessingWorkflow(object):
                     ki_max = max(ki_max, ki_z.max())
                 except TypeError:
                     logging.warning(
-                        f"Off-specular data for {pol_state} in run {item.number} is not available, skipping this run."
+                        f"Off-specular data for {pol_state} in run {item.run_number} is not available, skipping this run."
                     )
                     continue
 
@@ -814,7 +814,7 @@ class ProcessingWorkflow(object):
 
     def _email_replace(self, text):
         """Replace token templates in text."""
-        run_list = [str(item.number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
         return (
             text.replace("{ipts}", "")
             .replace("{numbers}", "+".join(run_list))

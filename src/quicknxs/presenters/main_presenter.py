@@ -402,7 +402,7 @@ class MainPresenter:
         self.ui.datasetDirectPixel.setText(dpix)
         self.ui.currentCrossSection.setText(
             "<b>%s</b> (%s)&nbsp;&nbsp;&nbsp;Type: %s&nbsp;&nbsp;&nbsp;Current State: "
-            "<b>%s</b>" % (d.number, d.experiment, d.measurement_type, d.name)
+            "<b>%s</b>" % (d.run_number, d.experiment, d.measurement_type, d.name)
         )
 
         # Update direct beam indicator
@@ -436,7 +436,7 @@ class MainPresenter:
             self.ui.datasetRate.setText("NaN")
         self.ui.currentCrossSection.setText(
             "<b>%s</b> (%s)&nbsp;&nbsp;&nbsp;Type: %s&nbsp;&nbsp;&nbsp;Current State: "
-            "<b>%s</b>" % (d.number, d.experiment, d.measurement_type, d.name)
+            "<b>%s</b>" % (d.run_number, d.experiment, d.measurement_type, d.name)
         )
 
         # Update the calculated data
@@ -641,7 +641,7 @@ class MainPresenter:
             self._data_presenter.set_active_reduction_list_index(self._data_presenter.MAIN_REDUCTION_LIST_INDEX)
             self._data_presenter.set_active_data_from_reduction_list(0)
 
-            direct_beam_ids = [str(r.number) for r in self._data_presenter.direct_beam_list]
+            direct_beam_ids = [str(r.run_number) for r in self._data_presenter.direct_beam_list]
             self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
             self.file_loaded()
@@ -913,7 +913,7 @@ class MainPresenter:
         button_group.addButton(radio_widget.radio_button)
         table_widget.setCellWidget(idx, ReductionTableColumn.ACTIVE, radio_widget)
 
-        item = QtWidgets.QTableWidgetItem(str(data.number))
+        item = QtWidgets.QTableWidgetItem(str(data.run_number))
         if data == self._data_presenter.active_cross_section:
             item.setBackground(QColors.yellow)
         else:
@@ -1193,7 +1193,7 @@ class MainPresenter:
                 _pop_up = True
             case AddToDirectBeamResult.SUCCESS_REFLECTED:
                 msg = (
-                    f"Run {self._data_presenter._nexus_data.number} added to direct beam list."
+                    f"Run {self._data_presenter._nexus_data.run_number} added to direct beam list."
                     "Note: This run is labeled as a reflected beam in the metadata "
                     "(data_type PV ≠ 1). This may occur for runs started with 'Start RUN' "
                     "command in EPICS."
@@ -1211,7 +1211,7 @@ class MainPresenter:
         direct_beam_data = self._data_presenter.direct_beam_list[idx].get_main_cross_section_data()
         self.update_direct_beam_table(idx, direct_beam_data)
 
-        direct_beam_ids = [str(r.number) for r in self._data_presenter.direct_beam_list]
+        direct_beam_ids = [str(r.run_number) for r in self._data_presenter.direct_beam_list]
         self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
@@ -1246,7 +1246,7 @@ class MainPresenter:
         matched_runs = [
             refl
             for refl in self._data_presenter.reduction_list
-            if str(refl.get_parameter("direct_beam")) == str(direct_beam.number)
+            if str(refl.get_parameter("direct_beam")) == str(direct_beam.run_number)
         ]
         dpix = direct_beam.get_parameter("peak_position")
         for refl in matched_runs:
@@ -1288,7 +1288,7 @@ class MainPresenter:
         self.direct_beam_button_group.addButton(radio_widget.radio_button)
         self.ui.directBeamTable.setCellWidget(idx, DirectBeamTableColumn.ACTIVE, radio_widget)
 
-        item = QtWidgets.QTableWidgetItem(str(data.number))
+        item = QtWidgets.QTableWidgetItem(str(data.run_number))
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         if data == self._data_presenter.active_cross_section:
             item.setBackground(QColors.yellow)
@@ -1374,7 +1374,7 @@ class MainPresenter:
 
         # Recalculate reflectivity for runs with this direct beam
         try:
-            self._data_presenter.reduce_spec(direct_beam=data.number)
+            self._data_presenter.reduce_spec(direct_beam=data.run_number)
         except:
             self.report_message(
                 "Could not compute reflectivity for %s" % self._data_presenter.current_file_name,
@@ -1520,7 +1520,7 @@ class MainPresenter:
         if not path:
             return
         # ask user for base name for files (one file for each cross-section, e.g. "REF_M_1234_data_Off-Off.dat")
-        default_basename = f"REF_M_{nexus_data.number}_data"
+        default_basename = f"REF_M_{nexus_data.run_number}_data"
         while True:  # to ask again for new basename if the user does not want to overwrite existing files
             basename, ok = QtWidgets.QInputDialog.getText(
                 self.main_window, "Base name", "Save file base name:", text=default_basename
@@ -1967,7 +1967,7 @@ class MainPresenter:
                 self._data_presenter.set_active_data_from_reduction_list(idx)
                 self.update_reduction_table(table_widget, idx, self._data_presenter.active_cross_section)
 
-        direct_beam_ids = [str(r.number) for r in self._data_presenter.direct_beam_list]
+        direct_beam_ids = [str(r.run_number) for r in self._data_presenter.direct_beam_list]
         self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
         # Restore the active data tab

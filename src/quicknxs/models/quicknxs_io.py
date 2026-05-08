@@ -51,6 +51,7 @@ LEGACY_CONFIG_MAP = {
     "binning_q_step_global": "q_binning_step_global",
     "binning_type_run": "q_binning_type_run",
     "binning_q_step_run": "q_binning_step_run",
+    "number": "run_number",
 }
 
 
@@ -239,7 +240,7 @@ def write_reflectivity_header(
         "PN",
         "dpix",
         "tth",
-        "number",
+        "run_number",
         "slice",
         "File",
     ]
@@ -247,7 +248,7 @@ def write_reflectivity_header(
         "fan",
         "dpix",
         "tth",
-        "number",
+        "run_number",
         "slice",
         "DB_ID",
         "File",
@@ -259,7 +260,7 @@ def write_reflectivity_header(
     fd.write("# Datafile created using Mantid %s\n" % mantid.__version__)
     fd.write("# Date: %s\n" % time.strftime("%Y-%m-%d %H:%M:%S"))
     fd.write("# Type: Specular\n")
-    run_list = [str(item.number) for item in reduction_list]
+    run_list = [str(item.run_number) for item in reduction_list]
     fd.write("# Input file indices: %s\n" % ",".join(run_list))
     fd.write("# Extracted states: %s\n" % pol_state)
     fd.write("#\n")
@@ -279,7 +280,7 @@ def write_reflectivity_header(
     # Get the list of cross-sections
     pol_list = list(reduction_list[0].cross_sections.keys())
     if not pol_list:
-        logging.error("No data found in run %s", reduction_list[0].number)
+        logging.error("No data found in run %s", reduction_list[0].run_number)
         return
 
     # Direct beam section
@@ -302,7 +303,7 @@ def write_reflectivity_header(
 
             direct_beam = None
             for db_i in direct_beam_list:
-                if str(db_i.number) == str(normalization_run):
+                if str(db_i.run_number) == str(normalization_run):
                     direct_beam = db_i
             if direct_beam is None:
                 continue
@@ -310,16 +311,16 @@ def write_reflectivity_header(
             dpix = run_object.getProperty("normalization_dirpix").value
             filename = run_object.getProperty("normalization_file_path").value
 
-            item = dict(
-                DB_ID=direct_beam_idx,
-                tth=0,
-                P0=0,
-                PN=0,
-                dpix=dpix,
-                number=normalization_run,
-                slice=direct_beam.slice if direct_beam is not None else 0,
-                File=filename,
-            )
+            item = {
+                "DB_ID": direct_beam_idx,
+                "tth": 0,
+                "P0": 0,
+                "PN": 0,
+                "dpix": dpix,
+                "run_number": normalization_run,
+                "slice": direct_beam.slice if direct_beam is not None else 0,
+                "File": filename,
+            }
 
             config_value_dict = _build_config_row_dict(
                 config=direct_beam.cross_sections[db_pol].configuration,
@@ -443,15 +444,15 @@ def _get_cross_section_config_values(
         # Look up the DB_ID from the mapping
         db_id = normalization_run_to_db_id.get(str(normalization_run), 0)
 
-    item = dict(
-        DB_ID=db_id,
-        tth=tth,
-        fan=constant_q_binning,
-        dpix=dpix,
-        number=str(nexus_data.number if nexus_data is not None else ws.getRunNumber()),
-        slice=nexus_data.slice if nexus_data is not None else 0,
-        File=filename,
-    )
+    item = {
+        "DB_ID": db_id,
+        "tth": tth,
+        "fan": constant_q_binning,
+        "dpix": dpix,
+        "run_number": str(nexus_data.run_number if nexus_data is not None else ws.getRunNumber()),
+        "slice": nexus_data.slice if nexus_data is not None else 0,
+        "File": filename,
+    }
 
     return item
 
@@ -612,7 +613,7 @@ def read_reduced_file(file_path: str, configuration=None):
                             _assign_config_value(conf, attr, value_str)
 
                     # Handle run numbers that may contain "+" for summed files (e.g., "42112+42113")
-                    run_number_str = _get_tok("number", cols, toks)
+                    run_number_str = _get_tok("number", cols, toks) or _get_tok("run_number", cols, toks)
                     if "+" in run_number_str:
                         # For summed files, use the first run number as the identifier
                         run_number = int(run_number_str.split("+")[0])
@@ -672,7 +673,7 @@ def read_reduced_file(file_path: str, configuration=None):
                         if DB_ID > 0 and len(direct_beam_runs) >= DB_ID:
                             conf.direct_beam = direct_beam_runs[DB_ID - 1][0]
                     # Handle run numbers that may contain "+" for summed files (e.g., "42112+42113")
-                    run_number_str = _get_tok("number", cols, toks)
+                    run_number_str = _get_tok("number", cols, toks) or _get_tok("run_number", cols, toks)
                     if "+" in run_number_str:
                         # For summed files, use the first run number as the identifier
                         run_number = int(run_number_str.split("+")[0])
