@@ -22,8 +22,9 @@ from mr_reduction import io_orso
 from mr_reduction.types import MantidWorkspace
 
 from quicknxs.config import SMTP_SERVER
+from quicknxs.enums import OffSpecXAxis
 from quicknxs.models import data_manipulation, gisans, off_specular, quicknxs_io
-from quicknxs.models.configuration import Configuration, OutputOptions
+from quicknxs.models.configuration import OutputOptions
 from quicknxs.presenters.data_presenter import DataPresenter
 from quicknxs.presenters.progress_reporter import ProgressReporter
 
@@ -632,14 +633,14 @@ class ProcessingWorkflow(object):
             I = data[:, :, 5].flatten()
             Qzmax = data[:, :, 2].max() * 2.0
             y_label = "Qz"
-            if axes == Configuration.QX_VS_QZ:
+            if axes == OffSpecXAxis.QX_VS_QZ:
                 x = data[:, :, 0].flatten()
                 y = data[:, :, 1].flatten()
                 output_data["units"] = ["1/A", "1/A", "a.u."]
                 output_data["columns"] = ["Qx", "Qz", "I"]
                 axis_sigma_scaling = 2
                 xysigma0 = Qzmax / 3.0
-            elif axes == Configuration.KZI_VS_KZF:
+            elif axes == OffSpecXAxis.KZI_VS_KZF:
                 y_label = "kf_z"
                 x = data[:, :, 2].flatten()
                 y = data[:, :, 3].flatten()

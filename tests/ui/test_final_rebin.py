@@ -1,7 +1,7 @@
 import pytest
 
 from quicknxs.config.gui import QColors
-from quicknxs.enums import BinningType, ReductionTableColumn
+from quicknxs.enums import QBinningType, ReductionTableColumn
 from quicknxs.views.main_window import MainWindow
 from tests.ui import ui_utilities
 
@@ -22,7 +22,7 @@ def _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=
     main_window.actionAddRefl.triggered.emit()
 
     if final_rebin_enabled:
-        main_window.ui.binning_type_selector_global.setCurrentIndex(1)
+        main_window.ui.q_binning_type_selector_global.setCurrentIndex(1)
         main_window.ui.q_rebin_spinbox_global.setValue(-0.010)
         main_window.ui.propagate_binning_options_button.click()
     # set the first data run to active
@@ -42,29 +42,29 @@ def test_clicking_apply_binning_button_updates_reduction_table(qtbot):
     main_window.addDataTable()
 
     # Change the "global" binning options and click the button "Apply to all runs"
-    main_window.ui.binning_type_selector_global.setCurrentIndex(1)
+    main_window.ui.q_binning_type_selector_global.setCurrentIndex(1)
     main_window.ui.q_rebin_spinbox_global.setValue(-0.010)
     main_window.ui.propagate_binning_options_button.click()
 
     # Verify that the reduction table was updated
-    assert reduction_table1.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NORMAL
-    assert reduction_table1.cellWidget(1, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NORMAL
+    assert reduction_table1.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == QBinningType.NORMAL
+    assert reduction_table1.cellWidget(1, ReductionTableColumn.BINNING_TYPE).currentIndex() == QBinningType.NORMAL
     assert reduction_table1.item(0, ReductionTableColumn.Q_STEPS).text() == "-0.010"
     assert reduction_table1.item(1, ReductionTableColumn.Q_STEPS).text() == "-0.010"
 
     # Verify that the active run panel was updated
-    assert main_window.ui.binning_type_selector_run.currentIndex() == BinningType.NORMAL
+    assert main_window.ui.q_binning_type_selector_run.currentIndex() == QBinningType.NORMAL
     assert main_window.ui.q_rebin_spinbox_run.value() == -0.010
 
     # Switch to the second data tab
     main_window.ui.tabWidget.setCurrentIndex(2)
 
     # Verify that the options were not applied to the second data tab
-    assert reduction_table2.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NONE
-    assert reduction_table2.cellWidget(1, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NONE
+    assert reduction_table2.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == QBinningType.NONE
+    assert reduction_table2.cellWidget(1, ReductionTableColumn.BINNING_TYPE).currentIndex() == QBinningType.NONE
     assert reduction_table2.item(0, ReductionTableColumn.Q_STEPS).text() == "-0.020"
     assert reduction_table2.item(1, ReductionTableColumn.Q_STEPS).text() == "-0.020"
-    assert main_window.ui.binning_type_selector_run.currentIndex() == BinningType.NONE
+    assert main_window.ui.q_binning_type_selector_run.currentIndex() == QBinningType.NONE
     assert main_window.ui.q_rebin_spinbox_run.value() == -0.020
 
 
@@ -104,24 +104,24 @@ def test_editing_run_binning_type_updates_reduction_table(qtbot):
     main_window = MainWindow()
     qtbot.addWidget(main_window)
     reduction_table = main_window.ui.reductionTable
-    bin_type_combobox = main_window.ui.binning_type_selector_run
+    bin_type_combobox = main_window.ui.q_binning_type_selector_run
 
     _populate_reduction_and_direct_beam_tables(main_window, final_rebin_enabled=False)
 
-    assert bin_type_combobox.currentIndex() == BinningType.NONE
-    assert reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NONE
+    assert bin_type_combobox.currentIndex() == QBinningType.NONE
+    assert reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == QBinningType.NONE
 
     # Update bin type in combobox in panel Reflectivity Extraction (Per Run)
-    bin_type_combobox.setCurrentIndex(BinningType.NORMAL)
+    bin_type_combobox.setCurrentIndex(QBinningType.NORMAL)
 
     # Verify that the table was updated. The first row is the "active" run that should have been updated
-    assert reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == BinningType.NORMAL
+    assert reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).currentIndex() == QBinningType.NORMAL
 
     # Update bin type in reduction table column
-    reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).setCurrentIndex(BinningType.CONST_Q)
+    reduction_table.cellWidget(0, ReductionTableColumn.BINNING_TYPE).setCurrentIndex(QBinningType.CONST_Q)
 
     # Verify that the combobox in the run panel was updated
-    assert bin_type_combobox.currentIndex() == BinningType.CONST_Q
+    assert bin_type_combobox.currentIndex() == QBinningType.CONST_Q
 
 
 def test_editing_rebin_q_step_triggers_replotting(qtbot, mocker):
@@ -173,7 +173,7 @@ def test_changing_binning_type_triggers_replotting(qtbot, mocker):
     plot_refl_call_count = mock_plot_refl.call_count
 
     # Simulate changing the binning type
-    binning_type_combobox = main_window.ui.binning_type_selector_run
+    binning_type_combobox = main_window.ui.q_binning_type_selector_run
     binning_type_combobox.setCurrentIndex(1)
 
     # Verify that the plot is redrawn
@@ -183,8 +183,8 @@ def test_changing_binning_type_triggers_replotting(qtbot, mocker):
 @pytest.mark.parametrize(
     "binning_type, foreground",
     [
-        (BinningType.NONE, QColors.dark_grey),
-        (BinningType.CONST_Q, QColors.black),
+        (QBinningType.NONE, QColors.dark_grey),
+        (QBinningType.CONST_Q, QColors.black),
     ],
 )
 def test_setting_binning_type_none_disables_q_steps(qtbot, binning_type, foreground):

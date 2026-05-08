@@ -17,8 +17,9 @@ from quicknxs.config.gui import QColors
 from quicknxs.enums import (
     AddToDirectBeamResult,
     AddToReductionResult,
-    BinningType,
     DirectBeamTableColumn,
+    OffSpecXAxis,
+    QBinningType,
     ReductionTableColumn,
 )
 from quicknxs.exceptions import CrossSectionError, NormalizeToUnityQCutoffError
@@ -971,12 +972,12 @@ class MainPresenter:
         # Binning type column
         combobox = BinningTypeSelection(on_change_handler=self.reduction_table_binning_type_changed, row=idx)
         combobox.blockSignals(True)
-        combobox.setCurrentIndex(data.configuration.binning_type_run)
+        combobox.setCurrentIndex(data.configuration.q_binning_type_run)
         combobox.blockSignals(False)
         table_widget.setCellWidget(idx, ReductionTableColumn.BINNING_TYPE, combobox)
         # Q steps column
-        item = QtWidgets.QTableWidgetItem(f"{data.configuration.binning_q_step_run:.3f}")
-        if data.configuration.binning_type_run == BinningType.NONE:
+        item = QtWidgets.QTableWidgetItem(f"{data.configuration.q_binning_step_run:.3f}")
+        if data.configuration.q_binning_type_run == QBinningType.NONE:
             # indicate Q steps is not used
             item.setForeground(QColors.dark_grey)
             item.setBackground(QColors.light_grey)
@@ -1042,8 +1043,8 @@ class MainPresenter:
             ReductionTableColumn.DPIX: "direct_pixel_overwrite",
             # ReductionTableColumn.THETA: "scattering_angle",
             ReductionTableColumn.DIRECT_BEAM: "direct_beam",
-            # ReductionTableColumn.BINNING_TYPE: "binning_type_run",  ## handled by combobox
-            ReductionTableColumn.Q_STEPS: "binning_q_step_run",
+            # ReductionTableColumn.BINNING_TYPE: "q_binning_type_run",  ## handled by combobox
+            ReductionTableColumn.Q_STEPS: "q_binning_step_run",
         }
 
         if column not in keys:
@@ -1117,9 +1118,9 @@ class MainPresenter:
             The row in the reduction table to update.
         """
         # update the configuration state
-        binning_type = BinningType(combobox_index)
+        binning_type = QBinningType(combobox_index)
         nexus_data = self._data_presenter.reduction_list[row]
-        nexus_data.set_parameter("binning_type_run", binning_type)
+        nexus_data.set_parameter("q_binning_type_run", binning_type)
 
         # recalculate and replot
         self.reduction_table_cell_changed(nexus_data, recalculate=True)
@@ -1657,10 +1658,10 @@ class MainPresenter:
             )
 
         valid_change = (
-            valid_change or configuration.binning_type_run != self.ui.binning_type_selector_run.currentIndex()
+            valid_change or configuration.q_binning_type_run != self.ui.q_binning_type_selector_run.currentIndex()
         )
 
-        valid_change = valid_change or configuration.binning_q_step_run != self.ui.q_rebin_spinbox_run.value()
+        valid_change = valid_change or configuration.q_binning_step_run != self.ui.q_rebin_spinbox_run.value()
 
         if valid_change:
             return 1
@@ -1704,8 +1705,8 @@ class MainPresenter:
         configuration.bck_position = self.ui.bgCenter.value()
         configuration.bck_width = self.ui.bgWidth.value()
         configuration.match_direct_beam = self.ui.actionAutoNorm.isChecked()
-        configuration.binning_type_run = self.ui.binning_type_selector_run.currentIndex()
-        configuration.binning_q_step_run = self.ui.q_rebin_spinbox_run.value()
+        configuration.q_binning_type_run = QBinningType(self.ui.q_binning_type_selector_run.currentIndex())
+        configuration.q_binning_step_run = self.ui.q_rebin_spinbox_run.value()
 
         # Other reduction options
         configuration.subtract_background = self.ui.bgActive.isChecked()
@@ -1730,7 +1731,8 @@ class MainPresenter:
         configuration.direct_pixel_overwrite = self.ui.directPixelOverwrite.value()
         configuration.direct_angle_offset_overwrite = self.ui.dangle0Overwrite.value()
         Configuration.sample_size = self.ui.sample_size_spinbox.value()
-        Configuration.binning_q_step_global = self.ui.q_rebin_spinbox_global.value()
+        Configuration.q_binning_type_global = QBinningType(self.ui.q_binning_type_selector_global.currentIndex())
+        Configuration.q_binning_step_global = self.ui.q_rebin_spinbox_global.value()
 
         Configuration.apply_deadtime = self.ui.deadtime_entry.applyCheckBox.isChecked()
 
@@ -1745,11 +1747,11 @@ class MainPresenter:
 
         # Off-specular options
         if self.ui.kizmkfzVSqz.isChecked():
-            configuration.off_spec_x_axis = Configuration.DELTA_KZ_VS_QZ
+            configuration.off_spec_x_axis = OffSpecXAxis.DELTA_KZ_VS_QZ
         elif self.ui.qxVSqz.isChecked():
-            configuration.off_spec_x_axis = Configuration.QX_VS_QZ
+            configuration.off_spec_x_axis = OffSpecXAxis.QX_VS_QZ
         else:
-            configuration.off_spec_x_axis = Configuration.KZI_VS_KZF
+            configuration.off_spec_x_axis = OffSpecXAxis.KZI_VS_KZF
 
         # GISANS options
         configuration.gisans_wl_min = self.ui.gisans_wl_min_spinbox.value()
@@ -1817,15 +1819,16 @@ class MainPresenter:
         self.ui.directPixelOverwrite.setValue(configuration.direct_pixel_overwrite)
         self.ui.dangle0Overwrite.setValue(configuration.direct_angle_offset_overwrite)
         self.ui.sample_size_spinbox.setValue(configuration.sample_size)
-        self.ui.q_rebin_spinbox_global.setValue(configuration.binning_q_step_global)
+        self.ui.q_rebin_spinbox_global.setValue(configuration.q_binning_step_global)
+        self.ui.q_binning_type_selector_global.setCurrentIndex(configuration.q_binning_type_global)
 
         self.ui.deadtime_entry.applyCheckBox.setChecked(configuration.apply_deadtime)
 
         self.ui.direct_beam_y_lock_checkbox.setChecked(configuration.lock_direct_beam_y)
 
-        self.ui.binning_type_selector_run.setCurrentIndex(configuration.binning_type_run)
-        if configuration.binning_q_step_run:
-            self.ui.q_rebin_spinbox_run.setValue(configuration.binning_q_step_run)
+        self.ui.q_binning_type_selector_run.setCurrentIndex(configuration.q_binning_type_run)
+        if configuration.q_binning_step_run:
+            self.ui.q_rebin_spinbox_run.setValue(configuration.q_binning_step_run)
 
         # UI elements
         self.ui.normalizeXTof.setChecked(configuration.normalize_x_tof)
@@ -1835,9 +1838,9 @@ class MainPresenter:
         self.ui.logarithmic_colorscale.setChecked(configuration.log_2d)
 
         # Off-specular options
-        if configuration.off_spec_x_axis == Configuration.DELTA_KZ_VS_QZ:
+        if configuration.off_spec_x_axis == OffSpecXAxis.DELTA_KZ_VS_QZ:
             self.ui.kizmkfzVSqz.setChecked(True)
-        elif configuration.off_spec_x_axis == Configuration.QX_VS_QZ:
+        elif configuration.off_spec_x_axis == OffSpecXAxis.QX_VS_QZ:
             self.ui.qxVSqz.setChecked(True)
         else:
             self.ui.kizVSkfz.setChecked(True)
@@ -2046,8 +2049,8 @@ class MainPresenter:
         Note: This function updates the UI and internal configuration state while blocking all signals.
         The caller is responsible for triggering recalculation and replotting.
         """
-        bin_type_global = self.ui.binning_type_selector_global.currentIndex()
-        q_step_global = self.ui.q_rebin_spinbox_global.value()
+        q_binning_type_global = self.ui.q_binning_type_selector_global.currentIndex()
+        q_binning_step_global = self.ui.q_rebin_spinbox_global.value()
 
         # loop over runs in the active data tab to update internal state and UI state
         reduct_list = self._data_presenter.reduction_list
@@ -2057,21 +2060,21 @@ class MainPresenter:
             # get the current configuration state
             conf = active_cross_section.configuration
             # update the run final rebin configuration state
-            conf.binning_type_run = bin_type_global
-            conf.binning_q_step_run = q_step_global
+            conf.q_binning_type_run = q_binning_type_global
+            conf.q_binning_step_run = q_binning_step_global
             nexus_data.update_configuration(conf)
             # update the UI reduction table to reflect the configuration state (signals are blocked)
             self.update_reduction_table(self.reduction_table, idx, active_cross_section)
 
         # update the run Q step spinbox value
         self.ui.q_rebin_spinbox_run.blockSignals(True)
-        self.ui.q_rebin_spinbox_run.setValue(q_step_global)
+        self.ui.q_rebin_spinbox_run.setValue(q_binning_step_global)
         self.ui.q_rebin_spinbox_run.blockSignals(False)
 
         # update the run binning type combobox
-        self.ui.binning_type_selector_run.blockSignals(True)
-        self.ui.binning_type_selector_run.setCurrentIndex(bin_type_global)
-        self.ui.binning_type_selector_run.blockSignals(False)
+        self.ui.q_binning_type_selector_run.blockSignals(True)
+        self.ui.q_binning_type_selector_run.setCurrentIndex(q_binning_type_global)
+        self.ui.q_binning_type_selector_run.blockSignals(False)
 
     def get_log_level(self):
         """Return current root logger level as a string for GUI dropdown."""

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
-from quicknxs.enums import BinningType
+from quicknxs.enums import OffSpecXAxis, QBinningType
 from quicknxs.models.instrument import Instrument
 
 
@@ -40,7 +40,7 @@ class OutputOptions:
     email_text: str = ""
 
     # Off-specular defaults (match Configuration defaults)
-    off_spec_x_axis: int = 0  # Configuration.DELTA_KZ_VS_QZ
+    off_spec_x_axis: int = OffSpecXAxis.DELTA_KZ_VS_QZ
     off_spec_x_min: float = -0.015
     off_spec_x_max: float = 0.015
     off_spec_y_min: float = 0.0
@@ -74,17 +74,12 @@ class Configuration:
         Background range of interest, obtained from data set's metadata
     """
 
-    # Choice of axes for off-specular binning
-    QX_VS_QZ = 0
-    KZI_VS_KZF = 1
-    DELTA_KZ_VS_QZ = 3
-
     ### Global variables
     sample_size = 10
     wl_bandwidth = 3.2
-    # Binning Q step global option
-    binning_type_global = BinningType.NONE
-    binning_q_step_global = -0.02
+    # Q-Binning options
+    q_binning_type_global = QBinningType.NONE
+    q_binning_step_global = -0.02
     # Normalize to unity when stitching
     normalize_to_unity = True
     total_reflectivity_q_cutoff = 0.01
@@ -115,13 +110,10 @@ class Configuration:
     @classmethod
     def setup_default_values(cls):
         """Initialize class variables - only used for testing purposes."""
-        cls.QX_VS_QZ = 0
-        cls.KZI_VS_KZF = 1
-        cls.DELTA_KZ_VS_QZ = 3
         cls.sample_size = 10
         cls.wl_bandwidth = 3.2
-        cls.binning_type_global = BinningType.NONE
-        cls.binning_q_step_global = -0.02
+        cls.q_binning_type_global = QBinningType.NONE
+        cls.q_binning_step_global = -0.02
         cls.normalize_to_unity = True
         cls.total_reflectivity_q_cutoff = 0.01
         cls.global_stitching = False
@@ -189,9 +181,9 @@ class Configuration:
         self.cut_first_n_points = 1
         self.cut_last_n_points = 1
 
-        # Binning options
-        self.binning_type_run = BinningType.NONE
-        self.binning_q_step_run = -0.02
+        # Binning options (per run)
+        self.q_binning_type_run = QBinningType.NONE
+        self.q_binning_step_run = -0.02
 
         # UI elements
         self.normalize_x_tof = False
@@ -201,7 +193,7 @@ class Configuration:
         self.log_2d = True
 
         # Off-specular options
-        self.off_spec_x_axis = Configuration.DELTA_KZ_VS_QZ
+        self.off_spec_x_axis = OffSpecXAxis.DELTA_KZ_VS_QZ
         self.off_spec_slice = False
         self.off_spec_qz_list = []
         self.off_spec_slice_qz_min = 0.05

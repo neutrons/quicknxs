@@ -23,8 +23,8 @@
 # [Global Options]
 # name                        value
 # sample_size                  10.0
-# binning_type_global          None
-# binning_q_step_global       -0.02
+# q_binning_type_global        Normal
+# q_binning_step_global       -0.02
 # normalize_to_unity           True
 # total_reflectivity_q_cutoff  0.01
 # global_stitching            False

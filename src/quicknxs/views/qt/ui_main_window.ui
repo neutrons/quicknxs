@@ -466,7 +466,7 @@
             <item row="0" column="2">
              <layout class="QVBoxLayout">
               <item>
-               <widget class="BinningTypeSelection" name="binning_type_selector_global"/>
+               <widget class="BinningTypeSelection" name="q_binning_type_selector_global"/>
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="q_rebin_spinbox_global">
@@ -1050,7 +1050,7 @@
              </widget>
             </item>
             <item row="11" column="1">
-             <widget class="QLabel" name="binning_type_selector_label_run">
+             <widget class="QLabel" name="q_binning_type_selector_label_run">
               <property name="toolTip">
                <string>Step size in Q for reflectometry reduction. Enter a negative number to get a log scale.</string>
               </property>
@@ -1060,7 +1060,7 @@
              </widget>
             </item>
             <item row="11" column="2">
-             <widget class="BinningTypeSelection" name="binning_type_selector_run"/>
+             <widget class="BinningTypeSelection" name="q_binning_type_selector_run"/>
             </item>
             <item row="12" column="1">
              <widget class="QLabel" name="q_rebin_label_run">
@@ -1098,7 +1098,7 @@
              </widget>
             </item>
            </layout>
-           <zorder>binning_type_selector_label_run</zorder>
+           <zorder>q_binning_type_selector_label_run</zorder>
            <zorder>refYPos</zorder>
            <zorder>refYPos_label</zorder>
            <zorder>width_column_label</zorder>
@@ -1122,7 +1122,7 @@
            <zorder>set_dirpix_checkbox</zorder>
            <zorder>set_dangle0_checkbox</zorder>
            <zorder>dangle0Overwrite</zorder>
-           <zorder>binning_type_selector_run</zorder>
+           <zorder>q_binning_type_selector_run</zorder>
            <zorder>q_rebin_label_run</zorder>
            <zorder>q_rebin_spinbox_run</zorder>
           </widget>
@@ -6852,7 +6852,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>binning_type_selector_run</sender>
+   <sender>q_binning_type_selector_run</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>MainWindow</receiver>
    <slot>changeRegionValues()</slot>

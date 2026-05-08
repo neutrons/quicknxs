@@ -9,7 +9,15 @@ class NexusDataType(IntEnum):
     UNDEFINED = -1
 
 
-class BinningType(IntEnum):
+class OffSpecXAxis(IntEnum):
+    """Choices of axes for off-specular binning."""
+
+    QX_VS_QZ = 0
+    KZI_VS_KZF = 1
+    DELTA_KZ_VS_QZ = 3
+
+
+class QBinningType(IntEnum):
     """Enum for binning types."""
 
     NONE = 0
@@ -26,14 +34,37 @@ class BinningType(IntEnum):
             The name of the binning type ("None", "Normal", or "Const Q").
         """
         return {
-            BinningType.NONE: "None",
-            BinningType.NORMAL: "Normal",
-            BinningType.CONST_Q: "Const Q",
+            QBinningType.NONE: "None",
+            QBinningType.NORMAL: "Normal",
+            QBinningType.CONST_Q: "Const Q",
         }[self]
 
 
+### Table column and result code enums for direct beam and reduction tables
+
+
+class AddToDirectBeamResult(StrEnum):
+    """Result codes for adding a run to the direct beam list."""
+
+    SUCCESS = auto()
+    SUCCESS_REFLECTED = auto()
+    ALREADY_IN_LIST = auto()
+    INCOMPATIBLE = auto()
+    OTHER_ERROR = auto()
+
+
+class AddToReductionResult(StrEnum):
+    """Result codes for adding a run to the reduction list."""
+
+    SUCCESS = auto()
+    SUCCESS_DIRECT_BEAM = auto()
+    ALREADY_IN_LIST = auto()
+    INCOMPATIBLE = auto()
+    OTHER_ERROR = auto()
+
+
 class DirectBeamTableColumn(IntEnum):
-    """Column indices in the normalization table."""
+    """Column indices in the direct beam table."""
 
     ACTIVE = 0
     RUN_NUMBER = 1
@@ -66,23 +97,3 @@ class ReductionTableColumn(IntEnum):
     DIRECT_BEAM = 14
     BINNING_TYPE = 15
     Q_STEPS = 16
-
-
-class AddToReductionResult(StrEnum):
-    """Result codes for adding a run to the reduction list."""
-
-    SUCCESS = auto()
-    SUCCESS_DIRECT_BEAM = auto()
-    ALREADY_IN_LIST = auto()
-    INCOMPATIBLE = auto()
-    OTHER_ERROR = auto()
-
-
-class AddToDirectBeamResult(StrEnum):
-    """Result codes for adding a run to the direct beam list."""
-
-    SUCCESS = auto()
-    SUCCESS_REFLECTED = auto()
-    ALREADY_IN_LIST = auto()
-    INCOMPATIBLE = auto()
-    OTHER_ERROR = auto()

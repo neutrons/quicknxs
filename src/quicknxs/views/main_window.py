@@ -531,11 +531,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.file_handler.get_configuration_from_ui()
 
             # Make sure the off-specular has been calculated if needed
-            if output_options.get("apply_smoothing", False) or output_options.get("export_offspec_slices", False):
+            if output_options.apply_smoothing or output_options.export_offspec_slices:
                 self.file_handler.compute_offspec_on_change()
 
             # Show combined parameters dialog when smoothing or binned output is requested
-            show_smoothing = output_options.get("apply_smoothing", False)
+            show_smoothing = output_options.apply_smoothing
 
             if show_smoothing:
                 dia = OffSpecParametersDialog(
@@ -550,11 +550,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     # Get parameters and add to output options
                     params = dia.get_parameters()
-                    output_options.update(params)
+                    for k, v in params.items():
+                        setattr(output_options, k, v)
                     dia.destroy()
 
             # Show slice parameters dialog when off-specular slices are requested
-            if output_options.get("export_offspec_slices", False):
+            if output_options.export_offspec_slices:
                 dia = OffSpecSliceDialog(self, self.data_presenter)
                 if not dia.exec_():
                     logging.info("Skipping slice parameters")
@@ -563,7 +564,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     # Get slice parameters and add to output options
                     slice_params = dia.get_parameters()
-                    output_options.update(slice_params)
+                    for k, v in slice_params.items():
+                        setattr(output_options, k, v)
                     dia.destroy()
 
             # If we want to save images, we just need to cycle through
@@ -572,9 +574,9 @@ class MainWindow(QtWidgets.QMainWindow):
             wrk.execute(self.file_handler.new_progress_reporter())
 
             # Show final results
-            if output_options["export_offspec"]:
+            if output_options.export_offspec:
                 self.update_off_specular_viewer.emit()
-            if output_options["export_gisans"]:
+            if output_options.export_gisans:
                 self.update_gisans_viewer.emit()
 
     def loadExtraction(self):

@@ -6,6 +6,7 @@ import logging
 import math
 import os
 import time
+from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
@@ -19,6 +20,7 @@ from quicknxs.models.configuration import Configuration
 from quicknxs.models.data_set import CrossSectionData, NexusData
 
 # Mapping of Configuration attributes to "common name" labels for the reduced file output.
+# Used for the column names in the direct beam and data run sections of the reduced file.
 CONFIG_LABELS = {
     "scaling_factor": "scale",
     "scaling_error": "scale_err",
@@ -30,10 +32,10 @@ CONFIG_LABELS = {
     "low_res_width": "y_width",
     "bck_position": "bg_pos",
     "bck_width": "bg_width",
-    "binning_type_global": "g_final_rebin",
-    "binning_q_step_global": "g_Qsteps",
-    "binning_type_run": "r_final_rebin",
-    "binning_q_step_run": "r_Qsteps",
+    "q_binning_type_global": "g_final_rebin",
+    "q_binning_step_global": "g_Qsteps",
+    "q_binning_type_run": "r_final_rebin",
+    "q_binning_step_run": "r_Qsteps",
     "tof_bins": "bin_width",
     "total_reflectivity_q_cutoff": "critical_q_cutoff",
     "direct_pixel_overwrite": "dpix",
@@ -41,6 +43,15 @@ CONFIG_LABELS = {
 }
 
 LABEL_TO_CONFIG = {v: k for k, v in CONFIG_LABELS.items()}
+
+# Compatibility mapping for legacy config names to new config attribute names.
+# This is used when reading old reduced files that may have used the old attribute names.
+LEGACY_CONFIG_MAP = {
+    "binning_type_global": "q_binning_type_global",
+    "binning_q_step_global": "q_binning_step_global",
+    "binning_type_run": "q_binning_type_run",
+    "binning_q_step_run": "q_binning_step_run",
+}
 
 
 def _find_h5_data(filename: str):
@@ -73,9 +84,6 @@ def _get_all_config_attributes(conf: Configuration):
         "angle_map",
         "log_1d",
         "log_2d",
-        "QX_VS_QZ",  # Enum-style constants
-        "KZI_VS_KZF",
-        "DELTA_KZ_VS_QZ",
         "count_threshold",  # Internal constants
         "tof_overwrite",
         "nbr_events_min",
@@ -487,6 +495,7 @@ def write_reflectivity_data(
 def _assign_config_value(conf: Configuration, attr: str, value_str: str):
     """Assign a string value to a Configuration attribute with type inference."""
     if not hasattr(conf, attr):
+        logging.warning(f"Configuration has no attribute '{attr}', skipping assignment")
         return  # silently ignore unknown attributes
 
     value_str = value_str.strip()
@@ -494,6 +503,14 @@ def _assign_config_value(conf: Configuration, attr: str, value_str: str):
         current_value = getattr(conf, attr)
         if isinstance(current_value, bool):
             value = value_str.lower() in ("true", "1", "yes")
+        elif isinstance(current_value, IntEnum):
+            enum_type = type(current_value)
+            # Match by str() representation (e.g. "Normal" -> QBinningType.NORMAL)
+            matched = next((m for m in enum_type if str(m) == value_str), None)
+            if matched is not None:
+                value = matched
+            else:
+                value = enum_type(int(value_str))
         elif isinstance(current_value, float):
             value = float(value_str)
         elif isinstance(current_value, int):
@@ -512,6 +529,7 @@ def _assign_config_value(conf: Configuration, attr: str, value_str: str):
         else:
             value = value_str
         setattr(conf, attr, value)
+        logging.info(f"Assigned config value: {attr} = {value} (from '{value_str}')")
     except (AttributeError, ValueError, TypeError) as e:
         logging.error(f"Failed to assign config value: {attr} = {value_str} -> {e}")
 
@@ -688,6 +706,7 @@ def read_reduced_file(file_path: str, configuration=None):
                 except ValueError:
                     logging.error("Unable to parse line '%s' in run file %s", line, run_file)
                 attr = LABEL_TO_CONFIG.get(label, label)
+                attr = LEGACY_CONFIG_MAP.get(attr, attr)  # Map legacy attribute names to new ones
                 _assign_config_value(Configuration, attr, value)
 
     return direct_beam_runs, data_runs, additional_peaks, has_scaling_error

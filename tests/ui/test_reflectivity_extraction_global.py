@@ -65,7 +65,7 @@ def test_global_checkboxes(qtbot, widget, config_param):
 @pytest.mark.parametrize(
     "widget, config_param, gold_value",
     [
-        ("q_rebin_spinbox_global", "binning_q_step_global", -0.02),
+        ("q_rebin_spinbox_global", "q_binning_step_global", -0.02),
         ("normalization_q_cutoff_spinbox", "total_reflectivity_q_cutoff", 0.02),
         ("polynomial_stitching_degree_spinbox", "polynomial_stitching_degree", 2),
         ("polynomial_stitching_points_spinbox", "polynomial_stitching_points", 5),
@@ -120,9 +120,9 @@ def test_reflectivity_recalculated_on_config_change(mocker, qtbot):
     checkbox.setChecked(True)
     assert mock_calculate_reflectivity.call_count == prev_call_count + number_runs
 
-    # test changing `binning_type_selector_run` - should only recalculate reflectivity for the current run
+    # test changing `q_binning_type_selector_run` - should only recalculate reflectivity for the current run
     prev_call_count = mock_calculate_reflectivity.call_count
-    main_window.ui.binning_type_selector_run.setCurrentIndex(1)
+    main_window.ui.q_binning_type_selector_run.setCurrentIndex(1)
     assert mock_calculate_reflectivity.call_count == prev_call_count + 1
 
     # test editing `final_rebin_checkbox_run` - should only recalculate reflectivity for the current run

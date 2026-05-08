@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from quicknxs.exceptions import NormalizeToUnityQCutoffError
-from quicknxs.models.configuration import BinningType, Configuration
+from quicknxs.models.configuration import QBinningType, Configuration
 from quicknxs.models.data_manipulation import (
     _get_polynomial_fit_stitching_scaling_factor,
     _get_stitching_overlap_region,
@@ -59,7 +59,7 @@ def stitching_config():
         "normalize_to_unity": False,
         "total_reflectivity_q_cutoff": 0.008,
         "do_final_rebin_global": False,
-        "binning_q_step_global": -0.01,
+        "q_binning_step_global": -0.01,
         "match_direct_beam": True,
     }
     Configuration.setup_default_values()
@@ -130,8 +130,8 @@ class TestDataManipulation(object):
     @pytest.mark.datarepo
     def test_stitch_reflectivity_const_q(self, data_server, mocker_file_open, stitching_config):
         """Test stitching with constant Q binning."""
-        stitching_config.binning_type_run = BinningType.CONST_Q
-        stitching_config.binning_q_step_run = -0.01
+        stitching_config.q_binning_type_run = QBinningType.CONST_Q
+        stitching_config.q_binning_step_run = -0.01
 
         manager = DataPresenter(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)

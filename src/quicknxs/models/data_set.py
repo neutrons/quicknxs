@@ -13,7 +13,7 @@ import numpy as np
 from mantid.dataobjects import Workspace2D
 from scipy.constants import h, m_n
 
-from quicknxs.enums import BinningType, NexusDataType
+from quicknxs.enums import QBinningType, NexusDataType
 from quicknxs.exceptions import CrossSectionError
 from quicknxs.models.configuration import Configuration, get_direct_beam_low_res_roi
 from quicknxs.models.data_info import DataInfo
@@ -822,9 +822,9 @@ class NexusData(object):
         # Resolve binning options
         final_rebin = False
         const_q_binning = False
-        if conf.binning_type_run == BinningType.NORMAL:
+        if conf.q_binning_type_run == QBinningType.NORMAL:
             final_rebin = True
-        elif conf.binning_type_run == BinningType.CONST_Q:
+        elif conf.q_binning_type_run == QBinningType.CONST_Q:
             const_q_binning = True
 
         # The reduced data workspace may be a group or a single
@@ -846,7 +846,7 @@ class NexusData(object):
             CutTimeAxis=True,
             FinalRebin=final_rebin,
             QMin=0.001,
-            QStep=conf.binning_q_step_run,
+            QStep=conf.q_binning_step_run,
             RoundUpPixel=False,
             AngleOffset=angle_offset,
             UseWLTimeAxis=False,
@@ -975,13 +975,10 @@ class NexusData(object):
                 if current_name is None:
                     logging.warning(f"No event workspace for {xs}, skipping workspace recreation")
                     continue
-                # if current name already has _REFLECTED, _DIRECT_BEAM, or _UNKNOWN suffix, remove it before adding the new suffix
-                if current_name.endswith("_REFLECTED"):
-                    current_name = current_name[: -len("_REFLECTED")]
-                elif current_name.endswith("_DIRECT_BEAM"):
-                    current_name = current_name[: -len("_DIRECT_BEAM")]
-                elif current_name.endswith("_UNKNOWN"):
-                    current_name = current_name[: -len("_UNKNOWN")]
+                # if current name already has _REFLECTED, _DIRECT_BEAM, or _UNDEFINED suffix, remove it before adding the new suffix
+                for t in NexusDataType:
+                    if current_name.endswith(f"_{t.name}"):
+                        current_name = current_name[: -len(f"_{t.name}")]
                 new_name = f"{current_name}_{data_type.name}"
                 # Existing workspaces from prior loads/tests can cause clone collisions.
                 # Replace stale entries so the expected name is always assigned.

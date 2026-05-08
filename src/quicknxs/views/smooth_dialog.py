@@ -7,7 +7,7 @@ from numpy import float64
 from numpy.typing import NDArray
 from qtpy import QtCore, QtWidgets
 
-from quicknxs.models.configuration import Configuration
+from quicknxs.enums import OffSpecXAxis
 from quicknxs.presenters.data_presenter import DataPresenter
 from quicknxs.views import load_ui
 from quicknxs.views.widgets import MPLWidget
@@ -465,9 +465,9 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         # Load coordinate system
         if settings.contains("offspec_binned/coordinate_system"):
             coord_sys = settings.value("offspec_binned/coordinate_system")
-            if coord_sys == Configuration.KZI_VS_KZF:
+            if coord_sys == OffSpecXAxis.KZI_VS_KZF:
                 self.ui.kizVSkfz.setChecked(True)
-            elif coord_sys == Configuration.QX_VS_QZ:
+            elif coord_sys == OffSpecXAxis.QX_VS_QZ:
                 self.ui.qxVSqz.setChecked(True)
             else:
                 self.ui.kizmkfzVSqz.setChecked(True)
@@ -484,11 +484,11 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         # Save coordinate system
         if self.ui.kizVSkfz.isChecked():
-            coord_sys = Configuration.KZI_VS_KZF
+            coord_sys = OffSpecXAxis.KZI_VS_KZF
         elif self.ui.qxVSqz.isChecked():
-            coord_sys = Configuration.QX_VS_QZ
+            coord_sys = OffSpecXAxis.QX_VS_QZ
         else:
-            coord_sys = Configuration.DELTA_KZ_VS_QZ
+            coord_sys = OffSpecXAxis.DELTA_KZ_VS_QZ
         settings.setValue("offspec_binned/coordinate_system", coord_sys)
 
         # Save bins parameters (common to both binning and smoothing)
@@ -531,11 +531,11 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         # Determine coordinate system setting
         if self.ui.kizVSkfz.isChecked():
-            params["off_spec_x_axis"] = Configuration.KZI_VS_KZF
+            params["off_spec_x_axis"] = OffSpecXAxis.KZI_VS_KZF
         elif self.ui.qxVSqz.isChecked():
-            params["off_spec_x_axis"] = Configuration.QX_VS_QZ
+            params["off_spec_x_axis"] = OffSpecXAxis.QX_VS_QZ
         else:
-            params["off_spec_x_axis"] = Configuration.DELTA_KZ_VS_QZ
+            params["off_spec_x_axis"] = OffSpecXAxis.DELTA_KZ_VS_QZ
 
         # Shared region parameters
         params["off_spec_x_min"] = self.ui.offspec_x_min.value()

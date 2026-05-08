@@ -1,4 +1,4 @@
-from quicknxs.models.configuration import BinningType
+from quicknxs.models.configuration import QBinningType
 from quicknxs.views.widgets.binning_type_combobox import BinningTypeSelection
 
 
@@ -8,8 +8,8 @@ class TestBinningTypeSelection:
     def test_init(self, qtbot):
         """Test that the combo box is initialized correctly."""
         combo = BinningTypeSelection()
-        assert combo.count() == len(BinningType)
-        assert combo.currentText() == str(BinningType.NONE)
+        assert combo.count() == len(QBinningType)
+        assert combo.currentText() == str(QBinningType.NONE)
 
     def test_on_change_handler(self, qtbot):
         """Test that the on change handler is called when the index changes."""
@@ -26,6 +26,6 @@ class TestBinningTypeSelection:
     def test_current_text(self, qtbot):
         """Test that currentText returns the correct binning type."""
         combo = BinningTypeSelection()
-        for binning_type in BinningType:
+        for binning_type in QBinningType:
             combo.setCurrentIndex(binning_type.value)
             assert combo.currentText() == str(binning_type)

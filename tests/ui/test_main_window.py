@@ -1,7 +1,7 @@
 import pytest
 from qtpy import QtCore, QtWidgets
 
-from quicknxs.enums import BinningType
+from quicknxs.enums import QBinningType
 from quicknxs.models.configuration import Configuration
 from quicknxs.models.data_set import CrossSectionData, NexusData
 from quicknxs.views.main_window import MainWindow, disabled_widget
@@ -115,8 +115,8 @@ class TestMainGui:
         conf1 = window_main.data_presenter.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf1.binning_type_global == BinningType.NONE
-        assert conf1.binning_q_step_global == -0.02
+        assert conf1.q_binning_type_global == QBinningType.NONE
+        assert conf1.q_binning_step_global == -0.02
         assert conf1.normalize_to_unity is True
         assert conf1.total_reflectivity_q_cutoff == 0.01
         assert conf1.global_stitching is False
@@ -144,13 +144,13 @@ class TestMainGui:
         assert conf1.set_direct_angle_offset is False
         assert conf1.direct_angle_offset_overwrite == 0
         assert conf1.use_dangle is False
-        assert conf1.binning_type_run == BinningType.NONE
-        assert conf1.binning_q_step_run == -0.02
+        assert conf1.q_binning_type_run == QBinningType.NONE
+        assert conf1.q_binning_step_run == -0.02
 
         # set UI elements to non-default
 
         # global
-        window_main.ui.binning_type_selector_global.setCurrentIndex(BinningType.NORMAL)
+        window_main.ui.q_binning_type_selector_global.setCurrentIndex(QBinningType.NORMAL)
         window_main.ui.q_rebin_spinbox_global.setValue(-0.01)
         window_main.ui.normalize_to_unity_checkbox.setChecked(False)
         window_main.ui.normalization_q_cutoff_spinbox.setValue(0.02)
@@ -177,7 +177,7 @@ class TestMainGui:
         window_main.ui.set_dangle0_checkbox.setChecked(True)
         window_main.ui.dangle0Overwrite.setValue(2.0)
         window_main.ui.trustDANGLE.setChecked(True)
-        window_main.ui.binning_type_selector_run.setCurrentIndex(BinningType.NORMAL)
+        window_main.ui.q_binning_type_selector_run.setCurrentIndex(QBinningType.NORMAL)
         window_main.ui.q_rebin_spinbox_run.setValue(0.045)
 
         window_main.file_handler.get_configuration_from_ui()  # to update configuration from UI
@@ -186,8 +186,8 @@ class TestMainGui:
         conf1 = window_main.data_presenter.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf1.binning_type_global == BinningType.NORMAL
-        assert conf1.binning_q_step_global == -0.01
+        assert conf1.q_binning_type_global == QBinningType.NORMAL
+        assert conf1.q_binning_step_global == -0.01
         assert conf1.normalize_to_unity is False
         assert conf1.total_reflectivity_q_cutoff == 0.02
         assert conf1.global_stitching is True
@@ -215,8 +215,8 @@ class TestMainGui:
         assert conf1.set_direct_angle_offset is True
         assert conf1.direct_angle_offset_overwrite == 2.0
         assert conf1.use_dangle is True
-        assert conf1.binning_type_run == BinningType.NORMAL
-        assert conf1.binning_q_step_run == 0.045
+        assert conf1.q_binning_type_run == QBinningType.NORMAL
+        assert conf1.q_binning_step_run == 0.045
 
         # change selected data and check that global variables are carried over but not the per run ones
 
@@ -227,8 +227,8 @@ class TestMainGui:
         conf2 = window_main.data_presenter.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
-        assert conf2.binning_type_global == BinningType.NORMAL
-        assert conf2.binning_q_step_global == -0.01
+        assert conf2.q_binning_type_global == QBinningType.NORMAL
+        assert conf2.q_binning_step_global == -0.01
         assert conf2.normalize_to_unity is False
         assert conf2.total_reflectivity_q_cutoff == 0.02
         assert conf2.global_stitching is True

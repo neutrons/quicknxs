@@ -1,9 +1,9 @@
 import os
-from copy import deepcopy
 
 import pytest
 from orsopy.fileio import load_orso
 
+from quicknxs.enums import OffSpecXAxis
 from quicknxs.models.configuration import Configuration, OutputOptions
 from quicknxs.models.processing_workflow import ProcessingWorkflow
 from quicknxs.presenters.data_presenter import DataPresenter
@@ -85,7 +85,7 @@ def test_smoothing_without_slice_export(data_server, tmpdir):
         export_offspec_slices=False,  # User did NOT check this
         output_directory=str(tmpdir),
         # Off-spec params from OffSpecParametersDialog:
-        off_spec_x_axis=0,  # DELTA_KZ_VS_QZ
+        off_spec_x_axis=OffSpecXAxis.DELTA_KZ_VS_QZ,
         off_spec_x_min=-0.1,
         off_spec_x_max=0.1,
         off_spec_y_min=0.0,

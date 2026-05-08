@@ -81,7 +81,7 @@ class TestNexusData:
         for xs in nexus_data.cross_sections:
             current_name = xs._event_workspace
             assert current_name.startswith("REF_M_40785")
-            assert current_name.endswith("_UNKNOWN")
+            assert current_name.endswith("_UNDEFINED")
             assert "_REFLECTED" not in current_name
             assert "_DIRECT_BEAM" not in current_name
 

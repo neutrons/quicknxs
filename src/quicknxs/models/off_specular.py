@@ -1,6 +1,5 @@
 """Class to execute and hold the off-specular reflectivity calculation."""
 
-from typing import Type
 import logging
 from functools import reduce
 from multiprocessing import Pool
@@ -9,7 +8,8 @@ from typing import TYPE_CHECKING, List, Optional, Tuple
 import numpy as np
 import scipy.stats
 
-from quicknxs.models.configuration import Configuration, get_direct_beam_low_res_roi
+from quicknxs.enums import OffSpecXAxis
+from quicknxs.models.configuration import get_direct_beam_low_res_roi
 
 if TYPE_CHECKING:
     from quicknxs.models.data_set import CrossSectionData, NexusData
@@ -217,10 +217,10 @@ def rebin_extract(
     y_label = "Qz"
     x_values = delta_k
     y_values = Qz
-    if axes == Configuration.QX_VS_QZ:
+    if axes == OffSpecXAxis.QX_VS_QZ:
         x_label = "Qx"
         x_values = Qx
-    elif axes == Configuration.KZI_VS_KZF:
+    elif axes == OffSpecXAxis.KZI_VS_KZF:
         x_label = "ki_z"
         y_label = "kf_z"
         x_values = ki_z

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from qtpy import QtCore
 from qtpy.QtWidgets import QAction, QCheckBox, QDoubleSpinBox, QSpinBox, QWidget
 
-from quicknxs.enums import BinningType
+from quicknxs.enums import QBinningType
 from quicknxs.models.configuration import Configuration
 from quicknxs.views.widgets import BinningTypeSelection
 
@@ -50,7 +50,7 @@ class ConfigurationHandler:
                 setattr(Configuration, config_name, value)
             elif isinstance(qwidget, BinningTypeSelection):
                 combobox_idx = qwidget.currentIndex()
-                value = BinningType(combobox_idx)
+                value = QBinningType(combobox_idx)
                 setattr(Configuration, config_name, value)
             else:
                 value = qwidget.value()
@@ -87,8 +87,8 @@ class ConfigurationHandler:
             recalc_reflectivity: bool = False
 
         config_widgets = [
-            ConfigWidget("binning_type_selector_global", "binning_type_global"),
-            ConfigWidget("q_rebin_spinbox_global", "binning_q_step_global"),
+            ConfigWidget("q_binning_type_selector_global", "q_binning_type_global"),
+            ConfigWidget("q_rebin_spinbox_global", "q_binning_step_global"),
             ConfigWidget("normalize_to_unity_checkbox", "normalize_to_unity"),
             ConfigWidget("normalization_q_cutoff_spinbox", "total_reflectivity_q_cutoff"),
             ConfigWidget("global_fit_checkbox", "global_stitching"),

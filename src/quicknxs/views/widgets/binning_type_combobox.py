@@ -1,6 +1,6 @@
 from qtpy.QtWidgets import QComboBox
 
-from quicknxs.enums import BinningType
+from quicknxs.enums import QBinningType
 
 
 class BinningTypeSelection(QComboBox):
@@ -23,10 +23,10 @@ class BinningTypeSelection(QComboBox):
         """
         super().__init__(parent)
 
-        for binning_type in BinningType:
+        for binning_type in QBinningType:
             self.addItem(str(binning_type))
 
-        self.setCurrentIndex(BinningType.NONE)
+        self.setCurrentIndex(QBinningType.NONE)
         self.setToolTip("Select the binning type used in the reflectometry reduction.")
 
         self.row = row
