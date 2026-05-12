@@ -23,6 +23,52 @@ pytest_plugins = ["mantid.fixtures"]
 
 this_module_path = sys.modules[__name__].__file__
 
+# Path to the LFS-backed test data submodule
+_QUICKNXS_DATA_DIR = Path(__file__).parent / "data" / "quicknxs-data"
+
+# LFS pointer files start with this signature
+_LFS_POINTER_SIGNATURE = b"version https://git-lfs.github.com/spec/v1"
+
+_SKIP_REASON = (
+    "Git LFS data not available. "
+    "Run 'git submodule update --init && cd test/data/quicknxs-data && git lfs pull' "
+    "to fetch test data files."
+)
+
+
+def _lfs_data_is_available():
+    """Check whether the LFS-backed test data files contain real data (not pointer stubs).
+
+    Returns True if the submodule directory exists and at least one .nxs.h5 file
+    is a real HDF5 file (not a ~130-byte LFS pointer stub).
+    """
+    if not _QUICKNXS_DATA_DIR.is_dir():
+        return False
+    sentinel = _QUICKNXS_DATA_DIR / "REF_M_42099.nxs.h5"
+    if not sentinel.exists():
+        return False
+    # LFS pointer stubs are small ASCII files (~130 bytes); real HDF5 files are megabytes
+    if sentinel.stat().st_size < 1024:
+        return False
+    # Double-check by reading the first bytes — LFS pointers start with a known signature
+    with open(sentinel, "rb") as fh:
+        header = fh.read(len(_LFS_POINTER_SIGNATURE))
+    return header != _LFS_POINTER_SIGNATURE
+
+
+# Evaluate once at import time so every fixture/hook can reuse the result
+_HAS_LFS_DATA = _lfs_data_is_available()
+
+
+def pytest_collection_modifyitems(config, items):
+    """Auto-skip tests marked with @pytest.mark.datarepo when LFS data is unavailable."""
+    if _HAS_LFS_DATA:
+        return
+    skip_marker = pytest.mark.skip(reason=_SKIP_REASON)
+    for item in items:
+        if "datarepo" in item.keywords:
+            item.add_marker(skip_marker)
+
 
 def pytest_configure(config):
     """Suppress debug logging from pyvirtualdisplay.
@@ -70,6 +116,8 @@ Instrument.file_search_template = str(Path(__file__).parent / "data" / "quicknxs
 @pytest.fixture(scope="module")
 def data_server(DATA_DIR):
     r"""Object containing info and functionality for data files."""
+    if not _HAS_LFS_DATA:
+        pytest.skip(_SKIP_REASON)
 
     class _DataServer(object):
         _directory = str(DATA_DIR)
