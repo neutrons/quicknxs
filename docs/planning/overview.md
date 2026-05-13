@@ -27,11 +27,11 @@ The two roadmaps should proceed in parallel wherever their contracts allow it.
 
 | Frontend phase | Active plan | Purpose | Depends on |
 |---|---|---|---|
-| Phase 1: Stabilize identity and view contracts | [plan_introduce_view_interface.md](frontend/plan_introduce_view_interface.md) | Split into Phase 1A-1D: identity characterization, read-only view models, configuration inventory/adapters, and a narrow target `IMainView` without changing behavior. | Research document and identity contract |
+| Phase 1: Stabilize identity and view contracts | [plan_phase_1_stabilize_contracts.md](frontend/plan_phase_1_stabilize_contracts.md) | Split into Phase 1A-1D: identity characterization, read-only view models, configuration inventory/adapters, and focused view classes with render methods and user-action hooks without changing behavior. | Research document and identity contract |
 | Phase 2: Replace shared reentrancy | [plan_phase_2_replace_shared_reentrancy.md](frontend/plan_phase_2_replace_shared_reentrancy.md) | Replace `auto_change_active` in direct-beam and reduction table paths with local signal blocking in render methods. | Frontend Phase 1 |
-| Phase 3: Extract presenters | [plan_phase_3_extract_presenters.md](frontend/plan_phase_3_extract_presenters.md) | Move user-action orchestration from `MainHandler` into `ReductionPresenter`, `FilePresenter`, and `PlotPresenter`. | Frontend Phases 1-2 |
-| Phase 4: Split `DataManager` | [plan_phase_4_split_data_manager.md](frontend/plan_phase_4_split_data_manager.md) | Split loaded-data cache, session entries, direct-beam repositories, reduction repositories, matching, and reduction execution behind focused services. | Frontend Phases 1-3 |
-| Phase 5: Configuration, jobs, errors | [plan_phase_5_configuration_jobs_errors.md](frontend/plan_phase_5_configuration_jobs_errors.md) | Replace legacy `Configuration` with explicit option models and add job/progress/error/workspace boundaries. | Frontend Phases 1, 3, and 4; backend contracts where migrated paths use backend APIs |
+| Phase 3: Extract presenters | [plan_phase_3_extract_presenters.md](frontend/plan_phase_3_extract_presenters.md) | Introduce event broker. Extract one presenter per view. Model services publish domain events after state mutations; presenters subscribe and re-render their views. | Frontend Phases 1-2 |
+| Phase 4: Split `DataManager` | [plan_phase_4_split_data_manager.md](frontend/plan_phase_4_split_data_manager.md) | Split `DataManager` into a Qt-free frontend model layer: runtime session state, entry repositories, loaded-data cache, matching adapter/service, reduction orchestration service, and stitching orchestration service. | Frontend Phases 1-3 |
+| Phase 5: Configuration, jobs, errors | [plan_phase_5_configuration_jobs_errors.md](frontend/plan_phase_5_configuration_jobs_errors.md) | Replace legacy `Configuration` with explicit frontend option models and add job/progress/error/workspace boundaries. | Frontend Phases 1, 3, and 4; backend contracts where migrated paths use backend APIs |
 
 ## Backend Roadmap
 
@@ -66,15 +66,26 @@ Frontend Phases 2-4 can then clean up UI reentrancy, extract presenters, and mov
 session ownership out of `DataManager`. These phases should not wait for backend
 implementation unless a specific migrated path needs a backend contract.
 
+The frontend "model layer" in these phases includes both runtime state models and
+Qt-free model/session services. `ReductionSession`, entry models, option models,
+and result state are state models. Repositories, direct-beam matching, stitching,
+reduction orchestration, cache management, and backend adapters are services around
+those models.
+
+Phase 3 introduces the event broker and the one-presenter-per-view structure.
+Model services publish events after state mutations. Presenters subscribe and call
+their own view's render methods on receipt. This keeps views ignorant of the
+broker and keeps presenter-to-presenter coupling indirect and explicit.
+
 Backend phases can proceed at the same time because they add or consolidate
 `mr_reduction` APIs and tests without requiring QuickNXS call-site changes. Backend
 Phase 2 contains backend reduced-file I/O and backend-facade work only. QuickNXS
 adoption of those APIs is tracked separately as a future frontend integration plan.
 
 Frontend Phase 5 finishes frontend state cleanup by replacing legacy
-`Configuration` usage and adding clear job, progress, error, and workspace
-boundaries. It should consume backend contracts only where those contracts already
-exist; it should not block unrelated frontend cleanup.
+`Configuration` usage with explicit option models and adding clear job, progress,
+error, and workspace boundaries. It should consume backend contracts only where
+those contracts already exist; it should not block unrelated frontend cleanup.
 
 ## Cross-Cutting Consistency Rules
 
@@ -89,13 +100,38 @@ Use these rules across all active plans:
 - Use file path for loading/cache identity, not mutable session-entry identity.
 - Use object identity only inside cache or adapter internals where object lifetime is
   the subject of the operation.
-- View models and backend DTOs should be plain Python and Qt-free.
+- Frontend model-layer objects include runtime state models and Qt-free
+  model/session services; do not use "model" to imply only passive dataclasses.
+- View models, frontend option models, session models, event payloads, and backend
+  DTOs should be plain Python and Qt-free.
 - Presenters should not import Qt widgets or Mantid workspace globals.
+- Presenters may call model/session services, but should not own long-lived session
+  state or duplicate domain rules.
 - QuickNXS owns GUI orchestration and live session reconstruction.
 - `mr_reduction` owns reusable backend contracts, canonical reduced-file parsing,
-  canonical reduced-file writing, and backend output formatting.
+  canonical reduced-file writing, backend output formatting, and reusable
+  scientific/file-format behavior after it has migrated.
+- Frontend services such as `DirectBeamMatcher`, `ReductionService`, and
+  `StitchingService` are orchestration or adapter boundaries. They should become
+  thin adapters when equivalent backend APIs are available instead of preserving
+  duplicate rules.
+- Stitching is a reduction-list command handled by `ReductionTablePresenter`.
+  Frontend stitching orchestration should update scale-factor/error values through
+  reduction entry state, not maintain a separate long-lived stitching model.
+- `QuickNXSProject` owns project-level `ReductionOptions`; run-specific and
+  direct-beam-specific parameters live on their corresponding session entries.
+- Plot/view preferences are frontend model state, not backend reduction inputs.
 - Legacy `Configuration` remains behind adapters until the frontend configuration
   phase removes it from migrated paths.
+- Each view class is paired with exactly one presenter; the presenter holds a
+  reference to the concrete view.
+- Presenters register callbacks on view user-action hooks and call view render
+  methods directly; no formal view interface or protocol is required.
+- Model services publish domain events after state mutations; presenters subscribe
+  to events and re-render their views; views never publish to or subscribe from
+  the broker.
+- Event payload types are plain Python dataclasses with no Qt dependency; the
+  event broker itself must not import Qt.
 
 ## Active Document Set
 
@@ -104,7 +140,7 @@ These are the active documents covered by this overview:
 - [research_mvp_architecture.md](research_mvp_architecture.md)
 - [session_identity_contract.md](session_identity_contract.md)
 - [analysis_refactoring_plan.md](analysis_refactoring_plan.md)
-- [frontend/plan_introduce_view_interface.md](frontend/plan_introduce_view_interface.md)
+- [frontend/plan_phase_1_stabilize_contracts.md](frontend/plan_phase_1_stabilize_contracts.md)
 - [frontend/plan_phase_2_replace_shared_reentrancy.md](frontend/plan_phase_2_replace_shared_reentrancy.md)
 - [frontend/plan_phase_3_extract_presenters.md](frontend/plan_phase_3_extract_presenters.md)
 - [frontend/plan_phase_4_split_data_manager.md](frontend/plan_phase_4_split_data_manager.md)

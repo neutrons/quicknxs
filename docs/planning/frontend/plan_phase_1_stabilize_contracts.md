@@ -44,7 +44,8 @@ Phase 1 should produce:
    `DataManager`, `NexusData`, `CrossSectionData`, and `Configuration` objects.
 5. A configuration field inventory and adapter sketch that preserve all current
    values while classifying them by future owner.
-6. A narrow target `IMainView` protocol and fake view for future presenter tests.
+6. Focused view classes (`DirectBeamTableView`, `ReductionTableView`, etc.) with
+   render methods and user-action hooks, prepared for presenter wiring in Phase 3.
 
 The important constraint is that Phase 1 should avoid changing behavior. It should
 add contracts, adapters, and tests around existing behavior so later phases can move
@@ -54,7 +55,7 @@ logic with confidence.
 
 Do not do these in Phase 1:
 
-- Do not extract `ReductionPresenter`, `FilePresenter`, or `PlotPresenter`.
+- Do not extract presenters or wire views to presenters.
 - Do not replace `auto_change_active`.
 - Do not change Qt signal names or user-action flow.
 - Do not make table edits use entry IDs yet.
@@ -204,6 +205,25 @@ Rules:
   run number in its public meaning.
 - Keep models Qt-free and Mantid-free.
 - Treat run number as source metadata only.
+
+### Relationship between View Models and Models
+
+Models or domain session objects for the view models are introduced in
+Phase 4 (`DirectBeamEntry`, `ReductionRunEntry`,
+etc.). Those objects own mutable session state; view models are read-only snapshots
+that presenters build *from* session objects for display. The two coexist at
+different layers.
+
+What evolves across phases is the builder code that produces view models. In Phase
+1 the builders take `DataManager` directly. By Phase 4, when repositories exist,
+presenters build view models from `DirectBeamRepository` entries instead. The view
+model dataclasses themselves are stable and do not change.
+
+View models belong to the view/presenter layer. `view_models.py` must live under
+`interfaces/` and must not be imported by model, session, or backend code. The
+dependency direction is: model layer → presenter (builds view models) → view
+(renders view models). Nothing in `data_handling/`, `mr_reduction`, or session
+services should import from `view_models.py`.
 
 ### Proposed File: `src/quicknxs/interfaces/view_model_builders.py`
 
@@ -458,148 +478,102 @@ Rules:
 - Configuration adapters preserve current values in tests.
 - Live runtime code still uses legacy `Configuration`.
 
-## Phase 1D: View Interface Preparation
+## Phase 1D: Focused View Class Preparation
 
 ### Purpose
 
-Prepare the narrow view boundary future presenters will use without pretending the
-current handlers already satisfy that boundary.
+Introduce the focused view classes that Phase 3 will wire to presenters, without
+yet wiring them or changing live application behavior. Establish the render method
+and user-action hook conventions so Phase 3 can assume these surfaces exist.
 
 ### Design Principles
 
-- Define `IMainView` as the target interface for future presenters.
-- Add narrowly scoped display/read methods to `MainWindow` where they can delegate
-  to existing behavior without changing it.
-- Use fake views only for new presenter/view-model tests, not as drop-in
-  replacements for current handlers.
-- Do not annotate existing handlers as protocol consumers until their dependencies
-  have actually been reduced.
+- Extract each focused view class from `MainWindow` as a `QWidget` subclass.
+- Each view class owns the widgets relevant to its domain.
+- Render methods accept typed view model payloads and apply local signal blocking.
+- User-action hooks are nullable callable attributes that the view fires when user
+  input arrives.
+- No Protocol or ABC is required. The render methods and hooks are the contract
+  with the future presenter.
+- `MainWindow` continues to own the Qt layout and hosts each view class.
 
-### Proposed File: `src/quicknxs/interfaces/view_protocol.py`
+### View Classes To Introduce
 
-Add the target view protocol. Keep it small and truthful.
+Introduce these classes during Phase 1D (matching the Phase 3 presenter pairs):
 
-Suggested contents:
+- `DirectBeamTableView` — direct-beam table widget, render method, and
+  user-action hooks.
+- `ReductionTableView` — reduction table widget, render method, and user-action
+  hooks.
+- `RunOptionsView` — per-run options form widgets and hooks.
+- `GlobalOptionsView` — global options form widgets and hooks.
+- `FileListView` — file list widget, render method, and selection hook.
+- `RunOverviewView` — overview image, cross-section selector, DAS log, and
+  calculated data.
+- `IntensityPlotView` — XY / X-TOF / overview plot widgets and option controls.
+- `ReflectivityPlotView` — reflectivity and compare-plot widgets and option
+  controls.
+
+The view classes can be introduced incrementally. Start with `DirectBeamTableView`
+and `ReductionTableView` first, since Phase 2 and Phase 3 need them earliest.
+
+### Render Method Convention
+
+Each render method should:
+
+1. Accept a typed view model (or sequence of view models) as its sole argument.
+2. Apply local signal blocking via the `block_widget_signals` helper around
+   widget updates.
+3. Preserve current selection when the relevant entry ID still exists.
+4. Not call any model, session, or backend code.
+
+Example:
 
 ```python
-from __future__ import annotations
-
-from typing import Protocol, runtime_checkable
-
-from quicknxs.interfaces.config_view_model import ConfigViewModel
-from quicknxs.interfaces.view_models import (
-    DirectBeamRowModel,
-    ReductionRowModel,
-    RunOverviewModel,
-    StatusMessageModel,
-)
-
-
-@runtime_checkable
-class IMainView(Protocol):
-    def show_run_overview(self, data: RunOverviewModel) -> None:
-        ...
-
-    def show_reduction_rows(self, rows: tuple[ReductionRowModel, ...]) -> None:
-        ...
-
-    def show_direct_beam_rows(self, rows: tuple[DirectBeamRowModel, ...]) -> None:
-        ...
-
-    def show_status_message(self, message: StatusMessageModel) -> None:
-        ...
-
-    def show_progress(self, value: float) -> None:
-        ...
-
-    def refresh_projection_plots(self) -> None:
-        ...
-
-    def refresh_reflectivity_plot(self) -> None:
-        ...
-
-    def get_config_view_model(self) -> ConfigViewModel:
-        ...
-
-    def set_config_view_model(self, view_model: ConfigViewModel) -> None:
+def render_rows(self, rows: tuple[DirectBeamRowModel, ...]) -> None:
+    with block_widget_signals(self._table):
+        # populate table from rows
         ...
 ```
 
-Do not try to model Qt signals in the protocol. User-action signal typing belongs
-with presenter extraction after the event surface is reduced.
+### User-Action Hook Convention
 
-### Proposed File: `test/unit/quicknxs/interfaces/fakes.py`
-
-Add test fakes under `test/`, not `src/`.
-
-Suggested fake:
+User-action hooks are nullable callable attributes set to `None` by default:
 
 ```python
-class FakeMainView:
-    def __init__(self):
-        self.run_overview: RunOverviewModel | None = None
-        self.reduction_rows: tuple[ReductionRowModel, ...] = ()
-        self.direct_beam_rows: tuple[DirectBeamRowModel, ...] = ()
-        self.status_messages: list[StatusMessageModel] = []
-        self.progress_values: list[float] = []
-        self.projection_refresh_count = 0
-        self.reflectivity_refresh_count = 0
-        self.config_view_model: ConfigViewModel | None = None
+self.on_cell_edited: Callable[[TableCellEdit], None] | None = None
 ```
 
-### Optional `MainWindow` Methods
+The view fires the hook after reading the minimum widget state needed and
+constructing the typed action. If no hook is registered, the call is a no-op.
+The hook is registered by the presenter at construction time in Phase 3. The
+view does not know the presenter's type.
 
-Add thin methods to `MainWindow` only where they can delegate to current behavior.
+### What This Phase Does Not Do
 
-Suggested methods:
-
-```python
-def show_run_overview(self, data: RunOverviewModel) -> None:
-    self.file_handler.update_overview_run_info_from_active_run()
-
-
-def show_reduction_rows(self, rows: tuple[ReductionRowModel, ...]) -> None:
-    self.file_handler.update_tables()
-
-
-def show_direct_beam_rows(self, rows: tuple[DirectBeamRowModel, ...]) -> None:
-    self.file_handler.update_tables()
-
-
-def show_status_message(self, message: StatusMessageModel) -> None:
-    self.file_handler.report_message(message.message, pop_up=message.is_error)
-
-
-def show_progress(self, value: float) -> None:
-    self.ui.progressBar.setValue(int(value * 100))
-
-
-def refresh_projection_plots(self) -> None:
-    self.initiate_projection_plot.emit(False)
-
-
-def refresh_reflectivity_plot(self) -> None:
-    self.initiate_reflectivity_or_intensity_plot.emit()
-```
-
-For `get_config_view_model()` and `set_config_view_model()`, either implement them
-by calling the new configuration adapter plus existing widget mapping, or defer them
-until `ConfigViewModel` coverage is complete. Do not add stub methods that silently
-return incomplete data.
+- Does not wire views to presenters.
+- Does not introduce the event broker.
+- Does not remove `MainWindow` orchestration or signal-connection code.
+- Does not change any live application behavior.
+- Does not define a Protocol or ABC for the views.
 
 ### Required Tests
 
-- `view_protocol.py` imports without Qt.
-- A small `FakeMainView` satisfies `IMainView` at runtime.
-- The protocol does not import `MainWindow`, `MainHandler`, `DataManager`, or
-  Mantid.
-- `MainWindow` has target methods only where they are implemented truthfully.
+- Each view class imports and instantiates without errors in isolation.
+- Calling a render method with view model data updates widget rows without firing
+  user-action hooks (verifies signal blocking).
+- A registered user-action hook is called when the user edits a cell (Qt test
+  simulating a cell change signal).
+- Signal blocking prevents hook re-entry during programmatic renders.
 
 ### Acceptance Criteria
 
-- A target view protocol exists.
-- Fake view tests can be used by future presenters.
-- Current handlers are not falsely typed against the protocol.
+- Focused view classes exist and are hosted in `MainWindow`'s layout.
+- Render methods use local signal blocking.
+- User-action hooks follow the nullable callable convention.
+- No presenter wiring exists yet.
+- No Protocol or ABC is introduced.
+- Live application behavior is unchanged.
 
 ## Recommended Verification
 
@@ -664,7 +638,7 @@ Mitigation: land Phase 1 as the four subphases above. Phase 1A is mandatory firs
 | Later phase | How it uses Phase 1 work |
 |---|---|
 | Phase 2: Replace shared reentrancy | Uses identity rules, row view models, and display methods so `blockSignals()` can be localized. |
-| Phase 3: Extract presenters | Presenters consume `IMainView`, build view models, and can be tested with `FakeMainView`. |
+| Phase 3: Extract presenters | Presenters hold concrete view references, register callbacks on user-action hooks, and subscribe to domain events via the event broker. |
 | Phase 4: Split `DataManager` | Replaces adapter-local entry IDs with session-owned entry IDs and dedicated repositories. |
 | Phase 5: Configuration, jobs, errors | Replaces legacy `Configuration` usage with the option groups introduced by `ConfigViewModel` and adapters. |
 | Backend reduced-file I/O | Uses the same identity contract and later frontend adapters, but backend DTO/parser/writer work is tracked in the backend roadmap. |

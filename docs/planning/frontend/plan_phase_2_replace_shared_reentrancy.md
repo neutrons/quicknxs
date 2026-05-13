@@ -24,7 +24,7 @@ Phase 2 assumes Phase 1 has produced:
 
 - Direct-beam and reduction row view models with opaque entry IDs.
 - Read-only builders that can create row models from the current `DataManager`.
-- A target `IMainView` protocol and thin `MainWindow` render methods.
+- Focused view classes with render methods and user-action hooks.
 - Characterization tests around duplicate run numbers and copied `NexusData`
   instances.
 - The Phase 1A identity contract defining when table code may compare by entry ID,

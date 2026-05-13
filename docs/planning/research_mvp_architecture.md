@@ -179,17 +179,29 @@ snapshots, instead of reading broad mutable application state.
 - Project/session save and load participation.
 - Reload and refresh behavior.
 
-The target state is to split these into narrower services while keeping a temporary
-facade for compatibility:
+The target state is to split these into a Qt-free frontend model layer while
+keeping a temporary facade for compatibility. In this roadmap, "model layer"
+means both runtime state models and the services that mutate or query them:
 
+- `ReductionSession`: active run, active cross-section, selected table rows,
+  direct-beam entries, reduction/data entries, run options, pairings, and result
+  state.
+- `DirectBeamEntry` / `ReductionRunEntry`: role-specific session rows keyed by
+  stable entry IDs.
+- Option models such as `ReductionOptions`, `LoadingOptions`,
+  `RunReductionParameters`, `DirectBeamParameters`, `PlotViewPreferences`, and
+  `ExportOptions`.
 - `LoadedDataCache`: loaded files and run lookup.
-- `SessionState`: active run, active cross-section, selected table rows, and current
-  reduction session.
-- `DirectBeamRepository` or `DirectBeamMatcher`: direct-beam entries and matching
-  decisions.
-- `ReductionRunRepository`: data runs selected for reduction.
-- `ReductionService`: reduction execution and result generation.
-- `ProjectLoader` / `ProjectWriter`: persistence through explicit file models.
+- `DirectBeamRepository` / `ReductionRunRepository`: entry collection mutation and
+  lookup.
+- `DirectBeamMatcher`: a narrow matching service or backend adapter, not the owner
+  of the direct-beam list.
+- `ReductionService`: reduction orchestration and backend/current-code delegation,
+  not UI rendering and not long-lived session ownership.
+- `StitchingService`: stitching/scaling orchestration and backend/current-code
+  delegation. Scale-factor state remains on reduction entries.
+- `ProjectLoader` / `ProjectWriter`: frontend application of persistence models;
+  canonical file parsing and writing belongs to the backend.
 
 ### `data_handling` and `ProcessingWorkflow`
 
@@ -270,7 +282,7 @@ Architectural impact:
 Recommendation:
 
 - Split configuration concepts into explicit models:
-  - `GlobalReductionOptions`
+  - `ReductionOptions`
   - `RunReductionParameters`
   - `DirectBeamParameters`
   - `ViewPreferences`
@@ -456,13 +468,22 @@ Current shape:
 
 Target shape:
 
-1. `MainWindow` emits a typed user action such as
-   `direct_beam_peak_changed(entry_id, peak_min, peak_max)`.
-2. `ReductionPresenter` handles the action.
-3. The presenter mutates the selected direct-beam entry in session state.
-4. The presenter asks model services to recalculate affected state.
-5. The presenter builds direct-beam table, data table, plot, and overview view models.
-6. The view renders those models using display methods that block signals internally.
+1. User edits a cell in `DirectBeamTableView`.
+2. The view fires its `on_cell_edited` hook with `(entry_id, column, value)`.
+3. `DirectBeamTablePresenter` calls `direct_beam_repository.update_entry(entry_id,
+   ...)`.
+4. `DirectBeamRepository` publishes `DirectBeamEntryUpdatedEvent(entry_id)` to the
+   event broker.
+5. `DirectBeamTablePresenter` (subscriber) receives the event and calls
+   `self._view.render_rows(updated_rows)`.
+6. `ReductionTablePresenter` (subscriber) receives the event and calls
+   `self._view.render_rows(rows)` to refresh match indicators.
+7. `ReflectivityPlotPresenter` (subscriber) receives the event and calls
+   `self._view.render_plot(plot_vm)`.
+
+The initiating presenter re-renders its own view through the same event path as
+all other subscribers. No special direct render call is needed from the presenter
+after the mutation.
 
 This pattern is especially important now that the same run number can appear as
 multiple `NexusData` instances in different roles. The presenter should not assume
@@ -503,7 +524,7 @@ mutation, and plot/reduction refreshes.
 Target shape:
 
 - The view emits a typed configuration action or submits a `ConfigViewModel`.
-- The presenter maps the view model to `GlobalReductionOptions`.
+- The presenter maps the view model to project-owned `ReductionOptions`.
 - The model identifies affected entries.
 - The presenter renders the resulting table and plot view models.
 
@@ -549,27 +570,258 @@ Recommended model:
 
 ## Target Architecture
 
+```mermaid
+flowchart TB
+    subgraph MW["MainWindow — composition root"]
+        direction LR
+        subgraph VL["Views"]
+            V1[DirectBeamTableView]
+            V2[ReductionTableView]
+            V3[ConfigurationView]
+            V4[FileListView]
+            V5[RunOverviewView]
+            V6[IntensityPlotView]
+            V7[ReflectivityPlotView]
+        end
+        subgraph PL["Presenters"]
+            P1[DirectBeamTablePresenter]
+            P2[ReductionTablePresenter]
+            P3[ConfigurationPresenter]
+            P4[FileListPresenter]
+            P5[RunOverviewPresenter]
+            P6[IntensityPlotPresenter]
+            P7[ReflectivityPlotPresenter]
+        end
+    end
+
+    EB([EventBroker])
+
+    subgraph SL["Frontend Model Layer - State + Services"]
+        M0[ReductionSession + Option Models]
+        M1[DirectBeamRepository]
+        M2[ReductionRunRepository]
+        M3[LoadedDataCache]
+        M4[DirectBeamMatcher]
+        M5[ReductionService]
+        M6[StitchingService]
+    end
+
+    BK[[mr_reduction — Backend Facade]]
+
+    V1 --- P1
+    V2 --- P2
+    V3 --- P3
+    V4 --- P4
+    V5 --- P5
+    V6 --- P6
+    V7 --- P7
+
+    P1 & P2 & P3 & P4 & P5 & P6 & P7 --> EB
+
+    EB ~~~ M0
+    EB ~~~ M1
+    EB ~~~ M2
+    EB ~~~ M3
+    EB ~~~ M4
+    EB ~~~ M5
+    EB ~~~ M6
+
+    M0 & M1 & M2 & M3 & M4 & M5 & M6 -->|publish| EB
+    M4 & M5 & M6 -.->|call| BK
+```
+
+Each view is paired one-to-one with its presenter (solid lines within
+`MainWindow`). Presenters subscribe to and receive notifications from the
+`EventBroker` (undirected lines). Model/session services publish domain events to
+the broker after state mutations. Services that need canonical scientific or
+file-format behavior call the backend facade (dashed lines). Presenters do not
+hold references to each other; views do not interact with the broker.
+
+At the application-runtime level, separate filesystem browsing state, loaded-data
+runtime cache, and reduction project state:
+
+```mermaid
+classDiagram
+    class ApplicationModel {
+        run_file_catalog: RunFileCatalog
+        loaded_data_cache: LoadedDataCache
+        project: QuickNXSProject
+    }
+
+    class RunFileCatalog {
+        current_directory: Path
+        event_files: list
+    }
+
+    class RunFileRef {
+        file_name: str
+        file_path: Path
+        run_number: str
+    }
+
+    class LoadedDataCache {
+        entries: list
+    }
+
+    class LoadedRun {
+        source_ref: LoadedRunRef
+        nexus_data: NexusData
+    }
+
+    class QuickNXSProject {
+        project_id: ProjectId
+    }
+
+    ApplicationModel *-- "1" RunFileCatalog : run_file_catalog
+    ApplicationModel *-- "1" LoadedDataCache : loaded_data_cache
+    ApplicationModel *-- "1" QuickNXSProject : project
+    RunFileCatalog *-- "0..*" RunFileRef : event_files
+    LoadedDataCache *-- "0..*" LoadedRun : loaded_runs
+    RunFileRef --> "0..1" LoadedRun : loaded run
+```
+
+`RunFileCatalog` replaces the current `DataManager.current_directory` and
+`DataManager.current_event_files` concerns. It is application runtime state, not
+reduction-project state: it supports file-list rendering, file dialogs, and
+directory refresh behavior. `LoadedDataCache` is also runtime state and should stay
+separate from `QuickNXSProject`, which owns the reduction-domain state. A file
+watcher can refresh `RunFileCatalog`, but the watcher itself is infrastructure, not
+part of the model.
+
+The project model mirrors the current `DataManager` direct-beam and reflected-run
+lists while making the collection semantics explicit:
+
+```mermaid
+classDiagram
+    class QuickNXSProject {
+        project_id: ProjectId
+        reduction_options: ReductionOptions
+        direct_beams: DirectBeamRepository
+        reflected_runs: ReflectedRunSetCollection
+        active_run_id: EntryId
+    }
+
+    class DirectBeamRepository {
+        entries: list
+    }
+
+    class DirectBeamRun {
+        entry_id: EntryId
+        run_number: str
+        source_ref: LoadedRunRef
+        parameters: DirectBeamParameters
+    }
+
+    class ReflectedRunSetCollection {
+        sets: list
+        active_set_id: ReflectedRunSetId
+    }
+
+    class ReflectedRunSet {
+        set_id: ReflectedRunSetId
+        name: str
+        runs: list
+        active_run_id: EntryId
+    }
+
+    class ReflectedRun {
+        entry_id: EntryId
+        run_number: str
+        source_ref: LoadedRunRef
+        direct_beam_entry_id: EntryId
+        configuration: RunConfiguration
+        cross_sections: list
+    }
+
+    class RunConfiguration {
+        peak_range: PixelRange
+        background_range: PixelRange
+        low_resolution_range: PixelRange
+        scaling_factor: float
+        scaling_error: float
+        cut_first_n_points: int
+        cut_last_n_points: int
+    }
+
+    class RunCrossSection {
+        name: str
+        state: str
+        reflectivity_result: ReductionResultRef
+    }
+
+    class ReductionOptions {
+        sample_size: float
+        wavelength_bandwidth: float
+        normalize_to_unity: bool
+        q_cutoff: float
+        global_stitching: bool
+        polynomial_degree: optional_int
+        polynomial_points: int
+    }
+
+    QuickNXSProject *-- "1" ReductionOptions : reduction_options
+    QuickNXSProject *-- "1" DirectBeamRepository : direct_beams
+    QuickNXSProject *-- "1" ReflectedRunSetCollection : reflected_runs
+    ReflectedRunSetCollection *-- "1..4" ReflectedRunSet : sets
+    DirectBeamRepository *-- "0..*" DirectBeamRun : unordered entries
+    ReflectedRunSet *-- "0..*" ReflectedRun : ordered runs
+    ReflectedRun --> "0..1" DirectBeamRun : matched direct beam
+    ReflectedRun *-- "1" RunConfiguration : configuration
+    ReflectedRun *-- "1..4" RunCrossSection : cross_sections
+```
+
+`DirectBeamRepository` is intentionally named as a repository because direct-beam
+order is not scientifically meaningful and reflected runs can match any direct
+beam in the repository. `ReflectedRunSet` is intentionally not called a repository:
+it is an ordered list of reflected runs selected to cover a larger Q range and to
+be stitched together. The first implementation can still keep a compatibility
+service named `ReductionRunRepository`; the runtime state model should move toward
+ordered `ReflectedRunSet` objects. `ReductionOptions` is owned by
+`QuickNXSProject` because its fields, including stitching controls, describe
+project-level reduction behavior rather than one specific reflected-run set.
+
 ### Passive View
 
-The view owns Qt widgets and does three things:
+Views are concrete Qt classes decomposed by responsibility. Each view is paired
+one-to-one with a presenter. A view does two things:
 
-- Emit typed user-action signals.
-- Return typed view models when asked.
-- Render typed view models through display methods.
+- Exposes user-action hooks (callable attributes or Qt signal connection points)
+  that its presenter registers handlers on at construction.
+- Exposes render methods that its presenter calls to update the display.
 
-The view should not:
+No protocol or ABC is required. The presenter holds a reference to the concrete
+view class. For testing, the concrete view can be replaced with a lightweight fake
+that records render calls.
+
+The decomposition by responsibility (not exhaustive):
+
+| View class | Presenter class | Primary responsibility |
+|---|---|---|
+| `FileListView` | `FileListPresenter` | File list, active file highlight |
+| `RunOverviewView` | `RunOverviewPresenter` | Detector image, cross-section selector, DAS log, calculated data |
+| `IntensityPlotView` | `IntensityPlotPresenter` | XY / X-TOF / overview plots and controls |
+| `ReflectivityPlotView` | `ReflectivityPlotPresenter` | Reflectivity and compare-plots |
+| `ConfigurationView` | `ConfigurationPresenter` | Global reduction settings, normalization, dead-time |
+| `ReductionTableView` | `ReductionTablePresenter` | Data-run table rows |
+| `DirectBeamTableView` | `DirectBeamTablePresenter` | Direct-beam table rows |
+
+`MainWindow` owns the Qt layout and instantiates all view and presenter objects,
+wiring them together at startup.
+
+Views should not:
 
 - Decide reduction behavior.
 - Match direct beams to data runs.
 - Know backend persistence format details.
 - Reach into `DataManager` directly.
+- Subscribe to or publish events on the event broker.
 
 ### Presenter/Application Command Layer
 
 Presenters handle user actions and coordinate state changes:
 
 - Validate the action.
-- Call model/session/backend services.
+- Call frontend model/session services and backend adapters where appropriate.
 - Decide which view models must be refreshed.
 - Ask the view to render them.
 - Translate domain errors into UI messages.
@@ -577,18 +829,41 @@ Presenters handle user actions and coordinate state changes:
 The presenter should not manipulate individual Qt widgets. It should know view-model
 fields, not widget names.
 
-### Model And Session Services
+### Frontend Model Layer
 
-Model/session services hold application state and domain operations:
+The frontend model layer is the Qt-free application state and domain operation
+boundary. It contains both passive data models and model/session services.
 
-- Loaded data.
-- Session entries.
-- Direct-beam matching.
-- Reduction parameters.
-- Reduction results.
-- Backend service calls.
+State models belong here when they represent live QuickNXS runtime state:
 
-These services should be testable without Qt.
+- `ReductionSession`, active selection, active cross-section, and result state.
+- `DirectBeamEntry` and `ReductionRunEntry`, keyed by stable entry IDs.
+- Option models for project reduction settings, loading, run reduction, direct-beam
+  parameters, plot preferences, export, offspec, and GISANS.
+- View-independent result models or references needed to rebuild view models.
+
+Model/session services belong here when they mutate, query, or coordinate that
+state:
+
+- `LoadedDataCache`, direct-beam and reduction repositories, and session entry
+  mutation.
+- `DirectBeamMatcher`, as a narrow service that returns explicit match results by
+  entry ID. After backend matching exists, this service should become a thin
+  adapter around backend matching DTOs rather than duplicating backend rules.
+- `ReductionService`, as orchestration that builds requests from session entries
+  and option models, delegates calculation to current QuickNXS code or backend
+  APIs, stores or returns results, and publishes result events.
+- `StitchingService`, as orchestration that builds stitching requests from ordered
+  reduction entries and project-owned reduction options, delegates to current
+  QuickNXS code or backend stitching APIs, and applies scale-factor/error updates
+  through `ReductionRunRepository`.
+
+The frontend model layer should not contain Qt widgets, render logic, user-facing
+message wording, canonical reduced-file parsing/writing, or reusable scientific
+algorithms once those algorithms have backend APIs. Direct Mantid ADS access
+should be localized behind workspace services in migrated paths.
+
+These models and services should be testable without Qt.
 
 ### Backend Facade
 
@@ -619,24 +894,116 @@ Each user action should follow a clear two-phase shape:
 
 This replaces broad reentrancy flags with local, explicit rendering behavior.
 
+## Event Broker
+
+The event broker coordinates state-change notifications across model services,
+presenters, and (where needed) model services that observe other model changes. It
+replaces both the `auto_change_active` reentrancy guard and direct cross-presenter
+coupling.
+
+### Design
+
+The event broker is a plain Python object with no Qt dependency. It is
+instantiated once in the composition root and passed to all presenters and model
+services at construction.
+
+```python
+class EventBroker:
+    def subscribe(self, event_type: type, handler: Callable) -> None: ...
+    def publish(self, event: object) -> None: ...
+```
+
+Dispatch is synchronous. All registered handlers for an event type are called
+before `publish` returns.
+
+### Publishers
+
+Model and session services publish events after state mutations. Presenters do not
+publish events directly.
+
+### Subscribers
+
+Presenters subscribe to domain events and call their own view's render methods on
+receipt. Model services may also subscribe (for example, a direct-beam matching
+service that re-runs when a run is loaded). Views never subscribe to or publish
+events on the broker.
+
+### Example event taxonomy
+
+```python
+@dataclass(frozen=True)
+class RunLoadedEvent:
+    run_number: int
+    entry_id: EntryId
+
+@dataclass(frozen=True)
+class ActiveRunChangedEvent:
+    entry_id: EntryId
+
+@dataclass(frozen=True)
+class FileListChangedEvent:
+    pass
+
+@dataclass(frozen=True)
+class DirectBeamEntryUpdatedEvent:
+    entry_id: EntryId
+
+@dataclass(frozen=True)
+class DirectBeamListChangedEvent:
+    pass
+
+@dataclass(frozen=True)
+class ReductionListChangedEvent:
+    pass
+
+@dataclass(frozen=True)
+class GlobalOptionsChangedEvent:
+    pass
+
+@dataclass(frozen=True)
+class RunOptionsUpdatedEvent:
+    entry_id: EntryId
+
+@dataclass(frozen=True)
+class ReductionResultReadyEvent:
+    entry_id: EntryId
+
+@dataclass(frozen=True)
+class StitchingCompletedEvent:
+    entry_ids: tuple[EntryId, ...]
+
+@dataclass(frozen=True)
+class IntensityDataReadyEvent:
+    entry_id: EntryId
+```
+
+### Reentrancy constraint
+
+A subscriber must not cause the same event type to be published again during its
+own handling of that event. This is a documented design constraint; enforce it
+mechanically in a later phase if needed.
+
 ## MVP View And Presenter Design
 
-### View Interface
+### View–Presenter Wiring
 
-Define an `IMainView` protocol or similar interface with:
+Each view class is paired one-to-one with a presenter. The presenter:
 
-- User-action signals or registration methods.
-- Typed getters for current view input, such as `get_config_view_model()`.
-- Typed render methods, such as `show_direct_beam_rows(rows)`,
-  `show_reduction_rows(rows)`, `show_run_overview(model)`, and
-  `show_plot(model)`.
-- Message and progress display methods.
+- Holds a direct reference to its concrete view.
+- Registers handler callables on the view's user-action hooks at construction
+  time.
+- Calls the view's render methods when a broker event subscription triggers a
+  display update.
 
-Why this is useful:
+The view:
 
-- Presenters become testable with fake views.
-- Widget names stop leaking into business logic.
-- The concrete `MainWindow` can be changed without changing presenter tests.
+- Declares user-action hooks as callable attributes or Qt signal connection
+  points.
+- Declares render methods that accept typed view model payloads.
+- Applies `blockSignals()` locally inside render methods to suppress re-entrancy.
+
+No protocol or ABC is required. Presenter unit tests use a lightweight fake view
+(a plain object with the same render method names, or `MagicMock(spec=ViewClass)`).
 
 ### Configuration View Model
 
@@ -669,20 +1036,28 @@ This directly addresses the multiple-`NexusData`-instances-per-run-number proble
 
 ### Presenter Split
 
-Recommended presenter split:
+One presenter is paired with each view. Extraction follows coupling risk (highest
+risk first):
 
-- `FilePresenter`: file navigation, file loading, active cross-section selection,
-  file list rendering, run overview, calculated data display, DAS log table, and
-  panel visibility.
-- `ReductionPresenter`: add/remove/clear direct beams, add/remove/clear data runs,
-  edit direct-beam rows, edit reduction rows, direct-beam matching, stitching,
-  overlap stripping, trim-to-normalization, and reload-all-files.
-- `PlotPresenter`: plot option changes, offspec/GISANS recomputation guards, and
-  plot-view-model rendering.
-- `ConfigurationPresenter`: optional extraction for global options and
-  configuration form mapping.
+1. `DirectBeamTablePresenter`: direct-beam table cell edits, add/remove/clear
+   direct beams, active direct-beam row selection changes.
+2. `ReductionTablePresenter`: reduction table cell edits, add/remove/clear data
+   runs, active reduction row changes, stitching, overlap stripping,
+   trim-to-normalization.
+3. `RunOptionsPresenter`: per-run peak, background, and scaling parameter form.
+4. `GlobalOptionsPresenter`: global reduction settings, normalization, dead-time
+   toggle, and other configuration form fields.
+5. `FileListPresenter`: file navigation, file loading, active file selection, and
+   file list rendering.
+6. `RunOverviewPresenter`: run overview rendering, cross-section selection, DAS
+   log rendering, calculated data display, and panel visibility.
+7. `IntensityPlotPresenter`: plot trigger decisions and rendering for XY, X-TOF,
+   and overview intensity plots.
+8. `ReflectivityPlotPresenter`: plot trigger decisions and rendering for
+   reflectivity and compare-plots.
 
-The old `MainHandler` can bridge to these presenters during migration.
+`MainHandler` acts as a compatibility bridge during migration and is retired once
+all orchestration has moved into the focused presenters.
 
 ## Backend And Persistence Target
 
@@ -793,18 +1168,23 @@ Work:
 Goals:
 
 - Reduce `MainHandler` responsibility.
+- Introduce one presenter per view and the event broker.
 - Make user-action logic testable without real Qt widgets.
 
 Work:
 
-- Extract `ReductionPresenter` first, because direct-beam/data-run logic has the
-  highest coupling and highest risk.
-- Move `direct_beam_table_changed` and `reduction_table_changed` into presenter
-  methods with typed inputs.
-- Extract add/remove/clear direct-beam and data-run operations.
-- Extract `FilePresenter` for file loading and active run/cross-section changes.
-- Extract or narrow `PlotPresenter` so recomputation decisions are centralized.
-- Keep `MainHandler` as a compatibility bridge until enough behavior has moved.
+- Introduce the event broker and define the initial event taxonomy.
+- Decompose `MainWindow` into focused view classes, each paired with a presenter.
+- Extract `DirectBeamTablePresenter` and `ReductionTablePresenter` first, because
+  direct-beam/data-run logic has the highest coupling and highest risk.
+- Extract `RunOptionsPresenter` and `GlobalOptionsPresenter` for configuration
+  form fields.
+- Extract `FileListPresenter` and `RunOverviewPresenter` for file and run
+  navigation.
+- Extract `IntensityPlotPresenter` and `ReflectivityPlotPresenter` for plot
+  trigger decisions.
+- Wire model services to publish domain events after state mutations.
+- Keep `MainHandler` as a compatibility bridge until all orchestration has moved.
 
 ### Frontend Phase 4: Split `DataManager`
 
@@ -816,9 +1196,16 @@ Goals:
 Work:
 
 - Introduce a loaded-run cache keyed by file/run identity.
-- Introduce direct-beam and reduction-run repositories keyed by entry ID.
-- Move direct-beam matching into a dedicated service.
-- Move reduction execution into a reduction service.
+- Introduce `ReductionSession` plus direct-beam and reduction-run entry models
+  keyed by entry ID.
+- Introduce direct-beam and reduction-run repositories for entry mutation and
+  lookup.
+- Move direct-beam matching into a narrow service/backend adapter that returns
+  explicit match results by entry ID.
+- Move reduction execution orchestration into a service that builds requests from
+  session entries and option models.
+- Move stitching/scaling orchestration into a service that updates reduction entry
+  scale factors through the repository/session boundary.
 - Keep a `DataManager` facade temporarily so existing callers can migrate gradually.
 - Add focused tests for each service.
 
@@ -831,7 +1218,7 @@ Goals:
 
 Work:
 
-- Split `Configuration` into explicit option models.
+- Split `Configuration` into explicit frontend model-layer option models.
 - Add adapters from old `Configuration` during transition.
 - Introduce backend/domain error result types.
 - Add a progress/job abstraction for loading, reduction, export, and save/load.
