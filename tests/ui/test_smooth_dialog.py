@@ -257,7 +257,9 @@ def test_dialog_settings_persistence(dialog_both, qtbot):
 
     # Create a new dialog to test loading
     main_window = dialog_both.parent()
-    new_dialog = OffSpecParametersDialog(main_window, main_window.data_presenter, show_smoothing=True, show_binning=True)
+    new_dialog = OffSpecParametersDialog(
+        main_window, main_window.data_presenter, show_smoothing=True, show_binning=True
+    )
     qtbot.addWidget(new_dialog)
 
     # Check that region values were loaded

@@ -3,7 +3,7 @@ import mantid.simpleapi as api
 from quicknxs.utils.filepath import FilePath
 
 
-class DiagnosticData(object):
+class DiagnosticData:
     """Diagnostic data for a run or group of runs to help understand and debug issues with QuickNXS workspaces"""
 
     def __init__(self, file_path: str | list[str] | None = None, message: str | None = None, min_num_evts: int = 100):

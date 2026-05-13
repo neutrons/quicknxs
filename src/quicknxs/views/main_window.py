@@ -122,7 +122,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def initialize_instrument(self):
         """Initialize instrument according to the instrument and saved parameters."""
         for i in range(1, 12):
-            getattr(self.ui, "selectedCrossSection%i" % i).hide()
+            getattr(self.ui, f"selectedCrossSection{i}").hide()
         self.ui.selectedCrossSection0.show()
         self.ui.selectedCrossSection0.setText("None")
 

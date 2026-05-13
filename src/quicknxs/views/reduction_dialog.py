@@ -18,7 +18,7 @@ class ReductionDialog(QtWidgets.QDialog):
     default_template = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
 
     def __init__(self, parent):
-        super(ReductionDialog, self).__init__(parent)
+        super().__init__(parent)
 
         self.ui = load_ui("ui_reduce_dialog.ui", base_instance=self)
 

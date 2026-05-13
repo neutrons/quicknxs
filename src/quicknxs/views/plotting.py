@@ -1,6 +1,5 @@
 import logging
 import sys
-from typing import List
 
 import numpy as np
 
@@ -8,7 +7,7 @@ from quicknxs.models.data_set import CrossSectionData
 from quicknxs.views.widgets.mplwidget import MPLWidget
 
 
-class PlotView(object):
+class PlotView:
     """PlotView is responsible for plotting the data in the main window."""
 
     _refl_color_list = ["blue", "red", "green", "purple", "#aaaa00", "cyan"]
@@ -196,7 +195,7 @@ class PlotView(object):
                 continue
             imin = min(imin, d[d > 0].min())
             imax = max(imax, d.max())
-            progress(i, message="Prepared %s plot" % key, out_of=n_total + 1)
+            progress(i, message=f"Prepared {key} plot", out_of=n_total + 1)
 
         if len(xynormed) > 1:
             main_window.ui.frame_xy_mm.show()
@@ -280,7 +279,7 @@ class PlotView(object):
                 continue
             imin = min(imin, d[d > 0].min())
             imax = max(imax, d.max())
-            progress(i, message="Prepared %s plot" % key, out_of=n_total + 1)
+            progress(i, message=f"Prepared {key} plot", out_of=n_total + 1)
 
         progress(n_total, message="Plotting...", out_of=n_total + 1)
 
@@ -442,7 +441,7 @@ class PlotView(object):
             xlim = self.main_window.ui.offspec_pp.canvas.ax.get_xlim()
             ylim = self.main_window.ui.offspec_pp.canvas.ax.get_ylim()
 
-        plots: List[MPLWidget] = [
+        plots: list[MPLWidget] = [
             self.main_window.ui.offspec_pp,
             self.main_window.ui.offspec_mm,
             self.main_window.ui.offspec_pm,
@@ -481,7 +480,7 @@ class PlotView(object):
                 plot = plots[i]
                 plot.show()
                 selected_data = nexus_data.cross_sections[xs]
-                progress(i_run + i / 4.0, message="Processed run %s %s" % (selected_data.run_number, xs), out_of=n_total)
+                progress(i_run + i / 4.0, message=f"Processed run {selected_data.run_number} {xs}", out_of=n_total)
 
                 PN = len(selected_data.tof) - selected_data.configuration.cut_first_n_points
                 P0 = selected_data.configuration.cut_last_n_points
@@ -498,7 +497,7 @@ class PlotView(object):
                     kf_z_max = max(kf_z_max, kf_z[S > 0].max())
                     k_diff_min = min(k_diff_min, (ki_z - kf_z)[S > 0].min())
                     k_diff_max = max(k_diff_max, (ki_z - kf_z)[S > 0].max())
-                except:
+                except (ValueError, AttributeError, TypeError):
                     logging.error("Error computing ranges: %s", sys.exc_info()[1])
                     continue
                 if self.main_window.ui.kizmkfzVSqz.isChecked():

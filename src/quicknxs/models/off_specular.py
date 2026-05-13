@@ -3,7 +3,7 @@
 import logging
 from functools import reduce
 from multiprocessing import Pool
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy.stats
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
 
-class OffSpecular(object):
+class OffSpecular:
     """Compute off-specular reflectivity."""
 
     d_wavelength = 0
@@ -32,7 +32,7 @@ class OffSpecular(object):
         """Initialize the OffSpecular class with processed cross-section data."""
         self.data_set = cross_section_data
 
-    def __call__(self, direct_beam: Optional["CrossSectionData"] = None):
+    def __call__(self, direct_beam: "CrossSectionData | None" = None):
         """Extract off-specular scattering from 4D dataset (x,y,ToF,I).
 
         Uses a window in y to filter the 4D data,
@@ -133,7 +133,7 @@ class OffSpecular(object):
             self.dS[:, np.logical_not(idxs)] = 0.0
 
 
-def merge(reduction_list: List["NexusData"], pol_state: str) -> Tuple[np.ndarray, ...]:
+def merge(reduction_list: list["NexusData"], pol_state: str) -> tuple[np.ndarray, ...]:
     """Merge the off-specular data from a reduction list.
 
     The scaling factors should have been determined at this point. Just use them
@@ -180,7 +180,7 @@ def merge(reduction_list: List["NexusData"], pol_state: str) -> Tuple[np.ndarray
     return _qx, _qz, _ki_z, _kf_z, _ki_z - _kf_z, _s, _ds
 
 
-def closest_bin(q: float, bin_edges: list) -> Optional[int]:
+def closest_bin(q: float, bin_edges: list) -> int | None:
     """Find index of closest bin to a q-value."""
     for i in range(len(bin_edges)):
         if q > bin_edges[i] and q <= bin_edges[i + 1]:
@@ -312,9 +312,9 @@ def _smooth_data(
     x2=0.03,
     y1=0.0,
     y2=0.1,
-    axis_sigma_scaling: Optional[int] = None,
+    axis_sigma_scaling: int | None = None,
     xysigma0: float = 0.06,
-    indices: Optional[list] = None,
+    indices: list | None = None,
 ):
     """Smooth a irregular spaced dataset onto a regular grid.
 
@@ -357,7 +357,7 @@ def _smooth_data(
     return Xout, Yout, Iout
 
 
-def proc(data: dict) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def proc(data: dict) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Serializable function to be called by each thread."""
     return _smooth_data(
         x=data["x"],
@@ -391,9 +391,9 @@ def smooth_data(
     x2=0.03,
     y1=0.0,
     y2=0.1,
-    axis_sigma_scaling: Optional[int] = None,
+    axis_sigma_scaling: int | None = None,
     xysigma0: float = 0.06,
-    indices: Optional[list] = None,
+    indices: list | None = None,
     pool=5,
 ):
     """Execute legacy smoothing process by spreading it to a pool of processes.

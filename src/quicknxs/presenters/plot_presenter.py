@@ -5,7 +5,6 @@ Most of those come straight from QuickNXS.
 """
 
 import time
-from typing import List
 
 from matplotlib.backend_bases import MouseEvent
 from qtpy import QtWidgets
@@ -29,7 +28,7 @@ def slow_down_events(fn):
     return function_wrapper
 
 
-class PlotPresenter(object):
+class PlotPresenter:
     """Class to handle plotting events."""
 
     _picked_line = None
@@ -97,12 +96,12 @@ class PlotPresenter(object):
         self.ui.xtof_overview.canvas.mpl_connect("button_release_event", self.plot_release)
 
         # Status bar indicator
-        self.x_position_indicator = QtWidgets.QLabel(" x=%g" % 0.0)
+        self.x_position_indicator = QtWidgets.QLabel(f" x={0.0:g}")
         self.x_position_indicator.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         self.x_position_indicator.setMaximumWidth(100)
         self.x_position_indicator.setMinimumWidth(100)
         self.ui.statusbar.addPermanentWidget(self.x_position_indicator)
-        self.y_position_indicator = QtWidgets.QLabel(" y=%g" % 0.0)
+        self.y_position_indicator = QtWidgets.QLabel(f" y={0.0:g}")
         self.y_position_indicator.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         self.y_position_indicator.setMaximumWidth(100)
         self.y_position_indicator.setMinimumWidth(100)
@@ -115,8 +114,8 @@ class PlotPresenter(object):
         """
         if event.inaxes is None:
             return
-        self.x_position_indicator.setText(" x=%g" % event.xdata)
-        self.y_position_indicator.setText(" y=%g" % event.ydata)
+        self.x_position_indicator.setText(f" x={event.xdata:g}")
+        self.y_position_indicator.setText(f" y={event.ydata:g}")
 
     @slow_down_events
     def change_color_scale(self, event: MouseEvent):
@@ -318,7 +317,7 @@ class PlotPresenter(object):
 
     def change_offspec_colorscale(self):
         """Modify color scale."""
-        plots: List[MPLWidget] = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
+        plots: list[MPLWidget] = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
         Imin = 10 ** self.ui.offspecImin.value()
         Imax = 10 ** self.ui.offspecImax.value()
         if Imin >= Imax:

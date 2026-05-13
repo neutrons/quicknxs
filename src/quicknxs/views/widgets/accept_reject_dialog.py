@@ -11,7 +11,7 @@ class AcceptRejectDialog(QDialog):
     """
 
     def __init__(self, parent=None, title="", message=""):
-        super(AcceptRejectDialog, self).__init__(parent)
+        super().__init__(parent)
 
         self.setWindowTitle(title)
 
@@ -33,11 +33,11 @@ class AcceptRejectDialog(QDialog):
         self.m_status = None
 
     def accept(self):
-        super(AcceptRejectDialog, self).accept()
+        super().accept()
         self.m_status = True
 
     def reject(self):
-        super(AcceptRejectDialog, self).reject()
+        super().reject()
         self.m_status = False
 
     def is_accepted(self):

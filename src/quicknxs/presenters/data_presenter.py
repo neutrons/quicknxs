@@ -4,10 +4,9 @@ import copy
 import glob
 import logging
 import os
-import sys
 import time
 from bisect import insort_left
-from typing import Callable, Set
+from collections.abc import Callable
 
 import numpy as np
 
@@ -19,7 +18,7 @@ from quicknxs.presenters.progress_reporter import ProgressReporter
 from quicknxs.utils.filepath import FilePath
 
 
-class DataPresenter(object):
+class DataPresenter:
     """Holds information about the current data location and manages the data cache.
 
     Attributes
@@ -82,7 +81,7 @@ class DataPresenter(object):
         self.cached_gisans: dict | None = None
 
         # List of bad files that can't be loaded due to insufficient event count or other failure
-        self.bad_files: Set[str] = set()
+        self.bad_files: set[str] = set()
 
     @property
     def data_sets(self):
@@ -392,7 +391,9 @@ class DataPresenter(object):
             return AddToReductionResult.OTHER_ERROR
 
         if self._nexus_data.is_direct_beam():
-            logging.warning(f"Run {nexus_data.run_number} was added to the reduction list but is labeled as a direct beam.")
+            logging.warning(
+                f"Run {nexus_data.run_number} was added to the reduction list but is labeled as a direct beam."
+            )
             result = AddToReductionResult.SUCCESS_DIRECT_BEAM
         else:
             result = AddToReductionResult.SUCCESS
@@ -766,8 +767,8 @@ class DataPresenter(object):
                 self.calculate_gisans(nexus_data=nexus_data, progress=None)
                 if progress is not None:
                     progress(100.0 / len(self.reduction_list) * (i + 1))
-            except:
-                logging.error("Could not compute GISANS for %s\n  %s", nexus_data.run_number, sys.exc_info()[1])
+            except Exception as e:
+                logging.error("Could not compute GISANS for %s\n  %s", nexus_data.run_number, e)
         if progress is not None:
             progress(100)
 
@@ -821,8 +822,8 @@ class DataPresenter(object):
                     continue
                 try:
                     self.calculate_reflectivity(nexus_data=nexus_data)
-                except:
-                    logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.run_number, sys.exc_info()[1])
+                except Exception as e:
+                    logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.run_number, e)
 
     def reduce_offspec(self, progress=None):
         """Calculate off-specular reflectivity for all datasets in all reduction list.
@@ -834,8 +835,8 @@ class DataPresenter(object):
         for nexus_data in self.reduction_list:
             try:
                 self.calculate_reflectivity(nexus_data=nexus_data, specular=False)
-            except:
-                logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.run_number, sys.exc_info()[1])
+            except Exception as e:
+                logging.error("Could not compute reflectivity for %s\n  %s", nexus_data.run_number, e)
 
     def rebin_gisans(self, pol_state, wl_min=0, wl_max=100, qy_npts=50, qz_npts=50, use_pf=False):
         """Merge all the off-specular reflectivity data and rebin."""
@@ -1073,7 +1074,7 @@ class DataPresenter(object):
         logging.info("Reduced file loaded: %s sec", time.time() - t_0)
         n_total = len(db_files) + len(data_files)
         if progress and n_total > 0:
-            progress.set_value(1, message="Loaded %s" % os.path.basename(file_path), out_of=n_total)
+            progress.set_value(1, message=f"Loaded {os.path.basename(file_path)}", out_of=n_total)
         self.load_direct_beam_and_data_files(db_files, data_files, additional_peaks, configuration, progress, True, t_0)
         if progress and not has_scaling_error:
             progress.set_value(
@@ -1130,11 +1131,11 @@ class DataPresenter(object):
                 self.add_active_to_direct_beam_list()
                 logging.info("%s loaded: %s sec [%s]", r_id, time.time() - t_i, time.time() - t_0)
                 if progress:
-                    progress.set_value(n_loaded, message="%s loaded" % os.path.basename(run_file), out_of=n_total)
+                    progress.set_value(n_loaded, message=f"{os.path.basename(run_file)} loaded", out_of=n_total)
             else:
                 logging.error("File does not exist: %s", run_file)
                 if progress:
-                    progress.set_value(n_loaded, message="ERROR: %s does not exist" % run_file, out_of=n_total)
+                    progress.set_value(n_loaded, message=f"ERROR: {run_file} does not exist", out_of=n_total)
             n_loaded += 1
 
         # Add reflectivity runs
@@ -1143,7 +1144,7 @@ class DataPresenter(object):
             t_i = time.time()
             do_files_exist = []
             for name in run_file.split("+"):
-                do_files_exist.append((os.path.isfile(name)))
+                do_files_exist.append(os.path.isfile(name))
 
             if all(do_files_exist):
                 is_from_cache = self.load(run_file, conf, force=force, update_parameters=False)
@@ -1159,7 +1160,7 @@ class DataPresenter(object):
                 else:
                     logging.error(f"Could not add run {r_id} to reduction table: {result.value}")
                 if progress:
-                    progress.set_value(n_loaded, message="%s loaded" % os.path.basename(run_file), out_of=n_total)
+                    progress.set_value(n_loaded, message=f"{os.path.basename(run_file)} loaded", out_of=n_total)
             else:
                 logging.error(f"File does not exist: {run_file}")
                 if progress:

@@ -12,13 +12,13 @@ class BinningTypeSelection(QComboBox):
 
         Parameters
         ----------
-        on_change_handler: Optional[Callable]
+        on_change_handler: Callable | None
             A function to be called when the selection changes.
             It should accept two arguments: the new index and the row identifier.
-        row : Optional[int]
+        row : int | None
             An identifier for the row associated with this combo box, useful when
             the combo box is used in a table or list context.
-        parent : Optional[QWidget]
+        parent : QWidget | None
             The parent widget.
         """
         super().__init__(parent)

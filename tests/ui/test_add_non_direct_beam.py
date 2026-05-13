@@ -324,7 +324,7 @@ def test_non_direct_beam_saved_and_loaded(qtbot, data_server, tmp_path):
     saved_file = dat_files[0]
 
     # Read the file and check for the direct beam entry
-    with open(saved_file, "r") as f:
+    with open(saved_file) as f:
         content = f.read()
 
     # Check that the direct beam section exists and contains our run

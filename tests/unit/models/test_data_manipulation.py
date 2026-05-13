@@ -73,7 +73,7 @@ def stitching_config():
 def stitching_reduction_list():
     """List of NexusData objects for testing of stitching."""
 
-    class _MockCrossSectionData(object):
+    class _MockCrossSectionData:
         """Test class to use instead of CrossSectionData, which requires EventWorkspaces."""
 
         def __init__(self, xs: str, config: Configuration, data_x: list, data_y: list, ws_name: str):
@@ -114,7 +114,7 @@ def stitching_reduction_list():
     return [curve1, curve2, curve3]
 
 
-class TestDataManipulation(object):
+class TestDataManipulation:
     """Main test class for data manipulation functions."""
 
     @pytest.mark.datarepo
@@ -122,7 +122,7 @@ class TestDataManipulation(object):
         manager = DataPresenter(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
-            raise IOError("Files missing.")
+            raise OSError("Files missing.")
         scaling_factors, scaling_errors = stitch_reflectivity(manager.reduction_list, "Off_On", False, 0.008)
         assert scaling_factors == pytest.approx([1.0, 0.1809, 0.1556], abs=0.001)
         assert scaling_errors == pytest.approx([0.0, 0.003, 0.005], abs=0.001)
@@ -136,7 +136,7 @@ class TestDataManipulation(object):
         manager = DataPresenter(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
-            raise IOError("Files missing.")
+            raise OSError("Files missing.")
         scaling_factors, scaling_errors = stitch_reflectivity(manager.reduction_list, "Off_On", False, 0.008)
         assert scaling_factors == pytest.approx([0.137, 0.028, 0.072], abs=0.001)
         assert scaling_errors == pytest.approx([0.0, 0.003, 0.021], abs=0.001)

@@ -6,7 +6,6 @@ import math
 import os
 import time
 import traceback
-from typing import List, Optional, Union
 
 import numpy as np
 from mantid.simpleapi import DeleteWorkspace, LoadEventNexus
@@ -173,7 +172,7 @@ class MainPresenter:
             if not os.path.isfile(single_file_path):
                 self.report_message(
                     "File does not exist",
-                    detailed_message="The following file does not exist:\n  %s" % single_file_path,
+                    detailed_message=f"The following file does not exist:\n  {single_file_path}",
                     pop_up=True,
                     is_error=True,
                 )
@@ -217,14 +216,14 @@ class MainPresenter:
 
         cross_sections = list(self._data_presenter.data_sets.keys())
         for i, xs in enumerate(cross_sections):
-            getattr(self.ui, "selectedCrossSection%i" % i).show()
+            getattr(self.ui, f"selectedCrossSection{i}").show()
             good_label = xs.replace("_", "-")
             cross_section_label = self._data_presenter.data_sets[xs].cross_section_label
             if good_label != cross_section_label:
                 good_label = f"{good_label}: {cross_section_label}"
-            getattr(self.ui, "selectedCrossSection%i" % i).setText(good_label)
+            getattr(self.ui, f"selectedCrossSection{i}").setText(good_label)
         for i in range(len(cross_sections), 12):
-            getattr(self.ui, "selectedCrossSection%i" % i).hide()
+            getattr(self.ui, f"selectedCrossSection{i}").hide()
         self.main_window.auto_change_active = False
 
         self.active_data_changed()
@@ -233,7 +232,7 @@ class MainPresenter:
         self.main_window.file_loaded_signal.emit()
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
         self.main_window.initiate_projection_plot.emit(False)
-        self.cache_indicator.setText("Files loaded: %s" % (self._data_presenter.get_cachesize()))
+        self.cache_indicator.setText(f"Files loaded: {self._data_presenter.get_cachesize()}")
 
     def active_cross_section_changed(self):
         """Update UI metadata and plots after the active cross section is changed."""
@@ -248,7 +247,7 @@ class MainPresenter:
         self.main_window.auto_change_active = True
         current_cross_section = 0
         for i in range(12):
-            if getattr(self.ui, "selectedCrossSection%i" % i).isChecked():
+            if getattr(self.ui, f"selectedCrossSection{i}").isChecked():
                 current_cross_section = i
                 break
 
@@ -257,7 +256,7 @@ class MainPresenter:
             self.ui.selectedCrossSection0.setChecked(True)
         self.main_window.auto_change_active = False
 
-    def _congruency_fail_report(self, file_paths: List[str], log_names: Optional[List[str]] = None):
+    def _congruency_fail_report(self, file_paths: list[str], log_names: list[str] | None = None):
         """Check whether these files can be merged.
 
         Parameters
@@ -276,8 +275,8 @@ class MainPresenter:
         assert len(file_paths) > 1, "We require more than one data file in order to compare their metadata"
         # Log names validation and collect tolerances
         tolerances = dict()  # store the tolerance value for each log name
-        all_log_names: List[str] = list(OPEN_SUM_TOLERANCES.keys())
-        all_tolerances: List[float] = list(OPEN_SUM_TOLERANCES.values())
+        all_log_names: list[str] = list(OPEN_SUM_TOLERANCES.keys())
+        all_tolerances: list[float] = list(OPEN_SUM_TOLERANCES.values())
         assert all_log_names  # failsafe if structure of settings.json changes
         if log_names is None:
             log_names = all_log_names
@@ -314,8 +313,7 @@ class MainPresenter:
         for log_name, values in log_values.items():
             if max(values) - min(values) > tolerances[log_name]:
                 runs = FilePath(file_paths).run_numbers(string_representation="statement")
-                message_template = "Runs {0} contain values for log {1} that differ above tolerance {2}"
-                message = message + message_template.format(runs, log_name, tolerances[log_name]) + "\n"
+                message += f"Runs {runs} contain values for log {log_name} that differ above tolerance {tolerances[log_name]}\n"
 
         return message  # empty string if no failures
 
@@ -344,29 +342,29 @@ class MainPresenter:
         if d is None:
             return
 
-        self.ui.datasetAi.setText("%.3f°" % (d.scattering_angle))
+        self.ui.datasetAi.setText(f"{d.scattering_angle:.3f}°")
 
         try:
             wl_min, wl_max = d.wavelength_range
         except ZeroDivisionError:
             wl_min, wl_max = float("NaN"), float("NaN")
-        self.ui.datasetLambda.setText("%.2f (%.2f-%.2f) Å" % (d.lambda_center, wl_min, wl_max))
+        self.ui.datasetLambda.setText(f"{d.lambda_center:.2f} ({wl_min:.2f}-{wl_max:.2f}) Å")
 
         # DIRPIX and DANGLE0 overwrite
         if self.ui.set_dangle0_checkbox.isChecked():
-            dangle0 = "%.3f° (%.3f°)" % (float(self.ui.dangle0Overwrite.text()), d._angle_offset)
+            dangle0 = f"{float(self.ui.dangle0Overwrite.text()):.3f}° ({d._angle_offset:.3f}°)"
         else:
-            dangle0 = "%.3f°" % (d.angle_offset)
+            dangle0 = f"{d.angle_offset:.3f}°"
         self.ui.datasetDangle0.setText(dangle0)
 
         if self.ui.set_dirpix_checkbox.isChecked():
-            dpix = "%.1f (%.1f)" % (float(self.ui.directPixelOverwrite.value()), d._direct_pixel)
+            dpix = f"{float(self.ui.directPixelOverwrite.value()):.1f} ({d._direct_pixel:.1f})"
         else:
-            dpix = "%.1f" % d.direct_pixel
+            dpix = f"{d.direct_pixel:.1f}"
         self.ui.datasetDirectPixel.setText(dpix)
 
         if d.configuration.direct_beam is not None:
-            self.ui.matched_direct_beam_label.setText("%s" % d.configuration.direct_beam)
+            self.ui.matched_direct_beam_label.setText(f"{d.configuration.direct_beam}")
         else:
             self.ui.matched_direct_beam_label.setText("None")
 
@@ -378,31 +376,31 @@ class MainPresenter:
         QtWidgets.QApplication.instance().processEvents()
 
         if self.ui.set_dangle0_checkbox.isChecked():
-            dangle0 = "%.3f° (%.3f°)" % (float(self.ui.dangle0Overwrite.text()), d.angle_offset)
+            dangle0 = f"{float(self.ui.dangle0Overwrite.text()):.3f}° ({d.angle_offset:.3f}°)"
         else:
-            dangle0 = "%.3f°" % (d.angle_offset)
+            dangle0 = f"{d.angle_offset:.3f}°"
 
         if self.ui.set_dirpix_checkbox.isChecked():
-            dpix = "%.1f (%.1f)" % (float(self.ui.directPixelOverwrite.value()), d.direct_pixel)
+            dpix = f"{float(self.ui.directPixelOverwrite.value()):.1f} ({d.direct_pixel:.1f})"
         else:
-            dpix = "%.1f" % d.direct_pixel
+            dpix = f"{d.direct_pixel:.1f}"
 
         wl_min, wl_max = d.wavelength_range
-        self.ui.datasetLambda.setText("%.2f (%.2f-%.2f) Å" % (d.lambda_center, wl_min, wl_max))
-        self.ui.datasetPCharge.setText("%.3e" % d.proton_charge)
-        self.ui.datasetTime.setText("%i s" % d.total_time)
-        self.ui.datasetTotCounts.setText("%.4e" % d.total_counts)
+        self.ui.datasetLambda.setText(f"{d.lambda_center:.2f} ({wl_min:.2f}-{wl_max:.2f}) Å")
+        self.ui.datasetPCharge.setText(f"{d.proton_charge:.3e}")
+        self.ui.datasetTime.setText(f"{d.total_time:.0f} s")
+        self.ui.datasetTotCounts.setText(f"{d.total_counts:.4e}")
         try:
-            self.ui.datasetRate.setText("%.1f cps" % (d.total_counts / d.total_time))
+            self.ui.datasetRate.setText(f"{d.total_counts / d.total_time:.1f} cps")
         except ZeroDivisionError:
             self.ui.datasetRate.setText("NaN")
-        self.ui.datasetDangle.setText("%.3f°" % d.dangle)
+        self.ui.datasetDangle.setText(f"{d.dangle:.3f}°")
         self.ui.datasetDangle0.setText(dangle0)
-        self.ui.datasetSangle.setText("%.3f°" % d.sangle)
+        self.ui.datasetSangle.setText(f"{d.sangle:.3f}°")
         self.ui.datasetDirectPixel.setText(dpix)
         self.ui.currentCrossSection.setText(
-            "<b>%s</b> (%s)&nbsp;&nbsp;&nbsp;Type: %s&nbsp;&nbsp;&nbsp;Current State: "
-            "<b>%s</b>" % (d.run_number, d.experiment, d.measurement_type, d.name)
+            f"<b>{d.run_number}</b> ({d.experiment})&nbsp;&nbsp;&nbsp;Type: {d.measurement_type}&nbsp;&nbsp;&nbsp;Current State: "
+            f"<b>{d.name}</b>"
         )
 
         # Update direct beam indicator
@@ -414,7 +412,7 @@ class MainPresenter:
         # Update the calculated data
         self.update_calculated_data()
 
-        self.ui.roi_used_value.setText("%s" % d.use_roi_actual)
+        self.ui.roi_used_value.setText(f"{d.use_roi_actual}")
         self.ui.roi_peak_value.setText(str(d.configuration.metadata_roi_peak))
         self.ui.roi_bck_value.setText(str(d.configuration.metadata_roi_bck))
 
@@ -427,22 +425,22 @@ class MainPresenter:
         """Update cross section metadata shown in the overview tab."""
         # Update cross-section specific information in the overview tab
         d = self._data_presenter.active_cross_section
-        self.ui.datasetPCharge.setText("%.3e" % d.proton_charge)
-        self.ui.datasetTime.setText("%i s" % d.total_time)
-        self.ui.datasetTotCounts.setText("%.4e" % d.total_counts)
+        self.ui.datasetPCharge.setText(f"{d.proton_charge:.3e}")
+        self.ui.datasetTime.setText(f"{d.total_time:.0f} s")
+        self.ui.datasetTotCounts.setText(f"{d.total_counts:.4e}")
         try:
-            self.ui.datasetRate.setText("%.1f cps" % (d.total_counts / d.total_time))
+            self.ui.datasetRate.setText(f"{d.total_counts / d.total_time:.1f} cps")
         except ZeroDivisionError:
             self.ui.datasetRate.setText("NaN")
         self.ui.currentCrossSection.setText(
-            "<b>%s</b> (%s)&nbsp;&nbsp;&nbsp;Type: %s&nbsp;&nbsp;&nbsp;Current State: "
-            "<b>%s</b>" % (d.run_number, d.experiment, d.measurement_type, d.name)
+            f"<b>{d.run_number}</b> ({d.experiment})&nbsp;&nbsp;&nbsp;Type: {d.measurement_type}&nbsp;&nbsp;&nbsp;Current State: "
+            f"<b>{d.name}</b>"
         )
 
         # Update the calculated data
         self.update_calculated_data()
 
-    def update_file_list(self, query_path: Optional[str] = None) -> None:
+    def update_file_list(self, query_path: str | None = None) -> None:
         """Update the list of data files.
 
         Parameters
@@ -673,7 +671,7 @@ class MainPresenter:
                 active_cross_section = nexus_data.cross_sections[active_cross_section_name]
                 self.update_reduction_table(table_widget, idx, active_cross_section)
 
-    def _file_open_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
+    def _file_open_dialog(self, filter_: str | None = None) -> str | None:
         """Pop a File dialog window for the user to select one file.
 
         Parameters
@@ -691,7 +689,7 @@ class MainPresenter:
         )
         return file_path
 
-    def _file_open_sum_dialog(self, filter_: Optional[str] = None) -> Optional[str]:
+    def _file_open_sum_dialog(self, filter_: str | None = None) -> str | None:
         """Open a File dialog Window for the user to select two or more files.
 
         Congruency among the selected files is checked by comparing the values of selected metadata.
@@ -760,7 +758,7 @@ class MainPresenter:
         proceed = dialog.exec_()
         return proceed
 
-    def open_run_number(self, number: Union[List[int], List[str], int, str, None] = None):
+    def open_run_number(self, number: list[int] | list[str] | int | str | None = None):
         """Open a data file by typing a run number or a composite run number for merging data sets.
 
         Example
@@ -780,12 +778,12 @@ class MainPresenter:
         configuration = self.get_configuration_from_ui()
         for run_number in run_numbers.numbers:
             search_string = configuration.instrument.file_search_template % run_number
-            matches = glob.glob(search_string + ".nxs.h5")  # type: Optional[List[str]]
+            matches = glob.glob(search_string + ".nxs.h5")  # type: list[str] | None
             if not matches:  # Look for old-style nexus file name
                 search_string = configuration.instrument.legacy_search_template % run_number
                 matches = glob.glob(search_string + "_event.nxs")
             if not matches:
-                self.report_message("Could not locate run number %s" % run_number, pop_up=True)
+                self.report_message(f"Could not locate run number {run_number}", pop_up=True)
                 return
             file_list.append(matches[0])  # there should be only one match, since we query with one run number
 
@@ -802,7 +800,7 @@ class MainPresenter:
             self.open_file(file_path)
             success = True
         else:
-            self.report_message("Could not locate one or more of file(s) %s" % run_numbers.short, pop_up=True)
+            self.report_message(f"Could not locate one or more of file(s) {run_numbers.short}", pop_up=True)
 
         self.main_window.auto_change_active = False
         return success
@@ -824,8 +822,10 @@ class MainPresenter:
             )
             i = 0
             for xs in self._data_presenter.data_sets:
-                item = QtWidgets.QTableWidgetItem("%g" % self._data_presenter.data_sets[xs].logs[key])
-                item.setToolTip("MIN: %g   MAX: %g" % (self._data_presenter.data_sets[xs].log_minmax[key]))
+                item = QtWidgets.QTableWidgetItem(f"{self._data_presenter.data_sets[xs].logs[key]:g}")
+                item.setToolTip(
+                    f"MIN: {self._data_presenter.data_sets[xs].log_minmax[key][0]:g}   MAX: {self._data_presenter.data_sets[xs].log_minmax[key][1]:g}"
+                )
                 table.setItem(j, i + 1, item)
                 i += 1
         table.resizeColumnsToContents()
@@ -935,7 +935,7 @@ class MainPresenter:
         table_widget.setItem(
             idx,
             ReductionTableColumn.SCALE_FACTOR,
-            QtWidgets.QTableWidgetItem("%.4f" % (data.configuration.scaling_factor)),
+            QtWidgets.QTableWidgetItem(f"{data.configuration.scaling_factor:.4f}"),
         )
         table_widget.setItem(
             idx, ReductionTableColumn.NUM_LEFT, QtWidgets.QTableWidgetItem(str(data.configuration.cut_first_n_points))
@@ -962,7 +962,7 @@ class MainPresenter:
             idx, ReductionTableColumn.BCK_WIDTH, QtWidgets.QTableWidgetItem(str(data.configuration.bck_width))
         )
         table_widget.setItem(idx, ReductionTableColumn.DPIX, QtWidgets.QTableWidgetItem(str(data.direct_pixel)))
-        item = QtWidgets.QTableWidgetItem("%.4f" % data.scattering_angle)
+        item = QtWidgets.QTableWidgetItem(f"{data.scattering_angle:.4f}")
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         table_widget.setItem(idx, ReductionTableColumn.THETA, item)
         direct_beam = "none"
@@ -1090,7 +1090,7 @@ class MainPresenter:
                     new_value = round(float(item.text()), 3)
                     if -0.1 <= new_value <= 0.1:
                         refl.set_parameter(keys[column], new_value)
-                except:
+                except ValueError:
                     refl.set_parameter(keys[column], None)
 
         recalculate = (
@@ -1164,9 +1164,9 @@ class MainPresenter:
         if recalculate:
             try:
                 self._data_presenter.calculate_reflectivity(nexus_data=refl)
-            except:
+            except Exception:
                 self.report_message(
-                    "Could not compute reflectivity for %s" % self._data_presenter.current_file_name,
+                    f"Could not compute reflectivity for {self._data_presenter.current_file_name}",
                     detailed_message=str(traceback.format_exc()),
                     pop_up=False,
                     is_error=False,
@@ -1314,7 +1314,7 @@ class MainPresenter:
         self.ui.directBeamTable.setItem(
             idx, DirectBeamTableColumn.BCK_WIDTH, QtWidgets.QTableWidgetItem(str(data.configuration.bck_width))
         )
-        wl = "%s - %s" % (data.wavelength[0], data.wavelength[-1])
+        wl = f"{data.wavelength[0]} - {data.wavelength[-1]}"
         item = QtWidgets.QTableWidgetItem(wl)
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
         self.ui.directBeamTable.setItem(idx, DirectBeamTableColumn.WAVELENGTH, item)
@@ -1375,9 +1375,9 @@ class MainPresenter:
         # Recalculate reflectivity for runs with this direct beam
         try:
             self._data_presenter.reduce_spec(direct_beam=data.run_number)
-        except:
+        except Exception:
             self.report_message(
-                "Could not compute reflectivity for %s" % self._data_presenter.current_file_name,
+                f"Could not compute reflectivity for {self._data_presenter.current_file_name}",
                 detailed_message=str(traceback.format_exc()),
                 pop_up=False,
                 is_error=False,
@@ -1629,7 +1629,7 @@ class MainPresenter:
 
         try:
             scale = math.pow(10.0, self.ui.refScale.value())
-        except:
+        except (ValueError, OverflowError):
             scale = 1
         replot_change = replot_change or not configuration.scaling_factor == scale
 
@@ -1712,7 +1712,7 @@ class MainPresenter:
         configuration.subtract_background = self.ui.bgActive.isChecked()
         try:
             scale = math.pow(10.0, self.ui.refScale.value())
-        except:
+        except (ValueError, OverflowError):
             scale = 1
         configuration.scaling_factor = scale
         configuration.cut_first_n_points = self.ui.rangeStart.value()
@@ -1799,7 +1799,7 @@ class MainPresenter:
         # Scaling factor
         try:
             scale = math.log10(configuration.scaling_factor)
-        except:
+        except ValueError:
             scale = 0.0
         self.ui.refScale.setValue(scale)
         # Cut first and last points
@@ -1987,8 +1987,8 @@ class MainPresenter:
     def report_message(
         self,
         message: str,
-        informative_message: Optional[str] = None,
-        detailed_message: Optional[str] = None,
+        informative_message: str | None = None,
+        detailed_message: str | None = None,
         pop_up: bool = False,
         is_error: bool = False,
     ):

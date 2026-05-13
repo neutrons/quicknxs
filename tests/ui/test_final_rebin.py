@@ -132,9 +132,7 @@ def test_editing_rebin_q_step_triggers_replotting(qtbot, mocker):
     the reflectivity plot is redrawn. It uses a mock to track the call count of the plot
     redraw method and checks that it increments upon editing the spinbox value.
     """
-    mock_plot_refl = mocker.patch(
-        "quicknxs.views.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True
-    )
+    mock_plot_refl = mocker.patch("quicknxs.views.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True)
 
     main_window = MainWindow()
     qtbot.addWidget(main_window)
@@ -160,9 +158,7 @@ def test_changing_binning_type_triggers_replotting(qtbot, mocker):
     the reflectivity plot is redrawn. It uses a mock to track the call count of the plot
     redraw method and checks that it increments upon editing the spinbox value.
     """
-    mock_plot_refl = mocker.patch(
-        "quicknxs.views.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True
-    )
+    mock_plot_refl = mocker.patch("quicknxs.views.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True)
 
     main_window = MainWindow()
     qtbot.addWidget(main_window)

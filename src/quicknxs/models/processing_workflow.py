@@ -14,7 +14,6 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Dict, Optional, Tuple
 
 import numpy as np
 from mantid.simpleapi import CopyLogs, CreateWorkspace
@@ -29,7 +28,7 @@ from quicknxs.presenters.data_presenter import DataPresenter
 from quicknxs.presenters.progress_reporter import ProgressReporter
 
 
-class ProcessingWorkflow(object):
+class ProcessingWorkflow:
     """Carry out the reduction process for a set of data runs and manages outputs."""
 
     def __init__(self, data_presenter: DataPresenter, output_options: OutputOptions | None = None):
@@ -39,7 +38,7 @@ class ProcessingWorkflow(object):
         self.exported_data_files = []
         self.exported_data_plots = []
 
-    def execute(self, progress: Optional[ProgressReporter] = None):
+    def execute(self, progress: ProgressReporter | None = None):
         """Process data and write output files."""
         if not self.data_presenter.reduction_states:
             return
@@ -97,8 +96,8 @@ class ProcessingWorkflow(object):
 
     def get_file_name(
         self,
-        run_list: Optional[list] = None,
-        pol_state: Optional[str] = None,
+        run_list: list | None = None,
+        pol_state: str | None = None,
         data_type: str = "dat",
         process_type: str = "Specular",
     ):
@@ -130,9 +129,9 @@ class ProcessingWorkflow(object):
 
     def write_quicknxs(
         self,
-        output_data: Dict[str, np.ndarray],
+        output_data: dict[str, np.ndarray],
         output_file_base: str,
-        xs: Optional[list] = None,
+        xs: list | None = None,
         include_gisans: bool = False,
         include_offspec: bool = False,
     ):
@@ -154,7 +153,7 @@ class ProcessingWorkflow(object):
         # Get the column names
         units = output_data["units"]
         cols = output_data["columns"]
-        col_names = ["%s [%s]" % (cols[i], units[i]) for i in range(len(cols))]
+        col_names = [f"{cols[i]} [{units[i]}]" for i in range(len(cols))]
 
         # List of all output states we have to deal with
         if xs is not None:
@@ -193,7 +192,7 @@ class ProcessingWorkflow(object):
             quicknxs_io.write_reflectivity_data(state_output_path, output_data[pol_state], col_names, as_5col=five_cols)
             self.exported_data_files.append(state_output_path)
 
-    def write_orso(self, output_data: Dict[str, np.ndarray]):
+    def write_orso(self, output_data: dict[str, np.ndarray]):
         """
         Save individual and combined reflectivity curves to ORSO format.
 
@@ -286,8 +285,8 @@ class ProcessingWorkflow(object):
                 output_file = self.get_file_name(run_list, data_type="mat", pol_state="all")
                 savemat(output_file, output_data, oned_as="column")
                 self.exported_data_files.append(output_file)
-            except:
-                logging.error("Could not save in matlab format: %s", sys.exc_info([1]))
+            except (OSError, ValueError):
+                logging.exception("Could not save in matlab format")
 
         if self.output_options.format_mantid:
             output_file = self.get_file_name(run_list, data_type="py", pol_state="all")
@@ -377,7 +376,7 @@ class ProcessingWorkflow(object):
                 # Cache smooth output if no binned output requested, otherwise cache binned
                 if not binned:
                     self.data_presenter.cached_offspec = smooth_output
-            except:
+            except Exception:
                 logging.error("Problem writing smooth off-spec output")
                 raise
 
@@ -458,7 +457,7 @@ class ProcessingWorkflow(object):
 
         return data_dict, slice_data_dict
 
-    def get_gisans_data(self, progress=None) -> dict | Tuple[dict, dict]:
+    def get_gisans_data(self, progress=None) -> dict | tuple[dict, dict]:
         wl_npts = self.data_presenter.active_cross_section.configuration.gisans_wl_npts
         wl_min = self.data_presenter.active_cross_section.configuration.gisans_wl_min
         wl_max = self.data_presenter.active_cross_section.configuration.gisans_wl_max
@@ -512,8 +511,8 @@ class ProcessingWorkflow(object):
                 else:
                     _pol_state = pol_state
 
-                _pol_state = "%.3f-%.3f_%s" % (_wl_min, _wl_max, pol_state)
-                _pol_state_clean = "%.3f-%.3f_%s" % (_wl_min, _wl_max, _pol_state)
+                _pol_state = f"{_wl_min:.3f}-{_wl_max:.3f}_{pol_state}"
+                _pol_state_clean = f"{_wl_min:.3f}-{_wl_max:.3f}_{_pol_state}"
                 data_dict[_pol_state] = [np.nan_to_num(rdata)]
                 data_dict["cross_sections"][_pol_state] = _pol_state_clean
                 data_dict["cross_section_bins"][pol_state].append(_pol_state)
@@ -596,7 +595,7 @@ class ProcessingWorkflow(object):
         data_dict["ki_max"] = ki_max
         return data_dict
 
-    def smooth_offspec(self, data_dict: dict) -> Tuple[dict, dict]:
+    def smooth_offspec(self, data_dict: dict) -> tuple[dict, dict]:
         """Create a smoothed dataset from the off-specular scattering.
 
         Note for my own integrity (MD):
@@ -695,7 +694,7 @@ class ProcessingWorkflow(object):
             _to_save = np.asarray([qx, result, error]).T
         else:
             _to_save = np.asarray([qx, result]).T
-        slice_label = "%s_%s_%s-%s" % (pol_state, label, q_min, q_max)
+        slice_label = f"{pol_state}_{label}_{q_min}-{q_max}"
         slice_data_dict["cross_sections"][slice_label] = slice_label
         slice_data_dict[slice_label] = _to_save
         return slice_data_dict
@@ -716,7 +715,7 @@ class ProcessingWorkflow(object):
             _to_save = np.asarray([qy, result, error]).T
         else:
             _to_save = np.asarray([qy, result]).T
-        slice_label = "%s_%s_%s-%s" % (pol_state, label, q_min, q_max)
+        slice_label = f"{pol_state}_{label}_{q_min}-{q_max}"
         slice_data_dict["cross_sections"][slice_label] = slice_label
         slice_data_dict[slice_label] = _to_save
         return slice_data_dict
@@ -857,24 +856,27 @@ class ProcessingWorkflow(object):
             for item in exported_files:
                 try:
                     if item.endswith(".png"):
-                        mitem = MIMEImage(open(item, "r").read(), "png")
+                        mitem = MIMEImage(open(item).read(), "png")
                     elif item.endswith(".pdf"):
-                        mitem = MIMEText(open(item, "r").read(), "pdf")
+                        mitem = MIMEText(open(item).read(), "pdf")
                     elif item.endswith(".dat") or item.endswith(".gp"):
-                        mitem = MIMEText(open(item, "r").read())
+                        mitem = MIMEText(open(item).read())
                     else:
                         mitem = MIMEBase("application", item[-3:])
-                        mitem.set_payload(open(item, "r").read())
+                        mitem.set_payload(open(item).read())
                         encoders.encode_base64(mitem)
-                except:
-                    logging.error("Could not package files for email: %s", sys.exc_info()[1])
-                mitem.add_header("Content-Disposition", "attachment", filename=os.path.basename(item))
-                msg.attach(mitem)
+                    mitem.add_header("Content-Disposition", "attachment", filename=os.path.basename(item))
+                    msg.attach(mitem)
+                except (OSError, KeyError):
+                    logging.exception("Could not package files for email")
 
+        smtp = None
         try:
             smtp = smtplib.SMTP(SMTP_SERVER, timeout=10)
             to_addr = msg["To"].replace(",", ";") + ";" + msg["CC"].replace(",", ";")
             smtp.sendmail(msg["From"], to_addr, msg.as_string())
-            smtp.quit()
-        except:
-            logging.error("Could not send email: %s", sys.exc_info()[1])
+        except (OSError, smtplib.SMTPException, TimeoutError):
+            logging.exception("Could not send email")
+        finally:
+            if smtp is not None:
+                smtp.quit()

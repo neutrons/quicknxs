@@ -4,10 +4,9 @@ import itertools
 import operator
 import os
 import re
-from typing import List, Optional, Union
 
 
-class RunNumbers(object):
+class RunNumbers:
     """A helper class to handle string representations of one or more run numbers.
 
     Translates from a string representation to a list of run numbers, and viceversa
@@ -16,7 +15,7 @@ class RunNumbers(object):
     merge_symbol = "+"
     range_symbol = ":"
 
-    def __init__(self, numbers: Union[List[int], List[str], int, str]) -> None:
+    def __init__(self, numbers: list[int] | list[str] | int | str) -> None:
         """Initialize the RunNumbers object.
 
         Parameters
@@ -25,7 +24,7 @@ class RunNumbers(object):
             a list of numbers or a string containing one or more numbers.
             For instance, '1:3+5' translates to [1, 2, 3, 5]
         """
-        self._numbers: List[int]
+        self._numbers: list[int]
         if isinstance(numbers, int):
             self._numbers = [numbers]  # just one run number
         elif isinstance(numbers, list):
@@ -38,7 +37,7 @@ class RunNumbers(object):
         else:
             raise ValueError("Constructor requires a list or a string of run numbers as input")
 
-    def _uncompress(self, numbers: str) -> List[int]:
+    def _uncompress(self, numbers: str) -> list[int]:
         """Split a string representation of a set of run numbers into a list.
 
         Example: '1:3+6' becomes [1, 2, 3, 6]
@@ -53,7 +52,7 @@ class RunNumbers(object):
         return run_numbers
 
     @property
-    def numbers(self) -> List[int]:
+    def numbers(self) -> list[int]:
         """List of run numbers as a list of integers."""
         return self._numbers
 
@@ -94,7 +93,7 @@ class RunNumbers(object):
         return runs
 
 
-class FilePath(object):
+class FilePath:
     """Helper class to deal with string representation of one or more absolute file paths.
 
     Example:
@@ -141,7 +140,7 @@ class FilePath(object):
             return False
         return True
 
-    def __init__(self, file_path: Union[str, List[str]], sort: bool = True):
+    def __init__(self, file_path: str | list[str], sort: bool = True):
         if isinstance(file_path, list):
             file_path = self.merge_symbol.join(file_path)
         if not self.unique_dirname(file_path):
@@ -195,7 +194,7 @@ class FilePath(object):
     def split(self):
         return self.dirname, self.basename
 
-    def run_numbers(self, string_representation: Optional[str] = None) -> Union[List[int], str]:
+    def run_numbers(self, string_representation: str | None = None) -> list[int] | str:
         """Return the run number(s) associated to this file path.
 
         This function assumes the basename of each single file path has the pattern "REF_M_XXXX.*"

@@ -6,7 +6,8 @@ import math
 import time
 import traceback
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Callable, Dict, Optional, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import mantid.simpleapi as api
 import numpy as np
@@ -38,7 +39,7 @@ N_EVENTS_CUTOFF = 100
 REFLECTIVITY_THRESHOLD_VALUE = 1e-6
 
 
-def _is_empty_reflectivity_curve(input_workspace: Union[str, Workspace2D]) -> bool:
+def _is_empty_reflectivity_curve(input_workspace: str | Workspace2D) -> bool:
     r"""
     Check that the reflectivity values are not all zero.
 
@@ -55,9 +56,7 @@ def _is_empty_reflectivity_curve(input_workspace: Union[str, Workspace2D]) -> bo
     return np.all(workspace.readY(0) < REFLECTIVITY_THRESHOLD_VALUE)
 
 
-def _shift_empty_reflectivity_curve(
-    input_workspace: Union[str, Workspace2D], shift=REFLECTIVITY_THRESHOLD_VALUE
-) -> None:
+def _shift_empty_reflectivity_curve(input_workspace: str | Workspace2D, shift=REFLECTIVITY_THRESHOLD_VALUE) -> None:
     r"""
     Shift the reflectivity values by a small amount so that it can be plotted.
 
@@ -91,7 +90,7 @@ def getIxyt(nxs_data: Workspace2D) -> tuple:
     return _y_axis, _y_error_axis
 
 
-class CrossSectionData(object):
+class CrossSectionData:
     """Data object to hold loaded reflectivity data."""
 
     # Instrument specific attributes filled out by the instrument object
@@ -320,8 +319,13 @@ class CrossSectionData(object):
                     stats = item.getStatistics()
                     self.logs[motor] = np.float64(stats.mean)
                     self.log_minmax[motor] = (np.float64(stats.minimum), np.float64(stats.maximum))
-            except:
-                logging.error("Error reading DASLogs %s", motor)
+            except (
+                AttributeError,
+                RuntimeError,
+                ValueError,
+                TypeError,
+            ):  # NOTE (Glass): Handle these differently if we want
+                logging.error(f"Error reading DASLogs for {motor}")
 
         self.proton_charge = data["gd_prtn_chrg"].value
         self.total_counts = workspace.getNumberEvents()
@@ -546,7 +550,7 @@ class CrossSectionData(object):
         def _as_ints(a):
             return [int(round(a[0])), int(round(a[1]))]
 
-        output_ws = "r%s_%s" % (self.run_number, str(self.entry_name))
+        output_ws = f"r{self.run_number}_{str(self.entry_name)}"
 
         ws_norm = None
         if apply_norm and direct_beam._event_workspace is not None:
@@ -627,7 +631,7 @@ class CrossSectionData(object):
         # DeleteWorkspace(ws)
         self._reflectivity_workspace = str(ws)
 
-    def offspec(self, direct_beam: Optional["CrossSectionData"] = None):
+    def offspec(self, direct_beam: "CrossSectionData | None" = None):
         """Extract off-specular scattering from 4D dataset (x,y,ToF,I).
 
         Uses a window in y to filter the 4D data,
@@ -647,7 +651,7 @@ class CrossSectionData(object):
         self.off_spec(direct_beam)
         return
 
-    def gisans(self, direct_beam: Optional["CrossSectionData"] = None):
+    def gisans(self, direct_beam: "CrossSectionData | None" = None):
         """Compute GISANS.
 
         Parameters
@@ -668,7 +672,7 @@ class CrossSectionData(object):
         return self.gisans_data
 
 
-class NexusData(object):
+class NexusData:
     """Read a nexus file with multiple cross-section data."""
 
     def __init__(self, file_path: str, configuration: Configuration) -> None:
@@ -686,7 +690,7 @@ class NexusData(object):
         self.file_name = fp.basename
         self.run_number: str = ""  # can be a single number (e.g. '1234') or a composite (e.g '1234:1239+1245')
         self.configuration = configuration
-        self.cross_sections: Dict[str, CrossSectionData] = {}
+        self.cross_sections: dict[str, CrossSectionData] = {}
         self.main_cross_section: str | None = None
         self.slice: int = 0  # slice index for multiple slices per run (default 0)
 
@@ -756,8 +760,8 @@ class NexusData(object):
 
     def calculate_reflectivity(
         self,
-        direct_beam: Optional[CrossSectionData] = None,
-        configuration: Optional[Configuration] = None,
+        direct_beam: CrossSectionData | None = None,
+        configuration: Configuration | None = None,
         ws_suffix: str = "",
     ):
         """
@@ -797,14 +801,17 @@ class NexusData(object):
             direct_beam = CrossSectionData("none", self.configuration, "none")
 
         logging.info(
-            "%s Reduction with DB: %s [config: %s]", self.run_number, direct_beam.run_number, self.configuration.direct_beam
+            "%s Reduction with DB: %s [config: %s]",
+            self.run_number,
+            direct_beam.run_number,
+            self.configuration.direct_beam,
         )
         angle_offset = 0  # Offset from dangle0, in radians
 
         def _as_ints(a):
             return [int(round(a[0])), int(round(a[1])) - 1]
 
-        output_ws = "r%s_%s" % (self.run_number, ws_suffix)
+        output_ws = f"r{self.run_number}_{ws_suffix}"
 
         ws_norm = None
         if apply_norm and direct_beam._event_workspace is not None:
@@ -913,15 +920,12 @@ class NexusData(object):
         for i, xs in enumerate(self.cross_sections):
             try:
                 self.cross_sections[xs].gisans(direct_beam=direct_beam)
-            except:
+            except Exception:
                 has_errors = True
-                detailed_msg += "Could not calculate GISANS reflectivity for %s\n  %s\n\n" % (
-                    xs,
-                    traceback.format_exc(),
-                )
+                detailed_msg += f"Could not calculate GISANS reflectivity for {xs}\n  {traceback.format_exc()}\n\n"
                 logging.error("Could not calculate GISANS reflectivity for %s", xs)
             if progress:
-                progress(i, message="Computed GISANS %s" % xs, out_of=len(self.cross_sections))
+                progress(i, message=f"Computed GISANS {xs}", out_of=len(self.cross_sections))
         if has_errors:
             raise RuntimeError(detailed_msg)
         if progress is not None:
@@ -950,9 +954,8 @@ class NexusData(object):
                 self.cross_sections[xs].offspec(direct_beam=direct_beam)
             except Exception:
                 has_errors = True
-                detailed_msg += "Could not calculate off-specular reflectivity for %s\n  %s\n\n" % (
-                    xs,
-                    traceback.format_exc(),
+                detailed_msg += (
+                    f"Could not calculate off-specular reflectivity for {xs}\n  {traceback.format_exc()}\n\n"
                 )
                 logging.error(detailed_msg)
         if has_errors:
@@ -977,8 +980,7 @@ class NexusData(object):
                     continue
                 # if current name already has _REFLECTED, _DIRECT_BEAM, or _UNDEFINED suffix, remove it before adding the new suffix
                 for t in NexusDataType:
-                    if current_name.endswith(f"_{t.name}"):
-                        current_name = current_name[: -len(f"_{t.name}")]
+                    current_name = current_name.removesuffix(f"_{t.name}")
                 new_name = f"{current_name}_{data_type.name}"
                 # Existing workspaces from prior loads/tests can cause clone collisions.
                 # Replace stale entries so the expected name is always assigned.
@@ -1003,7 +1005,7 @@ class NexusData(object):
         for xs in self.cross_sections:
             self.cross_sections[xs].update_calculated_values()
 
-    def load(self, update_parameters: bool = True, progress: Optional[Callable] = None):
+    def load(self, update_parameters: bool = True, progress: Callable | None = None):
         """Load cross-sections from a nexus file.
 
         Parameters
@@ -1041,7 +1043,7 @@ class NexusData(object):
                 _loaded_with_getDI = True
             if progress is not None:
                 progress_value += int(100.0 / len(xs_list))
-                progress(progress_value, "Loading %s..." % str(xs_id), out_of=100.0)
+                progress(progress_value, f"Loading {str(xs_id)}...", out_of=100.0)
 
             # Get rid of empty workspaces
             logging.info("Loading %s: %s events", str(xs_id), ws.getNumberEvents())
@@ -1052,7 +1054,9 @@ class NexusData(object):
             name = ws.getRun().getProperty("cross_section_id").value
             cross_section = CrossSectionData(name, self.configuration, entry_name=xs_id, workspace=ws)
             self.cross_sections[name] = cross_section
-            self.run_number = cross_section.run_number  # e.g '1234:1238+1239' if more than one run made up this cross section
+            self.run_number = (
+                cross_section.run_number
+            )  # e.g '1234:1238+1239' if more than one run made up this cross section
             if cross_section.total_counts > _max_counts:
                 _max_counts = cross_section.total_counts
                 _max_xs = name
@@ -1100,7 +1104,7 @@ class NexusData(object):
         return self.cross_sections[xs_label]
 
 
-class NexusMetaData(object):
+class NexusMetaData:
     """Class used to hold meta-data read before loading the neutron events."""
 
     mid_q = 0

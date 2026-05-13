@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,7 +70,7 @@ class CompareWidget(QtWidgets.QWidget):
         color_skip = 30
         color_offset = int(idx / 255.0 * color_skip / 2.0)
         color_id = (color_skip * idx + color_offset) % 255
-        color = "#" + "".join([r"%02x" % int(f * 255) for f in self._refl_color_map(color_id)[:-1]])
+        color = "#" + "".join([rf"{int(f * 255):02x}" for f in self._refl_color_map(color_id)[:-1]])
 
         self.changing_table = True
         self.ui.compareList.setRowCount(idx + 1)
@@ -86,7 +85,7 @@ class CompareWidget(QtWidgets.QWidget):
             try:
                 plotlabel = label.split("REF_M_", 1)[1]
                 plotlabel = plotlabel.split("_Specular")[0] + "  " + plotlabel.split("Specular_")[1].split(".")[0]
-            except:
+            except IndexError:
                 plotlabel = label
         self.ui.compareList.setItem(idx, 0, item)
         item = QtWidgets.QTableWidgetItem(color)
@@ -140,8 +139,8 @@ class CompareWidget(QtWidgets.QWidget):
                 self.ui.comparePlot.set_xlabel("Q$_z$ [Å$^{-1}$]")
                 self.ui.comparePlot.set_ylabel("R")
             self.ui.comparePlot.draw()
-        except:
-            logging.error("CompareDialog: %s", sys.exc_info()[1])
+        except (KeyError, IndexError, OSError):
+            logging.exception("Could not draw reflectivity comparison")
 
     def edit_cell(self, row, column):
         """Cell editing call-back. Deal with color picking."""

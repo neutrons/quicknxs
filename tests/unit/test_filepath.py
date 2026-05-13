@@ -8,7 +8,7 @@ def assert_equal_arrays(actual, expected):
     assert all([a == b for a, b in zip(actual, expected)])
 
 
-class TestRunNumber(object):
+class TestRunNumber:
     """Test RunNumbers class."""
 
     def test_init(self):
@@ -32,7 +32,7 @@ class TestRunNumber(object):
         assert RunNumbers([7, 8, 9]).statement == "7, 8, and 9"
 
 
-class TestFilePath(object):
+class TestFilePath:
     """Test FilePath class."""
 
     def test_init(self):

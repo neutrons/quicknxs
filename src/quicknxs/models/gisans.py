@@ -2,7 +2,7 @@
 
 import logging
 from multiprocessing import Pool
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 H_OVER_M_NEUTRON = 3.956034e-7  # h/m_n [m^2/s]
 
 
-class GISANS(object):
+class GISANS:
     """Compute grazing-incident SANS."""
 
     def __init__(self, cross_section_data: "CrossSectionData"):
@@ -120,7 +120,7 @@ class GISANS(object):
         self.QyGrid, self.QzGrid = np.meshgrid(qy, qz)
 
 
-def merge(reduction_list: List["NexusData"], pol_state: str, wl_min: float = 0, wl_max: float = 100):
+def merge(reduction_list: list["NexusData"], pol_state: str, wl_min: float = 0, wl_max: float = 100):
     """Merge the off-specular data from a reduction list.
 
     The scaling factors should have been determined at this point.
@@ -164,7 +164,7 @@ def merge(reduction_list: List["NexusData"], pol_state: str, wl_min: float = 0, 
 
 
 def rebin_extract(
-    reduction_list: List["NexusData"],
+    reduction_list: list["NexusData"],
     pol_state: str,
     wl_min: float,
     wl_max: float,
@@ -218,7 +218,7 @@ def _rebin_proc(data: dict):
 
 
 def rebin_parallel(
-    reduction_list: List["NexusData"],
+    reduction_list: list["NexusData"],
     pol_state: str,
     wl_min: float,
     wl_max: float,

@@ -3,9 +3,7 @@
 import copy
 import logging
 import math
-import sys
 import time
-from typing import Tuple
 
 import mantid.simpleapi as api
 import numpy as np
@@ -19,7 +17,7 @@ NX_PIXELS = 304
 NY_PIXELS = 256
 
 
-class DataInfo(object):
+class DataInfo:
     """Class to hold the relevant information from a run (scattering or direct beam)."""
 
     peak_range_offset = 0
@@ -72,9 +70,9 @@ class DataInfo(object):
         self.theta_d = 0.0
         t_0 = time.time()
         self.determine_data_type(ws)
-        logging.info("INSPECT: %s sec" % (time.time() - t_0))
+        logging.info(f"INSPECT: {time.time() - t_0:.2f} sec")
 
-    def get_tof_range(self, ws) -> Tuple[float, float]:
+    def get_tof_range(self, ws) -> tuple[float, float]:
         """Determine TOF range from the data."""
 
         run_object = ws.getRun()
@@ -198,7 +196,7 @@ class DataInfo(object):
         """Inspect the data and determine peak locations and data type."""
         # Skip empty data entries
         if ws.getNumberEvents() < self.n_events_cutoff:
-            logging.info("No data for %s %s" % (self.run_number, self.cross_section))
+            logging.info(f"No data for {self.run_number} {self.cross_section}")
             return
 
         # Find reflectivity peak and low resolution ranges
@@ -208,14 +206,14 @@ class DataInfo(object):
 
         self.found_peak = copy.copy(peak)
         self.found_low_res = copy.copy(low_res)
-        logging.info("Run %s [%s]: Peak found %s" % (self.run_number, self.cross_section, peak))
-        logging.info("Run %s [%s]: Low-res found %s" % (self.run_number, self.cross_section, str(low_res)))
+        logging.info(f"Run {self.run_number} [{self.cross_section}]: Peak found {peak}")
+        logging.info(f"Run {self.run_number} [{self.cross_section}]: Low-res found {low_res}")
 
         # Process the ROI information
         try:
             self.process_roi(ws)
-        except:
-            logging.info("Could not process ROI\n%s" % sys.exc_info()[1])
+        except (RuntimeError, KeyError, UnboundLocalError) as e:
+            logging.info("Could not process ROI: %s", e, exc_info=True)
 
         # Keep track of whether we actually used the ROI
         self.use_roi_actual = False
@@ -255,7 +253,7 @@ class DataInfo(object):
         run_object = ws.getRun()
         try:
             self.is_direct_beam = run_object.getProperty("data_type").value[0] == 1
-        except:
+        except (RuntimeError, IndexError):
             self.is_direct_beam = False
 
 
@@ -266,7 +264,7 @@ def chi2(data, model):
     return np.sum((data - model) ** 2 / err) / len(data)
 
 
-class Fitter2(object):
+class Fitter2:
     """Class to fit the data and find the peak and beam width."""
 
     DEAD_PIXELS = 10
@@ -402,6 +400,6 @@ class Fitter2(object):
             self.guess_wy = (peak_max - peak_min) / 2.0
             peak_min = max(peak_min, self.DEAD_PIXELS)
             peak_max = min(peak_max, self.n_x - self.DEAD_PIXELS)
-        except:
+        except (RuntimeError, ValueError, IndexError):
             logging.error("Could not fit the beam width")
         return [peak_min, peak_max]

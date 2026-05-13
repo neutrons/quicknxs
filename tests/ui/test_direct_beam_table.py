@@ -69,9 +69,7 @@ def test_table_connections(qtbot, data_server):
 def test_table_peak_position_change_triggers_plot_update(mocker, main_window_with_data_factory):
     """Test that changing the peak position in the direct beam table triggers a plot update."""
     # Mock plotting
-    mock_plot_refl = mocker.patch(
-        "quicknxs.views.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True
-    )
+    mock_plot_refl = mocker.patch("quicknxs.views.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True)
 
     main_window = main_window_with_data_factory()
     table: QtWidgets.QTableWidget = main_window.ui.directBeamTable

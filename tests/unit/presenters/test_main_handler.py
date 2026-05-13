@@ -20,13 +20,13 @@ from tests.ui import ui_utilities
 this_module_path = sys.modules[__name__].__file__
 
 
-class DataPresenterMock(object):
+class DataPresenterMock:
     """Mock for DataPresenter to be used in MainWindowMock."""
 
     current_directory = os.path.dirname(this_module_path)
 
 
-class MainWindowMock(object):
+class MainWindowMock:
     """Mock for MainWindow to be used in MainPresenter tests."""
 
     ui = None
@@ -34,7 +34,7 @@ class MainWindowMock(object):
     data_presenter = DataPresenterMock()
 
 
-class TestMainPresenter(object):
+class TestMainPresenter:
     """Test MainPresenter class."""
 
     app = QApplication(sys.argv)

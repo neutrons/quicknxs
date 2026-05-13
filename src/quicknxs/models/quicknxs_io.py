@@ -8,7 +8,7 @@ import os
 import time
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
 
 import mantid
 import mr_reduction
@@ -166,10 +166,10 @@ def _get_all_config_attributes(conf: Configuration):
 
 def _build_config_row_dict(
     config: Configuration,
-    item: Dict[str, Any],
+    item: dict[str, Any],
     include_gisans: bool = False,
     include_offspec: bool = False,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Build a dictionary of string-formatted values for config output."""
 
     all_config = _get_all_config_attributes(config)
@@ -184,7 +184,7 @@ def _build_config_row_dict(
     return config_value_dict
 
 
-def _build_table(config_values: List[Dict[str, str]], columns: List[str], section_header: str, ljust: str = ""):
+def _build_table(config_values: list[dict[str, str]], columns: list[str], section_header: str, ljust: str = ""):
     """Build a formatted table from configuration values."""
     df = pd.DataFrame(config_values, columns=columns)
     if df.empty:
@@ -200,9 +200,9 @@ def _build_table(config_values: List[Dict[str, str]], columns: List[str], sectio
 
 
 def write_reflectivity_header(
-    peak_reduction_lists: Dict[int, List[NexusData]],
+    peak_reduction_lists: dict[int, list[NexusData]],
     active_list_index: int,
-    direct_beam_list: List[NexusData],
+    direct_beam_list: list[NexusData],
     output_path: str,
     pol_state: str,
     include_gisans: bool = False,
@@ -255,14 +255,14 @@ def write_reflectivity_header(
     ]
 
     fd = open(output_path, "w")
-    fd.write("# Datafile created by QuickNXS %s\n" % __version__)
-    fd.write("# Datafile created using mr_reduction %s\n" % mr_reduction.__version__)
-    fd.write("# Datafile created using Mantid %s\n" % mantid.__version__)
-    fd.write("# Date: %s\n" % time.strftime("%Y-%m-%d %H:%M:%S"))
+    fd.write(f"# Datafile created by QuickNXS {__version__}\n")
+    fd.write(f"# Datafile created using mr_reduction {mr_reduction.__version__}\n")
+    fd.write(f"# Datafile created using Mantid {mantid.__version__}\n")
+    fd.write(f"# Date: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
     fd.write("# Type: Specular\n")
     run_list = [str(item.run_number) for item in reduction_list]
-    fd.write("# Input file indices: %s\n" % ",".join(run_list))
-    fd.write("# Extracted states: %s\n" % pol_state)
+    fd.write(f"# Input file indices: {','.join(run_list)}\n")
+    fd.write(f"# Extracted states: {pol_state}\n")
     fd.write("#\n")
 
     g_conf = Configuration()
@@ -405,9 +405,9 @@ def write_reflectivity_header(
 
 def _get_cross_section_config_values(
     cross_section_data: CrossSectionData,
-    normalization_run_to_db_id: Dict[str, int],
+    normalization_run_to_db_id: dict[str, int],
     nexus_data: NexusData = None,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Get dict of cross-section data configuration to write to QuickNXS file.
 
     Parameters
@@ -457,9 +457,7 @@ def _get_cross_section_config_values(
     return item
 
 
-def write_reflectivity_data(
-    output_path: str, data: Union[list, np.ndarray], col_names: List[str], as_5col: bool = True
-):
+def write_reflectivity_data(output_path: str, data: list | np.ndarray, col_names: list[str], as_5col: bool = True):
     """Write out reflectivity header in a format readable by QuickNXS.
 
     If `as_5col` is False, only the first four columns passed will be written.
@@ -474,10 +472,10 @@ def write_reflectivity_data(
         # write header
         fd.write("# [Data]\n")
         if four_cols:
-            toks = ["%12s" % item for item in col_names[:4]]
+            toks = [f"{item:>12}" for item in col_names[:4]]
         else:
-            toks = ["%12s" % item for item in col_names]
-        fd.write("# %s\n" % "\t".join(toks))
+            toks = [f"{item:>12}" for item in col_names]
+        fd.write("# " + "\t".join(toks) + "\n")
 
         # write numerical columns
         if isinstance(data, list):
@@ -517,7 +515,7 @@ def _assign_config_value(conf: Configuration, attr: str, value_str: str):
         elif isinstance(current_value, int):
             try:
                 value = int(value_str)
-            except:
+            except ValueError:
                 value = float(value_str)
         elif value_str == "None":
             value = None
@@ -542,7 +540,7 @@ def read_reduced_file(file_path: str, configuration=None):
     additional_peaks = []
     config_properties = [name for name, _ in inspect.getmembers(Configuration, lambda o: isinstance(o, property))]
 
-    def _get_tok(col_name: str, cols: List[str], toks: List) -> Union[int, None]:
+    def _get_tok(col_name: str, cols: list[str], toks: list) -> int | None:
         """Get the item in a list of index matching the column name."""
         try:
             idx = cols.index(col_name)
@@ -551,7 +549,7 @@ def read_reduced_file(file_path: str, configuration=None):
             return None
 
     # reading is mocked. The file_path is the prefix of the path. File name is obtained from the mocked data
-    with open(file_path, "r") as file_content:
+    with open(file_path) as file_content:
         # Section identifier
         #   0: None
         #   1: direct beams
@@ -564,7 +562,7 @@ def read_reduced_file(file_path: str, configuration=None):
         # Detect if file uses 0-based or 1-based DB_ID indexing
         # Default to None, will be set when we see the first DB_ID
         db_id_is_zero_based = None
-        for line in file_content.readlines():
+        for line in file_content:
             if _file_start and not line.startswith("# Datafile created by QuickNXS"):
                 raise RuntimeError("The selected file does not conform to the QuickNXS format")
             _file_start = False

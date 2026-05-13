@@ -1,5 +1,4 @@
 from functools import reduce
-from typing import Optional
 
 import plotly.graph_objs as go
 import plotly.offline as py
@@ -9,7 +8,7 @@ py.init_notebook_mode(connected=True)
 
 def plot1d(
     data_list: list,
-    data_names: Optional[list] = None,
+    data_names: list | None = None,
     x_title: str = "",
     y_title: str = "",
     x_log: bool = False,
@@ -201,10 +200,10 @@ def read_settings(file_path):
 
     reduction_settings = {"direct_beam_runs": [], "data_runs": [], "process_type": "Specular"}
 
-    fd = open(file_path, "r")
+    fd = open(file_path)
     current_block = DATA_BLOCK
 
-    for line in fd.readlines():
+    for line in fd:
         if "# Type:" in line:
             toks = line.strip().split()
             reduction_settings["process_type"] = toks[2]
@@ -278,7 +277,7 @@ def find_peaks(workspace, x_min=50, x_max=250):
 def process_run(run_number, settings, direct_beam=True):
     """Process a run."""
     ws = LoadEventNexus(
-        Filename="REF_M%s" % run_number, NXentryName="entry-Off_Off", OutputWorkspace="%s_%s" % ("REF_M", run_number)
+        Filename=f"REF_M{run_number}", NXentryName="entry-Off_Off", OutputWorkspace="{}_{}".format("REF_M", run_number)
     )
     dirpix = ws.getRun()["DIRPIX"].value[0]
     x_max = 250 if direct_beam else dirpix - 30
@@ -288,5 +287,5 @@ def process_run(run_number, settings, direct_beam=True):
     low_max = settings["y_pos"] + settings["y_width"] / 2.0
     low_min = settings["y_pos"] - settings["y_width"] / 2.0
 
-    print("r%s - PEAK: [%s %s]   Input: [%s %s]" % (run_number, x_peak[0], x_peak[1], r_min, r_max))
-    print("r%s - LOW:  [%s %s]   Input: [%s %s]" % (run_number, y_peak[0], y_peak[1], low_min, low_max))
+    print(f"r{run_number} - PEAK: [{x_peak[0]} {x_peak[1]}]   Input: [{r_min} {r_max}]")
+    print(f"r{run_number} - LOW:  [{y_peak[0]} {y_peak[1]}]   Input: [{low_min} {low_max}]")

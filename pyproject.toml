@@ -226,7 +226,8 @@ select = [
     "F",
     "I",
     "N",
-    "UP032", # Use f-strings instead of format call
+    "UP",
+    "FURB",
     "W",
 ]
 ignore = [

@@ -16,7 +16,7 @@ from quicknxs.models.quicknxs_io import (
 )
 
 
-class TestDataLoader(object):
+class TestDataLoader:
     """Test the data loading functionality from quicknxs_io module."""
 
     @pytest.fixture(autouse=True)
@@ -180,7 +180,7 @@ def mock_nexus_data(tmp_path, temp_workspace_name):
     return mock_nexus_data_function
 
 
-class TestDataWriter(object):
+class TestDataWriter:
     """Test the data writing functionality from quicknxs_io module."""
 
     def test_save_multiple_peaks(self, tmp_path, temp_workspace_name):

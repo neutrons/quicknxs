@@ -4,22 +4,22 @@ Class used to report on progress.
 It allows for sub-tasks and computes a meaningful progress status accordingly.
 """
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from qtpy.QtWidgets import QProgressBar
 
 from quicknxs.views.status_bar import StatusBar
 
 
-class ProgressReporter(object):
+class ProgressReporter:
     """Progress reporter class that allows for sub-tasks."""
 
     def __init__(
         self,
         max_value: int = 100,
-        call_back: Optional[Callable] = None,
-        status_bar: Optional[StatusBar] = None,
-        progress_bar: Optional[QProgressBar] = None,
+        call_back: Callable | None = None,
+        status_bar: StatusBar | None = None,
+        progress_bar: QProgressBar | None = None,
     ):
         """Initialize the progress reporter."""
         self.max_value = max_value
@@ -30,7 +30,7 @@ class ProgressReporter(object):
         self.status_bar = status_bar
         self.progress_bar = progress_bar
 
-    def __call__(self, value: int, message: str = "", out_of: Optional[int] = None):
+    def __call__(self, value: int, message: str = "", out_of: int | None = None):
         """Shortcut to set_value() so that the object can be used.
 
         as a function to be compatible with QProgressDialog.setValue().
@@ -46,7 +46,7 @@ class ProgressReporter(object):
         """
         return self.set_value(value, message, out_of)
 
-    def set_value(self, value: int, message: str = "", out_of: Optional[int] = None):
+    def set_value(self, value: int, message: str = "", out_of: int | None = None):
         """Set the value of a progress indicator."""
         if out_of is not None:
             value = int(value / out_of * self.max_value)

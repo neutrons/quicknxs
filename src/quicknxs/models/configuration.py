@@ -1,7 +1,6 @@
 """Application configuration, including reduction options."""
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 from quicknxs.enums import OffSpecXAxis, QBinningType
 from quicknxs.models.instrument import Instrument
@@ -138,7 +137,7 @@ class Configuration:
         self.instrument = Instrument()
         # Number of TOF bins
         self.tof_bins = 400
-        self.tof_range: Optional[List[float]] = None
+        self.tof_range: list[float] | None = None
         # Bin type:
         #    0 = Constant bin width
         #    1 = Constant Q bin width
@@ -152,8 +151,8 @@ class Configuration:
         ### Reduction parameters
 
         # Use region of interest specified in metadata
-        self.metadata_roi_peak: List[int] = []
-        self.metadata_roi_bck: List[int] = []
+        self.metadata_roi_peak: list[int] = []
+        self.metadata_roi_bck: list[int] = []
         self.set_direct_pixel = False
         self.direct_pixel_overwrite = 0.0
         self.set_direct_angle_offset = False
@@ -260,7 +259,7 @@ class Configuration:
         self.bck_width = value[1] - value[0]
 
 
-def get_direct_beam_low_res_roi(data_conf: Configuration, direct_beam_conf: Configuration) -> List[int]:
+def get_direct_beam_low_res_roi(data_conf: Configuration, direct_beam_conf: Configuration) -> list[int]:
     """Get the direct beam low res ROI.
 
     Either from the data run or from the direct beam depending on

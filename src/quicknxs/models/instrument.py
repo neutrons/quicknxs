@@ -58,7 +58,7 @@ def get_cross_section_label(ws, entry_name):
     if ana_label == "" and pol_label == "":
         return entry_name
     else:
-        return "%s%s" % (pol_label, ana_label)
+        return f"{pol_label}{ana_label}"
 
 
 def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
@@ -86,7 +86,7 @@ def remove_low_event_workspaces(ws_list, nbr_events_cutoff):
     return pruned_list
 
 
-class Instrument(object):
+class Instrument:
     """Instrument class. Holds the data handling that is unique to a specific instrument."""
 
     n_x_pixel: int = 304
@@ -342,7 +342,7 @@ class Instrument(object):
         """Determine whether this data is a direct beam."""
         try:
             return ws.getRun().getProperty("data_type").value[0] == 1
-        except:
+        except (RuntimeError, IndexError):
             return False
 
     def direct_beam_match(self, scattering, direct_beam, skip_slits=False):
@@ -413,7 +413,7 @@ class Instrument(object):
         data_object.cross_section_label = get_cross_section_label(workspace, data_object.entry_name)
         try:
             data_object.is_direct_beam = data["data_type"].value[0] == 1
-        except:
+        except (RuntimeError, IndexError):
             data_object.is_direct_beam = False
 
     def integrate_detector(self, ws: EventWorkspace, specular: bool = True):

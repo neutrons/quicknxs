@@ -3,7 +3,6 @@
 import logging
 import math
 import time
-from typing import List, Optional
 
 import h5py
 import mantid
@@ -23,8 +22,8 @@ def generate_short_script(reduction_list):
         return "# No data in reduction list\n"
 
     xs = list(reduction_list[0].cross_sections.keys())[0]
-    script = "# Mantid version %s\n" % mantid.__version__
-    script += "# Date: %s\n\n" % time.strftime("%Y-%m-%d %H:%M:%S")
+    script = f"# Mantid version {mantid.__version__}\n"
+    script += f"# Date: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
     script += "from mantid.simpleapi import *\n"
 
     logging.info("Cross section for script %s", xs)
@@ -52,7 +51,7 @@ def generate_short_script(reduction_list):
         # short-hand it
         ws_iterable = [api.mtd[ws_name]] if contain_single_crosssection else api.mtd[ws_name]
 
-        script += "# Run:%s\n" % reduction_list[i].cross_sections[xs].run_number
+        script += f"# Run:{reduction_list[i].cross_sections[xs].run_number}\n"
         script_text = api.GeneratePythonScript(ws_iterable[0])
         script += script_text.replace(", ", ",\n                                ")
         script += "\n\n"
@@ -65,16 +64,16 @@ def generate_short_script(reduction_list):
         logging.info("%s %s %s %s", q0, qf, p_0, p_f)
 
         for item in ws_iterable:
-            script += "CropWorkspace(InputWorkspace='%s', XMin=%s, XMax=%s, " % (str(item), q0, qf)
-            script += "OutputWorkspace='%s')\n" % str(item)
-            script += "Scale(InputWorkspace='%s', Operation='Multiply', " % str(item)
-            script += "Factor=%s, " % reduction_list[i].cross_sections[xs].configuration.scaling_factor
-            script += "OutputWorkspace='%s')\n\n" % str(item)
+            script += f"CropWorkspace(InputWorkspace='{str(item)}', XMin={q0}, XMax={qf}, "
+            script += f"OutputWorkspace='{str(item)}')\n"
+            script += f"Scale(InputWorkspace='{str(item)}', Operation='Multiply', "
+            script += f"Factor={reduction_list[i].cross_sections[xs].configuration.scaling_factor}, "
+            script += f"OutputWorkspace='{str(item)}')\n\n"
 
     return script
 
 
-def generate_script(reduction_list: List[NexusData], pol_state: str):
+def generate_script(reduction_list: list[NexusData], pol_state: str):
     """Generate a Mantid script for the reflectivity reduction.
 
     Parameters
@@ -91,9 +90,9 @@ def generate_script(reduction_list: List[NexusData], pol_state: str):
     if not ws_list:
         return ""
 
-    script = "# Cross-section: %s\n" % pol_state
+    script = f"# Cross-section: {pol_state}\n"
     for ws in ws_list:
-        script += "# Run:%s\n" % ws.getRunNumber()
+        script += f"# Run:{ws.getRunNumber()}\n"
         script_text = api.GeneratePythonScript(ws)
         script += script_text.replace(", ", ",\n                                ")
         script += "\n"
@@ -286,12 +285,12 @@ def _get_polynomial_fit_stitching_scaling_factor(
 
 
 def stitch_reflectivity(
-    reduction_list: List[NexusData],
-    xs: Optional[str] = None,
+    reduction_list: list[NexusData],
+    xs: str | None = None,
     normalize_to_unity: bool = True,
     q_cutoff: float = 0.01,
     global_fit: bool = False,
-    poly_degree: Optional[int] = None,
+    poly_degree: int | None = None,
     poly_points: int = 3,
 ):
     """Stitch and normalize data sets.
@@ -441,7 +440,7 @@ def merge_reflectivity(reduction_list, xs, q_min=0.001, q_step=-0.01):
             scaling_factors.append(reduction_list[i].cross_sections[xs].configuration.scaling_factor)
             api.ConvertToHistogram(InputWorkspace=ws_name, OutputWorkspace=ws_name + "_histo")
         ws_list.append(ws_name + "_histo")
-        params = "%s, %s, %s" % (q_min, q_step, q_max)
+        params = f"{q_min}, {q_step}, {q_max}"
 
     if len(ws_list) > 1:
         merged_ws, _ = api.Stitch1DMany(
@@ -466,7 +465,7 @@ def merge_reflectivity(reduction_list, xs, q_min=0.001, q_step=-0.01):
     return merged_ws
 
 
-def get_scaled_workspaces(reduction_list: List[NexusData], xs: str):
+def get_scaled_workspaces(reduction_list: list[NexusData], xs: str):
     """Return a list of scaled workspaces."""
     ws_list = []
 
@@ -494,7 +493,7 @@ def get_scaled_workspaces(reduction_list: List[NexusData], xs: str):
     return ws_list
 
 
-def extract_metadata(file_path: Optional[str] = None, cross_section_data=None):
+def extract_metadata(file_path: str | None = None, cross_section_data=None):
     """Get mid Q-value from metadata."""
     metadata = NexusMetaData()
 
@@ -518,9 +517,9 @@ def extract_metadata(file_path: Optional[str] = None, cross_section_data=None):
         ws = api.LoadEventNexus(str(file_path), MetaDataOnly=True, NXentryName=str(keys[0]))
         metadata.mid_q = Instrument.mid_q_value(ws)
         metadata.is_direct_beam = Instrument.check_direct_beam(ws)
-    except:
+    except (RuntimeError, IndexError):
         logging.error("Exception extracting metadata")
-        raise RuntimeError("Could not load file %s [%s]" % (file_path, keys[0]))
+        raise RuntimeError(f"Could not load file {file_path} [{keys[0]}]")
 
     return metadata
 

@@ -15,7 +15,7 @@ def setup_method():
     Instrument.USE_SLOW_FLIPPER_LOG = False
 
 
-class TestDataPresenterTest(object):
+class TestDataPresenterTest:
     """Test DataPresenter class."""
 
     @pytest.mark.datarepo
@@ -55,14 +55,14 @@ class TestDataPresenterTest(object):
         try:
             file_paths = data_server.get_file_paths("39743")
             if len(file_paths) < 1:
-                raise IOError("Files missing.")
+                raise OSError("Files missing.")
             file_paths.append(data_server.get_file_paths("39744")[0])
             file_paths.append(data_server.get_file_paths("39745")[0])
             config = Configuration()
             for file_path in file_paths:
                 data_presenter.load(file_path, config)
                 data_presenter.add_active_to_reduction()
-        except IOError:
+        except OSError:
             pytest.skip("Cannot find required datafiles, probably not being run on the cluster.")
 
         assert len(data_presenter.reduction_list) == 3

@@ -1,7 +1,7 @@
 from qtpy.QtWidgets import QStatusBar
 
 
-class StatusBar(object):
+class StatusBar:
     """Status bar handler class."""
 
     def __init__(self, status_bar: QStatusBar):

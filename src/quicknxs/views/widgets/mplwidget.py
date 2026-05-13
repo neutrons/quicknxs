@@ -313,8 +313,9 @@ def _save_dat_pcolormesh(fname, extracted):
                 x_grid = surf["x_grid"]
                 y_grid = surf["y_grid"]
                 for iy in range(s_ny):
-                    for ix in range(s_nx):
-                        f.write(f"{x_grid[iy, ix]:.6g}\t{y_grid[iy, ix]:.6g}\t{z_data[iy, ix]:.6g}\n")
+                    f.writelines(
+                        f"{x_grid[iy, ix]:.6g}\t{y_grid[iy, ix]:.6g}\t{z_data[iy, ix]:.6g}\n" for ix in range(s_nx)
+                    )
                     if iy < s_ny - 1:
                         f.write("\n")
             else:
@@ -470,8 +471,8 @@ class NavigationToolbar(NavigationToolbar2QT):
         start = "image." + default_filetype
         filters = []
         for name, exts in sorted_filetypes:
-            exts_list = " ".join(["*.%s" % ext for ext in exts])
-            filter_ = "%s (%s)" % (name, exts_list)
+            exts_list = " ".join([f"*.{ext}" for ext in exts])
+            filter_ = f"{name} ({exts_list})"
             if default_filetype in exts:
                 filters.insert(0, filter_)
             else:
@@ -481,7 +482,7 @@ class NavigationToolbar(NavigationToolbar2QT):
         fname = QtWidgets.QFileDialog.getSaveFileName(self, "Choose a filename to save to", start, filters)
         if fname:
             try:
-                self.canvas.print_figure((fname[0]))
+                self.canvas.print_figure(fname[0])
             except Exception as e:
                 QtWidgets.QMessageBox.critical(
                     self, "Error saving file", str(e), QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.NoButton

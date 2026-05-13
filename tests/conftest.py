@@ -71,7 +71,7 @@ Instrument.file_search_template = str(Path(__file__).parent / "data" / "quicknxs
 def data_server(DATA_DIR):
     r"""Object containing info and functionality for data files."""
 
-    class _DataServer(object):
+    class _DataServer:
         _directory = str(DATA_DIR)
         _h5_path = "quicknxs-data"
 
@@ -103,7 +103,7 @@ def data_server(DATA_DIR):
             for ext in [".nxs.h5", "", "_event.nxs"]:
                 if os.path.isfile(file_path + ext):
                     return file_path + ext
-            raise IOError(f"File {basename} not found in data directory {self._directory}")
+            raise OSError(f"File {basename} not found in data directory {self._directory}")
 
         def get_file_paths(self, number):
             instrument = Instrument()
@@ -114,7 +114,7 @@ def data_server(DATA_DIR):
 
             for run_number in run_numbers.numbers:
                 search_string = instrument.file_search_template % run_number
-                matches = glob.glob(search_string + ".nxs.h5")  # type: Optional[List[str]]
+                matches = glob.glob(search_string + ".nxs.h5")  # type: list[str] | None
                 if not matches:  # Look for old-style nexus file name
                     search_string = instrument.legacy_search_template % run_number
                     matches = glob.glob(search_string + "_event.nxs")
