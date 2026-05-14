@@ -46,7 +46,7 @@ class TestCrossSectionData:
         data_table, header = xs.get_tof_counts_table()
         assert len(data_table) == 3
         assert data_table[0][0] == pytest.approx(0.15, rel_tol)  # tof
-        assert data_table[0][1] == pytest.approx(2.0047469e-4, rel_tol)  # wavelength
+        assert data_table[0][1] == pytest.approx(2.0046381e-4, rel_tol)  # wavelength
         assert data_table[0][2] == pytest.approx(13.0 / xs.proton_charge, rel_tol)  # counts normalized
         assert data_table[0][3] == pytest.approx(2.0 / xs.proton_charge, rel_tol)  # counts normalized error
         assert data_table[0][4] == pytest.approx(13.0, rel_tol)  # counts

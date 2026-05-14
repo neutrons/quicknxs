@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 import mantid.simpleapi as api
 import numpy as np
 from mantid.dataobjects import Workspace2D
-from scipy.constants import h, m_n
 
 from quicknxs.enums import NexusDataType, QBinningType
 from quicknxs.exceptions import CrossSectionError
@@ -37,6 +36,9 @@ N_EVENTS_CUTOFF = 100
 
 # If there's an empty reflectivity curve, add a small value to it so that it can be plotted.
 REFLECTIVITY_THRESHOLD_VALUE = 1e-6
+
+h = 6.626e-34  # m^2 kg s^-1
+m_n = 1.675e-27  # kg
 
 
 def _is_empty_reflectivity_curve(input_workspace: str | Workspace2D) -> bool:

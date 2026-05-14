@@ -9,12 +9,14 @@ import mantid.simpleapi as api
 import numpy as np
 import scipy.optimize as opt
 from scipy import ndimage
-from scipy.constants import h, m_n
 
 from quicknxs.models.peak_finding import find_peaks, peak_prominences, peak_widths
 
 NX_PIXELS = 304
 NY_PIXELS = 256
+
+h = 6.626e-34  # m^2 kg s^-1
+m_n = 1.675e-27  # kg
 
 
 class DataInfo:

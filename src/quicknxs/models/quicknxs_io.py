@@ -39,7 +39,9 @@ CONFIG_LABELS = {
     "tof_bins": "bin_width",
     "total_reflectivity_q_cutoff": "critical_q_cutoff",
     "direct_pixel_overwrite": "dpix",
-    "use_metadata_bck_roi": "force_bck_roi",  # Legacy name
+    # Legacy names for backwards compatibility
+    "use_metadata_bck_roi": "force_bck_roi",
+    "run_number": "number",
 }
 
 LABEL_TO_CONFIG = {v: k for k, v in CONFIG_LABELS.items()}
@@ -53,6 +55,7 @@ LEGACY_CONFIG_MAP = {
     "binning_q_step_run": "q_binning_step_run",
     "number": "run_number",
 }
+LEGACY_LABEL_TO_CONFIG = {v: k for k, v in LEGACY_CONFIG_MAP.items()}
 
 
 def _find_h5_data(filename: str):
@@ -267,6 +270,8 @@ def write_reflectivity_header(
 
     g_conf = Configuration()
     conf_options = _get_all_config_attributes(g_conf)
+    # Map conf_options["global"] keys to their labels for output
+    conf_options["global"] = {LEGACY_LABEL_TO_CONFIG.get(k, k): v for k, v in conf_options["global"].items()}
     conf_instance_toks = list(conf_options["instance"].keys())
 
     if include_gisans:
