@@ -92,11 +92,11 @@ def data_server(DATA_DIR):
 
         def path_to(self, basename):
             r"""Absolute path to a data file. If it doesn't exist, try to find it in the remote repository."""
-            # looking in test/data
+            # looking in tests/data
             file_path = os.path.join(self._directory, basename)
             if os.path.isfile(file_path):
                 return file_path
-            # looking in test/data/quicknxs-data
+            # looking in tests/data/quicknxs-data
             file_path = os.path.join(self.directory, self.h5_path)
             file_path = os.path.join(file_path, basename)
 
