@@ -13,6 +13,7 @@ class DeadTimeSettingsView(QDialog):
     """Dialog to choose the dead time correction options."""
 
     reload_files_signal = Signal()
+    """Signal emitted when files should be reloaded."""
 
     def __init__(self, parent: QWidget):
         super().__init__(parent)

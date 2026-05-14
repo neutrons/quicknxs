@@ -9,6 +9,7 @@ class DeadTimeEntryPoint(QGroupBox):
     """Group box for dead-time correction settings."""
 
     reload_files_signal = Signal()
+    """Signal emitted when files should be reloaded."""
 
     def __init__(self, title="Dead Time Correction"):
         super().__init__(title)

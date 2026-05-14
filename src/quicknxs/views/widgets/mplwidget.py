@@ -714,6 +714,7 @@ class MplCanvas(FigureCanvas):
         return QtCore.QSize(40, 40)
 
     def get_default_filetype(self):
+        """Return the default file type for saving figures (``'png'``)."""
         return "png"
 
 

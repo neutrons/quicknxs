@@ -13,5 +13,7 @@ Subpackages
    :maxdepth: 4
 
    quicknxs.config
-   quicknxs.interfaces
+   quicknxs.models
+   quicknxs.presenters
+   quicknxs.utils
    quicknxs.views

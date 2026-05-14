@@ -18,6 +18,14 @@ quicknxs.config.gui module
    :undoc-members:
    :show-inheritance:
 
+quicknxs.config.logging module
+----------------------------------
+
+.. automodule:: quicknxs.config.logging
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 quicknxs.config.plotting module
 ---------------------------------------
 
