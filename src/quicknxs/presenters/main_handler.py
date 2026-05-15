@@ -907,9 +907,7 @@ class MainHandler:
                 button_group.removeButton(old_btn)
 
         # radio button for active data (layout inside a widget to center it)
-        radio_widget = ActiveDataRadioButton(
-            self, is_active=(data == self._data_handler.active_cross_section), idx=idx
-        )
+        radio_widget = ActiveDataRadioButton(self, is_active=(data == self._data_handler.active_cross_section), idx=idx)
         button_group.addButton(radio_widget.radio_button)
         table_widget.setCellWidget(idx, ReductionTableColumn.ACTIVE, radio_widget)
 

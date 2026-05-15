@@ -31,9 +31,7 @@ def _assert_configuration_value(main_window, param_name, gold_value):
 
 def _assert_configuration_float_value(main_window, param_name, gold_value):
     """Check float parameter value through the data hierarchy."""
-    assert getattr(main_window.data_handler.active_cross_section.configuration, param_name) == pytest.approx(
-        gold_value
-    )
+    assert getattr(main_window.data_handler.active_cross_section.configuration, param_name) == pytest.approx(gold_value)
     for nexus_data in main_window.data_handler.reduction_list:
         assert getattr(nexus_data.configuration, param_name) == pytest.approx(gold_value)
         for xs_data in nexus_data.cross_sections.values():
