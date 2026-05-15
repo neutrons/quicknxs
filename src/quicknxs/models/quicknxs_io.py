@@ -21,7 +21,7 @@ from quicknxs.models.data_set import CrossSectionData, NexusData
 
 # Mapping of Configuration attributes to "common name" labels for the reduced file output.
 # Used for the column names in the direct beam and data run sections of the reduced file.
-CONFIG_LABELS = {
+CONFIG_TO_DATA_TABLE_MAP = {
     "scaling_factor": "scale",
     "scaling_error": "scale_err",
     "cut_first_n_points": "P0",
@@ -44,18 +44,15 @@ CONFIG_LABELS = {
     "run_number": "number",
 }
 
-LABEL_TO_CONFIG = {v: k for k, v in CONFIG_LABELS.items()}
+DATA_TABLE_TO_CONFIG = {v: k for k, v in CONFIG_TO_DATA_TABLE_MAP.items()}
 
 # Compatibility mapping for user-facing to new config attribute names.
 # This is used when reading reduced files to map labels to the new Configuration attributes.
-LEGACY_CONFIG_MAP = {
+CONFIG_OPTIONS_MAP = {
     "binning_type_global": "q_binning_type_global",
     "binning_q_step_global": "q_binning_step_global",
-    "binning_type_run": "q_binning_type_run",
-    "binning_q_step_run": "q_binning_step_run",
-    "number": "run_number",
 }
-LEGACY_LABEL_TO_CONFIG = {v: k for k, v in LEGACY_CONFIG_MAP.items()}
+OPTIONS_TO_CONFIG = {v: k for k, v in CONFIG_OPTIONS_MAP.items()}
 
 
 def _find_h5_data(filename: str):
@@ -192,7 +189,7 @@ def _build_table(config_values: list[dict[str, str]], columns: list[str], sectio
     df = pd.DataFrame(config_values, columns=columns)
     if df.empty:
         return ""
-    df.rename(columns=CONFIG_LABELS, inplace=True)
+    df.rename(columns=CONFIG_TO_DATA_TABLE_MAP, inplace=True)
     if ljust:
         max_len = df[ljust].astype(str).map(len).max()
         df_str = df.to_string(index=False, justify="left", formatters={ljust: lambda x: str(x).ljust(max_len)})
@@ -271,7 +268,7 @@ def write_reflectivity_header(
     g_conf = Configuration()
     conf_options = _get_all_config_attributes(g_conf)
     # Map conf_options["global"] keys to their labels for output
-    conf_options["global"] = {LEGACY_LABEL_TO_CONFIG.get(k, k): v for k, v in conf_options["global"].items()}
+    conf_options["global"] = {OPTIONS_TO_CONFIG.get(k, k): v for k, v in conf_options["global"].items()}
     conf_instance_toks = list(conf_options["instance"].keys())
 
     if include_gisans:
@@ -610,7 +607,7 @@ def read_reduced_file(file_path: str, configuration=None):
                     else:
                         conf = Configuration()
                     for label in cols:
-                        attr = LABEL_TO_CONFIG.get(label, label)
+                        attr = DATA_TABLE_TO_CONFIG.get(label, label)
                         value_str = _get_tok(label, cols, toks)
                         if value_str is not None and attr not in config_properties:
                             _assign_config_value(conf, attr, value_str)
@@ -658,7 +655,7 @@ def read_reduced_file(file_path: str, configuration=None):
                         conf = copy.deepcopy(Configuration())
 
                     for label in cols:
-                        attr = LABEL_TO_CONFIG.get(label, label)
+                        attr = DATA_TABLE_TO_CONFIG.get(label, label)
                         value_str = _get_tok(label, cols, toks)
                         if value_str is not None and attr not in config_properties:
                             _assign_config_value(conf, attr, value_str)
@@ -709,8 +706,8 @@ def read_reduced_file(file_path: str, configuration=None):
                     label, value = line[2:].strip().split(" ", 1)
                 except ValueError:
                     logging.error("Unable to parse line '%s' in run file %s", line, run_file)
-                attr = LABEL_TO_CONFIG.get(label, label)
-                attr = LEGACY_CONFIG_MAP.get(attr, attr)  # Map legacy attribute names to new ones
+                attr = DATA_TABLE_TO_CONFIG.get(label, label)
+                attr = CONFIG_OPTIONS_MAP.get(attr, attr)  # Map legacy attribute names to new ones
                 _assign_config_value(Configuration, attr, value)
 
     return direct_beam_runs, data_runs, additional_peaks, has_scaling_error

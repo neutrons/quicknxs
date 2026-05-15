@@ -1,13 +1,13 @@
 import pytest
 
 from quicknxs.models.configuration import Configuration
-from quicknxs.presenters.data_presenter import DataPresenter
+from quicknxs.presenters.data_handler import DataHandler
 
 
 @pytest.mark.datarepo
 def test_off_specular(data_server):
     """Test of the OffSpecular calculation."""
-    manager = DataPresenter(data_server.directory)
+    manager = DataHandler(data_server.directory)
     manager.load(data_server.path_to("REF_M_42112"), Configuration())
     manager.add_active_to_reduction()
     manager.load(data_server.path_to("REF_M_42100"), Configuration())

@@ -14,10 +14,10 @@ def mock_main_window(qtbot):
     main_window = QtWidgets.QMainWindow()
     qtbot.addWidget(main_window)
 
-    # Mock data_presenter with minimal required attributes
-    main_window.data_presenter = Mock()
-    main_window.data_presenter.reduction_states = []  # Empty list for UI-only tests
-    main_window.data_presenter.reduction_list = []  # Empty list for UI-only tests
+    # Mock data_handler with minimal required attributes
+    main_window.data_handler = Mock()
+    main_window.data_handler.reduction_states = []  # Empty list for UI-only tests
+    main_window.data_handler.reduction_list = []  # Empty list for UI-only tests
 
     return main_window
 
@@ -27,7 +27,7 @@ def dialog_both(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with both smoothing and binning enabled."""
     with patch.object(OffSpecParametersDialog, "draw_plot"):
         dlg = OffSpecParametersDialog(
-            mock_main_window, mock_main_window.data_presenter, show_smoothing=True, show_binning=True
+            mock_main_window, mock_main_window.data_handler, show_smoothing=True, show_binning=True
         )
         qtbot.addWidget(dlg)
         return dlg
@@ -38,7 +38,7 @@ def dialog_smoothing_only(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with only smoothing enabled."""
     with patch.object(OffSpecParametersDialog, "draw_plot"):
         dlg = OffSpecParametersDialog(
-            mock_main_window, mock_main_window.data_presenter, show_smoothing=True, show_binning=False
+            mock_main_window, mock_main_window.data_handler, show_smoothing=True, show_binning=False
         )
         qtbot.addWidget(dlg)
         return dlg
@@ -49,7 +49,7 @@ def dialog_binning_only(qtbot, mock_main_window):
     """Create an OffSpecParametersDialog instance with only binning enabled."""
     with patch.object(OffSpecParametersDialog, "draw_plot"):
         dlg = OffSpecParametersDialog(
-            mock_main_window, mock_main_window.data_presenter, show_smoothing=False, show_binning=True
+            mock_main_window, mock_main_window.data_handler, show_smoothing=False, show_binning=True
         )
         qtbot.addWidget(dlg)
         return dlg
@@ -258,7 +258,7 @@ def test_dialog_settings_persistence(dialog_both, qtbot):
     # Create a new dialog to test loading
     main_window = dialog_both.parent()
     new_dialog = OffSpecParametersDialog(
-        main_window, main_window.data_presenter, show_smoothing=True, show_binning=True
+        main_window, main_window.data_handler, show_smoothing=True, show_binning=True
     )
     qtbot.addWidget(new_dialog)
 

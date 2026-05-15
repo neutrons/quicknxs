@@ -14,7 +14,7 @@ from qtpy import QtWidgets
 from quicknxs.models.configuration import Configuration
 from quicknxs.models.data_set import CrossSectionData, NexusData
 from quicknxs.models.instrument import Instrument
-from quicknxs.presenters.data_presenter import DataPresenter
+from quicknxs.presenters.data_handler import DataHandler
 from quicknxs.utils.filepath import RunNumbers
 from quicknxs.views.main_window import MainWindow
 from tests.ui import ui_utilities
@@ -162,7 +162,7 @@ def main_window_with_data_factory(qtbot):
 
 
 @pytest.fixture
-def data_presenter_with_data_factory(data_server):
+def data_handler_with_data_factory(data_server):
     """Test fixture that returns a data manager with data loaded into it.
 
     Create as a factory to be able to do setup e.g. mock functions before instantiating the data manager.
@@ -171,7 +171,7 @@ def data_presenter_with_data_factory(data_server):
     def _create():
         Configuration.setup_default_values()
 
-        manager = DataPresenter(data_server.directory)
+        manager = DataHandler(data_server.directory)
 
         # Add direct beams
         manager.load(data_server.path_to("REF_M_42099"), Configuration())
@@ -200,15 +200,15 @@ def data_presenter_with_data_factory(data_server):
 def main_window_with_mock_runs(qtbot, mocker, tmp_path):
     """MainWindow with two mock reflected runs and two mock direct beam runs.
 
-    Injects NexusData objects directly into the DataPresenter (no Nexus file content is read),
+    Injects NexusData objects directly into the DataHandler (no Nexus file content is read),
     and pre-populates the file list widget with their file names.
 
     Empty placeholder files are created in tmp_path so that open_file()'s existence check
     passes when the file list selection signal triggers file_open_from_list().
-    DataPresenter.load() finds each NexusData by its full path in direct_beam_list /
+    DataHandler.load() finds each NexusData by its full path in direct_beam_list /
     reduction_list, so no actual Nexus data is ever parsed.
 
-    Both MainWindow.file_loaded and MainPresenter.file_loaded are patched out so that
+    Both MainWindow.file_loaded and MainHandler.file_loaded are patched out so that
     the plotting machinery is not triggered. set_active_reduction_data still calls
     active_data_changed() explicitly after file_loaded returns.
     """
@@ -247,7 +247,7 @@ def main_window_with_mock_runs(qtbot, mocker, tmp_path):
     qtbot.addWidget(main_window)
     handler = main_window.file_handler
 
-    dm = main_window.data_presenter
+    dm = main_window.data_handler
     dm.current_directory = str(tmp_path)
     dm.peak_reduction_lists[dm.active_reduction_list_index] = [run_a, run_b, run_c]
     dm.direct_beam_list = [run_db, run_db2]

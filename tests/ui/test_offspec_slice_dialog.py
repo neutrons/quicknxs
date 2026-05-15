@@ -11,13 +11,13 @@ from quicknxs.views.offspec_slice_dialog import OffSpecSliceDialog
 @pytest.fixture
 def dialog(qtbot):
     """Create an OffSpecSliceDialog instance for testing."""
-    # Create minimal mock data_presenter for UI-only tests
-    data_presenter = Mock()
-    data_presenter.reduction_states = []  # Empty list for UI-only tests
-    data_presenter.reduction_list = []  # Empty list for UI-only tests
+    # Create minimal mock data_handler for UI-only tests
+    data_handler = Mock()
+    data_handler.reduction_states = []  # Empty list for UI-only tests
+    data_handler.reduction_list = []  # Empty list for UI-only tests
 
     # No parent needed for UI-only tests
-    dlg = OffSpecSliceDialog(None, data_presenter)
+    dlg = OffSpecSliceDialog(None, data_handler)
     qtbot.addWidget(dlg)
     return dlg
 
@@ -70,11 +70,11 @@ def test_dialog_settings_persistence(dialog, qtbot):
     # Save settings
     dialog.save_settings()
 
-    # Create a new dialog with mock data_presenter to test loading
-    data_presenter = Mock()
-    data_presenter.reduction_states = []
-    data_presenter.reduction_list = []
-    new_dialog = OffSpecSliceDialog(None, data_presenter)
+    # Create a new dialog with mock data_handler to test loading
+    data_handler = Mock()
+    data_handler.reduction_states = []
+    data_handler.reduction_list = []
+    new_dialog = OffSpecSliceDialog(None, data_handler)
     qtbot.addWidget(new_dialog)
 
     # Check that values were loaded

@@ -40,7 +40,7 @@ class PlotPresenter:
         self.main_window = main_window
         self.ui = main_window.ui
         self.plot_view = main_window.plot_view
-        self.data_presenter = main_window.data_presenter
+        self.data_handler = main_window.data_handler
         self.connect_plot_events()
 
     def connect_plot_events(self):
@@ -322,7 +322,7 @@ class PlotPresenter:
         Imax = 10 ** self.ui.offspecImax.value()
         if Imin >= Imax:
             return
-        data_set_keys = list(self.main_window.data_presenter.data_sets.keys())
+        data_set_keys = list(self.main_window.data_handler.data_sets.keys())
         for i in range(len(data_set_keys)):
             plot = plots[i]
             if plot.cplot is not None:
@@ -334,7 +334,7 @@ class PlotPresenter:
         """Modify color scale."""
         plots = [self.ui.offspec_pp, self.ui.offspec_mm, self.ui.offspec_pm, self.ui.offspec_mp]
         Imin = 1e10
-        data_set_keys = list(self.main_window.data_presenter.data_sets.keys())
+        data_set_keys = list(self.main_window.data_handler.data_sets.keys())
         for i in range(len(data_set_keys)):
             plot = plots[i]
             if plot.cplot is not None:

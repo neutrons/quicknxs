@@ -1,8 +1,8 @@
-"""Unit tests for MainPresenter.update_file_list."""
+"""Unit tests for MainHandler.update_file_list."""
 
 from qtpy import QtWidgets
 
-from quicknxs.presenters.main_presenter import MainPresenter
+from quicknxs.presenters.main_handler import MainHandler
 from quicknxs.views.main_window import MainWindow
 
 # ---------------------------------------------------------------------------
@@ -12,15 +12,15 @@ from quicknxs.views.main_window import MainWindow
 
 def _make_handler(qtbot, tmp_path):
     """
-    Create instances of MainWindow and MainPresenter.
+    Create instances of MainWindow and MainHandler.
 
-    Create a MainWindow + MainPresenter pair wired to *tmp_path* as the
+    Create a MainWindow + MainHandler pair wired to *tmp_path* as the
     current directory and register the window with qtbot for cleanup.
     """
     window = MainWindow()
     qtbot.addWidget(window)
-    handler = MainPresenter(window)
-    handler._data_presenter.current_directory = str(tmp_path)
+    handler = MainHandler(window)
+    handler._data_handler.current_directory = str(tmp_path)
     return window, handler
 
 
@@ -48,7 +48,7 @@ class TestUpdateFileListNoQueryPath:
         """File list is built from current_event_files when query_path is None."""
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_001.nxs.h5", "REF_M_002.nxs.h5"]),
         )
@@ -64,7 +64,7 @@ class TestUpdateFileListNoQueryPath:
         _add_to_file_list(handler, [composite])
 
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_001.nxs.h5", "REF_M_002.nxs.h5"]),
         )
@@ -78,7 +78,7 @@ class TestUpdateFileListNoQueryPath:
         """File list is sorted after refresh."""
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_003.nxs.h5", "REF_M_001.nxs.h5", "REF_M_002.nxs.h5"]),
         )
@@ -91,13 +91,13 @@ class TestUpdateFileListNoQueryPath:
         """The item matching current_file_name is set as the current item."""
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_001.nxs.h5", "REF_M_002.nxs.h5"]),
         )
-        handler._data_presenter._current_file_name_for_test = "REF_M_001.nxs.h5"
+        handler._data_handler._current_file_name_for_test = "REF_M_001.nxs.h5"
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_file_name",
             new_callable=lambda: property(lambda self: self._current_file_name_for_test),
         )
@@ -114,11 +114,11 @@ class TestUpdateFileListNoQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_001.nxs.h5", "REF_M_002.nxs.h5"]),
         )
-        handler._data_presenter.bad_files = {"REF_M_002.nxs.h5"}
+        handler._data_handler.bad_files = {"REF_M_002.nxs.h5"}
 
         handler.update_file_list()
 
@@ -133,7 +133,7 @@ class TestUpdateFileListNoQueryPath:
         _, handler = _make_handler(qtbot, tmp_path)
         _add_to_file_list(handler, ["REF_M_old.nxs.h5"])
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: []),
         )
@@ -155,7 +155,7 @@ class TestUpdateFileListCompositeQueryPath:
         """Composite in the current directory: composite basename is appended and list is sorted."""
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_001.nxs.h5", "REF_M_002.nxs.h5"]),
         )
@@ -177,7 +177,7 @@ class TestUpdateFileListCompositeQueryPath:
         new_dir.mkdir()
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_010.nxs.h5"]),
         )
@@ -191,7 +191,7 @@ class TestUpdateFileListCompositeQueryPath:
 
         handler.update_file_list(composite_path)
 
-        assert handler._data_presenter.current_directory == str(new_dir)
+        assert handler._data_handler.current_directory == str(new_dir)
 
     def test_composite_new_directory_saves_setting(self, qtbot, tmp_path, mocker):
         """Composite in a new directory: 'current_directory' setting is persisted."""
@@ -202,7 +202,7 @@ class TestUpdateFileListCompositeQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_020.nxs.h5", "REF_M_021.nxs.h5"]),
         )
@@ -223,7 +223,7 @@ class TestUpdateFileListCompositeQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: []),
         )
@@ -254,7 +254,7 @@ class TestUpdateFileListDirectoryQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_200.nxs.h5", "REF_M_201.nxs.h5"]),
         )
@@ -263,7 +263,7 @@ class TestUpdateFileListDirectoryQueryPath:
 
         handler.update_file_list(str(new_dir))
 
-        assert handler._data_presenter.current_directory == str(new_dir)
+        assert handler._data_handler.current_directory == str(new_dir)
         assert _files_in_list(handler) == ["REF_M_200.nxs.h5", "REF_M_201.nxs.h5"]
 
     def test_same_directory_leaves_list_unchanged(self, qtbot, tmp_path, mocker):
@@ -272,7 +272,7 @@ class TestUpdateFileListDirectoryQueryPath:
         _add_to_file_list(handler, ["REF_M_300.nxs.h5"])
         # current_event_files would normally be called — spy to confirm it is not
         event_files_spy = mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_300.nxs.h5"]),
         )
@@ -289,7 +289,7 @@ class TestUpdateFileListDirectoryQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: []),
         )
@@ -319,7 +319,7 @@ class TestUpdateFileListFileQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_400.nxs.h5", "REF_M_401.nxs.h5"]),
         )
@@ -335,15 +335,15 @@ class TestUpdateFileListFileQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_402.nxs.h5"]),
         )
 
-        original_dir = handler._data_presenter.current_directory
+        original_dir = handler._data_handler.current_directory
         handler.update_file_list(str(test_file))
 
-        assert handler._data_presenter.current_directory == original_dir
+        assert handler._data_handler.current_directory == original_dir
 
     def test_file_in_new_directory_updates_current_directory(self, qtbot, tmp_path, mocker):
         """A file path in a new directory triggers a directory switch."""
@@ -354,7 +354,7 @@ class TestUpdateFileListFileQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_500.nxs.h5"]),
         )
@@ -363,7 +363,7 @@ class TestUpdateFileListFileQueryPath:
 
         handler.update_file_list(str(test_file))
 
-        assert handler._data_presenter.current_directory == str(new_dir)
+        assert handler._data_handler.current_directory == str(new_dir)
 
     def test_file_in_new_directory_populates_list(self, qtbot, tmp_path, mocker):
         """After a directory switch via file path, list is populated with event files."""
@@ -374,7 +374,7 @@ class TestUpdateFileListFileQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_600.nxs.h5", "REF_M_601.nxs.h5"]),
         )
@@ -394,7 +394,7 @@ class TestUpdateFileListFileQueryPath:
 
         _, handler = _make_handler(qtbot, tmp_path)
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: []),
         )
@@ -418,7 +418,7 @@ class TestUpdateFileListFileQueryPath:
         _add_to_file_list(handler, [composite])
 
         mocker.patch.object(
-            type(handler._data_presenter),
+            type(handler._data_handler),
             "current_event_files",
             new_callable=lambda: property(lambda _: ["REF_M_800.nxs.h5", "REF_M_801.nxs.h5"]),
         )

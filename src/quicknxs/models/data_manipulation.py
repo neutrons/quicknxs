@@ -411,8 +411,8 @@ def merge_reflectivity(reduction_list, xs, q_min=0.001, q_step=-0.01):
     Combine the workspaces for a given cross-section into a single workspace.
 
     TODO: trim workspaces
-        trim_first = [item.cross_sections[pol_state].configuration.cut_first_n_points for item in self.data_presenter.reduction_list]
-        trim_last = [item.cross_sections[pol_state].configuration.cut_last_n_points for item in self.data_presenter.reduction_list]
+        trim_first = [item.cross_sections[pol_state].configuration.cut_first_n_points for item in self.data_handler.reduction_list]
+        trim_last = [item.cross_sections[pol_state].configuration.cut_last_n_points for item in self.data_handler.reduction_list]
 
     """
     ws_list = []

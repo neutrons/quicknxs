@@ -21,7 +21,7 @@ quicknxs.presenters.configuration\_handler module
 quicknxs.presenters.data\_presenter module
 -------------------------------------------
 
-.. automodule:: quicknxs.presenters.data_presenter
+.. automodule:: quicknxs.presenters.data_handler
    :members:
    :undoc-members:
    :show-inheritance:
@@ -29,7 +29,7 @@ quicknxs.presenters.data\_presenter module
 quicknxs.presenters.main\_presenter module
 -------------------------------------------
 
-.. automodule:: quicknxs.presenters.main_presenter
+.. automodule:: quicknxs.presenters.main_handler
    :members:
    :undoc-members:
    :show-inheritance:

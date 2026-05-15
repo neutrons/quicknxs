@@ -5,7 +5,7 @@ import logging
 from qtpy import QtCore, QtWidgets
 
 import quicknxs.views.widgets.mplwidget as mpl
-from quicknxs.presenters.data_presenter import DataPresenter
+from quicknxs.presenters.data_handler import DataHandler
 from quicknxs.views import load_ui
 
 
@@ -14,14 +14,14 @@ class ResultViewer(QtWidgets.QDialog):
 
     default_template = "{instrument}_{numbers}_{peak}_{item}_{state}.{type}"
 
-    def __init__(self, parent, data_presenter: DataPresenter):
+    def __init__(self, parent, data_handler: DataHandler):
         super().__init__(parent)
         self.ui = load_ui("ui_result_viewer.ui", base_instance=self)
         self.ui.resize(1024, 1024)
         self.settings = QtCore.QSettings(".quicknxs")
-        self.data_presenter = data_presenter
+        self.data_handler = data_handler
         self.ui.main_window = parent
-        self.ui.specular_compare_widget.data_presenter = self.data_presenter
+        self.ui.specular_compare_widget.data_handler = self.data_handler
         self._gisans_reference = None
 
     def update_active_tab(self):
@@ -43,7 +43,7 @@ class ResultViewer(QtWidgets.QDialog):
         crop:
             If True, all the plots will be cropped to the ++ cross-section
         """
-        off_spec_data = self.data_presenter.cached_offspec
+        off_spec_data = self.data_handler.cached_offspec
         if off_spec_data is None:
             return
 
@@ -53,7 +53,7 @@ class ResultViewer(QtWidgets.QDialog):
             xlim = self.ui.offspec_pp_plot.canvas.ax.get_xlim()
             ylim = self.ui.offspec_pp_plot.canvas.ax.get_ylim()
 
-        data_set_keys = list(self.data_presenter.data_sets.keys())
+        data_set_keys = list(self.data_handler.data_sets.keys())
 
         if len(data_set_keys) > 4:
             logging.error("Too many cross-sections for plotting: %s", str(len(data_set_keys)))
@@ -140,7 +140,7 @@ class ResultViewer(QtWidgets.QDialog):
             If True, all the plots will be cropped to the ++ cross-section
         """
         logging.info("Updating GISANS")
-        gisans_data = self.data_presenter.cached_gisans
+        gisans_data = self.data_handler.cached_gisans
         if gisans_data is None:
             logging.info("Nothing to plot for GISANS")
             return
@@ -154,7 +154,7 @@ class ResultViewer(QtWidgets.QDialog):
 
         self._gisans_reference = None
 
-        data_set_keys = list(self.data_presenter.data_sets.keys())
+        data_set_keys = list(self.data_handler.data_sets.keys())
         if len(data_set_keys) > 4:
             logging.error("Too many cross-sections for plotting: %s", str(len(data_set_keys)))
 

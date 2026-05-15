@@ -60,14 +60,14 @@ def test_db_as_ref_run_reduced_file(data_server, qtbot, monkeypatch):
 
     main_window.file_handler.open_reduced_file_dialog()
 
-    nexus_data = main_window.data_presenter._nexus_data
+    nexus_data = main_window.data_handler._nexus_data
     for xs in nexus_data.cross_sections:
         name = nexus_data.cross_sections[xs]._event_workspace
         assert name.endswith("_REFLECTED"), f"Expected workspace name to end with '_REFLECTED', got '{name}'"
 
     # Switch to direct beam tab and check that direct beam workspace is correctly named
     main_window.current_table_changed(0)
-    nexus_data = main_window.data_presenter._nexus_data
+    nexus_data = main_window.data_handler._nexus_data
     for xs in nexus_data.cross_sections:
         name = nexus_data.cross_sections[xs]._event_workspace
         assert name.endswith("_DIRECT_BEAM"), f"Expected workspace name to end with '_DIRECT_BEAM', got '{name}'"

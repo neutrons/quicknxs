@@ -6,7 +6,7 @@ from numpy import float64
 from numpy.typing import NDArray
 from qtpy import QtCore, QtWidgets
 
-from quicknxs.presenters.data_presenter import DataPresenter
+from quicknxs.presenters.data_handler import DataHandler
 from quicknxs.views import load_ui
 from quicknxs.views.widgets import MPLWidget
 
@@ -19,10 +19,10 @@ class OffSpecSliceDialog(QtWidgets.QDialog):
 
     drawing = False
 
-    def __init__(self, parent, data_presenter: DataPresenter):
+    def __init__(self, parent, data_handler: DataHandler):
         QtWidgets.QDialog.__init__(self, parent)
         self.ui = load_ui("ui_offspec_slice_dialog.ui", base_instance=self)
-        self.data_presenter = data_presenter
+        self.data_handler = data_handler
         self.rect_region = None
 
         # Load saved values from settings
@@ -99,14 +99,14 @@ class OffSpecSliceDialog(QtWidgets.QDialog):
         k_diff_min, k_diff_max = 0.01, -0.01
 
         # Get first state from reduction_states
-        if not self.data_presenter.reduction_states:
+        if not self.data_handler.reduction_states:
             self.drawing = False
             return
 
-        first_state = self.data_presenter.reduction_states[0]
+        first_state = self.data_handler.reduction_states[0]
 
         # Plot data from all runs in the reduction list
-        for item in self.data_presenter.reduction_list:
+        for item in self.data_handler.reduction_list:
             # Check if off_spec data exists
             if first_state not in item.cross_sections:
                 continue
@@ -218,7 +218,7 @@ class OffSpecSliceDialog(QtWidgets.QDialog):
             return
 
         # Only update if plot has been initialized with data and rectangle exists
-        if not self.data_presenter.reduction_states or self.rect_region is None:
+        if not self.data_handler.reduction_states or self.rect_region is None:
             return
 
         # Don't update region for ki_z vs kf_z (no Qz axis)

@@ -6,7 +6,7 @@ from orsopy.fileio import load_orso
 from quicknxs.enums import OffSpecXAxis
 from quicknxs.models.configuration import Configuration, OutputOptions
 from quicknxs.models.processing_workflow import ProcessingWorkflow
-from quicknxs.presenters.data_presenter import DataPresenter
+from quicknxs.presenters.data_handler import DataHandler
 
 
 @pytest.mark.datarepo
@@ -16,7 +16,7 @@ def test_orso_output(data_server, tmpdir):
     conf = Configuration()
     conf.cut_first_n_points = 0
     conf.cut_last_n_points = 0
-    manager = DataPresenter(data_server.directory)
+    manager = DataHandler(data_server.directory)
     output_options = OutputOptions()
     output_options.output_directory = str(tmpdir)
     pw = ProcessingWorkflow(manager, output_options)
@@ -73,7 +73,7 @@ def test_smoothing_without_slice_export(data_server, tmpdir):
     conf = Configuration()
     conf.cut_first_n_points = 0
     conf.cut_last_n_points = 0
-    manager = DataPresenter(data_server.directory)
+    manager = DataHandler(data_server.directory)
 
     # Simulate the exact state after ReductionDialog + OffSpecParametersDialog:
     # User checked "Apply intensity smoothing" but NOT "Export off-spec slices"

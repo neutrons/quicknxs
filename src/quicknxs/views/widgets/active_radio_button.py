@@ -6,7 +6,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QHBoxLayout, QRadioButton, QTableWidget, QWidget
 
 if TYPE_CHECKING:
-    from quicknxs.presenters.main_presenter import MainPresenter
+    from quicknxs.presenters.main_handler import MainHandler
 
 
 class ActiveDataRadioButton(QWidget):
@@ -14,7 +14,7 @@ class ActiveDataRadioButton(QWidget):
 
     def __init__(
         self,
-        parent: "MainPresenter | None" = None,
+        parent: "MainHandler | None" = None,
         is_active: bool = False,
         idx: int | None = None,
         is_direct_beam: bool = False,

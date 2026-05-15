@@ -18,7 +18,7 @@ from quicknxs.presenters.progress_reporter import ProgressReporter
 from quicknxs.utils.filepath import FilePath
 
 
-class DataPresenter:
+class DataHandler:
     """Holds information about the current data location and manages the data cache.
 
     Attributes
@@ -599,7 +599,7 @@ class DataPresenter:
                     dpix = direct_beam.configuration.peak_position
                     self._nexus_data.set_parameter("direct_pixel_overwrite", dpix)
                 else:
-                    logging.info(f"DataPresenter.load: No matching direct beam found - {match_found=}, {direct_beam=}")
+                    logging.info(f"DataHandler.load: No matching direct beam found - {match_found=}, {direct_beam=}")
 
             # Replace reduction and direct beam entries as needed
             if reduction_list_id is not None:
@@ -707,7 +707,7 @@ class DataPresenter:
             # All the cross sections should have the same direct beam file.
             data_keys = list(nexus_data.cross_sections.keys())
             if len(data_keys) == 0:
-                logging.error("DataPresenter._find_direct_beam: no data available in NexusData object")
+                logging.error("DataHandler._find_direct_beam: no data available in NexusData object")
                 return
             data_xs = nexus_data.cross_sections[data_keys[0]]
         elif isinstance(nexus_data, CrossSectionData):

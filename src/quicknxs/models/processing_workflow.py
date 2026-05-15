@@ -24,33 +24,33 @@ from quicknxs.config import SMTP_SERVER
 from quicknxs.enums import OffSpecXAxis
 from quicknxs.models import data_manipulation, gisans, off_specular, quicknxs_io
 from quicknxs.models.configuration import OutputOptions
-from quicknxs.presenters.data_presenter import DataPresenter
+from quicknxs.presenters.data_handler import DataHandler
 from quicknxs.presenters.progress_reporter import ProgressReporter
 
 
 class ProcessingWorkflow:
     """Carry out the reduction process for a set of data runs and manages outputs."""
 
-    def __init__(self, data_presenter: DataPresenter, output_options: OutputOptions | None = None):
+    def __init__(self, data_handler: DataHandler, output_options: OutputOptions | None = None):
         """All the reduced data shall come from data manager."""
-        self.data_presenter = data_presenter
+        self.data_handler = data_handler
         self.output_options = output_options if output_options is not None else OutputOptions()
         self.exported_data_files = []
         self.exported_data_plots = []
 
     def execute(self, progress: ProgressReporter | None = None):
         """Process data and write output files."""
-        if not self.data_presenter.reduction_states:
+        if not self.data_handler.reduction_states:
             return
 
         # store current peak shown in the UI
-        active_peak = self.data_presenter.active_reduction_list_index
-        active_data_index = self.data_presenter.find_active_data_id()
+        active_peak = self.data_handler.active_reduction_list_index
+        active_data_index = self.data_handler.find_active_data_id()
 
-        for peak_index in self.data_presenter.peak_reduction_lists.keys():
+        for peak_index in self.data_handler.peak_reduction_lists.keys():
             # set active data based on peak index
-            self.data_presenter.set_active_reduction_list_index(peak_index)
-            self.data_presenter.set_active_data_from_reduction_list(0)
+            self.data_handler.set_active_reduction_list_index(peak_index)
+            self.data_handler.set_active_data_from_reduction_list(0)
 
             if self.output_options.export_specular:
                 if progress is not None:
@@ -84,9 +84,9 @@ class ProcessingWorkflow:
                     logging.error("GISANS failed: %s", sys.exc_info()[1])
 
         # restore current peak shown in the UI
-        self.data_presenter.set_active_reduction_list_index(active_peak)
+        self.data_handler.set_active_reduction_list_index(active_peak)
         if active_data_index is not None:
-            self.data_presenter.set_active_data_from_reduction_list(active_data_index)
+            self.data_handler.set_active_data_from_reduction_list(active_data_index)
 
         if self.output_options.email_send:
             self.send_email()
@@ -118,13 +118,13 @@ class ProcessingWorkflow:
             run_list = []
         base_name = self.output_options.output_file_template.replace("{numbers}", "+".join(run_list))
         base_name = base_name.replace(
-            "{instrument}", self.data_presenter.active_cross_section.configuration.instrument.instrument_name
+            "{instrument}", self.data_handler.active_cross_section.configuration.instrument.instrument_name
         )
         base_name = base_name.replace("{item}", process_type)
         if pol_state is not None:
             base_name = base_name.replace("{state}", pol_state)
         base_name = base_name.replace("{type}", data_type)
-        base_name = base_name.replace("{peak}", f"peak{self.data_presenter.active_reduction_list_index}")
+        base_name = base_name.replace("{peak}", f"peak{self.data_handler.active_reduction_list_index}")
         return os.path.join(self.output_options.output_directory, base_name)
 
     def write_quicknxs(
@@ -159,7 +159,7 @@ class ProcessingWorkflow:
         if xs is not None:
             output_states = xs
         else:
-            output_states = copy.copy(self.data_presenter.reduction_states)
+            output_states = copy.copy(self.data_handler.reduction_states)
             if self.output_options.export_asym and "SA" in output_data:
                 output_states.append("SA")
 
@@ -171,8 +171,8 @@ class ProcessingWorkflow:
         five_cols = self.output_options.format_5cols
         for pol_state in output_states:
             # The cross-sections might have different names
-            if pol_state in self.data_presenter.reduction_list[0].cross_sections:
-                _pol_state = self.data_presenter.reduction_list[0].cross_sections[pol_state].cross_section_label
+            if pol_state in self.data_handler.reduction_list[0].cross_sections:
+                _pol_state = self.data_handler.reduction_list[0].cross_sections[pol_state].cross_section_label
             else:
                 _pol_state = pol_state
             # We might not have data for a given cross-section
@@ -181,9 +181,9 @@ class ProcessingWorkflow:
 
             state_output_path = output_file_base.replace("{state}", pol_state)
             quicknxs_io.write_reflectivity_header(
-                self.data_presenter.peak_reduction_lists,
-                self.data_presenter.active_reduction_list_index,
-                self.data_presenter.direct_beam_list,
+                self.data_handler.peak_reduction_lists,
+                self.data_handler.active_reduction_list_index,
+                self.data_handler.direct_beam_list,
                 state_output_path,
                 _pol_state,
                 include_gisans,
@@ -213,7 +213,7 @@ class ProcessingWorkflow:
         """
         # Save the individual runs to ORSO
         individual_paths = {}
-        for nexus_data in self.data_presenter.reduction_list:
+        for nexus_data in self.data_handler.reduction_list:
             run = str(nexus_data.run_number)
             reflectivity_workspaces = nexus_data.get_reflectivity_workspace_group()
             filepath = self.get_file_name([run], "all", "ort")
@@ -239,16 +239,16 @@ class ProcessingWorkflow:
 
         # Assemble the combined reflectivity workspaces
         combined_reflectivity_workspaces = []
-        cross_sections = self.data_presenter.reduction_states
+        cross_sections = self.data_handler.reduction_states
         for xs in cross_sections:
             # use the first reflectivity workspace to copy metadata from
-            ws_first = self.data_presenter.reduction_list[0].cross_sections[xs].reflectivity_workspace
+            ws_first = self.data_handler.reduction_list[0].cross_sections[xs].reflectivity_workspace
             # create a workspace from the stitched reflectivity data and add metadata
             ws_combined = _create_combined_reflectivity_workspace(ws_first, xs)
             combined_reflectivity_workspaces.append(ws_combined)
 
         # Save the combined reflectivity to ORSO
-        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_handler.reduction_list]
         combined_path = self.get_file_name(run_list, "all", "ort")
         io_orso.save_cross_sections(combined_reflectivity_workspaces, combined_path)
 
@@ -256,11 +256,11 @@ class ProcessingWorkflow:
         """Retrieve the computed reflectivity and save it to file."""
         # The reflectivity should always be up to date, so we don't need to recalculate it.
         # The following would be used to recalculate it:
-        #    self.data_presenter.calculate_reflectivity(specular=True)
+        #    self.data_handler.calculate_reflectivity(specular=True)
 
-        # self.data_presenter.merge_data_sets(asymmetry=self.output_options.export_asym)
+        # self.data_handler.merge_data_sets(asymmetry=self.output_options.export_asym)
 
-        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_handler.reduction_list]
 
         output_data = self.get_output_data()
 
@@ -290,27 +290,27 @@ class ProcessingWorkflow:
 
         if self.output_options.format_mantid:
             output_file = self.get_file_name(run_list, data_type="py", pol_state="all")
-            script = data_manipulation.generate_short_script(self.data_presenter.reduction_list)
+            script = data_manipulation.generate_short_script(self.data_handler.reduction_list)
             with open(output_file, "w") as file_object:
                 file_object.write(script)
             self.exported_data_files.append(output_file)
 
     def gisans(self, progress=None):
         """Export GISANS."""
-        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_handler.reduction_list]
 
         # Refresh the reflectivity calculation
         if progress is not None:
             progress(65, "Reducing GISANS...")
 
-        self.data_presenter.cached_gisans = None
-        self.data_presenter.reduce_gisans(progress=None)
+        self.data_handler.cached_gisans = None
+        self.data_handler.reduce_gisans(progress=None)
 
         if progress is not None:
             progress(75, "Binning GISANS...")
 
         data_dict, slice_data_dict = self.get_gisans_data(progress=None)
-        self.data_presenter.cached_gisans = data_dict
+        self.data_handler.cached_gisans = data_dict
 
         if progress is not None:
             progress(90, "Writing data")
@@ -342,11 +342,11 @@ class ProcessingWorkflow:
         slices:
             If true, Qz slices will be extracted and saved
         """
-        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_handler.reduction_list]
 
         # Refresh the reflectivity calculation
-        self.data_presenter.cached_offspec = None
-        self.data_presenter.reduce_offspec()
+        self.data_handler.cached_offspec = None
+        self.data_handler.reduce_offspec()
 
         # Get off-specular data for processing
         if raw or binned or smooth or slices:
@@ -375,7 +375,7 @@ class ProcessingWorkflow:
                     )
                 # Cache smooth output if no binned output requested, otherwise cache binned
                 if not binned:
-                    self.data_presenter.cached_offspec = smooth_output
+                    self.data_handler.cached_offspec = smooth_output
             except Exception:
                 logging.error("Problem writing smooth off-spec output")
                 raise
@@ -401,7 +401,7 @@ class ProcessingWorkflow:
 
             # Cache binned output if it was generated, otherwise cache smooth or raw
             if binned:
-                self.data_presenter.cached_offspec = binned_data
+                self.data_handler.cached_offspec = binned_data
 
     def get_rebinned_offspec_data(self):
         """Get a data dictionary ready for saving."""
@@ -409,14 +409,14 @@ class ProcessingWorkflow:
         slice_data_dict = {}
 
         # Extract common information
-        if len(self.data_presenter.reduction_states) == 0:
+        if len(self.data_handler.reduction_states) == 0:
             logging.error("List of cross-sections is empty")
             return {}
 
-        for pol_state in self.data_presenter.reduction_states:
+        for pol_state in self.data_handler.reduction_states:
             # All parameters now come from the OffSpecParametersDialog
             r, dr, x, y, labels = off_specular.rebin_extract(
-                self.data_presenter.reduction_list,
+                self.data_handler.reduction_list,
                 pol_state,
                 axes=self.output_options.off_spec_x_axis,
                 use_weights=self.output_options.off_spec_err_weight,
@@ -445,8 +445,8 @@ class ProcessingWorkflow:
 
             rdata = np.array([x_tiled, y_tiled, r, dr]).transpose((1, 2, 0))
 
-            if pol_state in self.data_presenter.reduction_list[0].cross_sections:
-                _pol_state = self.data_presenter.reduction_list[0].cross_sections[pol_state].cross_section_label
+            if pol_state in self.data_handler.reduction_list[0].cross_sections:
+                _pol_state = self.data_handler.reduction_list[0].cross_sections[pol_state].cross_section_label
             else:
                 _pol_state = pol_state
             data_dict[pol_state] = [np.nan_to_num(rdata)]
@@ -458,12 +458,12 @@ class ProcessingWorkflow:
         return data_dict, slice_data_dict
 
     def get_gisans_data(self, progress=None) -> dict | tuple[dict, dict]:
-        wl_npts = self.data_presenter.active_cross_section.configuration.gisans_wl_npts
-        wl_min = self.data_presenter.active_cross_section.configuration.gisans_wl_min
-        wl_max = self.data_presenter.active_cross_section.configuration.gisans_wl_max
-        qy_npts = self.data_presenter.active_cross_section.configuration.gisans_qy_npts
-        qz_npts = self.data_presenter.active_cross_section.configuration.gisans_qz_npts
-        use_pf = self.data_presenter.active_cross_section.configuration.gisans_use_pf
+        wl_npts = self.data_handler.active_cross_section.configuration.gisans_wl_npts
+        wl_min = self.data_handler.active_cross_section.configuration.gisans_wl_min
+        wl_max = self.data_handler.active_cross_section.configuration.gisans_wl_max
+        qy_npts = self.data_handler.active_cross_section.configuration.gisans_qy_npts
+        qz_npts = self.data_handler.active_cross_section.configuration.gisans_qz_npts
+        use_pf = self.data_handler.active_cross_section.configuration.gisans_use_pf
 
         data_dict = {"units": ["1/A", "1/A", "a.u.", "a.u."], "cross_sections": {}, "cross_section_bins": {}}
         if use_pf:
@@ -472,17 +472,17 @@ class ProcessingWorkflow:
             data_dict["columns"] = ["Qy", "Qz", "I", "dI"]
 
         # Extract common information
-        if not self.data_presenter.reduction_states or not self.data_presenter.reduction_list:
+        if not self.data_handler.reduction_states or not self.data_handler.reduction_list:
             logging.error("List of cross-sections is empty")
             return data_dict
 
         t_0 = time.time()
         _parallel = False
         slice_data_dict = {}
-        for pol_state in self.data_presenter.reduction_states:
+        for pol_state in self.data_handler.reduction_states:
             if _parallel:
                 binned_data = gisans.rebin_parallel(
-                    self.data_presenter.reduction_list,
+                    self.data_handler.reduction_list,
                     pol_state,
                     wl_min=wl_min,
                     wl_max=wl_max,
@@ -499,15 +499,15 @@ class ProcessingWorkflow:
                 if _parallel:
                     _intensity, _qy, _qz_axis, _intensity_err = binned_data[i]
                 else:
-                    _intensity, _qy, _qz_axis, _intensity_err = self.data_presenter.rebin_gisans(
+                    _intensity, _qy, _qz_axis, _intensity_err = self.data_handler.rebin_gisans(
                         pol_state, wl_min=_wl_min, wl_max=_wl_max, qy_npts=qy_npts, qz_npts=qz_npts, use_pf=use_pf
                     )
 
                 qz, qy = np.meshgrid(_qz_axis, _qy)
                 rdata = np.array([qy, qz, _intensity, _intensity_err]).transpose((1, 2, 0))
 
-                if pol_state in self.data_presenter.reduction_list[0].cross_sections:
-                    _pol_state = self.data_presenter.reduction_list[0].cross_sections[pol_state].cross_section_label
+                if pol_state in self.data_handler.reduction_list[0].cross_sections:
+                    _pol_state = self.data_handler.reduction_list[0].cross_sections[pol_state].cross_section_label
                 else:
                     _pol_state = pol_state
 
@@ -535,28 +535,28 @@ class ProcessingWorkflow:
         )
 
         # Extract common information
-        if not self.data_presenter.reduction_states or not self.data_presenter.reduction_list:
+        if not self.data_handler.reduction_states or not self.data_handler.reduction_list:
             logging.error("List of cross-sections is empty")
             return data_dict
 
-        first_state = self.data_presenter.reduction_states[0]
+        first_state = self.data_handler.reduction_states[0]
         p_0 = [
             item.cross_sections[first_state].configuration.cut_first_n_points
-            for item in self.data_presenter.reduction_list
+            for item in self.data_handler.reduction_list
         ]
         p_n = [
             item.cross_sections[first_state].configuration.cut_last_n_points
-            for item in self.data_presenter.reduction_list
+            for item in self.data_handler.reduction_list
         ]
 
         ki_max = 0.01
-        for pol_state in self.data_presenter.reduction_states:
+        for pol_state in self.data_handler.reduction_states:
             # The scaling factors should have been determined at this point. Just use them
             # to merge the different runs in a set.
 
             combined_data = []
 
-            for item in self.data_presenter.reduction_list:
+            for item in self.data_handler.reduction_list:
                 offspec = item.cross_sections[pol_state].off_spec
                 Qx, Qz, ki_z, kf_z, S, dS = (offspec.Qx, offspec.Qz, offspec.ki_z, offspec.kf_z, offspec.S, offspec.dS)
 
@@ -585,8 +585,8 @@ class ProcessingWorkflow:
                     )
                     continue
 
-            if pol_state in self.data_presenter.reduction_list[0].cross_sections:
-                _pol_state = self.data_presenter.reduction_list[0].cross_sections[pol_state].cross_section_label
+            if pol_state in self.data_handler.reduction_list[0].cross_sections:
+                _pol_state = self.data_handler.reduction_list[0].cross_sections[pol_state].cross_section_label
             else:
                 _pol_state = pol_state
             data_dict[pol_state] = combined_data
@@ -704,8 +704,8 @@ class ProcessingWorkflow:
         if slice_data_dict == {}:
             slice_data_dict = dict(units=["1/A", "a.u.", "a.u."], columns=[label, "I", "dI"], cross_sections={})
 
-        q_min = self.data_presenter.active_cross_section.configuration.gisans_slice_qz_min
-        q_max = self.data_presenter.active_cross_section.configuration.gisans_slice_qz_max
+        q_min = self.data_handler.active_cross_section.configuration.gisans_slice_qz_min
+        q_max = self.data_handler.active_cross_section.configuration.gisans_slice_qz_max
 
         # We can use the off-specular get_slice() function because it's not specific to off-specular
         result, error = off_specular.get_slice(qz, r, dr, q_min, q_max)
@@ -731,23 +731,23 @@ class ProcessingWorkflow:
         )
 
         # Extract common information
-        if not self.data_presenter.reduction_states or not self.data_presenter.reduction_list:
+        if not self.data_handler.reduction_states or not self.data_handler.reduction_list:
             logging.error("List of cross-sections is empty")
             return data_dict
-        first_state = self.data_presenter.reduction_states[0]
+        first_state = self.data_handler.reduction_states[0]
         p_0 = [
             item.cross_sections[first_state].configuration.cut_first_n_points
-            for item in self.data_presenter.reduction_list
+            for item in self.data_handler.reduction_list
         ]
         p_n = [
             item.cross_sections[first_state].configuration.cut_last_n_points
-            for item in self.data_presenter.reduction_list
+            for item in self.data_handler.reduction_list
         ]
 
-        for pol_state in self.data_presenter.reduction_states:
+        for pol_state in self.data_handler.reduction_states:
             # The scaling factors should have been determined at this point. Just use them
             # to merge the different runs in a set.
-            ws_list = data_manipulation.get_scaled_workspaces(self.data_presenter.reduction_list, pol_state)
+            ws_list = data_manipulation.get_scaled_workspaces(self.data_handler.reduction_list, pol_state)
 
             # If the reflectivity calculation failed, we may not have data to work with
             # for this cross-section.
@@ -772,8 +772,8 @@ class ProcessingWorkflow:
             ordered = np.argsort(_output_data, axis=0).transpose()[0]
             output_data = _output_data[ordered]
 
-            if pol_state in self.data_presenter.reduction_list[0].cross_sections:
-                _pol_state = self.data_presenter.reduction_list[0].cross_sections[pol_state].cross_section_label
+            if pol_state in self.data_handler.reduction_list[0].cross_sections:
+                _pol_state = self.data_handler.reduction_list[0].cross_sections[pol_state].cross_section_label
             else:
                 _pol_state = pol_state
             data_dict[pol_state] = output_data
@@ -781,7 +781,7 @@ class ProcessingWorkflow:
 
         # Asymmetry
         if self.output_options.export_asym:
-            p_state, m_state = self.data_presenter.determine_asymmetry_states()
+            p_state, m_state = self.data_handler.determine_asymmetry_states()
             if p_state and m_state:
                 # Get the list of workspaces
                 asym_data = []
@@ -813,11 +813,11 @@ class ProcessingWorkflow:
 
     def _email_replace(self, text):
         """Replace token templates in text."""
-        run_list = [str(item.run_number) for item in self.data_presenter.reduction_list]
+        run_list = [str(item.run_number) for item in self.data_handler.reduction_list]
         return (
             text.replace("{ipts}", "")
             .replace("{numbers}", "+".join(run_list))
-            .replace("{instrument}", self.data_presenter.active_cross_section.configuration.instrument.instrument_name)
+            .replace("{instrument}", self.data_handler.active_cross_section.configuration.instrument.instrument_name)
         )
 
     def send_email(self):
