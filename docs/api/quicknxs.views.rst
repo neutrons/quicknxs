@@ -10,6 +10,14 @@ quicknxs.views package
 Submodules
 ----------
 
+quicknxs.views.compare module
+------------------------------
+
+.. automodule:: quicknxs.views.compare
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 quicknxs.views.deadtime\_entry module
 --------------------------------------
 

@@ -10,14 +10,6 @@ quicknxs.presenters package
 Submodules
 ----------
 
-quicknxs.presenters.compare module
-------------------------------------
-
-.. automodule:: quicknxs.presenters.compare
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 quicknxs.presenters.configuration\_handler module
 --------------------------------------------------
 

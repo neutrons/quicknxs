@@ -46,8 +46,8 @@ CONFIG_LABELS = {
 
 LABEL_TO_CONFIG = {v: k for k, v in CONFIG_LABELS.items()}
 
-# Compatibility mapping for legacy config names to new config attribute names.
-# This is used when reading old reduced files that may have used the old attribute names.
+# Compatibility mapping for user-facing to new config attribute names.
+# This is used when reading reduced files to map labels to the new Configuration attributes.
 LEGACY_CONFIG_MAP = {
     "binning_type_global": "q_binning_type_global",
     "binning_q_step_global": "q_binning_step_global",
