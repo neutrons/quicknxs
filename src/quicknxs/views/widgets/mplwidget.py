@@ -10,6 +10,7 @@ import logging
 import os
 import pickle
 import tempfile
+from pathlib import Path
 
 import matplotlib.colors
 import numpy as np
@@ -41,13 +42,13 @@ def _set_default_rc():
 _set_default_rc()
 
 # path where all of the icons are
-ICON_DIR = os.path.join(os.path.split(__file__)[0], "../", "icons")
+ICON_DIR = Path(__file__).parent.parent.parent / "icons"
 
 
 def getIcon(filename: str) -> "QtGui.QIcon":
-    filename_full = os.path.join(ICON_DIR, filename)
+    filename_full = ICON_DIR / filename
     icon = QtGui.QIcon()
-    icon.addPixmap(QtGui.QPixmap(filename_full), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+    icon.addPixmap(QtGui.QPixmap(str(filename_full)), QtGui.QIcon.Normal, QtGui.QIcon.Off)
     return icon
 
 
@@ -440,9 +441,9 @@ class NavigationToolbar(NavigationToolbar2QT):
         """Save the plot to a temporary png file and show a preview dialog also used for printing."""
         filetypes = self.canvas.get_supported_filetypes_grouped()
 
-        filename = os.path.join(tempfile.gettempdir(), "quicknxs_print.png")
+        filename = Path(tempfile.gettempdir()) / "quicknxs_print.png"
         self.canvas.print_figure(filename, dpi=600)
-        imgpix = QtGui.QPixmap(filename)
+        imgpix = QtGui.QPixmap(str(filename))
         os.remove(filename)
 
         imgobj = QtWidgets.QLabel()
