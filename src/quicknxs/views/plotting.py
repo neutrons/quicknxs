@@ -46,7 +46,7 @@ class PlotView:
         main_window.ui.xy_overview.clear()
         main_window.ui.xtof_overview.clear()
 
-        data: CrossSectionData = main_window.data_handler.active_cross_section
+        data: CrossSectionData = main_window.data_manager.active_cross_section
         # Initialize data as needed
         data.prepare_plot_data()
 
@@ -173,7 +173,7 @@ class PlotView:
     def plot_xy(self):
         """X vs. Y plots for all xss."""
         main_window = self.main_window
-        data_set_keys = list(main_window.data_handler.data_sets.keys())
+        data_set_keys = list(main_window.data_manager.data_sets.keys())
         plots = [main_window.ui.xy_pp, main_window.ui.xy_mm, main_window.ui.xy_pm, main_window.ui.xy_mp]
         for i in range(len(data_set_keys), 4):
             if plots[i].cplot is not None:
@@ -187,7 +187,7 @@ class PlotView:
         n_total = len(data_set_keys)
         progress(0.1, message="Compiling plots", out_of=n_total + 1)
         for i, key in enumerate(data_set_keys[:4]):
-            dataset = main_window.data_handler.data_sets[key]
+            dataset = main_window.data_manager.data_sets[key]
             dataset.prepare_plot_data()
             d = dataset.xydata / dataset.proton_charge
             xynormed.append(d)
@@ -209,7 +209,7 @@ class PlotView:
 
         progress(n_total, message="Plotting...", out_of=n_total + 1)
         for i, datai in enumerate(xynormed):
-            if main_window.data_handler.data_sets[data_set_keys[i]].total_counts == 0:
+            if main_window.data_manager.data_sets[data_set_keys[i]].total_counts == 0:
                 continue
             if main_window.ui.tthPhi.isChecked():
                 plots[i].clear()
@@ -255,7 +255,7 @@ class PlotView:
     def plot_xtof(self):
         """X vs. ToF plots for all xss."""
         main_window = self.main_window
-        data_set_keys = list(main_window.data_handler.data_sets.keys())
+        data_set_keys = list(main_window.data_manager.data_sets.keys())
         imin = 1e20
         imax = 1e-20
         xtofnormed = []
@@ -268,7 +268,7 @@ class PlotView:
         n_total = len(data_set_keys)
         progress(0.1, message="Compiling plots", out_of=n_total + 1)
         for i, key in enumerate(data_set_keys[:4]):
-            dataset = main_window.data_handler.data_sets[key]
+            dataset = main_window.data_manager.data_sets[key]
             dataset.prepare_plot_data()
             d = dataset.xtofdata / dataset.proton_charge
             if main_window.ui.normalizeXTof.isChecked() and ref_norm is not None:
@@ -283,8 +283,8 @@ class PlotView:
 
         progress(n_total, message="Plotting...", out_of=n_total + 1)
 
-        wavelength = main_window.data_handler.active_cross_section.wavelength
-        tof = main_window.data_handler.active_cross_section.tof
+        wavelength = main_window.data_manager.active_cross_section.wavelength
+        tof = main_window.data_manager.active_cross_section.tof
 
         plots = [main_window.ui.xtof_pp, main_window.ui.xtof_mm, main_window.ui.xtof_pm, main_window.ui.xtof_mp]
         for i in range(len(data_set_keys), 4):
@@ -302,7 +302,7 @@ class PlotView:
             main_window.ui.frame_xtof_mm.hide()
             main_window.ui.frame_xtof_sf.hide()
         for i, datai in enumerate(xtofnormed):
-            if main_window.data_handler.data_sets[data_set_keys[i]].total_counts == 0:
+            if main_window.data_manager.data_sets[data_set_keys[i]].total_counts == 0:
                 continue
             if main_window.ui.xLamda.isChecked():
                 plots[i].imshow(
@@ -344,9 +344,9 @@ class PlotView:
         separate the specular reflection from bragg-sheets
         """
         main_window = self.main_window
-        if main_window.data_handler.active_cross_section is None:
+        if main_window.data_manager.active_cross_section is None:
             return
-        data = main_window.data_handler.active_cross_section
+        data = main_window.data_manager.active_cross_section
         data.prepare_plot_data()
 
         if data.total_counts == 0:
@@ -432,7 +432,7 @@ class PlotView:
         plotted intensity and select the coordinates to be either kiz-kfz vs. Qz,
         Qx vs. Qz or kiz vs. kfz.
         """
-        if self.main_window.data_handler.active_cross_section is None:
+        if self.main_window.data_manager.active_cross_section is None:
             return
 
         xlim = None
@@ -449,7 +449,7 @@ class PlotView:
         ]
         for plot in plots:
             plot.clear()
-        data_set_keys = list(self.main_window.data_handler.data_sets.keys())
+        data_set_keys = list(self.main_window.data_manager.data_sets.keys())
         for i in range(len(data_set_keys), 4):
             if plots[i].cplot is not None:
                 plots[i].draw()
@@ -469,13 +469,13 @@ class PlotView:
         k_diff_max = -0.01
 
         progress = self.main_window.file_handler.new_progress_reporter()
-        n_total = len(self.main_window.data_handler.reduction_list)
+        n_total = len(self.main_window.data_manager.reduction_list)
         if n_total == 0:
             progress(100, message="No data to reduce: add data to the reduction list", out_of=100)
             return
         progress(0.1, message="Computing off-specular", out_of=n_total)
         final_msg = "Off-specular calculation complete"
-        for i_run, nexus_data in enumerate(self.main_window.data_handler.reduction_list):
+        for i_run, nexus_data in enumerate(self.main_window.data_manager.reduction_list):
             for i, xs in enumerate(data_set_keys):
                 plot = plots[i]
                 plot.show()
@@ -580,19 +580,19 @@ class PlotView:
         """Add the direct beam intensity from the current dataset to the reflectivity/intensity plot."""
         # format and plot tof data
 
-        counts_normalized = self.main_window.data_handler.active_cross_section.get_tof_counts_table()[0][:, 2]
-        counts_normalized_error = self.main_window.data_handler.active_cross_section.get_tof_counts_table()[0][:, 3]
+        counts_normalized = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 2]
+        counts_normalized_error = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 3]
 
         if self.main_window.ui.xLamda.isChecked():
             self.main_window.ui.refl.errorbar(
-                self.main_window.data_handler.active_cross_section.wavelength,
+                self.main_window.data_manager.active_cross_section.wavelength,
                 counts_normalized,
                 yerr=counts_normalized_error,
             )
             self.main_window.ui.refl.set_xlabel("$\\lambda{}$ [Å]")
         else:
             # convert raw microsecond units to milliseconds to match xtof plot
-            tof_ms = self.main_window.data_handler.active_cross_section.get_tof_counts_table()[0][:, 0] / 1000
+            tof_ms = self.main_window.data_manager.active_cross_section.get_tof_counts_table()[0][:, 0] / 1000
 
             self.main_window.ui.refl.errorbar(
                 tof_ms,
@@ -623,11 +623,11 @@ class PlotView:
         """
         self.main_window.ui.refl.clear()
 
-        if self.main_window.data_handler.active_cross_section is None:
+        if self.main_window.data_manager.active_cross_section is None:
             self._plot_message(self.main_window.ui.refl, "No data")
             return False
 
-        if self.main_window.data_handler.active_cross_section.is_direct_beam:
+        if self.main_window.data_manager.active_cross_section.is_direct_beam:
             plot_title = "Intensity"
             self._prepare_intensity_plot()
             is_plotted = True
@@ -660,14 +660,14 @@ class PlotView:
             True if the plot preparation was successful, False otherwise
         """
         if (
-            self.main_window.data_handler.active_cross_section.r is None
-            or self.main_window.data_handler.active_cross_section.q is None
-            or self.main_window.data_handler.active_cross_section.dr is None
+            self.main_window.data_manager.active_cross_section.r is None
+            or self.main_window.data_manager.active_cross_section.q is None
+            or self.main_window.data_manager.active_cross_section.dr is None
         ):
             self._plot_message(self.main_window.ui.refl, "No data")
             return False
 
-        data = self.main_window.data_handler.active_cross_section
+        data = self.main_window.data_manager.active_cross_section
         if data.total_counts == 0:
             self._plot_message(self.main_window.ui.refl, "No points to show\nin active dataset!")
             return False
@@ -682,8 +682,8 @@ class PlotView:
         ymin = 1.5
         ymax = 1e-7
         P0 = self.main_window.ui.rangeStart.value()
-        PN = len(self.main_window.data_handler.active_cross_section.q) - self.main_window.ui.rangeEnd.value()
-        ynormed = self.main_window.data_handler.active_cross_section.r[P0:PN]
+        PN = len(self.main_window.data_manager.active_cross_section.q) - self.main_window.ui.rangeEnd.value()
+        ynormed = self.main_window.data_manager.active_cross_section.r[P0:PN]
         if len(ynormed[ynormed > 0]) < 2:
             self._plot_message(self.main_window.ui.refl, "No points to show\nin active dataset!")
             return False
@@ -691,17 +691,17 @@ class PlotView:
         ymin = min(ymin, ynormed[ynormed > 0].min())
         ymax = _set_ymax(ymax, ynormed)
         self.main_window.ui.refl.errorbar(
-            self.main_window.data_handler.active_cross_section.q[P0:PN],
+            self.main_window.data_manager.active_cross_section.q[P0:PN],
             ynormed,
-            yerr=self.main_window.data_handler.active_cross_section.dr[P0:PN],
+            yerr=self.main_window.data_manager.active_cross_section.dr[P0:PN],
             label="Active",
             lw=2,
             capsize=1,
             color="black",
         )
 
-        xs_name = self.main_window.data_handler.active_cross_section.name
-        for i, refli in enumerate(self.main_window.data_handler.reduction_list):
+        xs_name = self.main_window.data_manager.active_cross_section.name
+        for i, refli in enumerate(self.main_window.data_manager.reduction_list):
             if refli.cross_sections[xs_name].q is None:
                 continue
             P0i = refli.cross_sections[xs_name].configuration.cut_first_n_points
@@ -729,7 +729,7 @@ class PlotView:
 
     def plot_gisans(self):
         """Create GISANS plots of the current dataset with Qy-Qz maps."""
-        if self.main_window.data_handler.active_cross_section is None:
+        if self.main_window.data_manager.active_cross_section is None:
             return
 
         plots = [
@@ -741,7 +741,7 @@ class PlotView:
 
         for plot in plots:
             plot.clear()
-        data_set_keys = list(self.main_window.data_handler.data_sets.keys())
+        data_set_keys = list(self.main_window.data_manager.data_sets.keys())
         for i in range(len(data_set_keys), 4):
             if plots[i].cplot is not None:
                 plots[i].draw()
@@ -753,7 +753,7 @@ class PlotView:
         for i, xs in enumerate(data_set_keys):
             plot = plots[i]
             plot.show()
-            selected_data = self.main_window.data_handler.data_sets[xs]
+            selected_data = self.main_window.data_manager.data_sets[xs]
             plots[i].clear_fig()
             plots[i].pcolormesh(
                 selected_data.gisans_data.QyGrid,

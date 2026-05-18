@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 from qtpy import QtCore, QtWidgets
 
 from quicknxs.enums import OffSpecXAxis
-from quicknxs.presenters.data_handler import DataHandler
+from quicknxs.presenters.data_manager import DataManager
 from quicknxs.views import load_ui
 from quicknxs.views.widgets import MPLWidget
 
@@ -22,7 +22,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
     drawing = False
 
-    def __init__(self, parent, data_handler: DataHandler, show_smoothing: bool = False, show_binning: bool = False):
+    def __init__(self, parent, data_manager: DataManager, show_smoothing: bool = False, show_binning: bool = False):
         """
         Initialize the combined off-specular parameters dialog.
 
@@ -30,7 +30,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         ----------
         parent : QWidget
             Parent widget
-        data_handler : DataHandler
+        data_manager : DataManager
             Data manager instance
         show_smoothing : bool
             Whether to show smoothing parameters
@@ -39,7 +39,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         """
         QtWidgets.QDialog.__init__(self, parent)
         self.ui = load_ui("ui_smooth_dialog.ui", base_instance=self)
-        self.data_handler = data_handler
+        self.data_manager = data_manager
         self.show_smoothing = show_smoothing
         self.show_binning = show_binning
         self.rect_region = None
@@ -203,14 +203,14 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         Qzmax = 0.001
 
         # Get first state from reduction_states
-        if not self.data_handler.reduction_states:
+        if not self.data_manager.reduction_states:
             self.drawing = False
             return
 
-        first_state = self.data_handler.reduction_states[0]
+        first_state = self.data_manager.reduction_states[0]
 
         # Plot data from all runs in the reduction list
-        for item in self.data_handler.reduction_list:
+        for item in self.data_manager.reduction_list:
             # Check if off_spec data exists
             if first_state not in item.cross_sections:
                 logger.warning(f"Cross section state '{first_state}' not found in item, skipping plot")

@@ -25,7 +25,7 @@ from quicknxs.exceptions import CrossSectionError, NormalizeToUnityQCutoffError
 from quicknxs.models.configuration import Configuration
 from quicknxs.models.data_set import CrossSectionData, NexusData
 from quicknxs.models.diagnostic_data import DiagnosticData
-from quicknxs.presenters.data_handler import DataHandler
+from quicknxs.presenters.data_manager import DataManager
 from quicknxs.presenters.progress_reporter import ProgressReporter
 from quicknxs.utils.filepath import FilePath, RunNumbers
 from quicknxs.views.diagnostic_widget import DiagnosticWidget
@@ -44,7 +44,7 @@ class MainHandler:
     def __init__(self, main_window):
         self.ui = main_window.ui
         self.main_window = main_window
-        self._data_handler: DataHandler = main_window.data_handler
+        self._data_manager: DataManager = main_window.data_manager
 
         # Create button groups for radio buttons to ensure mutual exclusivity
         self.reduction_table_button_groups = {}  # {tab_index: QButtonGroup}
@@ -54,7 +54,7 @@ class MainHandler:
         self.reduction_table_button_groups[self.MAIN_DATA_TAB_INDEX] = QtWidgets.QButtonGroup(self.main_window)
 
         # Update file list when changes are made
-        self._path_watcher = QtCore.QFileSystemWatcher([self._data_handler.current_directory], self.main_window)
+        self._path_watcher = QtCore.QFileSystemWatcher([self._data_manager.current_directory], self.main_window)
         self._path_watcher.directoryChanged.connect(self.update_file_list)
 
         self.cache_indicator = QtWidgets.QLabel("Files loaded: 0")
@@ -74,7 +74,7 @@ class MainHandler:
         self.progress_bar.setMaximumSize(140, 100)
         self.ui.statusbar.addPermanentWidget(self.progress_bar)
 
-        self.status_bar_handler = StatusBar(self.ui.statusbar)
+        self.status_bar = StatusBar(self.ui.statusbar)
 
         # Log Level dropdown in statusbar
         self.log_level = QtWidgets.QComboBox(self.ui.statusbar)
@@ -119,11 +119,11 @@ class MainHandler:
 
     def new_progress_reporter(self):
         """Return a progress reporter."""
-        return ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
+        return ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar)
 
     def empty_cache(self):
         """Empty the data cache."""
-        self._data_handler.clear_cache()
+        self._data_manager.clear_cache()
         self.cache_indicator.setText("Files loaded: 0")
 
     def hide_sidebar(self):
@@ -159,8 +159,8 @@ class MainHandler:
         """
         # Actions carried out:
         # 1. check the file exists
-        # 2. Invoke DataHandler.load()
-        # 3. if silent==False, invoke DataHandler.file_loaded()
+        # 2. Invoke DataManager.load()
+        # 3. if silent==False, invoke DataManager.file_loaded()
 
         if file_path is None:
             self.report_message("No file selected", pop_up=True)
@@ -183,14 +183,14 @@ class MainHandler:
         self.main_window.auto_change_active = True
         try:
             self.report_message(f"Loading file(s) {file_path}")
-            prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
+            prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar)
             configuration = self.get_configuration_from_ui()
-            self._data_handler.load(file_path, configuration, force=force, progress=prog)
-            self.report_message(f"Loaded file(s) {self._data_handler.current_file_name}")
+            self._data_manager.load(file_path, configuration, force=force, progress=prog)
+            self.report_message(f"Loaded file(s) {self._data_manager.current_file_name}")
         except (RuntimeError, CrossSectionError) as run_err:
             if isinstance(run_err, RuntimeError):
                 self.report_message(
-                    f"Error loading file(s) {self._data_handler.current_file_name} due to:\n{run_err}",
+                    f"Error loading file(s) {self._data_manager.current_file_name} due to:\n{run_err}",
                     detailed_message=str(traceback.format_exc()),
                     pop_up=True,
                     is_error=True,
@@ -212,13 +212,13 @@ class MainHandler:
     def file_loaded(self):
         """Update UI after a file is loaded."""
         self.main_window.auto_change_active = True
-        self._set_data_handler_active_cross_section()
+        self._set_data_manager_active_cross_section()
 
-        cross_sections = list(self._data_handler.data_sets.keys())
+        cross_sections = list(self._data_manager.data_sets.keys())
         for i, xs in enumerate(cross_sections):
             getattr(self.ui, f"selectedCrossSection{i}").show()
             good_label = xs.replace("_", "-")
-            cross_section_label = self._data_handler.data_sets[xs].cross_section_label
+            cross_section_label = self._data_manager.data_sets[xs].cross_section_label
             if good_label != cross_section_label:
                 good_label = f"{good_label}: {cross_section_label}"
             getattr(self.ui, f"selectedCrossSection{i}").setText(good_label)
@@ -232,17 +232,17 @@ class MainHandler:
         self.main_window.file_loaded_signal.emit()
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
         self.main_window.initiate_projection_plot.emit(False)
-        self.cache_indicator.setText(f"Files loaded: {self._data_handler.get_cachesize()}")
+        self.cache_indicator.setText(f"Files loaded: {self._data_manager.get_cachesize()}")
 
     def active_cross_section_changed(self):
         """Update UI metadata and plots after the active cross section is changed."""
-        self._set_data_handler_active_cross_section()
+        self._set_data_manager_active_cross_section()
         self.update_cross_section_info()
         self.main_window.plotActiveTab()
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
         self.main_window.initiate_projection_plot.emit(False)
 
-    def _set_data_handler_active_cross_section(self):
+    def _set_data_manager_active_cross_section(self):
         """Set the data manager's active cross section to the one in the UI."""
         self.main_window.auto_change_active = True
         current_cross_section = 0
@@ -251,7 +251,7 @@ class MainHandler:
                 current_cross_section = i
                 break
 
-        success = self._data_handler.set_active_cross_section(current_cross_section)
+        success = self._data_manager.set_active_cross_section(current_cross_section)
         if not success:
             self.ui.selectedCrossSection0.setChecked(True)
         self.main_window.auto_change_active = False
@@ -320,16 +320,16 @@ class MainHandler:
     def update_tables(self):
         """Update a data set that may be in the reduction table or the direct beam table."""
         # Update the reduction table if this data set is in it
-        idx = self._data_handler.find_active_data_id()
+        idx = self._data_manager.find_active_data_id()
         if idx is not None:
             table_widget = self.reduction_table
-            self.update_reduction_table(table_widget, idx, self._data_handler.active_cross_section)
+            self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
 
         # Update the direct beam table if this data set is in it
-        idx = self._data_handler.find_active_direct_beam_id()
+        idx = self._data_manager.find_active_direct_beam_id()
         if idx is not None:
-            self.update_direct_beam_table(idx, self._data_handler.active_cross_section)
-            direct_beam = self._data_handler.direct_beam_list[idx]
+            self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
+            direct_beam = self._data_manager.direct_beam_list[idx]
             self.update_reduction_table_from_direct_beam(direct_beam)
 
     def update_calculated_data(self):
@@ -338,7 +338,7 @@ class MainHandler:
         We should call this after the peak ranges change,
         or after a change is made that will affect the displayed results.
         """
-        d = self._data_handler.active_cross_section
+        d = self._data_manager.active_cross_section
         if d is None:
             return
 
@@ -371,7 +371,7 @@ class MainHandler:
     def update_overview_run_info_from_active_run(self):
         """Update metadata shown in the overview tab."""
         self.main_window.auto_change_active = True
-        d = self._data_handler.active_cross_section
+        d = self._data_manager.active_cross_section
         self.populate_from_configuration(d.configuration)
         QtWidgets.QApplication.instance().processEvents()
 
@@ -424,7 +424,7 @@ class MainHandler:
     def update_cross_section_info(self):
         """Update cross section metadata shown in the overview tab."""
         # Update cross-section specific information in the overview tab
-        d = self._data_handler.active_cross_section
+        d = self._data_manager.active_cross_section
         self.ui.datasetPCharge.setText(f"{d.proton_charge:.3e}")
         self.ui.datasetTime.setText(f"{d.total_time:.0f} s")
         self.ui.datasetTotCounts.setText(f"{d.total_counts:.4e}")
@@ -464,7 +464,7 @@ class MainHandler:
         def _updated_current_list():
             r"""Most updated list of single and composite files from the current directory."""
             _, composites = _split_composites()
-            return sorted(self._data_handler.current_event_files + composites)
+            return sorted(self._data_manager.current_event_files + composites)
 
         def _reset_ui_file_list(fresh_list):
             r"""Reset widget self.ui.file_list and highlight the current file_name."""
@@ -472,20 +472,20 @@ class MainHandler:
             assert isinstance(fresh_list, list), f"fresh_list must be list but not {type(fresh_list)}"
             for item in fresh_list:
                 listitem = QtWidgets.QListWidgetItem(item, self.ui.file_list)
-                if item == self._data_handler.current_file_name:
+                if item == self._data_manager.current_file_name:
                     # Changing the current selection will trigger self.main_window.file_open_from_list() to be called,
                     # however, the current setting self.main_window.auto_change_active == True will cause
                     # self.main_window.file_open_from_list() to return before any statement is executed
                     self.ui.file_list.setCurrentItem(listitem)
-                if item in self._data_handler.bad_files:
+                if item in self._data_manager.bad_files:
                     listitem.setForeground(QColors.red)
 
         def _update_current_directory(new_dir):
             r"""Update the directory path in the main window and the path watcher."""
             self.main_window.settings.setValue("current_directory", new_dir)
-            self._path_watcher.removePath(self._data_handler.current_directory)
-            self._data_handler.current_directory = new_dir
-            self._path_watcher.addPath(self._data_handler.current_directory)
+            self._path_watcher.removePath(self._data_manager.current_directory)
+            self._data_manager.current_directory = new_dir
+            self._path_watcher.addPath(self._data_manager.current_directory)
 
         # This setting prevents automatic read-in of the currently selected item in the list
         # when the currently selected items changes due to the list update.
@@ -501,31 +501,31 @@ class MainHandler:
         elif file_path.is_composite:
             file_dir, _ = file_path.split()
             # Use case 2.1: the composite is made up of files in the current directory
-            if file_dir == self._data_handler.current_directory:
+            if file_dir == self._data_manager.current_directory:
                 new_list = sorted(_updated_current_list() + [file_path.basename])
             # Use case 2.2: the composite is made up of files in a new directory
             else:
                 _update_current_directory(file_dir)
-                new_list = sorted(self._data_handler.current_event_files + [file_path.basename])
+                new_list = sorted(self._data_manager.current_event_files + [file_path.basename])
         # Use case 3: a single path pointing to a file or a directory
         else:
             # Use case 3.1: a single path pointing to a new directory
             if os.path.isdir(query_path):
                 file_dir = query_path
-                if file_dir != self._data_handler.current_directory:  # User changed directory
+                if file_dir != self._data_manager.current_directory:  # User changed directory
                     _update_current_directory(file_dir)
-                    new_list = self._data_handler.current_event_files
+                    new_list = self._data_manager.current_event_files
                 else:
                     # TODO FIXME discovered from #93.  This path is not checked and thus problematic
                     new_list = None
             # Use case 3.2: a single path pointing to a file in the current or new directory
             else:
                 file_dir, _ = file_path.split()
-                if file_dir == self._data_handler.current_directory:  # User selected a new file in the directory
+                if file_dir == self._data_manager.current_directory:  # User selected a new file in the directory
                     new_list = _updated_current_list()
                 else:  # User selected a new file in a new directory
                     _update_current_directory(file_dir)
-                    new_list = self._data_handler.current_event_files
+                    new_list = self._data_manager.current_event_files
         # TODO FIXME  - new_list is not None has not been defined by stakeholder
         if new_list is not None:
             _reset_ui_file_list(new_list)
@@ -539,21 +539,21 @@ class MainHandler:
         """
         self.main_window.auto_change_active = True
         # Update the list of files
-        event_file_list = glob.glob(os.path.join(self._data_handler.current_directory, "*event.nxs"))
-        h5_file_list = glob.glob(os.path.join(self._data_handler.current_directory, "*.nxs.h5"))
+        event_file_list = glob.glob(os.path.join(self._data_manager.current_directory, "*event.nxs"))
+        h5_file_list = glob.glob(os.path.join(self._data_manager.current_directory, "*.nxs.h5"))
         event_file_list.extend(h5_file_list)
         event_file_list.sort()
         event_file_list = [os.path.basename(name) for name in event_file_list]
 
         current_file_found = False
         n_count = 0
-        logging.error("Current file: %s", self._data_handler.current_file_name)
+        logging.error("Current file: %s", self._data_manager.current_file_name)
 
-        q_current = self._data_handler.extract_metadata().mid_q
+        q_current = self._data_manager.extract_metadata().mid_q
 
         # Add the current data set to the reduction table
         # Do nothing if the data is incompatible
-        is_direct_beam = self._data_handler.active_cross_section.is_direct_beam
+        is_direct_beam = self._data_manager.active_cross_section.is_direct_beam
         if is_direct_beam:
             if not self.add_direct_beam():
                 return
@@ -562,26 +562,26 @@ class MainHandler:
                 return
 
         for f in event_file_list:
-            file_path = str(os.path.join(self._data_handler.current_directory, f))
+            file_path = str(os.path.join(self._data_manager.current_directory, f))
             if current_file_found and n_count < 10:
                 n_count += 1
-                metadata = self._data_handler.extract_metadata(file_path)
+                metadata = self._data_manager.extract_metadata(file_path)
 
                 if q_current <= metadata.mid_q and is_direct_beam == metadata.is_direct_beam:
                     q_current = metadata.mid_q
                     self.open_file(file_path, silent=True)
-                    d = self._data_handler.active_cross_section
+                    d = self._data_manager.active_cross_section
                     # If we find data of another type, stop here
-                    if not is_direct_beam == self._data_handler.active_cross_section.is_direct_beam:
+                    if not is_direct_beam == self._data_manager.active_cross_section.is_direct_beam:
                         break
                     self.main_window.auto_change_active = True
                     self.populate_from_configuration(d.configuration)
-                    if self._data_handler.active_cross_section.is_direct_beam:
+                    if self._data_manager.active_cross_section.is_direct_beam:
                         self.add_direct_beam()
                     else:
                         self.add_reflectivity()
 
-            if f == self._data_handler.current_file_name:
+            if f == self._data_manager.current_file_name:
                 current_file_found = True
 
         # At the very end, update the UI and plot reflectivity
@@ -609,7 +609,7 @@ class MainHandler:
             configuration = self.get_configuration_from_ui()
             prog = self.new_progress_reporter()
             try:
-                self._data_handler.load_data_from_reduced_file(file_path, configuration=configuration, progress=prog)
+                self._data_manager.load_data_from_reduced_file(file_path, configuration=configuration, progress=prog)
             except CrossSectionError as err:
                 self._show_diagnostic(err)
                 return
@@ -621,32 +621,32 @@ class MainHandler:
             self.main_window.auto_change_active = True
 
             # Update UI direct beam table
-            self.ui.directBeamTable.setRowCount(len(self._data_handler.direct_beam_list))
-            for idx, _ in enumerate(self._data_handler.direct_beam_list):
-                self._data_handler.set_active_data_from_direct_beam_list(idx)
-                self.update_direct_beam_table(idx, self._data_handler.active_cross_section)
+            self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
+            for idx, _ in enumerate(self._data_manager.direct_beam_list):
+                self._data_manager.set_active_data_from_direct_beam_list(idx)
+                self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
             # Update UI data table(s) with the loaded data
-            for ipeak, _ in self._data_handler.peak_reduction_lists.items():
-                self._data_handler.set_active_reduction_list_index(ipeak)
+            for ipeak, _ in self._data_manager.peak_reduction_lists.items():
+                self._data_manager.set_active_reduction_list_index(ipeak)
                 self.main_window.add_data_tab_by_index(ipeak)
                 table_widget = self.get_reduction_table_by_index(ipeak)
-                table_widget.setRowCount(len(self._data_handler.reduction_list))
-                for idx, _ in enumerate(self._data_handler.reduction_list):
-                    self._data_handler.set_active_data_from_reduction_list(idx)
-                    self.update_reduction_table(table_widget, idx, self._data_handler.active_cross_section)
+                table_widget.setRowCount(len(self._data_manager.reduction_list))
+                for idx, _ in enumerate(self._data_manager.reduction_list):
+                    self._data_manager.set_active_data_from_reduction_list(idx)
+                    self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
 
             # Set the first reduction table and its first run as the active (plotted) data
-            self._data_handler.set_active_reduction_list_index(self._data_handler.MAIN_REDUCTION_LIST_INDEX)
-            self._data_handler.set_active_data_from_reduction_list(0)
+            self._data_manager.set_active_reduction_list_index(self._data_manager.MAIN_REDUCTION_LIST_INDEX)
+            self._data_manager.set_active_data_from_reduction_list(0)
 
-            direct_beam_ids = [str(r.run_number) for r in self._data_handler.direct_beam_list]
+            direct_beam_ids = [str(r.run_number) for r in self._data_manager.direct_beam_list]
             self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
             self.file_loaded()
 
-            if self._data_handler.active_cross_section is not None:
-                self.populate_from_configuration(self._data_handler.active_cross_section.configuration)
-                self.update_file_list(self._data_handler.current_file)
+            if self._data_manager.active_cross_section is not None:
+                self.populate_from_configuration(self._data_manager.active_cross_section.configuration)
+                self.update_file_list(self._data_manager.current_file)
             self.main_window.auto_change_active = False
 
             logging.info("UI updated: %s", time.time() - t_0)
@@ -663,11 +663,11 @@ class MainHandler:
         if tab_index not in self.reduction_table_button_groups:
             self.reduction_table_button_groups[tab_index] = QtWidgets.QButtonGroup(self.main_window)
 
-        if self._data_handler.main_reduction_list:
+        if self._data_manager.main_reduction_list:
             table_widget = self.get_reduction_table_by_index(tab_index)
-            table_widget.setRowCount(len(self._data_handler.main_reduction_list))
-            active_cross_section_name: str = self._data_handler.active_cross_section.name
-            for idx, nexus_data in enumerate(self._data_handler.main_reduction_list):
+            table_widget.setRowCount(len(self._data_manager.main_reduction_list))
+            active_cross_section_name: str = self._data_manager.active_cross_section.name
+            for idx, nexus_data in enumerate(self._data_manager.main_reduction_list):
                 active_cross_section = nexus_data.cross_sections[active_cross_section_name]
                 self.update_reduction_table(table_widget, idx, active_cross_section)
 
@@ -685,7 +685,7 @@ class MainHandler:
             Absolute path to the selected file
         """
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self.main_window, "Open NXS file...", directory=self._data_handler.current_directory, filter=filter_
+            self.main_window, "Open NXS file...", directory=self._data_manager.current_directory, filter=filter_
         )
         return file_path
 
@@ -708,7 +708,7 @@ class MainHandler:
         file_paths, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self.main_window,
             "Select multiple NXS files to sum before data reduction.",
-            directory=self._data_handler.current_directory,
+            directory=self._data_manager.current_directory,
             filter=filter_,
         )
         # user cancel operation
@@ -810,21 +810,21 @@ class MainHandler:
         table = self.ui.daslogTableBox
         table.setRowCount(0)
         table.sortItems(-1)
-        table.setColumnCount(len(self._data_handler.data_sets) + 2)
-        table.setHorizontalHeaderLabels(["Name"] + list(self._data_handler.data_sets.keys()) + ["Unit"])
-        for j, key in enumerate(sorted(self._data_handler.active_cross_section.logs.keys(), key=lambda s: s.lower())):
+        table.setColumnCount(len(self._data_manager.data_sets) + 2)
+        table.setHorizontalHeaderLabels(["Name"] + list(self._data_manager.data_sets.keys()) + ["Unit"])
+        for j, key in enumerate(sorted(self._data_manager.active_cross_section.logs.keys(), key=lambda s: s.lower())):
             table.insertRow(j)
             table.setItem(j, 0, QtWidgets.QTableWidgetItem(key))
             table.setItem(
                 j,
-                len(self._data_handler.data_sets) + 1,
-                QtWidgets.QTableWidgetItem(self._data_handler.active_cross_section.log_units[key]),
+                len(self._data_manager.data_sets) + 1,
+                QtWidgets.QTableWidgetItem(self._data_manager.active_cross_section.log_units[key]),
             )
             i = 0
-            for xs in self._data_handler.data_sets:
-                item = QtWidgets.QTableWidgetItem(f"{self._data_handler.data_sets[xs].logs[key]:g}")
+            for xs in self._data_manager.data_sets:
+                item = QtWidgets.QTableWidgetItem(f"{self._data_manager.data_sets[xs].logs[key]:g}")
                 item.setToolTip(
-                    f"MIN: {self._data_handler.data_sets[xs].log_minmax[key][0]:g}   MAX: {self._data_handler.data_sets[xs].log_minmax[key][1]:g}"
+                    f"MIN: {self._data_manager.data_sets[xs].log_minmax[key][0]:g}   MAX: {self._data_manager.data_sets[xs].log_minmax[key][1]:g}"
                 )
                 table.setItem(j, i + 1, item)
                 i += 1
@@ -845,10 +845,10 @@ class MainHandler:
         # and apply then to all cross-sections.
         if self.ui.action_use_common_ranges.isChecked():
             config = self.get_configuration_from_ui()
-            self._data_handler.update_configuration(configuration=config, active_only=False)
+            self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        result = self._data_handler.add_active_to_reduction()
+        result = self._data_manager.add_active_to_reduction()
         match result:
             case AddToReductionResult.ALREADY_IN_LIST:
                 msg = "Data already in the list."
@@ -865,7 +865,7 @@ class MainHandler:
         # Reduction list has been updated at this point - now update the UI
         self.main_window.auto_change_active = True
 
-        idx = self._data_handler.find_data_in_reduction_list(self._data_handler._nexus_data)
+        idx = self._data_manager.find_data_in_reduction_list(self._data_manager._nexus_data)
         if idx is None:
             raise RuntimeError(
                 "We just added this data to the reduction list, so it should be there! Something went wrong"
@@ -907,12 +907,12 @@ class MainHandler:
                 button_group.removeButton(old_btn)
 
         # radio button for active data (layout inside a widget to center it)
-        radio_widget = ActiveDataRadioButton(self, is_active=(data == self._data_handler.active_cross_section), idx=idx)
+        radio_widget = ActiveDataRadioButton(self, is_active=(data == self._data_manager.active_cross_section), idx=idx)
         button_group.addButton(radio_widget.radio_button)
         table_widget.setCellWidget(idx, ReductionTableColumn.ACTIVE, radio_widget)
 
         item = QtWidgets.QTableWidgetItem(str(data.run_number))
-        if data == self._data_handler.active_cross_section:
+        if data == self._data_manager.active_cross_section:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
@@ -921,8 +921,8 @@ class MainHandler:
         table_widget.setItem(idx, ReductionTableColumn.RUN_NUMBER, item)
 
         # Slice column (non-editable)
-        if idx < len(self._data_handler.reduction_list):
-            nexus_data = self._data_handler.reduction_list[idx]
+        if idx < len(self._data_manager.reduction_list):
+            nexus_data = self._data_manager.reduction_list[idx]
             slice_item = QtWidgets.QTableWidgetItem(str(nexus_data.slice))
         else:
             # Fallback if index is out of bounds (shouldn't happen but defensive programming)
@@ -986,7 +986,7 @@ class MainHandler:
     def clear_reflectivity(self):
         """Remove all items from the reduction lists."""
         # clear the reduction lists in the data manager
-        self._data_handler.clear_reduction_lists()
+        self._data_manager.clear_reduction_lists()
         # clear the reflectivity UI table widgets
         for itab in range(self.ui.tabWidget.count()):
             if itab == self.DIRECT_BEAM_TAB_INDEX:
@@ -1005,7 +1005,7 @@ class MainHandler:
         index = self.reduction_table.currentRow()
         if index < 0:
             return
-        self._data_handler.reduction_list.pop(index)
+        self._data_manager.reduction_list.pop(index)
         self.reduction_table.removeRow(index)
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 
@@ -1024,7 +1024,7 @@ class MainHandler:
         column = item.column()
         column = ReductionTableColumn(column)
 
-        refl = self._data_handler.reduction_list[row]
+        refl = self._data_manager.reduction_list[row]
 
         keys = {
             # ReductionTableColumn.ACTIVE: "active",
@@ -1067,7 +1067,7 @@ class MainHandler:
 
             case ReductionTableColumn.DIRECT_BEAM:
                 direct_beam_name = item.text()
-                direct_beam = self._data_handler.find_direct_beam_by_name(direct_beam_name)
+                direct_beam = self._data_manager.find_direct_beam_by_name(direct_beam_name)
                 if direct_beam:
                     refl.set_parameter(keys[column], direct_beam_name)
                     # use direct beam peak position as dpix overwrite for matched ref runs
@@ -1117,7 +1117,7 @@ class MainHandler:
         """
         # update the configuration state
         binning_type = QBinningType(combobox_index)
-        nexus_data = self._data_handler.reduction_list[row]
+        nexus_data = self._data_manager.reduction_list[row]
         nexus_data.set_parameter("q_binning_type_run", binning_type)
 
         # recalculate and replot
@@ -1139,7 +1139,7 @@ class MainHandler:
         refl.update_calculated_values()
 
         # If the changed data set is the active data, also change the UI
-        if self._data_handler.is_active(refl):
+        if self._data_manager.is_active(refl):
             self.main_window.auto_change_active = True
             self.update_overview_run_info_from_active_run()
             self.main_window.auto_change_active = False
@@ -1147,13 +1147,13 @@ class MainHandler:
             # If the changed data set is another data run, only need to update the UI reduction table,
             # to take into account changes in one column affecting another column
             table_widget = self.reduction_table
-            idx = self._data_handler.find_data_in_reduction_list(refl)
-            active_cross_section_name: str = self._data_handler.active_cross_section.name
+            idx = self._data_manager.find_data_in_reduction_list(refl)
+            active_cross_section_name: str = self._data_manager.active_cross_section.name
             active_cross_section = refl.cross_sections[active_cross_section_name]
             self.update_reduction_table(table_widget, idx, active_cross_section)
 
         # Update the direct beam table if this data set is in it
-        idx = self._data_handler.find_data_in_direct_beam_list(refl)
+        idx = self._data_manager.find_data_in_direct_beam_list(refl)
         if idx is not None:
             cross_sections = list(refl.cross_sections.keys())
             self.update_direct_beam_table(idx, refl.cross_sections[cross_sections[0]])
@@ -1161,10 +1161,10 @@ class MainHandler:
         # Only recalculate if we need to, otherwise just replot
         if recalculate:
             try:
-                self._data_handler.calculate_reflectivity(nexus_data=refl)
+                self._data_manager.calculate_reflectivity(nexus_data=refl)
             except Exception:
                 self.report_message(
-                    f"Could not compute reflectivity for {self._data_handler.current_file_name}",
+                    f"Could not compute reflectivity for {self._data_manager.current_file_name}",
                     detailed_message=str(traceback.format_exc()),
                     pop_up=False,
                     is_error=False,
@@ -1180,10 +1180,10 @@ class MainHandler:
         # Update all cross-section parameters as needed.
         if self.ui.action_use_common_ranges.isChecked():
             config = self.get_configuration_from_ui()
-            self._data_handler.update_configuration(configuration=config, active_only=False)
+            self._data_manager.update_configuration(configuration=config, active_only=False)
 
         # Verify that the new data is consistent with existing data in the table
-        result = self._data_handler.add_active_to_direct_beam_list()
+        result = self._data_manager.add_active_to_direct_beam_list()
         _pop_up = False
         match result:
             case AddToDirectBeamResult.ALREADY_IN_LIST:
@@ -1191,7 +1191,7 @@ class MainHandler:
                 _pop_up = True
             case AddToDirectBeamResult.SUCCESS_REFLECTED:
                 msg = (
-                    f"Run {self._data_handler._nexus_data.run_number} added to direct beam list."
+                    f"Run {self._data_manager._nexus_data.run_number} added to direct beam list."
                     "Note: This run is labeled as a reflected beam in the metadata "
                     "(data_type PV ≠ 1). This may occur for runs started with 'Start RUN' "
                     "command in EPICS."
@@ -1203,13 +1203,13 @@ class MainHandler:
             self.report_message(msg, pop_up=_pop_up)
 
         # The direct beam list has been appended with a new direct beam - add it to the UI table
-        direct_beam_count = len(self._data_handler.direct_beam_list)
+        direct_beam_count = len(self._data_manager.direct_beam_list)
         self.ui.directBeamTable.setRowCount(direct_beam_count)
         idx = direct_beam_count - 1
-        direct_beam_data = self._data_handler.direct_beam_list[idx].get_main_cross_section_data()
+        direct_beam_data = self._data_manager.direct_beam_list[idx].get_main_cross_section_data()
         self.update_direct_beam_table(idx, direct_beam_data)
 
-        direct_beam_ids = [str(r.run_number) for r in self._data_handler.direct_beam_list]
+        direct_beam_ids = [str(r.run_number) for r in self._data_manager.direct_beam_list]
         self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
@@ -1220,13 +1220,13 @@ class MainHandler:
         index = self.ui.directBeamTable.currentRow()
         if index < 0:
             return
-        self._data_handler.direct_beam_list.pop(index)
+        self._data_manager.direct_beam_list.pop(index)
         self.ui.directBeamTable.removeRow(index)
         self.main_window.initiate_reflectivity_or_intensity_plot.emit()
 
     def clear_direct_beams(self):
         """Remove all items from the direct beam list."""
-        self._data_handler.clear_direct_beam_list()
+        self._data_manager.clear_direct_beam_list()
         self.ui.directBeamTable.setRowCount(0)
         # reset the button group so stale entries don't accumulate across load cycles
         self.direct_beam_button_group = QtWidgets.QButtonGroup(self.main_window)
@@ -1243,7 +1243,7 @@ class MainHandler:
         """
         matched_runs = [
             refl
-            for refl in self._data_handler.reduction_list
+            for refl in self._data_manager.reduction_list
             if str(refl.get_parameter("direct_beam")) == str(direct_beam.run_number)
         ]
         dpix = direct_beam.get_parameter("peak_position")
@@ -1253,7 +1253,7 @@ class MainHandler:
             # only update the UI table for runs with set_direct_pixel ("overwrite") enabled,
             # if it is disabled, the value from the DAS will be used and shown instead
             if refl.get_parameter("set_direct_pixel"):
-                idx = self._data_handler.find_data_in_reduction_list(refl)
+                idx = self._data_manager.find_data_in_reduction_list(refl)
                 dpix_item = self.reduction_table.item(idx, ReductionTableColumn.DPIX)
                 self.main_window.auto_change_active = True
                 dpix_item.setText(str(dpix))
@@ -1281,14 +1281,14 @@ class MainHandler:
 
         # radio button for active data (layout inside a widget to center it)
         radio_widget = ActiveDataRadioButton(
-            self, is_active=(data == self._data_handler.active_cross_section), idx=idx, is_direct_beam=True
+            self, is_active=(data == self._data_manager.active_cross_section), idx=idx, is_direct_beam=True
         )
         self.direct_beam_button_group.addButton(radio_widget.radio_button)
         self.ui.directBeamTable.setCellWidget(idx, DirectBeamTableColumn.ACTIVE, radio_widget)
 
         item = QtWidgets.QTableWidgetItem(str(data.run_number))
         item.setFlags(item.flags() & ~QtCore.Qt.ItemFlag.ItemIsEditable)
-        if data == self._data_handler.active_cross_section:
+        if data == self._data_manager.active_cross_section:
             item.setBackground(QColors.yellow)
         else:
             item.setBackground(QColors.white)
@@ -1325,7 +1325,7 @@ class MainHandler:
         if self.main_window.auto_change_active:
             return
 
-        data = self._data_handler.direct_beam_list[item.row()]
+        data = self._data_manager.direct_beam_list[item.row()]
 
         keys = {
             # DirectBeamTableColumn.ACTIVE: "active",
@@ -1353,7 +1353,7 @@ class MainHandler:
                 is_error=True,
             )
             # Reset to old value if conversion fails
-            old_value = getattr(self._data_handler.active_cross_section.configuration, keys[col])
+            old_value = getattr(self._data_manager.active_cross_section.configuration, keys[col])
             item.setText(str(old_value))
             return
 
@@ -1365,17 +1365,17 @@ class MainHandler:
         data.update_calculated_values()
 
         # Update UI if this data set is the active one
-        if self._data_handler.is_active(data):
+        if self._data_manager.is_active(data):
             self.main_window.auto_change_active = True
             self.update_overview_run_info_from_active_run()
             self.main_window.auto_change_active = False
 
         # Recalculate reflectivity for runs with this direct beam
         try:
-            self._data_handler.reduce_spec(direct_beam=data.run_number)
+            self._data_manager.reduce_spec(direct_beam=data.run_number)
         except Exception:
             self.report_message(
-                f"Could not compute reflectivity for {self._data_handler.current_file_name}",
+                f"Could not compute reflectivity for {self._data_manager.current_file_name}",
                 detailed_message=str(traceback.format_exc()),
                 pop_up=False,
                 is_error=False,
@@ -1393,13 +1393,13 @@ class MainHandler:
 
         Also syncs the highlighted file in the file list.
         """
-        if self._data_handler.active_cross_section is None:
+        if self._data_manager.active_cross_section is None:
             return
-        logging.info(f"Active data changed to {self._data_handler.active_cross_section._event_workspace}")
+        logging.info(f"Active data changed to {self._data_manager.active_cross_section._event_workspace}")
         # If we update an entry, it's because that data is currently active.
         # Highlight it and un-highlight the other ones.
         self.main_window.auto_change_active = True
-        idx = self._data_handler.find_active_data_id()
+        idx = self._data_manager.find_active_data_id()
         for i in range(self.reduction_table.rowCount()):
             # Highlight the active data row, un-highlight the others
             run_num = self.reduction_table.item(i, ReductionTableColumn.RUN_NUMBER)
@@ -1413,7 +1413,7 @@ class MainHandler:
             if active_cell is not None and isinstance(active_cell, ActiveDataRadioButton):
                 active_cell.set_checked_block_signals(i == idx)
 
-        idx = self._data_handler.find_active_direct_beam_id()
+        idx = self._data_manager.find_active_direct_beam_id()
         for i in range(self.ui.directBeamTable.rowCount()):
             # Highlight the active data row, un-highlight the others
             item = self.ui.directBeamTable.item(i, DirectBeamTableColumn.RUN_NUMBER)
@@ -1428,7 +1428,7 @@ class MainHandler:
                 active_cell.set_checked_block_signals(i == idx)
 
         # Find the file corresponding to the active data and highlight it in the file list
-        current_file_name = self._data_handler.current_file_name
+        current_file_name = self._data_manager.current_file_name
         for i in range(self.ui.file_list.count()):
             list_item = self.ui.file_list.item(i)
             if list_item is not None:
@@ -1469,13 +1469,13 @@ class MainHandler:
             row = table_widget.rowAt(pos.y())
             if 0 <= row < len(data_table):
                 nexus_data = data_table[row]
-                active_cross_section = self._data_handler.active_cross_section.name
+                active_cross_section = self._data_manager.active_cross_section.name
                 active_cross_section = nexus_data.cross_sections[active_cross_section]
-                for ipeak, peak_data in self._data_handler.peak_reduction_lists.items():
-                    if self._data_handler.copy_nexus_data_to_reduction(nexus_data, ipeak):
+                for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
+                    if self._data_manager.copy_nexus_data_to_reduction(nexus_data, ipeak):
                         # get widget for target reduction table
                         target_widget = self.get_reduction_table_by_index(ipeak)
-                        idx = self._data_handler.find_run_number_in_reduction_list(nexus_data, peak_data)
+                        idx = self._data_manager.find_run_number_in_reduction_list(nexus_data, peak_data)
                         if idx is None:
                             raise RuntimeError("Run number not in reduction list")
                         target_widget.insertRow(idx)
@@ -1491,10 +1491,10 @@ class MainHandler:
         # Get the table widget and data table
         if is_reduction_table:
             table_widget = self.reduction_table
-            data_table = self._data_handler.reduction_list
+            data_table = self._data_manager.reduction_list
         else:
             table_widget = self.ui.directBeamTable
-            data_table = self._data_handler.direct_beam_list
+            data_table = self._data_manager.direct_beam_list
 
         reduction_table_menu = QtWidgets.QMenu(table_widget)
 
@@ -1549,35 +1549,35 @@ class MainHandler:
         """Compute off-specular as needed."""
         prog = self.new_progress_reporter()
         has_changed_values = self.check_region_values_changed()
-        offspec_data_exists = self._data_handler.is_offspec_available()
+        offspec_data_exists = self._data_manager.is_offspec_available()
         logging.info("Exists %s %s", has_changed_values, offspec_data_exists)
         if force or has_changed_values >= 0 or not offspec_data_exists:
             logging.info("Updating....")
             config = self.get_configuration_from_ui()
-            self._data_handler.update_configuration(configuration=config, active_only=False)
-            self._data_handler.reduce_offspec(progress=prog)
+            self._data_manager.update_configuration(configuration=config, active_only=False)
+            self._data_manager.reduce_offspec(progress=prog)
 
     def compute_gisans_on_change(self, force=False, active_only=True):
         """Compute GISANS as needed."""
         prog = self.new_progress_reporter()
         has_changed_values = self.check_region_values_changed()
-        gisans_data_exists = self._data_handler.is_gisans_available(active_only=active_only)
+        gisans_data_exists = self._data_manager.is_gisans_available(active_only=active_only)
         logging.info("Exists %s %s %s", force, has_changed_values, gisans_data_exists)
         if force or has_changed_values >= 0 or not gisans_data_exists:
             logging.info("Updating....")
             config = self.get_configuration_from_ui()
-            self._data_handler.update_configuration(configuration=config, active_only=False)
+            self._data_manager.update_configuration(configuration=config, active_only=False)
             if active_only:
-                result = self._data_handler.calculate_gisans(progress=prog)
+                result = self._data_manager.calculate_gisans(progress=prog)
                 if not result:
                     self.report_message(
-                        f"Could not compute GISANS for {self._data_handler.current_file_name}",
+                        f"Could not compute GISANS for {self._data_manager.current_file_name}",
                         detailed_message=str(traceback.format_exc()),
                         pop_up=True,
                         is_error=True,
                     )
             else:
-                self._data_handler.reduce_gisans(progress=prog)
+                self._data_manager.reduce_gisans(progress=prog)
 
     def check_region_values_changed(self):
         """Return true if any of the parameters tied to a particular slot has changed.
@@ -1598,10 +1598,10 @@ class MainHandler:
              0 = replot needed,
              1 = recalculation needed
         """
-        if self._data_handler.active_cross_section is None:
+        if self._data_manager.active_cross_section is None:
             return -1
 
-        configuration = self._data_handler.active_cross_section.configuration
+        configuration = self._data_manager.active_cross_section.configuration
         valid_change = False
         replot_change = False
 
@@ -1679,8 +1679,8 @@ class MainHandler:
         (e.g. whether to use a ROI or not), while others are specific to each cross-section
         (e.g. the peak position and width).
         """
-        if self._data_handler.active_cross_section is not None:
-            configuration = self._data_handler.active_cross_section.configuration
+        if self._data_manager.active_cross_section is not None:
+            configuration = self._data_manager.active_cross_section.configuration
         else:
             configuration = Configuration()
         configuration.tof_bins = self.ui.eventTofBins.value()
@@ -1865,7 +1865,7 @@ class MainHandler:
             poly_degree = None
 
         try:
-            self._data_handler.stitch_data_sets(
+            self._data_manager.stitch_data_sets(
                 normalize_to_unity=self.ui.normalize_to_unity_checkbox.isChecked(),
                 q_cutoff=self.ui.normalization_q_cutoff_spinbox.value(),
                 global_stitching=self.ui.global_fit_checkbox.isChecked(),
@@ -1888,8 +1888,8 @@ class MainHandler:
             )
         else:
             self.main_window.auto_change_active = True
-            xs_name = self._data_handler.active_cross_section.name
-            for i, nexus_data in enumerate(self._data_handler.reduction_list):
+            xs_name = self._data_manager.active_cross_section.name
+            for i, nexus_data in enumerate(self._data_manager.reduction_list):
                 self.update_reduction_table(self.reduction_table, i, nexus_data.cross_sections[xs_name])
             self.main_window.auto_change_active = False
 
@@ -1897,7 +1897,7 @@ class MainHandler:
 
     def trim_data_to_normalization(self):
         """Cut the start and end of the active data set to 5% of its maximum intensity."""
-        trim_points = self._data_handler.get_trim_values()
+        trim_points = self._data_manager.get_trim_values()
         if trim_points is not None:
             self.ui.rangeStart.setValue(trim_points[0])
             self.ui.rangeEnd.setValue(trim_points[1])
@@ -1908,11 +1908,11 @@ class MainHandler:
 
     def strip_overlap(self):
         """Remove overlapping points in the reflectivity, cutting always from the lower Qz measurements."""
-        self._data_handler.strip_overlap()
+        self._data_manager.strip_overlap()
 
-        for i in range(len(self._data_handler.reduction_list)):
-            xs = self._data_handler.active_cross_section.name
-            d = self._data_handler.reduction_list[i].cross_sections[xs]
+        for i in range(len(self._data_manager.reduction_list)):
+            xs = self._data_manager.active_cross_section.name
+            d = self._data_manager.reduction_list[i].cross_sections[xs]
             self.reduction_table.setItem(
                 i, ReductionTableColumn.NUM_RIGHT, QtWidgets.QTableWidgetItem(str(d.configuration.cut_last_n_points))
             )
@@ -1925,26 +1925,26 @@ class MainHandler:
         To speed up reloading, the file cache is first cleared of files that are not used in the
         reduction list or direct beam list.
         """
-        if self._data_handler.get_cachesize() == 0:
+        if self._data_manager.get_cachesize() == 0:
             return
 
         # Store the active (plotted) run index
-        active_idx = self._data_handler.find_active_data_id()
+        active_idx = self._data_manager.find_active_data_id()
         if active_idx is not None:
             is_active_data_direct_beam = False
         else:
             is_active_data_direct_beam = True
-            active_idx = self._data_handler.find_active_direct_beam_id()
+            active_idx = self._data_manager.find_active_direct_beam_id()
 
         # Store the active data tab
-        active_data_tab = self._data_handler.active_reduction_list_index
+        active_data_tab = self._data_manager.active_reduction_list_index
 
         # Reload files
-        self._data_handler.clear_cached_unused_data()
+        self._data_manager.clear_cached_unused_data()
         configuration = self.get_configuration_from_ui()
-        prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar_handler)
+        prog = ProgressReporter(progress_bar=self.progress_bar, status_bar=self.status_bar)
         try:
-            self._data_handler.reload_files(configuration, prog)
+            self._data_manager.reload_files(configuration, prog)
         except CrossSectionError as err:
             self._show_diagnostic(err)
             return
@@ -1952,30 +1952,30 @@ class MainHandler:
         # Update the tables in the UI
         self.main_window.auto_change_active = True
 
-        self.ui.directBeamTable.setRowCount(len(self._data_handler.direct_beam_list))
-        for idx, _ in enumerate(self._data_handler.direct_beam_list):
-            self._data_handler.set_active_data_from_direct_beam_list(idx)
-            self.update_direct_beam_table(idx, self._data_handler.active_cross_section)
-        self.ui.reductionTable.setRowCount(len(self._data_handler.reduction_list))
-        for ipeak, peak_data in self._data_handler.peak_reduction_lists.items():
-            self._data_handler.set_active_reduction_list_index(ipeak)
+        self.ui.directBeamTable.setRowCount(len(self._data_manager.direct_beam_list))
+        for idx, _ in enumerate(self._data_manager.direct_beam_list):
+            self._data_manager.set_active_data_from_direct_beam_list(idx)
+            self.update_direct_beam_table(idx, self._data_manager.active_cross_section)
+        self.ui.reductionTable.setRowCount(len(self._data_manager.reduction_list))
+        for ipeak, peak_data in self._data_manager.peak_reduction_lists.items():
+            self._data_manager.set_active_reduction_list_index(ipeak)
             table_widget = self.get_reduction_table_by_index(ipeak)
-            table_widget.setRowCount(len(self._data_handler.reduction_list))
-            for idx, _ in enumerate(self._data_handler.reduction_list):
-                self._data_handler.set_active_data_from_reduction_list(idx)
-                self.update_reduction_table(table_widget, idx, self._data_handler.active_cross_section)
+            table_widget.setRowCount(len(self._data_manager.reduction_list))
+            for idx, _ in enumerate(self._data_manager.reduction_list):
+                self._data_manager.set_active_data_from_reduction_list(idx)
+                self.update_reduction_table(table_widget, idx, self._data_manager.active_cross_section)
 
-        direct_beam_ids = [str(r.run_number) for r in self._data_handler.direct_beam_list]
+        direct_beam_ids = [str(r.run_number) for r in self._data_manager.direct_beam_list]
         self.ui.direct_beam_list_label.setText(", ".join(direct_beam_ids))
 
         # Restore the active data tab
-        self._data_handler.set_active_reduction_list_index(active_data_tab)
+        self._data_manager.set_active_reduction_list_index(active_data_tab)
 
         # Restore the active run
         if is_active_data_direct_beam:
-            self._data_handler.set_active_data_from_direct_beam_list(active_idx)
+            self._data_manager.set_active_data_from_direct_beam_list(active_idx)
         else:
-            self._data_handler.set_active_data_from_reduction_list(active_idx)
+            self._data_manager.set_active_data_from_reduction_list(active_idx)
 
         # Update plots
         self.file_loaded()
@@ -1994,7 +1994,7 @@ class MainHandler:
 
         If `is_error` is True, the message is also logged on the error channel.
         """
-        self.status_bar_handler.show_message(message)
+        self.status_bar.show_message(message)
         if is_error:
             logging.error(message)
             if detailed_message is not None:
@@ -2034,7 +2034,7 @@ class MainHandler:
         """Pop up the result viewer."""
         from quicknxs.views.result_viewer import ResultViewer
 
-        dialog = ResultViewer(self.main_window, self._data_handler)
+        dialog = ResultViewer(self.main_window, self._data_manager)
         dialog.specular_compare_widget.ui.refl_preview_checkbox.setChecked(True)
         self.main_window.update_specular_viewer.connect(dialog.update_specular)
         self.main_window.update_off_specular_viewer.connect(dialog.update_off_specular)
@@ -2051,9 +2051,9 @@ class MainHandler:
         q_binning_step_global = self.ui.q_rebin_spinbox_global.value()
 
         # loop over runs in the active data tab to update internal state and UI state
-        reduct_list = self._data_handler.reduction_list
+        reduct_list = self._data_manager.reduction_list
         for idx, nexus_data in enumerate(reduct_list):
-            active_cross_section_name: str = self._data_handler.active_cross_section.name
+            active_cross_section_name: str = self._data_manager.active_cross_section.name
             active_cross_section = nexus_data.cross_sections[active_cross_section_name]
             # get the current configuration state
             conf = active_cross_section.configuration

@@ -785,9 +785,9 @@ class NexusData:
 
         peak_index = 2
         # update the active reduction list
-        data_handler.set_active_reduction_list_index(peak_index)
+        data_manager.set_active_reduction_list_index(peak_index)
         # get the first data set of the active reduction list
-        nexus_data = data_handler.reduction_list[0]
+        nexus_data = data_manager.reduction_list[0]
         # calculate the reflectivity for this data set
         nexus_data.calculate_reflectivity(ws_suffix=str(peak_index))
         """

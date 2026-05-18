@@ -48,16 +48,16 @@ class TestMainGui:
         cross_section_1 = CrossSectionData("On_On", configuration)
         nexus_data = NexusData("filepath", configuration)
         nexus_data.cross_sections = {cross_section_0.name: cross_section_0, cross_section_1.name: cross_section_1}
-        window_main.data_handler._nexus_data = nexus_data
-        window_main.data_handler.set_active_cross_section(0)
+        window_main.data_manager._nexus_data = nexus_data
+        window_main.data_manager.set_active_cross_section(0)
 
-        assert window_main.data_handler.active_cross_section.name == cross_section_0.name
+        assert window_main.data_manager.active_cross_section.name == cross_section_0.name
 
         # change the selected cross section
         window_main.selectedCrossSection1.setChecked(True)
 
         # check the active cross section in the data manager
-        assert window_main.data_handler.active_cross_section.name == cross_section_1.name
+        assert window_main.data_manager.active_cross_section.name == cross_section_1.name
         # check the current cross section name displayed in the UI
         assert cross_section_1.name in window_main.ui.currentCrossSection.text()
 
@@ -66,8 +66,8 @@ class TestMainGui:
         mock_save_run_data = mocker.patch("quicknxs.presenters.main_handler.MainHandler.save_run_data")
         window_main = MainWindow()
         qtbot.addWidget(window_main)
-        window_main.data_handler.reduction_list = [NexusData("filepath", Configuration())]
-        window_main.data_handler.direct_beam_list = [NexusData("filepath", Configuration())]
+        window_main.data_manager.reduction_list = [NexusData("filepath", Configuration())]
+        window_main.data_manager.direct_beam_list = [NexusData("filepath", Configuration())]
         table = getattr(window_main.ui, table_widget)
         table.insertRow(0)
 
@@ -106,13 +106,13 @@ class TestMainGui:
         nexus_data2 = NexusData("filepath2", configuration)
         nexus_data2.cross_sections = {cross_section_2.name: cross_section_2}
 
-        window_main.data_handler.reduction_list.append(nexus_data1)
-        window_main.data_handler.reduction_list.append(nexus_data2)
-        window_main.data_handler.set_active_data_from_reduction_list(0)
-        assert window_main.data_handler.current_file == "filepath1"
+        window_main.data_manager.reduction_list.append(nexus_data1)
+        window_main.data_manager.reduction_list.append(nexus_data2)
+        window_main.data_manager.set_active_data_from_reduction_list(0)
+        assert window_main.data_manager.current_file == "filepath1"
 
         # check that the configuration is the default
-        conf1 = window_main.data_handler.active_cross_section.configuration
+        conf1 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
         assert conf1.q_binning_type_global == QBinningType.NONE
@@ -183,7 +183,7 @@ class TestMainGui:
         window_main.file_handler.get_configuration_from_ui()  # to update configuration from UI
 
         # check that the current config has been updated for both global and per run
-        conf1 = window_main.data_handler.active_cross_section.configuration
+        conf1 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
         assert conf1.q_binning_type_global == QBinningType.NORMAL
@@ -220,11 +220,11 @@ class TestMainGui:
 
         # change selected data and check that global variables are carried over but not the per run ones
 
-        window_main.data_handler.set_active_data_from_reduction_list(1)
-        assert window_main.data_handler.current_file == "filepath2"
+        window_main.data_manager.set_active_data_from_reduction_list(1)
+        assert window_main.data_manager.current_file == "filepath2"
 
         # check that the configuration is the default
-        conf2 = window_main.data_handler.active_cross_section.configuration
+        conf2 = window_main.data_manager.active_cross_section.configuration
 
         # Reflectivity Extraction (Global)
         assert conf2.q_binning_type_global == QBinningType.NORMAL
@@ -308,7 +308,7 @@ class TestMainGui:
         window_main = MainWindow()
         qtbot.addWidget(window_main)
 
-        manager = window_main.data_handler
+        manager = window_main.data_manager
         manager.load(data_server.path_to("REF_M_40782"), Configuration())
         manager.add_active_to_reduction()
         manager.load(data_server.path_to("REF_M_40785"), Configuration())
@@ -319,11 +319,11 @@ class TestMainGui:
         assert mock_plot_refl.call_count == 0
         # switch to second peak tab
         window_main.ui.tabWidget.setCurrentIndex(2)
-        assert window_main.data_handler.active_reduction_list_index == 2
+        assert window_main.data_manager.active_reduction_list_index == 2
         assert mock_plot_refl.call_count == 1
         # switch to first peak tab
         window_main.ui.tabWidget.setCurrentIndex(1)
-        assert window_main.data_handler.active_reduction_list_index == 1
+        assert window_main.data_manager.active_reduction_list_index == 1
         assert mock_plot_refl.call_count == 2
 
     @pytest.mark.datarepo
@@ -348,7 +348,7 @@ class TestMainGui:
         window_main.file_handler.open_file(data_server.path_to("REF_M_42112"))
         window_main.actionAddRefl.triggered.emit()
 
-        reduction_lists = window_main.data_handler.peak_reduction_lists
+        reduction_lists = window_main.data_manager.peak_reduction_lists
         assert len(reduction_lists[1]) == 2
         assert reduction_lists[1][0].run_number == "42112"
         assert reduction_lists[1][1].run_number == "42113"
@@ -366,8 +366,8 @@ class TestMainGui:
             qtbot.keyClick(menu, QtCore.Qt.Key_Down)
             qtbot.keyClick(menu, QtCore.Qt.Key_Down)
             qtbot.keyClick(menu, QtCore.Qt.Key_Enter)
-            assert len(window_main.data_handler.peak_reduction_lists[1]) == 2
-            assert len(window_main.data_handler.peak_reduction_lists[2]) == 2
+            assert len(window_main.data_manager.peak_reduction_lists[1]) == 2
+            assert len(window_main.data_manager.peak_reduction_lists[2]) == 2
 
         QtCore.QTimer.singleShot(200, handle_menu)
         table_item = table.item(0, 0)  # new run on row index 0
@@ -419,8 +419,8 @@ class TestMainGui:
         table.customContextMenuRequested.emit(table_item_rect.topLeft())
 
         # check that the run was removed from the tables
-        assert len(window_main.data_handler.reduction_list) == 0
-        assert len(window_main.data_handler.direct_beam_list) == 0
+        assert len(window_main.data_manager.reduction_list) == 0
+        assert len(window_main.data_manager.direct_beam_list) == 0
 
 
 class TestDisabledWidget:

@@ -25,7 +25,7 @@ class CompareWidget(QtWidgets.QWidget):
         self.settings = QtCore.QSettings(".quicknxs")
         current_dir = self.settings.value("current_directory", os.path.expanduser("~"))
         self.active_folder = self.settings.value("compare_directory", current_dir)
-        self.data_handler = None
+        self.data_manager = None
         self.refl_data = None
         self.show_preview = False
 
@@ -38,8 +38,8 @@ class CompareWidget(QtWidgets.QWidget):
 
     def update_preview(self):
         """Update the preview data."""
-        if self.data_handler:
-            workflow = ProcessingWorkflow(self.data_handler)
+        if self.data_manager:
+            workflow = ProcessingWorkflow(self.data_manager)
             self.refl_data = workflow.get_output_data()
             self.draw()
 

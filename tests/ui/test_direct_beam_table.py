@@ -74,7 +74,7 @@ def test_table_peak_position_change_triggers_plot_update(mocker, main_window_wit
     main_window = main_window_with_data_factory()
     table: QtWidgets.QTableWidget = main_window.ui.directBeamTable
 
-    reduction_list = main_window.data_handler.reduction_list
+    reduction_list = main_window.data_manager.reduction_list
     mock_refl_run_with_db_42099 = mocker.patch.object(reduction_list[0], "calculate_reflectivity")
     mock_refl_run_with_db_42100 = mocker.patch.object(reduction_list[1], "calculate_reflectivity")
 
@@ -108,15 +108,15 @@ def test_peak_position_updates_direct_pixel(qtbot, data_server):
     main_window.file_handler.open_file(data_server.path_to("REF_M_42113"))
     main_window.actionAddRefl.triggered.emit()
 
-    # assert that main_window.data_handler.load() was called and data is loaded
-    assert len(main_window.data_handler.direct_beam_list) == 1
-    assert len(main_window.data_handler.reduction_list) == 2
+    # assert that main_window.data_manager.load() was called and data is loaded
+    assert len(main_window.data_manager.direct_beam_list) == 1
+    assert len(main_window.data_manager.reduction_list) == 2
 
     # Assert reflected runs are using the direct beam
-    refl_run0 = main_window.data_handler.reduction_list[0]
-    assert str(refl_run0.get_parameter("direct_beam")) == str(main_window.data_handler.direct_beam_list[0].run_number)
-    refl_run1 = main_window.data_handler.reduction_list[1]
-    assert str(refl_run1.get_parameter("direct_beam")) == str(main_window.data_handler.direct_beam_list[0].run_number)
+    refl_run0 = main_window.data_manager.reduction_list[0]
+    assert str(refl_run0.get_parameter("direct_beam")) == str(main_window.data_manager.direct_beam_list[0].run_number)
+    refl_run1 = main_window.data_manager.reduction_list[1]
+    assert str(refl_run1.get_parameter("direct_beam")) == str(main_window.data_manager.direct_beam_list[0].run_number)
 
     # Verify that the column DPix is initially populated with the value from the DAS
     table_reduction: QtWidgets.QTableWidget = main_window.ui.reductionTable
@@ -133,7 +133,7 @@ def test_peak_position_updates_direct_pixel(qtbot, data_server):
     table.item(0, DBTableCols.PEAK_POSITION).setText("300.0")
 
     # Verify that the direct pixel in the direct beam object is updated
-    direct_beam = main_window.data_handler.direct_beam_list[0]
+    direct_beam = main_window.data_manager.direct_beam_list[0]
     direct_beam_peak_position = direct_beam.get_parameter("peak_position")
     assert direct_beam_peak_position == 300.0
 

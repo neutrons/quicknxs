@@ -22,7 +22,7 @@ def test_add_db_to_reduction(qtbot: QtBot, data_server):
     main_window.file_handler.open_file(ref_mislabeled_as_db)
 
     # It should look like a direct beam run in the UI
-    assert main_window.data_handler._nexus_data.is_direct_beam()
+    assert main_window.data_manager._nexus_data.is_direct_beam()
 
     # Add to reduction table
     main_window.actionAddRefl.trigger()
@@ -47,7 +47,7 @@ def test_add_mislabeled_db_to_reduction(qtbot: QtBot, data_server):
     main_window.file_handler.open_file(db_mislabeled_as_ref)
 
     # It should look like a reflected run in the UI
-    assert not main_window.data_handler._nexus_data.is_direct_beam()
+    assert not main_window.data_manager._nexus_data.is_direct_beam()
 
     # Add to reduction table
     main_window.actionAddRefl.trigger()

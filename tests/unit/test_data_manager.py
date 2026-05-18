@@ -5,7 +5,7 @@ from quicknxs.enums import AddToDirectBeamResult, AddToReductionResult
 from quicknxs.exceptions import CrossSectionError
 from quicknxs.models.configuration import Configuration
 from quicknxs.models.instrument import Instrument
-from quicknxs.presenters.data_handler import DataHandler
+from quicknxs.presenters.data_manager import DataManager
 
 
 @pytest.fixture()
@@ -15,43 +15,43 @@ def setup_method():
     Instrument.USE_SLOW_FLIPPER_LOG = False
 
 
-class TestDataHandlerTest:
-    """Test DataHandler class."""
+class TestDataManagerTest:
+    """Test DataManager class."""
 
     @pytest.mark.datarepo
-    def test_data_handler(self, data_server, setup_method):
-        data_handler = DataHandler(data_server.directory)
-        data_handler.load(data_server.path_to("REF_M_29160"), Configuration())
+    def test_data_manager(self, data_server, setup_method):
+        data_manager = DataManager(data_server.directory)
+        data_manager.load(data_server.path_to("REF_M_29160"), Configuration())
 
-        assert data_handler.current_file == data_server.path_to("REF_M_29160")
+        assert data_manager.current_file == data_server.path_to("REF_M_29160")
 
-        data_handler.add_active_to_reduction()
-        assert data_handler.find_run_number_in_reduction_list(data_handler._nexus_data) == 0
-        assert data_handler.find_data_in_direct_beam_list(data_handler._nexus_data) is None
+        data_manager.add_active_to_reduction()
+        assert data_manager.find_run_number_in_reduction_list(data_manager._nexus_data) == 0
+        assert data_manager.find_data_in_direct_beam_list(data_manager._nexus_data) is None
 
-        q_range = data_handler._nexus_data.get_q_range()
+        q_range = data_manager._nexus_data.get_q_range()
         assert q_range[0:2] == pytest.approx([0.034, 0.068], abs=0.05)
 
-        assert data_handler.add_active_to_direct_beam_list() == AddToDirectBeamResult.SUCCESS_REFLECTED
+        assert data_manager.add_active_to_direct_beam_list() == AddToDirectBeamResult.SUCCESS_REFLECTED
         # Now it's in the list, so remove should work
-        assert data_handler.remove_active_from_direct_beam_list() == 0
+        assert data_manager.remove_active_from_direct_beam_list() == 0
 
-        data_handler.set_active_data_from_reduction_list(0)
-        data_handler.set_active_data_from_direct_beam_list(0)
-        data_handler.calculate_reflectivity()
-        data_handler.calculate_reflectivity(specular=False)
-        data_handler.strip_overlap()
+        data_manager.set_active_data_from_reduction_list(0)
+        data_manager.set_active_data_from_direct_beam_list(0)
+        data_manager.calculate_reflectivity()
+        data_manager.calculate_reflectivity(specular=False)
+        data_manager.strip_overlap()
 
-        dm.generate_script(data_handler.reduction_list, data_handler.reduction_states[0])
-        dm.stitch_reflectivity(data_handler.reduction_list, q_cutoff=0.033)
-        dm.merge_reflectivity(data_handler.reduction_list, data_handler.reduction_states[0])
-        dm.get_scaled_workspaces(data_handler.reduction_list, data_handler.reduction_states[0])
-        dm.stitch_reflectivity(data_handler.reduction_list, q_cutoff=0.033)
+        dm.generate_script(data_manager.reduction_list, data_manager.reduction_states[0])
+        dm.stitch_reflectivity(data_manager.reduction_list, q_cutoff=0.033)
+        dm.merge_reflectivity(data_manager.reduction_list, data_manager.reduction_states[0])
+        dm.get_scaled_workspaces(data_manager.reduction_list, data_manager.reduction_states[0])
+        dm.stitch_reflectivity(data_manager.reduction_list, q_cutoff=0.033)
 
     @pytest.mark.skip(reason="WIP")
-    def test_add_orderdata_handler(self, data_server):
+    def test_add_orderdata_manager(self, data_server):
         # load up files for testing
-        data_handler = DataHandler(data_server.directory)
+        data_manager = DataManager(data_server.directory)
         try:
             file_paths = data_server.get_file_paths("39743")
             if len(file_paths) < 1:
@@ -60,81 +60,81 @@ class TestDataHandlerTest:
             file_paths.append(data_server.get_file_paths("39745")[0])
             config = Configuration()
             for file_path in file_paths:
-                data_handler.load(file_path, config)
-                data_handler.add_active_to_reduction()
+                data_manager.load(file_path, config)
+                data_manager.add_active_to_reduction()
         except OSError:
             pytest.skip("Cannot find required datafiles, probably not being run on the cluster.")
 
-        assert len(data_handler.reduction_list) == 3
+        assert len(data_manager.reduction_list) == 3
 
-        for i in range(len(data_handler.reduction_list) - 1):
-            ws = data_handler.reduction_list[i].get_reflectivity_workspace_group()[0]
+        for i in range(len(data_manager.reduction_list) - 1):
+            ws = data_manager.reduction_list[i].get_reflectivity_workspace_group()[0]
             theta = ws.getRun().getProperty("two_theta").value
 
-            _ws = data_handler.reduction_list[i + 1].get_reflectivity_workspace_group()[0]
+            _ws = data_manager.reduction_list[i + 1].get_reflectivity_workspace_group()[0]
             _theta = _ws.getRun().getProperty("two_theta").value
             assert theta <= _theta
 
     def test_load_reduced(self, data_server):
-        data_handler = DataHandler(data_server.directory)
-        data_handler.load_data_from_reduced_file(data_server.path_to("REF_M_29160_Specular_++.dat"))
+        data_manager = DataManager(data_server.directory)
+        data_manager.load_data_from_reduced_file(data_server.path_to("REF_M_29160_Specular_++.dat"))
 
     def test_clear_cached_unused_data(self, data_server):
         """Test helper function clear_cached_unused_data."""
-        data_handler = DataHandler(data_server.directory)
-        data_handler.load(data_server.path_to("REF_M_42112"), Configuration())
-        data_handler.add_active_to_reduction()
-        data_handler.load(data_server.path_to("REF_M_42113"), Configuration())
-        data_handler.add_active_to_reduction()
-        data_handler.load(data_server.path_to("REF_M_42099"), Configuration())
-        data_handler.add_active_to_direct_beam_list()
-        assert data_handler.get_cachesize() == 3
+        data_manager = DataManager(data_server.directory)
+        data_manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        data_manager.add_active_to_reduction()
+        data_manager.load(data_server.path_to("REF_M_42113"), Configuration())
+        data_manager.add_active_to_reduction()
+        data_manager.load(data_server.path_to("REF_M_42099"), Configuration())
+        data_manager.add_active_to_direct_beam_list()
+        assert data_manager.get_cachesize() == 3
         # Load files without adding them to reduction or normalization
-        data_handler.load(data_server.path_to("REF_M_42100"), Configuration())
-        data_handler.load(data_server.path_to("REF_M_42116"), Configuration())
-        assert data_handler.get_cachesize() == 5
+        data_manager.load(data_server.path_to("REF_M_42100"), Configuration())
+        data_manager.load(data_server.path_to("REF_M_42116"), Configuration())
+        assert data_manager.get_cachesize() == 5
         # Delete unused files from cache
-        data_handler.clear_cached_unused_data()
-        assert data_handler.get_cachesize() == 3
+        data_manager.clear_cached_unused_data()
+        assert data_manager.get_cachesize() == 3
 
     @pytest.mark.datarepo
     def test_add_additional_reduction_list(self, data_server):
-        data_handler = DataHandler(data_server.directory)
-        data_handler.load(data_server.path_to("REF_M_40782"), Configuration())
-        data_handler.add_active_to_reduction()
-        data_handler.load(data_server.path_to("REF_M_40785"), Configuration())
-        data_handler.add_active_to_reduction()
+        data_manager = DataManager(data_server.directory)
+        data_manager.load(data_server.path_to("REF_M_40782"), Configuration())
+        data_manager.add_active_to_reduction()
+        data_manager.load(data_server.path_to("REF_M_40785"), Configuration())
+        data_manager.add_active_to_reduction()
 
-        assert len(data_handler.peak_reduction_lists) == 1
-        assert len(data_handler.peak_reduction_lists[1]) == 2
-        assert data_handler.active_reduction_list_index == 1
+        assert len(data_manager.peak_reduction_lists) == 1
+        assert len(data_manager.peak_reduction_lists[1]) == 2
+        assert data_manager.active_reduction_list_index == 1
 
-        data_handler.add_additional_reduction_list(2)
+        data_manager.add_additional_reduction_list(2)
 
-        assert len(data_handler.peak_reduction_lists) == 2
-        assert len(data_handler.peak_reduction_lists[1]) == 2
-        assert len(data_handler.peak_reduction_lists[2]) == 2
-        assert data_handler.active_reduction_list_index == 1
+        assert len(data_manager.peak_reduction_lists) == 2
+        assert len(data_manager.peak_reduction_lists[1]) == 2
+        assert len(data_manager.peak_reduction_lists[2]) == 2
+        assert data_manager.active_reduction_list_index == 1
 
-        data_handler.remove_additional_reduction_list(2)
+        data_manager.remove_additional_reduction_list(2)
 
-        assert len(data_handler.peak_reduction_lists) == 1
-        assert len(data_handler.peak_reduction_lists[1]) == 2
-        assert data_handler.active_reduction_list_index == 1
+        assert len(data_manager.peak_reduction_lists) == 1
+        assert len(data_manager.peak_reduction_lists[1]) == 2
+        assert data_manager.active_reduction_list_index == 1
 
     @pytest.mark.datarepo
-    def test_reduce_spec(self, mocker, data_handler_with_data_factory):
+    def test_reduce_spec(self, mocker, data_manager_with_data_factory):
         """Test function reduce_spec."""
-        data_handler = data_handler_with_data_factory()
-        spy_calc_refl_run1 = mocker.spy(data_handler.reduction_list[0], "calculate_reflectivity")
-        spy_calc_refl_run2 = mocker.spy(data_handler.reduction_list[1], "calculate_reflectivity")
+        data_manager = data_manager_with_data_factory()
+        spy_calc_refl_run1 = mocker.spy(data_manager.reduction_list[0], "calculate_reflectivity")
+        spy_calc_refl_run2 = mocker.spy(data_manager.reduction_list[1], "calculate_reflectivity")
 
-        data_handler.reduce_spec()
+        data_manager.reduce_spec()
         # assert that the reflectivity was recalculated for the two reflected runs
         assert spy_calc_refl_run1.call_count == 1
         assert spy_calc_refl_run2.call_count == 1
 
-        data_handler.reduce_spec(direct_beam="42099")
+        data_manager.reduce_spec(direct_beam="42099")
         # assert that the reflectivity was recalculated for only one run, which matches the direct beam
         assert spy_calc_refl_run1.call_count == 2
         assert spy_calc_refl_run2.call_count == 1
@@ -142,37 +142,37 @@ class TestDataHandlerTest:
     @pytest.mark.datarepo
     def test_add_active_to_reduction_no_duplicates(self, data_server, setup_method):
         """Test that add_active_to_reduction prevents duplicate entries."""
-        data_handler = DataHandler(data_server.directory)
+        data_manager = DataManager(data_server.directory)
 
         # Add run once
-        data_handler.load(data_server.path_to("REF_M_42112"), Configuration())
-        assert data_handler.add_active_to_reduction() == AddToReductionResult.SUCCESS
-        assert len(data_handler.reduction_list) == 1
+        data_manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        assert data_manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
+        assert len(data_manager.reduction_list) == 1
 
         # Try to add the same run again - should return AddToReductionResult.ALREADY_IN_LIST
-        assert data_handler.add_active_to_reduction() == AddToReductionResult.ALREADY_IN_LIST
-        assert len(data_handler.reduction_list) == 1
+        assert data_manager.add_active_to_reduction() == AddToReductionResult.ALREADY_IN_LIST
+        assert len(data_manager.reduction_list) == 1
 
     @pytest.mark.datarepo
     def test_copy_nexus_data_prevents_duplicates(self, data_server, setup_method):
         """Test that copy_nexus_data_to_reduction prevents duplicate run numbers."""
-        data_handler = DataHandler(data_server.directory)
+        data_manager = DataManager(data_server.directory)
 
         # Setup main reduction list
-        data_handler.load(data_server.path_to("REF_M_42112"), Configuration())
-        data_handler.add_active_to_reduction(peak_index=1)
+        data_manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        data_manager.add_active_to_reduction(peak_index=1)
 
         # Create second reduction list
-        data_handler.peak_reduction_lists[2] = []
+        data_manager.peak_reduction_lists[2] = []
 
         # Copy run to second list
-        nexus_data = data_handler.reduction_list[0]
-        assert data_handler.copy_nexus_data_to_reduction(nexus_data, peak_index=2)
-        assert len(data_handler.peak_reduction_lists[2]) == 1
+        nexus_data = data_manager.reduction_list[0]
+        assert data_manager.copy_nexus_data_to_reduction(nexus_data, peak_index=2)
+        assert len(data_manager.peak_reduction_lists[2]) == 1
 
         # Try to copy same run again - should return False
-        assert not data_handler.copy_nexus_data_to_reduction(nexus_data, peak_index=2)
-        assert len(data_handler.peak_reduction_lists[2]) == 1
+        assert not data_manager.copy_nexus_data_to_reduction(nexus_data, peak_index=2)
+        assert len(data_manager.peak_reduction_lists[2]) == 1
 
     ########################
     ### Q ordering tests ###
@@ -187,110 +187,110 @@ class TestDataHandlerTest:
         REF_M_42113: Q ~ 0.02-0.05 (highest Q)
         REF_M_40782: Q ~ 0.01-0.03 (middle Q)
         """
-        data_handler = DataHandler(data_server.directory)
+        data_manager = DataManager(data_server.directory)
 
         # Add highest Q run first
-        data_handler.load(data_server.path_to("REF_M_42113"), Configuration())
-        assert data_handler.add_active_to_reduction() == AddToReductionResult.SUCCESS
-        assert len(data_handler.reduction_list) == 1
-        assert data_handler.reduction_list[0].run_number == "42113"
+        data_manager.load(data_server.path_to("REF_M_42113"), Configuration())
+        assert data_manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
+        assert len(data_manager.reduction_list) == 1
+        assert data_manager.reduction_list[0].run_number == "42113"
 
         # Add lowest Q run - should be inserted at the beginning
-        data_handler.load(data_server.path_to("REF_M_42112"), Configuration())
-        assert data_handler.add_active_to_reduction() == AddToReductionResult.SUCCESS
-        assert len(data_handler.reduction_list) == 2
-        assert data_handler.reduction_list[0].run_number == "42112"
-        assert data_handler.reduction_list[1].run_number == "42113"
+        data_manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        assert data_manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
+        assert len(data_manager.reduction_list) == 2
+        assert data_manager.reduction_list[0].run_number == "42112"
+        assert data_manager.reduction_list[1].run_number == "42113"
 
         # Add middle Q run - should be inserted in the middle
-        data_handler.load(data_server.path_to("REF_M_40782"), Configuration())
-        assert data_handler.add_active_to_reduction() == AddToReductionResult.SUCCESS
-        assert len(data_handler.reduction_list) == 3
-        assert data_handler.reduction_list[0].run_number == "42112"
-        assert data_handler.reduction_list[1].run_number == "40782"
-        assert data_handler.reduction_list[2].run_number == "42113"
+        data_manager.load(data_server.path_to("REF_M_40782"), Configuration())
+        assert data_manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
+        assert len(data_manager.reduction_list) == 3
+        assert data_manager.reduction_list[0].run_number == "42112"
+        assert data_manager.reduction_list[1].run_number == "40782"
+        assert data_manager.reduction_list[2].run_number == "42113"
 
         # Verify Q values are in ascending order
-        for i in range(len(data_handler.reduction_list) - 1):
-            q_min_current, _ = data_handler.reduction_list[i].get_q_range()
-            q_min_next, _ = data_handler.reduction_list[i + 1].get_q_range()
+        for i in range(len(data_manager.reduction_list) - 1):
+            q_min_current, _ = data_manager.reduction_list[i].get_q_range()
+            q_min_next, _ = data_manager.reduction_list[i + 1].get_q_range()
             assert q_min_current <= q_min_next, (
-                f"Q ordering violated: run {data_handler.reduction_list[i].run_number} "
-                f"(Q={q_min_current}) should be <= run {data_handler.reduction_list[i + 1].run_number} (Q={q_min_next})"
+                f"Q ordering violated: run {data_manager.reduction_list[i].run_number} "
+                f"(Q={q_min_current}) should be <= run {data_manager.reduction_list[i + 1].run_number} (Q={q_min_next})"
             )
 
     @pytest.mark.datarepo
     def test_q_ordering_copy_nexus_data_to_reduction(self, data_server, setup_method):
         """Test that copy_nexus_data_to_reduction maintains Q ordering."""
-        data_handler = DataHandler(data_server.directory)
+        data_manager = DataManager(data_server.directory)
 
         # Setup main reduction list (tab 1)
-        data_handler.load(data_server.path_to("REF_M_42113"), Configuration())
-        data_handler.add_active_to_reduction(peak_index=1)
-        data_handler.load(data_server.path_to("REF_M_42112"), Configuration())
-        data_handler.add_active_to_reduction(peak_index=1)
+        data_manager.load(data_server.path_to("REF_M_42113"), Configuration())
+        data_manager.add_active_to_reduction(peak_index=1)
+        data_manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        data_manager.add_active_to_reduction(peak_index=1)
 
         # Create a second reduction list (tab 2)
-        data_handler.peak_reduction_lists[2] = []
+        data_manager.peak_reduction_lists[2] = []
 
         # Copy runs to tab 2 in different order
-        nexus_data_high_q = data_handler.reduction_list[1]  # 42113 (high Q)
-        nexus_data_low_q = data_handler.reduction_list[0]  # 42112 (low Q)
+        nexus_data_high_q = data_manager.reduction_list[1]  # 42113 (high Q)
+        nexus_data_low_q = data_manager.reduction_list[0]  # 42112 (low Q)
 
         # Add high Q run first
-        assert data_handler.copy_nexus_data_to_reduction(nexus_data_high_q, peak_index=2)
-        assert len(data_handler.peak_reduction_lists[2]) == 1
+        assert data_manager.copy_nexus_data_to_reduction(nexus_data_high_q, peak_index=2)
+        assert len(data_manager.peak_reduction_lists[2]) == 1
 
         # Add low Q run - should be inserted before high Q
-        assert data_handler.copy_nexus_data_to_reduction(nexus_data_low_q, peak_index=2)
-        assert len(data_handler.peak_reduction_lists[2]) == 2
-        assert data_handler.peak_reduction_lists[2][0].run_number == "42112"
-        assert data_handler.peak_reduction_lists[2][1].run_number == "42113"
+        assert data_manager.copy_nexus_data_to_reduction(nexus_data_low_q, peak_index=2)
+        assert len(data_manager.peak_reduction_lists[2]) == 2
+        assert data_manager.peak_reduction_lists[2][0].run_number == "42112"
+        assert data_manager.peak_reduction_lists[2][1].run_number == "42113"
 
         # Verify Q values are in ascending order
-        for i in range(len(data_handler.peak_reduction_lists[2]) - 1):
-            q_min_current, _ = data_handler.peak_reduction_lists[2][i].get_q_range()
-            q_min_next, _ = data_handler.peak_reduction_lists[2][i + 1].get_q_range()
+        for i in range(len(data_manager.peak_reduction_lists[2]) - 1):
+            q_min_current, _ = data_manager.peak_reduction_lists[2][i].get_q_range()
+            q_min_next, _ = data_manager.peak_reduction_lists[2][i + 1].get_q_range()
             assert q_min_current <= q_min_next
 
     @pytest.mark.datarepo
     def test_q_ordering_empty_list(self, data_server, setup_method):
         """Test that the first run added to an empty list initializes properly."""
-        data_handler = DataHandler(data_server.directory)
+        data_manager = DataManager(data_server.directory)
 
         # Add to empty list
-        data_handler.load(data_server.path_to("REF_M_42112"), Configuration())
-        assert data_handler.add_active_to_reduction() == AddToReductionResult.SUCCESS
-        assert len(data_handler.reduction_list) == 1
-        assert data_handler.reduction_states is not None
-        assert len(data_handler.reduction_states) > 0
+        data_manager.load(data_server.path_to("REF_M_42112"), Configuration())
+        assert data_manager.add_active_to_reduction() == AddToReductionResult.SUCCESS
+        assert len(data_manager.reduction_list) == 1
+        assert data_manager.reduction_states is not None
+        assert len(data_manager.reduction_states) > 0
 
     @pytest.mark.datarepo
     def test_bad_files_list(self, data_server, mocker):
         """Test that files that fail to load are tracked in the bad_files list."""
-        data_handler = DataHandler(data_server.directory)
+        data_manager = DataManager(data_server.directory)
 
         # Mock loading the file, but use data_server to get the path for the error message
         mock_exception = CrossSectionError(data_server.path_to("REF_M_43670"))
-        mocker.patch("quicknxs.presenters.data_handler.NexusData.load", side_effect=mock_exception)
+        mocker.patch("quicknxs.presenters.data_manager.NexusData.load", side_effect=mock_exception)
         with pytest.raises(CrossSectionError):
-            data_handler.load(data_server.path_to("REF_M_43670"), Configuration())
-        assert len(data_handler.bad_files) == 1
-        assert "REF_M_43670.nxs.h5" in data_handler.bad_files
+            data_manager.load(data_server.path_to("REF_M_43670"), Configuration())
+        assert len(data_manager.bad_files) == 1
+        assert "REF_M_43670.nxs.h5" in data_manager.bad_files
 
         # Test loading the same bad file again - the bad files list should not grow
         with pytest.raises(CrossSectionError):
-            data_handler.load(data_server.path_to("REF_M_43670"), Configuration())
-        assert len(data_handler.bad_files) == 1
-        assert "REF_M_43670.nxs.h5" in data_handler.bad_files
+            data_manager.load(data_server.path_to("REF_M_43670"), Configuration())
+        assert len(data_manager.bad_files) == 1
+        assert "REF_M_43670.nxs.h5" in data_manager.bad_files
 
         # Test loading a different bad file - should be added to the list
         mock_exception = CrossSectionError(data_server.path_to("REF_M_42537"))
-        mocker.patch("quicknxs.presenters.data_handler.NexusData.load", side_effect=mock_exception)
+        mocker.patch("quicknxs.presenters.data_manager.NexusData.load", side_effect=mock_exception)
         with pytest.raises(CrossSectionError):
-            data_handler.load(data_server.path_to("REF_M_42537"), Configuration())
-        assert len(data_handler.bad_files) == 2
-        assert "REF_M_42537.nxs.h5" in data_handler.bad_files
+            data_manager.load(data_server.path_to("REF_M_42537"), Configuration())
+        assert len(data_manager.bad_files) == 2
+        assert "REF_M_42537.nxs.h5" in data_manager.bad_files
 
 
 if __name__ == "__main__":

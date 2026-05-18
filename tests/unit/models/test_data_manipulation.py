@@ -15,7 +15,7 @@ from quicknxs.models.data_manipulation import (
     stitch_reflectivity,
 )
 from quicknxs.models.data_set import NexusData
-from quicknxs.presenters.data_handler import DataHandler
+from quicknxs.presenters.data_manager import DataManager
 
 mock_reduced_file_str = (
     "# Datafile created by QuickNXS 3.1.0.dev2\n"
@@ -119,7 +119,7 @@ class TestDataManipulation:
 
     @pytest.mark.datarepo
     def test_stitch_reflectivity(self, data_server, mocker_file_open, stitching_config):
-        manager = DataHandler(data_server.directory)
+        manager = DataManager(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
             raise OSError("Files missing.")
@@ -133,7 +133,7 @@ class TestDataManipulation:
         stitching_config.q_binning_type_run = QBinningType.CONST_Q
         stitching_config.q_binning_step_run = -0.01
 
-        manager = DataHandler(data_server.directory)
+        manager = DataManager(data_server.directory)
         manager.load_data_from_reduced_file(data_server.directory, stitching_config)
         if len(manager.reduction_list) < 1:
             raise OSError("Files missing.")
@@ -299,7 +299,7 @@ class TestDataManipulation:
     )
     def test_extract_metadata(self, data_server, data_file, expected):
         """Test the extract_metadata function."""
-        manager = DataHandler(data_server.directory)
+        manager = DataManager(data_server.directory)
         fp = f"{data_server.directory}/quicknxs-data/{data_file}"
         metadata = extract_metadata(fp)
         assert metadata.mid_q == expected["mid_q"]
@@ -335,7 +335,7 @@ class TestDataManipulation:
         beam3 = self.make_mock_run(4, lam, (0.8, 1.1, 0.9))
 
         # make the mock data manager
-        manager = DataHandler("mock_dir")
+        manager = DataManager("mock_dir")
         manager.direct_beam_list = [beam1, beam2, beam3]
         manager.active_cross_section = scatter
         manager._nexus_data = mock.Mock(set_parameter=mock.Mock())

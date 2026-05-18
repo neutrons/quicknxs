@@ -21,7 +21,7 @@ class TestStatusBar:
         window_main = MainWindow()
         qtbot.addWidget(window_main)
         progress_reporter = ProgressReporter(
-            100, None, window_main.file_handler.status_bar_handler, window_main.file_handler.progress_bar
+            100, None, window_main.file_handler.status_bar, window_main.file_handler.progress_bar
         )
         assert window_main.ui.statusbar.currentMessage() == ""
         # Test that progress reporter update function updates the status bar message

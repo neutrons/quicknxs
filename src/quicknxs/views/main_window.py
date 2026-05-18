@@ -7,7 +7,7 @@ from qtpy import QtCore, QtWidgets
 from quicknxs import __version__ as quicknxs_version
 from quicknxs.models.processing_workflow import ProcessingWorkflow
 from quicknxs.presenters.configuration_handler import ConfigurationHandler
-from quicknxs.presenters.data_handler import DataHandler
+from quicknxs.presenters.data_manager import DataManager
 from quicknxs.presenters.main_handler import MainHandler
 from quicknxs.presenters.plot_presenter import PlotPresenter
 from quicknxs.utils.filepath import FilePath
@@ -71,7 +71,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settings = QtCore.QSettings(".quicknxs")
 
         # Object managers
-        self.data_handler = DataHandler(self.settings.value("current_directory", os.path.expanduser("~")))
+        self.data_manager = DataManager(self.settings.value("current_directory", os.path.expanduser("~")))
         self.plot_view = PlotView(self)
 
         r"""Setting `auto_change_active = True` bypasses execution of:
@@ -86,7 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_presenter = PlotPresenter(self)
         self.file_handler = MainHandler(self)
         self.config_handler = ConfigurationHandler(self)
-        self.ui.compare_widget.data_handler = self.data_handler
+        self.ui.compare_widget.data_manager = self.data_manager
 
         # Initialization for specific instrument
         # Retrieve configuration from config and enable/disable features
@@ -186,7 +186,7 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets.QApplication.instance().processEvents()
         item = self.ui.file_list.currentItem()  # type: QListWidgetItem
         name = str(item.text())  # e.g 'REF_M_38199.nxs.h5' or 'REF_M_38198.nxs.h5+REF_M_38199.nxs.h5'
-        filepath = FilePath.join(self.data_handler.current_directory, name)
+        filepath = FilePath.join(self.data_manager.current_directory, name)
 
         # disable adding file to reduction or direct beam list before it has been successfully loaded
         with disabled_widget(self.ui.mainToolbar):
@@ -194,7 +194,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def reload_file(self):
         """Reload the file that is currently selected form the list."""
-        self.file_handler.open_file(self.data_handler.current_file, force=True)
+        self.file_handler.open_file(self.data_manager.current_file, force=True)
 
     def change_active_cross_section(self, is_checked: bool):
         """Update the run info and overview plots when the active cross section is changed.
@@ -212,7 +212,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def plotActiveTab(self):
         """Select the appropriate function to plot all visible images."""
-        if self.data_handler.active_cross_section is None:
+        if self.data_manager.active_cross_section is None:
             return
 
         color = str(self.ui.color_selector.currentText())
@@ -271,7 +271,7 @@ class MainWindow(QtWidgets.QMainWindow):
             plot.clear_fig()
         self.plotActiveTab()
 
-        if self.data_handler.active_cross_section.is_direct_beam:
+        if self.data_manager.active_cross_section.is_direct_beam:
             # Update the intensity plot in case the scale was toggled between ToF and Wavelength
             self.initiate_reflectivity_or_intensity_plot.emit()
 
@@ -288,9 +288,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if change_type >= 0:
             configuration = self.file_handler.get_configuration_from_ui()
 
-            if self.data_handler.active_cross_section is not None:
+            if self.data_manager.active_cross_section is not None:
                 active_only = not self.ui.action_use_common_ranges.isChecked()
-                self.data_handler.update_configuration(configuration=configuration, active_only=active_only)
+                self.data_manager.update_configuration(configuration=configuration, active_only=active_only)
                 self.plot_presenter.change_region_values()
                 self.file_handler.update_calculated_data()
 
@@ -300,7 +300,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 QtWidgets.QApplication.instance().processEvents()
                 if change_type > 0:
                     try:
-                        self.data_handler.calculate_reflectivity(configuration=configuration, active_only=active_only)
+                        self.data_manager.calculate_reflectivity(configuration=configuration, active_only=active_only)
                     except Exception:
                         self.file_handler.report_message(
                             "There was a problem updating the reflectivity", pop_up=False, is_error=True
@@ -313,7 +313,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.auto_change_active:
             return
 
-        self.data_handler.reduce_spec()
+        self.data_manager.reduce_spec()
         self.initiate_reflectivity_or_intensity_plot.emit()
         self.update_specular_viewer.emit()
 
@@ -321,7 +321,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Select a data set (when checking the active box in the normalization/reduction table)."""
         if not checked:
             return
-        self.data_handler.set_active_data_from_reduction_list(row)
+        self.data_manager.set_active_data_from_reduction_list(row)
         self.file_loaded()
 
     def reductionTableChanged(self, item):
@@ -336,7 +336,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Select a data set when the user changes the active run radio button (col 0) in the direct beam table."""
         if not checked:
             return
-        self.data_handler.set_active_data_from_direct_beam_list(row)
+        self.data_manager.set_active_data_from_direct_beam_list(row)
         self.file_loaded()
 
     def direct_beam_table_right_click(self, pos: QtCore.QPoint):
@@ -369,7 +369,7 @@ class MainWindow(QtWidgets.QMainWindow):
         This is used to normalize the distributions we are plotting.
         See `plotting.plot_xtof` and `plotting.plot_overview`
         """
-        return self.data_handler.get_active_direct_beam()
+        return self.data_manager.get_active_direct_beam()
 
     def add_direct_beam(self):
         self.file_handler.add_direct_beam()
@@ -387,8 +387,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def match_direct_beam_clicked(self):
         """Find the best direct beam run for the activate data set and compute the reflectivity as needed."""
-        if self.data_handler.find_best_direct_beam():
-            dpix = self.data_handler.update_direct_pixel_from_direct_beam()
+        if self.data_manager.find_best_direct_beam():
+            dpix = self.data_manager.update_direct_pixel_from_direct_beam()
             if dpix is not None:
                 self.ui.directPixelOverwrite.setValue(dpix)
             # self.file_handler.direct_beam_matched()
@@ -396,7 +396,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.file_handler.update_calculated_data()
             QtWidgets.QApplication.instance().processEvents()
             try:
-                self.data_handler.calculate_reflectivity()
+                self.data_manager.calculate_reflectivity()
             except Exception:
                 self.file_handler.report_message(
                     "There was a problem updating the reflectivity", pop_up=False, is_error=True
@@ -447,7 +447,7 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             next_tab_idx = self.data_tab_count + 1
             self.ui.tabWidget.setTabVisible(next_tab_idx, True)
-            self.data_handler.add_additional_reduction_list(next_tab_idx)
+            self.data_manager.add_additional_reduction_list(next_tab_idx)
             self.file_handler.initialize_additional_reduction_table(next_tab_idx)
             self.data_tab_count += 1
             self.ui.removeTabButton.setEnabled(True)
@@ -463,7 +463,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.removeTabButton.setEnabled(False)  # Disable the `removeTabButton` at the beginning
         try:
             self.ui.tabWidget.setTabVisible(self.data_tab_count, False)
-            self.data_handler.remove_additional_reduction_list(self.data_tab_count)
+            self.data_manager.remove_additional_reduction_list(self.data_tab_count)
             self.data_tab_count -= 1
             self.ui.addTabButton.setEnabled(True)
             if self.data_tab_count == self.min_data_tab_count:
@@ -505,20 +505,20 @@ class MainWindow(QtWidgets.QMainWindow):
         """Update the state for active data set and the UI."""
         if tab_index != 0:  # not direct beam tab
             # Update the active reduction list index
-            self.data_handler.update_active_reduction_list(tab_index)
+            self.data_manager.update_active_reduction_list(tab_index)
         else:
             # When switching to direct beam tab, update active direct beam
             # This maintains the previously selected direct beam row if possible
-            self.data_handler.update_active_direct_beam()
+            self.data_manager.update_active_direct_beam()
 
-        if self.data_handler.data_sets:
+        if self.data_manager.data_sets:
             self.file_loaded()
 
     ### End of data tab management
 
     def reduceDatasets(self):
         """Open a dialog to select reduction options for the current list of reduction items."""
-        if len(self.data_handler.reduction_list) == 0:
+        if len(self.data_manager.reduction_list) == 0:
             self.file_handler.report_message("The data to be reduced must be added to the reduction table", pop_up=True)
             return
         dialog = ReductionDialog(self)
@@ -540,7 +540,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if show_smoothing:
                 dia = OffSpecParametersDialog(
                     self,
-                    self.data_handler,
+                    self.data_manager,
                     show_smoothing=show_smoothing,
                 )
                 if not dia.exec_():
@@ -556,7 +556,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # Show slice parameters dialog when off-specular slices are requested
             if output_options.export_offspec_slices:
-                dia = OffSpecSliceDialog(self, self.data_handler)
+                dia = OffSpecSliceDialog(self, self.data_manager)
                 if not dia.exec_():
                     logging.info("Skipping slice parameters")
                     dia.destroy()
@@ -570,7 +570,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # If we want to save images, we just need to cycle through
             # and call: self.canvas.print_figure(unicode(fname[0]))
-            wrk = ProcessingWorkflow(self.data_handler, output_options)
+            wrk = ProcessingWorkflow(self.data_manager, output_options)
             wrk.execute(self.file_handler.new_progress_reporter())
 
             # Show final results

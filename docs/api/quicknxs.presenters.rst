@@ -18,10 +18,10 @@ quicknxs.presenters.configuration\_handler module
    :undoc-members:
    :show-inheritance:
 
-quicknxs.presenters.data\_handler module
+quicknxs.presenters.data\_manager module
 -------------------------------------------
 
-.. automodule:: quicknxs.presenters.data_handler
+.. automodule:: quicknxs.presenters.data_manager
    :members:
    :undoc-members:
    :show-inheritance:

@@ -20,8 +20,8 @@ from tests.ui import ui_utilities
 this_module_path = sys.modules[__name__].__file__
 
 
-class DataHandlerMock:
-    """Mock for DataHandler to be used in MainWindowMock."""
+class DataManagerMock:
+    """Mock for DataManager to be used in MainWindowMock."""
 
     current_directory = os.path.dirname(this_module_path)
 
@@ -31,7 +31,7 @@ class MainWindowMock:
 
     ui = None
     main_window = None
-    data_handler = DataHandlerMock()
+    data_manager = DataManagerMock()
 
 
 class TestMainHandler:
@@ -81,7 +81,7 @@ class TestMainHandler:
     def test_stitch_reflectivity_errors(self, mocker, error_type, error_msg):
         """Test that stitch_reflectivity catches errors in stitching and calls report_message."""
         # Mock exception raised in stitch_data_sets
-        mocker.patch("quicknxs.presenters.data_handler.DataHandler.stitch_data_sets", side_effect=error_type)
+        mocker.patch("quicknxs.presenters.data_manager.DataManager.stitch_data_sets", side_effect=error_type)
         # Mock call to function report_message
         mock_report_message = mocker.patch("quicknxs.presenters.main_handler.MainHandler.report_message")
         self.handler.stitch_reflectivity()
@@ -151,7 +151,7 @@ def test_reload_all_files(qtbot):
     """Test function reload_all_files."""
     main_window = MainWindow()
     handler = MainHandler(main_window)
-    data_handler = main_window.data_handler
+    data_manager = main_window.data_manager
     qtbot.addWidget(main_window)
     selected_row = 0
 
@@ -169,12 +169,12 @@ def test_reload_all_files(qtbot):
 
     # Test that reloading all files does not change the active run
     assert main_window.ui.reductionTable.rowCount() == 2
-    assert len(data_handler.reduction_list) == 2
-    assert data_handler._nexus_data == data_handler.reduction_list[selected_row]
+    assert len(data_manager.reduction_list) == 2
+    assert data_manager._nexus_data == data_manager.reduction_list[selected_row]
     handler.reload_all_files()
     assert main_window.ui.reductionTable.rowCount() == 2
-    assert len(main_window.data_handler.reduction_list) == 2
-    assert data_handler._nexus_data == data_handler.reduction_list[selected_row]
+    assert len(main_window.data_manager.reduction_list) == 2
+    assert data_manager._nexus_data == data_manager.reduction_list[selected_row]
 
 
 @pytest.mark.datarepo
@@ -182,7 +182,7 @@ def test_reload_all_files_two_data_tabs(qtbot):
     """Test function reload_all_files."""
     main_window = MainWindow()
     handler = MainHandler(main_window)
-    data_handler = main_window.data_handler
+    data_manager = main_window.data_manager
     qtbot.addWidget(main_window)
     selected_row = 0
 
@@ -203,16 +203,16 @@ def test_reload_all_files_two_data_tabs(qtbot):
 
     # Test that reloading all files does not change the active run and data tab
     assert main_window.ui.reductionTable.rowCount() == 2
-    assert len(data_handler.reduction_list) == 2
-    assert len(data_handler.peak_reduction_lists[2]) == 2
-    assert data_handler.active_reduction_list_index == 1
-    assert data_handler._nexus_data == data_handler.reduction_list[selected_row]
+    assert len(data_manager.reduction_list) == 2
+    assert len(data_manager.peak_reduction_lists[2]) == 2
+    assert data_manager.active_reduction_list_index == 1
+    assert data_manager._nexus_data == data_manager.reduction_list[selected_row]
     handler.reload_all_files()
     assert main_window.ui.reductionTable.rowCount() == 2
-    assert len(data_handler.reduction_list) == 2
-    assert len(data_handler.peak_reduction_lists[2]) == 2
-    assert data_handler.active_reduction_list_index == 1
-    assert data_handler._nexus_data == data_handler.reduction_list[selected_row]
+    assert len(data_manager.reduction_list) == 2
+    assert len(data_manager.peak_reduction_lists[2]) == 2
+    assert data_manager.active_reduction_list_index == 1
+    assert data_manager._nexus_data == data_manager.reduction_list[selected_row]
 
 
 def _get_nexus_data():
@@ -260,7 +260,7 @@ def test_reduction_table(qtbot):
 def test_reduction_table_dpix(qtbot):
     """Test that changing the DPIX column in the reduction table updates configuration.direct_pixel_overwrite."""
     main_window = MainWindow()
-    data_handler = main_window.data_handler
+    data_manager = main_window.data_manager
     qtbot.addWidget(main_window)
 
     # Load a data file and add it to the reduction table
@@ -270,11 +270,11 @@ def test_reduction_table_dpix(qtbot):
 
     # Verify the run was added to the reduction table
     assert main_window.ui.reductionTable.rowCount() == 1
-    assert len(data_handler.reduction_list) == 1
+    assert len(data_manager.reduction_list) == 1
 
     # Get the nexus data from the reduction list
-    nexus_data = data_handler.reduction_list[0]
-    active_cross_section_name = data_handler.active_cross_section.name
+    nexus_data = data_manager.reduction_list[0]
+    active_cross_section_name = data_manager.active_cross_section.name
     active_cross_section = nexus_data.cross_sections[active_cross_section_name]
 
     # check the "Set Direct Pixel" checkbox
@@ -310,7 +310,7 @@ class MockCrossSectionError(CrossSectionError):
 )
 def test_open_file_insufficient_event_count_error(error_type, mocker, qtbot):
     mock_show_diag = mocker.patch("quicknxs.presenters.main_handler.MainHandler._show_diagnostic")
-    mocker.patch("quicknxs.presenters.data_handler.DataHandler.load", side_effect=error_type)
+    mocker.patch("quicknxs.presenters.data_manager.DataManager.load", side_effect=error_type)
     mocker.patch("os.path.isfile", return_value=True)
     mock_report_message = mocker.patch("quicknxs.presenters.main_handler.MainHandler.report_message")
 
@@ -397,15 +397,15 @@ def test_stitch_reflectivity_updates_reduction_table(mocker, qtbot):
 
     def _mock_stitch_data_sets(*args, **kwargs):
         # simulate stitching updating the scale factors
-        data_handler.reduction_list[0].set_parameter("scaling_factor", scale0)
-        data_handler.reduction_list[1].set_parameter("scaling_factor", scale1)
+        data_manager.reduction_list[0].set_parameter("scaling_factor", scale0)
+        data_manager.reduction_list[1].set_parameter("scaling_factor", scale1)
 
     mocker.patch("quicknxs.views.plotting.PlotView.plot_reflectivity_or_intensity", return_value=True)
-    mocker.patch("quicknxs.presenters.data_handler.DataHandler.stitch_data_sets", new=_mock_stitch_data_sets)
+    mocker.patch("quicknxs.presenters.data_manager.DataManager.stitch_data_sets", new=_mock_stitch_data_sets)
 
     main_window = MainWindow()
     handler = MainHandler(main_window)
-    data_handler = main_window.data_handler
+    data_manager = main_window.data_manager
     qtbot.addWidget(main_window)
 
     handler.change_log_level("ERROR")
@@ -469,41 +469,41 @@ class TestActiveDataChangedSyncsFileList:
     def test_select_run_from_reduction_table(self, main_window_with_mock_runs):
         """Test that switching the active run in the reduction table updates the file list selection."""
         main_window = main_window_with_mock_runs
-        data_handler = main_window.data_handler
+        data_manager = main_window.data_manager
 
         # Switch active run to row 0 and verify the file list highlights run 40785
         main_window.set_active_reduction_data(True, 0)
-        assert data_handler._nexus_data == data_handler.reduction_list[0]
+        assert data_manager._nexus_data == data_manager.reduction_list[0]
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40785.nxs.h5"
 
         # Switch active run to row 1 and verify the file list highlights run 40782
         main_window.set_active_reduction_data(True, 1)
-        assert data_handler._nexus_data == data_handler.reduction_list[1]
+        assert data_manager._nexus_data == data_manager.reduction_list[1]
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40782.nxs.h5+REF_M_40785.nxs.h5"
 
     def test_select_run_from_direct_beam_table(self, main_window_with_mock_runs):
         """Test that switching the active run in the direct beam table updates the file list selection."""
         main_window = main_window_with_mock_runs
-        data_handler = main_window.data_handler
+        data_manager = main_window.data_manager
 
         # Switch active to the direct beam run and verify the file list highlights run 40786
         main_window.set_active_direct_beam(True, 0)
-        assert data_handler._nexus_data == data_handler.direct_beam_list[0]
+        assert data_manager._nexus_data == data_manager.direct_beam_list[0]
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40786.nxs.h5"
 
         # Switch to the data run and verify the file list highlights run 40787
         main_window.set_active_direct_beam(True, 1)
-        assert data_handler._nexus_data == data_handler.direct_beam_list[1]
+        assert data_manager._nexus_data == data_manager.direct_beam_list[1]
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40787.nxs.h5"
 
     def test_select_run_from_file_list(self, main_window_with_mock_runs):
         """Test that selecting a file in the list updates the active run radio button"""
         main_window = main_window_with_mock_runs
-        data_handler = main_window.data_handler
+        data_manager = main_window.data_manager
         handler = main_window.file_handler
 
         def _checked_row():
@@ -517,30 +517,30 @@ class TestActiveDataChangedSyncsFileList:
         # Click on the first data run in the file list and verify that the correct row is checked
         item = main_window.ui.file_list.findItems("40785", QtCore.Qt.MatchContains)[0]
         main_window.ui.file_list.setCurrentItem(item)
-        assert data_handler._nexus_data == data_handler.reduction_list[0]
+        assert data_manager._nexus_data == data_manager.reduction_list[0]
         assert _checked_row() == 0
 
         # Click on the second data run in the file list and verify that the correct row is checked
         item = main_window.ui.file_list.findItems("REF_M_40782.nxs.h5+REF_M_40785.nxs.h5", QtCore.Qt.MatchContains)[0]
         main_window.ui.file_list.setCurrentItem(item)
-        assert data_handler._nexus_data == data_handler.reduction_list[1]
+        assert data_manager._nexus_data == data_manager.reduction_list[1]
         assert _checked_row() == 1
 
     def test_switching_between_data_and_direct_beam_tabs(self, main_window_with_mock_runs):
         """Test that switching between the direct beam and data tabs updates the file list selection."""
         main_window = main_window_with_mock_runs
-        data_handler = main_window.data_handler
+        data_manager = main_window.data_manager
         data_tab_widget = main_window.ui.tabWidget
 
         # Switch to the direct beam tab and verify the file list highlights the active direct beam run (40786)
         data_tab_widget.setCurrentIndex(main_window.file_handler.DIRECT_BEAM_TAB_INDEX)
-        assert data_handler._nexus_data.run_number == data_handler.direct_beam_list[0].run_number
+        assert data_manager._nexus_data.run_number == data_manager.direct_beam_list[0].run_number
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40786.nxs.h5"
 
         # Switch to the main data tab and verify the file list highlights the active data run (40785)
         data_tab_widget.setCurrentIndex(main_window.file_handler.MAIN_DATA_TAB_INDEX)
-        assert data_handler._nexus_data.run_number == data_handler.reduction_list[0].run_number
+        assert data_manager._nexus_data.run_number == data_manager.reduction_list[0].run_number
         assert main_window.ui.file_list.currentItem() is not None
         assert main_window.ui.file_list.currentItem().text() == "REF_M_40785.nxs.h5"
 
@@ -551,12 +551,12 @@ class TestActiveDataChangedSyncsFileList:
         verifies the file list sync without triggering the full tab-change event cycle.
         """
         main_window = main_window_with_mock_runs
-        data_handler = main_window.data_handler
+        data_manager = main_window.data_manager
         data_tab_widget = main_window.ui.tabWidget
 
         # Add a second data tab; the runs from tab 1 are deep-copied into it
         main_window.addDataTable()
-        assert len(data_handler.peak_reduction_lists[2]) == 3
+        assert len(data_manager.peak_reduction_lists[2]) == 3
 
         # Make the second tab the active list and verify the first run is active
         data_tab_widget.setCurrentIndex(2)
