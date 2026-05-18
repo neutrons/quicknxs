@@ -17,7 +17,7 @@ repository = "https://github.com/neutrons/quicknxs"
 issues = "https://github.com/neutrons/quicknxs/issues"
 
 [project.gui-scripts]
-quicknxs-gui = "quicknxs.gui:main"
+quicknxs-gui = "quicknxs.main:gui"
 
 ####################
 ### Build config ###
@@ -79,7 +79,7 @@ preview = ["pixi-build"]
 # These vulnerabilities are ignored in the audit-deps task until conda-forge updates are available.
 
 [tool.pixi.dependencies]
-mr_reduction = "==2.17.0"  # requires mantid >=6.14.0,<6.15.0
+mr_reduction = "==2.17.0" # requires mantid >=6.14.0,<6.15.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
@@ -100,7 +100,7 @@ hatchling = "*"
 versioningit = "*"
 
 [tool.pixi.package.run-dependencies]
-mr_reduction = "==2.17.0"  # requires mantid >=6.14.0,<6.15.0
+mr_reduction = "==2.17.0" # requires mantid >=6.14.0,<6.15.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
@@ -131,13 +131,13 @@ versioningit = ">=3.2.0"
 toml-cli = "*"
 
 [tool.pixi.feature.dev.dependencies]
-pip = ">=26.0"            # CVE-2026-1703 fixed in version 26.0
+pip = ">=26.0"
 pip-audit = ">=2.9.0"
 pre-commit = ">=4.2.0"
 ruff = "*"
 versioningit = ">=3.2.0"
-virtualenv = ">=20.36.1"  # CVE-2026-22702 fixed in version 20.36.1
-filelock = ">=3.20.3"     # CVE-2026-22701 fixed in version 3.20.3
+virtualenv = ">=20.36.1" # CVE-2026-22702 fixed in version 20.36.1
+filelock = ">=3.20.3"    # CVE-2026-22701 fixed in version 3.20.3
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = ">=8"
@@ -189,11 +189,11 @@ reset-version = { cmd = "toml set tool.pixi.package.version \"0.0.0\" --toml-pat
 
 [tool.coverage.run]
 source = ["src/quicknxs"]
-omit = ["test/*"]
+omit = ["tests/*"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src", "scripts"]
-testpaths = ["test/"]
+testpaths = ["tests/"]
 python_files = ["test*.py"]
 norecursedirs = [
     ".git",
@@ -212,7 +212,7 @@ qt_log_format = "{rec.when} {rec.type_name}: {rec.message}"
 
 [tool.ruff]
 line-length = 120
-extend-exclude = ["notebooks/*", "icons/*", "test/notebooks/*"]
+extend-exclude = ["notebooks/*", "icons/*", "tests/notebooks/*"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
@@ -226,7 +226,8 @@ select = [
     "F",
     "I",
     "N",
-    "UP032", # Use f-strings instead of format call
+    "UP",
+    "FURB",
     "W",
 ]
 ignore = [

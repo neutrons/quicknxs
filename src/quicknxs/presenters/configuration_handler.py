@@ -1,0 +1,129 @@
+from dataclasses import dataclass
+
+from qtpy import QtCore
+from qtpy.QtWidgets import QAction, QCheckBox, QDoubleSpinBox, QSpinBox, QWidget
+
+from quicknxs.enums import QBinningType
+from quicknxs.models.configuration import Configuration
+from quicknxs.views.widgets import BinningTypeSelection
+
+
+class ConfigurationHandler:
+    """
+    Handles events upon changes in the configuration.
+
+    Configuration state that is global to all runs is stored as class variables in the class
+    `Configuration`. This class handles updating the configuration state upon changes in the UI
+    configuration elements, as well as triggering any recalculation and replotting needed as a
+    consequence of the changed configuration.
+    """
+
+    def __init__(self, main_window):
+        self.main_window = main_window
+        self.ui = main_window.ui
+        self.connect_config_events()
+
+    def config_setter_factory(self, qwidget: QWidget, config_name: str):
+        """Factory function to create configuration setters.
+
+        Generates anonymous functions to serve as callback when any of the global configurations
+        (`Configuration` class variables) are updated in the UI.
+
+        Each callback will be associated to one configuration parameter. Upon invoked,
+        the `Configuration` class variable value will be updated.
+
+        Parameters
+        ----------
+        qwidget: QWidget
+            UI widget
+        config_name: str
+            Name of the Configuration variable to update
+        """
+
+        def config_setter():
+            if isinstance(qwidget, QCheckBox):
+                value = qwidget.checkState()
+                bool_value = value == QtCore.Qt.Checked
+                setattr(Configuration, config_name, bool_value)
+            elif isinstance(qwidget, QAction):
+                value = qwidget.isChecked()
+                setattr(Configuration, config_name, value)
+            elif isinstance(qwidget, BinningTypeSelection):
+                combobox_idx = qwidget.currentIndex()
+                value = QBinningType(combobox_idx)
+                setattr(Configuration, config_name, value)
+            else:
+                value = qwidget.value()
+                setattr(Configuration, config_name, value)
+
+        return config_setter
+
+    def global_reflectivity_updater(self):
+        """Recalculate and replot reflectivity upon change in global reflectivity configuration."""
+        self.main_window.global_reflectivity_config_changed()
+
+    def connect_config_events(self):
+        """Connect configuration widget events."""
+
+        @dataclass
+        class ConfigWidget:
+            """Class to help connect UI configuration widgets to events.
+
+            Holds widget name and the `Configuration` class variable it represents, as well
+            as information about any events the widget triggers
+
+            Attributes
+            ----------
+            widget_name:
+                Name of a QWidget
+            config_name:
+                Name of a `Configuration` class variable
+            recalc_reflectivity:
+                If True, trigger global reflectivity recalculation
+            """
+
+            widget_name: str
+            config_name: str
+            recalc_reflectivity: bool = False
+
+        config_widgets = [
+            ConfigWidget("q_binning_type_selector_global", "q_binning_type_global"),
+            ConfigWidget("q_rebin_spinbox_global", "q_binning_step_global"),
+            ConfigWidget("normalize_to_unity_checkbox", "normalize_to_unity"),
+            ConfigWidget("normalization_q_cutoff_spinbox", "total_reflectivity_q_cutoff"),
+            ConfigWidget("global_fit_checkbox", "global_stitching"),
+            ConfigWidget("polynomial_stitching_degree_spinbox", "polynomial_stitching_degree"),
+            ConfigWidget("polynomial_stitching_points_spinbox", "polynomial_stitching_points"),
+            ConfigWidget("polynomial_stitching_checkbox", "polynomial_stitching"),
+            ConfigWidget("sample_size_spinbox", "sample_size"),
+            ConfigWidget("bandwidth_spinbox", "wl_bandwidth"),
+            ConfigWidget("direct_beam_y_lock_checkbox", "lock_direct_beam_y", recalc_reflectivity=True),
+            ConfigWidget("fit_within_roi_checkbox", "update_peak_range"),
+            ConfigWidget("actionAutoXROI", "use_peak_finder"),
+            ConfigWidget("actionAutoYROI", "use_low_res_finder"),
+            ConfigWidget("use_roi_checkbox", "use_roi"),
+            ConfigWidget("use_bck_roi_checkbox", "use_metadata_bck_roi"),
+            ConfigWidget("use_side_bck_checkbox", "use_tight_bck"),
+            ConfigWidget("side_bck_width", "bck_offset"),
+        ]
+
+        for config_widget in config_widgets:
+            # get the widget signal to connect
+            qwidget = getattr(self.ui, config_widget.widget_name)
+            if isinstance(qwidget, (QSpinBox, QDoubleSpinBox)):
+                signal_name = "editingFinished"
+            elif isinstance(qwidget, QCheckBox):
+                signal_name = "stateChanged"
+            elif isinstance(qwidget, QAction):
+                signal_name = "toggled"
+            elif isinstance(qwidget, BinningTypeSelection):
+                signal_name = "currentIndexChanged"
+            else:
+                raise ValueError(f"{type(qwidget)} not supported by ConfigurationHandler")
+            signal = getattr(qwidget, signal_name)
+
+            # connect config setter
+            signal.connect(self.config_setter_factory(qwidget, config_widget.config_name))
+            # connect reflectivity recalculation (order matters, must be connected after config setter)
+            if config_widget.recalc_reflectivity:
+                signal.connect(self.global_reflectivity_updater)

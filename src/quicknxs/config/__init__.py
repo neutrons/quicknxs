@@ -1,37 +1,22 @@
 """General settings."""
 
-# standard imports
-import json
-import os
-import sys
+OPEN_SUM_TOLERANCES = {
+    "LambdaRequest": 0.01,
+    "frequency": 1.0,
+    "DANGLE": 0.01,
+    "SANGLE": 0.01,
+    "S1HCenter": 0.01,
+    "S1VCenter": 0.01,
+    "S1HWidth": 0.01,
+    "S1Vheight": 0.01,
+    "S2HCenter": 0.01,
+    "S2VCenter": 0.01,
+    "S2HWidth": 0.01,
+    "S2Vheight": 0.01,
+    "S3HCenter": 0.01,
+    "S3VCenter": 0.01,
+    "S3HWidth": 0.01,
+    "S3Vheight": 0.01,
+}
 
-this_module_path = sys.modules[__name__].__file__
-
-
-class Settings(object):
-    """Singleton object containing the GUI settings as a dictionary."""
-
-    _instance = None
-    _settings: dict
-
-    def __new__(cls, *args, **kwargs):
-        if not isinstance(cls._instance, cls):
-            cls._instance = object.__new__(cls, *args, **kwargs)
-            cls._instance._settings = {}  # empty configuration
-        return cls._instance
-
-    def __init__(self):
-        """Load default configuration."""
-        if not self._settings:  # will load only once, since this is a singleton
-            self.update(os.path.join(os.path.dirname(this_module_path), "settings.json"))
-
-    def __getitem__(self, item):
-        return self._settings.get(item, None)
-
-    def __str__(self):
-        return str(self._settings)
-
-    def update(self, file_json: str) -> dict:
-        """Update the configuration with a JSON file containing settings of interest."""
-        with open(file_json) as file_handle:
-            self._settings.update(json.load(file_handle))
+SMTP_SERVER = "160.91.4.26"
