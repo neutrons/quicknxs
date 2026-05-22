@@ -137,7 +137,6 @@ jobs:
           organization: neutrons
           package-path: ${{ env.PKG_NAME }}-*.conda
           label: test
-          dry-run: true
 
       - name: Remove old packages
         if: github.ref == 'refs/heads/next'
