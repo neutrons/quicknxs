@@ -49,6 +49,13 @@ jobs:
           path: tests/data/quicknxs-data/
           key: submodule-${{ env.SUBMODULE_KEY }}
 
+      - name: Configure Git credentials for code.ornl.gov
+        if: steps.cache-lfs.outputs.cache-hit != 'true'
+        env:
+          TOKEN: ${{ secrets.DATA_READ_TOKEN }}
+        run: |
+          git config --global url."https://gitlab-ci-token:${TOKEN}@code.ornl.gov/".insteadOf "https://code.ornl.gov/"
+
       - name: Pull LFS files for the submodule
         if: steps.cache-lfs.outputs.cache-hit != 'true'
         run: |
