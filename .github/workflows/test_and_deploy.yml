@@ -32,9 +32,6 @@ jobs:
       - name: Setup Pixi
         uses: prefix-dev/setup-pixi@v0.9.6
 
-      - name: Audit dependencies
-        run: pixi run audit-deps
-
       - name: Generate cache key for submodule
         id: generate-cache-key
         run: |
@@ -77,6 +74,9 @@ jobs:
 
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read          # for actions/checkout
+      security-events: write  # for github/codeql-action/upload-sarif to upload Grype results
     defaults:
       run:
         shell: bash -el {0}
@@ -99,16 +99,33 @@ jobs:
           # extract version from the package file name "quicknxs-<version>-<build>.conda"
           echo "PKG_VERSION=$(ls *.conda | cut -d'-' -f2)" >> $GITHUB_ENV
 
-      - name: Verify Conda Package
-        uses: neutrons/conda-actions/pkg-verify@v1
+      # pkg-verify requires a conda env that already has the package
+      # installed (and micromamba on PATH); pkg-install sets both up and
+      # exposes the install directory for the Grype scan below.
+      - name: Install built conda package
+        id: install
+        uses: neutrons/conda-actions/pkg-install@v2
         with:
-          python-version: "3.11"
-          local-channel: /tmp/local-channel
           package-name: ${{ env.PKG_NAME }}
+          local-channel: /tmp/local-channel
+          python-version: "3.11"
           extra-channels: neutrons mantid oncat
+
+      - name: Verify Conda Package
+        uses: neutrons/conda-actions/pkg-verify@v2
+        with:
+          package-name: ${{ env.PKG_NAME }}
+          conda-env-name: ${{ steps.install.outputs.conda_env }}
           extra-commands: |
             python -c "import mr_reduction"
             python -c "import mantid"
+
+      # Audit the dependencies of the conda package we just installed. SARIF
+      # results are uploaded to GitHub code scanning by the grype action.
+      - name: Scan installed environment with Grype
+        uses: neutrons/conda-actions/grype@v2
+        with:
+          path: ${{ steps.install.outputs.conda_install_dir }}
 
       - name: upload conda package as artifact
         uses: actions/upload-artifact@v7
