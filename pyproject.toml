@@ -102,7 +102,7 @@ matplotlib = ">=3.8"
 
 [tool.pixi.package]
 name = "quicknxs"
-version = "4.18.0.dev20260612164222"
+version = "0.0.0"
 
 [tool.pixi.package.build]
 backend = { name = "pixi-build-python", version = "0.8.*" }
@@ -155,10 +155,9 @@ test = { description = "Run the test suite", cmd = "pytest" }
 # Packaging
 conda-build-command = { cmd = "pixi publish --target-channel ./local-channel", description = "Build the conda package command" }
 conda-build = { description = "Build the conda package", depends-on = [
-    "backup-toml",
     "sync-version",
     "conda-build-command",
-    "reset-toml",
+    "reset-version",
 ] }
 conda-publish = { cmd = "pixi upload anaconda --owner neutrons *.conda", description = "Publish the .conda package to anaconda.org", depends-on = [
     "conda-build",
@@ -175,7 +174,7 @@ clean-all = { description = "Clean all artifacts", depends-on = [
 # workaround for dynamic versioning
 sync-version = { cmd = 'version=$(python -m versioningit); toml set tool.pixi.package.version "$version" --toml-path pyproject.toml', description = "Sync pyproject.toml version with Git version" }
 backup-toml = { cmd = "cp pyproject.toml pyproject.toml.bak", description = "Backup the pyproject.toml file" }
-reset-toml = { cmd = "cp pyproject.toml.bak pyproject.toml; rm pyproject.toml.bak", description = "Reset the pyproject.toml file to the original state" }
+reset-version = { cmd = "toml set tool.pixi.package.version \"0.0.0\" --toml-path pyproject.toml", description = "Reset the package version to 0.0.0" }
 
 ##########################
 ### Pytest and CodeCov ###
