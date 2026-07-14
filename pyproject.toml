@@ -74,7 +74,7 @@ preview = ["pixi-build"]
 
 # Dependency tables
 [tool.pixi.dependencies]
-mr_reduction = "==2.18.0"  # requires mantid >=6.15.0,<6.16.0
+mr_reduction = "==2.18.0" # requires mantid >=6.15.0,<6.16.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
@@ -95,17 +95,17 @@ hatchling = "*"
 versioningit = "*"
 
 [tool.pixi.package.run-dependencies]
-mr_reduction = "==2.18.0"  # requires mantid >=6.15.0,<6.16.0
+mr_reduction = "==2.18.0" # requires mantid >=6.15.0,<6.16.0
 pyqt = ">=5.15,<6"
 qtpy = "*"
 matplotlib = ">=3.8"
 
 [tool.pixi.package]
 name = "quicknxs"
-version = "0.0.0"
+version = "4.18.0.dev20260612164222"
 
 [tool.pixi.package.build]
-backend = { name = "pixi-build-python", version = "0.4.*" }
+backend = { name = "pixi-build-python", version = "0.8.*" }
 
 # Environments and features
 
@@ -153,13 +153,14 @@ test-docs = { cmd = "sphinx-build -M doctest docs docs/_build/html", description
 # Testing
 test = { description = "Run the test suite", cmd = "pytest" }
 # Packaging
-conda-build-command = { cmd = "pixi build", description = "Wrapper for building the conda package - used by `conda-build`" }
+conda-build-command = { cmd = "pixi publish --target-channel ./local-channel", description = "Build the conda package command" }
 conda-build = { description = "Build the conda package", depends-on = [
+    "backup-toml",
     "sync-version",
     "conda-build-command",
-    "reset-version",
+    "reset-toml",
 ] }
-conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .conda package to anaconda.org", depends-on = [
+conda-publish = { cmd = "pixi upload anaconda --owner neutrons *.conda", description = "Publish the .conda package to anaconda.org", depends-on = [
     "conda-build",
 ] }
 # Misc
@@ -171,8 +172,10 @@ clean-all = { description = "Clean all artifacts", depends-on = [
     "clean-conda",
     "clean-docs",
 ] }
+# workaround for dynamic versioning
 sync-version = { cmd = 'version=$(python -m versioningit); toml set tool.pixi.package.version "$version" --toml-path pyproject.toml', description = "Sync pyproject.toml version with Git version" }
-reset-version = { cmd = "toml set tool.pixi.package.version \"0.0.0\" --toml-path pyproject.toml", description = "Reset the package version to 0.0.0" }
+backup-toml = { cmd = "cp pyproject.toml pyproject.toml.bak", description = "Backup the pyproject.toml file" }
+reset-toml = { cmd = "cp pyproject.toml.bak pyproject.toml; rm pyproject.toml.bak", description = "Reset the pyproject.toml file to the original state" }
 
 ##########################
 ### Pytest and CodeCov ###
@@ -212,7 +215,7 @@ convention = "numpy"
 select = [
     "A",
     "ARG",
-    "D",     # Docstrings
+    "D",    # Docstrings
     "E",
     "F",
     "I",
