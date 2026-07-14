@@ -94,10 +94,9 @@ jobs:
       - name: Build conda package
         run: |
           pixi run conda-build
-          mkdir -p /tmp/local-channel/noarch
-          cp *.conda /tmp/local-channel/noarch/
-          # extract version from the package file name "quicknxs-<version>-<build>.conda"
-          echo "PKG_VERSION=$(ls *.conda | cut -d'-' -f2)" >> $GITHUB_ENV
+
+          # Copy conda package to workspace root so it can be uploaded as an artifact.
+          find local-channel -name "*.conda" -exec cp {} . \;
 
       # pkg-verify requires a conda env that already has the package
       # installed (and micromamba on PATH); pkg-install sets both up and
@@ -107,7 +106,7 @@ jobs:
         uses: neutrons/conda-actions/pkg-install@v2
         with:
           package-name: ${{ env.PKG_NAME }}
-          local-channel: /tmp/local-channel
+          local-channel: ./local-channel
           python-version: "3.11"
           extra-channels: neutrons mantid oncat
 
