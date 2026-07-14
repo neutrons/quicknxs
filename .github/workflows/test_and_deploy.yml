@@ -27,10 +27,10 @@ jobs:
         shell: bash -el {0}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.9.6
+        uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
 
       - name: Generate cache key for submodule
         id: generate-cache-key
@@ -63,7 +63,7 @@ jobs:
         run: pixi run test -vv --cov=src --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }} # required
@@ -82,14 +82,14 @@ jobs:
         shell: bash -el {0}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 100
           fetch-tags: true
           ref: ${{ github.ref }}
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.9.6
+        uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
 
       - name: Build conda package
         run: |
@@ -103,7 +103,7 @@ jobs:
       # exposes the install directory for the Grype scan below.
       - name: Install built conda package
         id: install
-        uses: neutrons/conda-actions/pkg-install@v2
+        uses: neutrons/gh-actions/pkg-install@v1
         with:
           package-name: ${{ env.PKG_NAME }}
           local-channel: ./local-channel
@@ -111,7 +111,7 @@ jobs:
           extra-channels: neutrons mantid oncat
 
       - name: Verify Conda Package
-        uses: neutrons/conda-actions/pkg-verify@v2
+        uses: neutrons/gh-actions/pkg-verify@v1
         with:
           package-name: ${{ env.PKG_NAME }}
           conda-env-name: ${{ steps.install.outputs.conda_env }}
@@ -122,7 +122,7 @@ jobs:
       # Audit the dependencies of the conda package we just installed. SARIF
       # results are uploaded to GitHub code scanning by the grype action.
       - name: Scan installed environment with Grype
-        uses: neutrons/conda-actions/grype@v2
+        uses: neutrons/gh-actions/grype@v1
         with:
           path: ${{ steps.install.outputs.conda_install_dir }}
 
@@ -141,12 +141,12 @@ jobs:
         shell: bash -el {0}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.ref }}
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.9.6
+        uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
 
       - name: Download conda package artifact
         uses: actions/download-artifact@v8
@@ -154,7 +154,7 @@ jobs:
           name: artifact-conda-package
 
       - name: Upload package to anaconda
-        uses: neutrons/conda-actions/publish@v1
+        uses: neutrons/gh-actions/publish@v1
         with:
           anaconda-token: ${{ secrets.ANACONDA_TOKEN }}
           organization: neutrons
@@ -177,14 +177,13 @@ jobs:
     if: github.ref == 'refs/heads/next'
     steps:
       - name: Get Environment Name
-        uses: neutrons/branch-mapper@main
+        uses: neutrons/gh-actions/branch-mapper@v1
         id: env_name
         with:
           prefix: quicknxs
 
       - name: Trigger Dev Deploy
-        # use https://github.com/eic/trigger-gitlab-ci/pull/14 until merged
-        uses: eic/trigger-gitlab-ci@d984d8d53d871d2fdc1325639d94322da6e8747f
+        uses: eic/trigger-gitlab-ci@v3.3
         id: trigger
         with:
           url: https://code.ornl.gov
