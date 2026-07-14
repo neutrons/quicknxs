@@ -27,10 +27,10 @@ jobs:
         shell: bash -el {0}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.9.6
+        uses: prefix-dev/setup-pixi@v0.10.0
 
       - name: Generate cache key for submodule
         id: generate-cache-key
@@ -41,7 +41,7 @@ jobs:
 
       - name: Restore/save LFS files in cache
         id: cache-lfs
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: tests/data/quicknxs-data/
           key: submodule-${{ env.SUBMODULE_KEY }}
@@ -63,7 +63,7 @@ jobs:
         run: pixi run test -vv --cov=src --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }} # required
@@ -82,14 +82,14 @@ jobs:
         shell: bash -el {0}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 100
           fetch-tags: true
           ref: ${{ github.ref }}
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.9.6
+        uses: prefix-dev/setup-pixi@v0.10.0
 
       - name: Build conda package
         run: |
@@ -141,12 +141,12 @@ jobs:
         shell: bash -el {0}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.ref }}
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.9.6
+        uses: prefix-dev/setup-pixi@v0.10.0
 
       - name: Download conda package artifact
         uses: actions/download-artifact@v8
@@ -154,7 +154,7 @@ jobs:
           name: artifact-conda-package
 
       - name: Upload package to anaconda
-        uses: neutrons/conda-actions/publish@v1
+        uses: neutrons/conda-actions/publish@v2
         with:
           anaconda-token: ${{ secrets.ANACONDA_TOKEN }}
           organization: neutrons
@@ -162,7 +162,7 @@ jobs:
 
       - name: Remove old packages
         if: github.ref == 'refs/heads/next'
-        uses: neutrons/conda-actions/pkg-remove@v1
+        uses: neutrons/conda-actions/pkg-remove@v2
         with:
           anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
           organization: neutrons
