@@ -118,8 +118,6 @@ default = { features = [
 ], solve-group = "default" }
 
 [tool.pixi.feature.build.dependencies]
-anaconda-client = ">=1.13.0"
-check-wheel-contents = ">=0.6.2"
 versioningit = ">=3.2.0"
 
 [tool.pixi.feature.build.pypi-dependencies]
