@@ -41,7 +41,7 @@ jobs:
 
       - name: Restore/save LFS files in cache
         id: cache-lfs
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: tests/data/quicknxs-data/
           key: submodule-${{ env.SUBMODULE_KEY }}
@@ -99,11 +99,11 @@ jobs:
           find local-channel -name "*.conda" -exec cp {} . \;
 
       # pkg-verify requires a conda env that already has the package
-      # installed (and micromamba on PATH); pkg-install sets both up and
-      # exposes the install directory for the Grype scan below.
+      # installed (and micromamba on PATH); pkg-install sets both up,
+      # and exposes the install directory for the Grype scan below.
       - name: Install built conda package
         id: install
-        uses: neutrons/gh-actions/pkg-install@v1
+        uses: neutrons/gh-actions/pkg-install@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
         with:
           package-name: ${{ env.PKG_NAME }}
           local-channel: ./local-channel
@@ -111,10 +111,10 @@ jobs:
           extra-channels: neutrons mantid oncat
 
       - name: Verify Conda Package
-        uses: neutrons/gh-actions/pkg-verify@v1
+        uses: neutrons/gh-actions/pkg-verify@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
         with:
           package-name: ${{ env.PKG_NAME }}
-          conda-env-name: ${{ steps.install.outputs.conda_env }}
+          conda-env-name: ${{ steps.install.outputs.conda-env }}
           extra-commands: |
             python -c "import mr_reduction"
             python -c "import mantid"
@@ -122,9 +122,9 @@ jobs:
       # Audit the dependencies of the conda package we just installed. SARIF
       # results are uploaded to GitHub code scanning by the grype action.
       - name: Scan installed environment with Grype
-        uses: neutrons/gh-actions/grype@v1
+        uses: neutrons/gh-actions/grype@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
         with:
-          path: ${{ steps.install.outputs.conda_install_dir }}
+          path: ${{ steps.install.outputs.conda-install-dir }}
 
       - name: upload conda package as artifact
         uses: actions/upload-artifact@v7
@@ -154,7 +154,7 @@ jobs:
           name: artifact-conda-package
 
       - name: Upload package to anaconda
-        uses: neutrons/gh-actions/publish@v1
+        uses: neutrons/gh-actions/publish@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
         with:
           anaconda-token: ${{ secrets.ANACONDA_TOKEN }}
           organization: neutrons
@@ -162,11 +162,11 @@ jobs:
 
       - name: Remove old packages
         if: github.ref == 'refs/heads/next'
-        uses: neutrons/conda-actions/pkg-remove@v1
+        uses: neutrons/conda-actions/pkg-remove@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
         with:
-          anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
+          anaconda-token: ${{ secrets.ANACONDA_TOKEN }}
           organization: neutrons
-          package_name: quicknxs
+          package-name: quicknxs
           label: ${{ env.CONDA_LABEL }}
           keep: 5
 
@@ -177,7 +177,7 @@ jobs:
     if: github.ref == 'refs/heads/next'
     steps:
       - name: Get Environment Name
-        uses: neutrons/gh-actions/branch-mapper@v1
+        uses: neutrons/gh-actions/branch-mapper@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
         id: env_name
         with:
           prefix: quicknxs
