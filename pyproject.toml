@@ -72,7 +72,8 @@ channels = [
 # Required until the build feature becomes stable
 preview = ["pixi-build"]
 
-# Dependency tables
+### Dependency tables
+
 [tool.pixi.dependencies]
 mr_reduction = "==2.18.0" # requires mantid >=6.15.0,<6.16.0
 pyqt = ">=5.15,<6"
@@ -82,7 +83,10 @@ matplotlib = ">=3.8"
 [tool.pixi.pypi-dependencies]
 quicknxs = { path = ".", editable = true }
 
-# Pixi build configuration
+### Pixi build configuration
+
+[tool.pixi.package.build]
+backend = { name = "pixi-build-python", version = "0.8.*" }
 
 [tool.pixi.package.build-dependencies]
 hatchling = "*"
@@ -104,10 +108,7 @@ matplotlib = ">=3.8"
 name = "quicknxs"
 version = "0.0.0"
 
-[tool.pixi.package.build]
-backend = { name = "pixi-build-python", version = "0.8.*" }
-
-# Environments and features
+### Environments and features
 
 [tool.pixi.environments]
 default = { features = [
@@ -127,7 +128,6 @@ toml-cli = "*"
 pip = "*"
 pre-commit = ">=4.2.0"
 ruff = "*"
-versioningit = ">=3.2.0"
 
 [tool.pixi.feature.docs.dependencies]
 sphinx = ">=8"
@@ -143,6 +143,8 @@ pytest-cov = ">=6.2.1"
 pytest-mock = ">=3.14.1"
 pytest-qt = ">=4.4.0"
 pytest-xvfb = ">=3.1.1"
+
+### Pixi tasks
 
 [tool.pixi.tasks]
 # Documentation
@@ -162,7 +164,7 @@ conda-publish = { cmd = "pixi upload anaconda --owner neutrons *.conda", descrip
 ] }
 # Misc
 clean = { cmd = 'rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__ **/_version.py', description = "Clean up various caches and build artifacts" }
-clean-conda = { cmd = "rm -f *.conda", description = "Clean the local .conda build artifacts" }
+clean-conda = { cmd = "rm -rf ./local-channel", description = "Clean the local .conda build artifacts" }
 clean-docs = { cmd = "rm -rf docs/_build", description = "Clean up documentation build artifacts" }
 clean-all = { description = "Clean all artifacts", depends-on = [
     "clean",
