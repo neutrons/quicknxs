@@ -61,7 +61,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         # Connect signals for smoothing
         if show_smoothing:
-            self.ui.sigmaX.valueChanged.connect(self.update_settings)
+            self.ui.sigmaX.valueChanged.connect(self.update_sigma_coupling)
             self.ui.sigmaY.valueChanged.connect(self.update_settings)
             self.ui.sigmasCoupled.toggled.connect(self.update_sigma_coupling)
             self.ui.rSigmas.valueChanged.connect(self.update_settings)
@@ -390,7 +390,9 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         if self.ui.sigmasCoupled.isChecked():
             self.ui.sigmaY.setEnabled(False)
+            self.ui.sigmaY.blockSignals(True)
             self.ui.sigmaY.setValue(self.ui.sigmaX.value())
+            self.ui.sigmaY.blockSignals(False)
         else:
             self.ui.sigmaY.setEnabled(True)
 

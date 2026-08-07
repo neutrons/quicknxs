@@ -113,6 +113,29 @@ def test_dialog_smoothing_defaults(dialog_both):
     assert dialog_both.ui.sigmasCoupled.isChecked()
 
 
+def test_sigma_y_follows_sigma_x_when_coupled(dialog_smoothing_only):
+    """Test that sigmaY tracks every sigmaX change while sigmasCoupled is checked."""
+    dialog_smoothing_only.ui.sigmasCoupled.setChecked(True)
+
+    dialog_smoothing_only.ui.sigmaX.setValue(0.002)
+    assert dialog_smoothing_only.ui.sigmaY.value() == 0.002
+    assert not dialog_smoothing_only.ui.sigmaY.isEnabled()
+
+    dialog_smoothing_only.ui.sigmaX.setValue(0.0007)
+    assert dialog_smoothing_only.ui.sigmaY.value() == 0.0007
+
+
+def test_sigma_y_independent_when_uncoupled(dialog_smoothing_only):
+    """Test that sigmaY keeps its own value when sigmasCoupled is unchecked."""
+    dialog_smoothing_only.ui.sigmasCoupled.setChecked(False)
+    dialog_smoothing_only.ui.sigmaY.setValue(0.004)
+
+    dialog_smoothing_only.ui.sigmaX.setValue(0.001)
+
+    assert dialog_smoothing_only.ui.sigmaY.value() == 0.004
+    assert dialog_smoothing_only.ui.sigmaY.isEnabled()
+
+
 def test_dialog_bin_width_calculation(dialog_binning_only):
     """Test that the Qz bin width is calculated correctly."""
     # Set known values
