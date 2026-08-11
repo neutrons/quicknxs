@@ -61,7 +61,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         # Connect signals for smoothing
         if show_smoothing:
-            self.ui.sigmaX.valueChanged.connect(self.update_settings)
+            self.ui.sigmaX.valueChanged.connect(self.update_sigma_coupling)
             self.ui.sigmaY.valueChanged.connect(self.update_settings)
             self.ui.sigmasCoupled.toggled.connect(self.update_sigma_coupling)
             self.ui.rSigmas.valueChanged.connect(self.update_settings)
@@ -308,6 +308,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             else:
                 self.ui.sigmasCoupled.setChecked(True)
 
+            # Apply coupling before constructing the ellipses: update_settings() cannot
+            # resize them later in this method because self.drawing is still True
+            self.update_sigma_coupling()
+
             # Create sigma ellipses
             sigma_ang = 0.0
             self.sigma_1 = Ellipse(
@@ -327,9 +331,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         if plot.cplot is not None:
             plot.cplot.set_clim([self.INTENSITY_MIN, self.INTENSITY_MAX])
         plot.draw()
-
-        if self.show_smoothing:
-            self.update_sigma_coupling()
 
         self.drawing = False
 
@@ -390,7 +391,9 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         if self.ui.sigmasCoupled.isChecked():
             self.ui.sigmaY.setEnabled(False)
+            self.ui.sigmaY.blockSignals(True)
             self.ui.sigmaY.setValue(self.ui.sigmaX.value())
+            self.ui.sigmaY.blockSignals(False)
         else:
             self.ui.sigmaY.setEnabled(True)
 
