@@ -308,6 +308,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             else:
                 self.ui.sigmasCoupled.setChecked(True)
 
+            # Apply coupling before constructing the ellipses: update_settings() cannot
+            # resize them later in this method because self.drawing is still True
+            self.update_sigma_coupling()
+
             # Create sigma ellipses
             sigma_ang = 0.0
             self.sigma_1 = Ellipse(
@@ -327,9 +331,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         if plot.cplot is not None:
             plot.cplot.set_clim([self.INTENSITY_MIN, self.INTENSITY_MAX])
         plot.draw()
-
-        if self.show_smoothing:
-            self.update_sigma_coupling()
 
         self.drawing = False
 

@@ -2,6 +2,7 @@
 
 from unittest.mock import Mock, patch
 
+import numpy as np
 import pytest
 from qtpy import QtWidgets
 
@@ -111,6 +112,58 @@ def test_dialog_smoothing_defaults(dialog_both):
 
     # Check coupling defaults
     assert dialog_both.ui.sigmasCoupled.isChecked()
+
+
+def _fake_reduction_item(state):
+    """Build a mock reduction item with numpy off-specular data (units: 1/A)."""
+    shape = (10, 20)
+    ki_z = np.linspace(0.05, 0.10, shape[0] * shape[1]).reshape(shape)
+    off_spec = Mock()
+    off_spec.ki_z = ki_z
+    off_spec.kf_z = ki_z * 0.5
+    off_spec.Qz = np.linspace(0.1, 0.3, shape[0] * shape[1]).reshape(shape)
+    off_spec.Qx = np.linspace(-0.001, 0.001, shape[0] * shape[1]).reshape(shape)
+    off_spec.S = np.ones(shape)
+    off_spec.dS = np.ones(shape)
+
+    cross_section = Mock()
+    cross_section.off_spec = off_spec
+    cross_section.configuration.cut_first_n_points = 0
+    cross_section.configuration.cut_last_n_points = 0
+
+    item = Mock()
+    item.cross_sections = {state: cross_section}
+    return item
+
+
+def test_initial_draw_ellipses_match_coupled_sigmas(qtbot, mock_main_window):
+    """Test that draw_plot builds the sigma ellipses from the coupled sigma values.
+
+    The Y range is larger than the X range, so the range-derived sigma_y differs
+    from sigma_x; in coupled mode the ellipses must use the coupled value.
+    """
+    state = "Off_Off"
+    mock_main_window.data_manager.reduction_states = [state]
+    mock_main_window.data_manager.reduction_list = [_fake_reduction_item(state)]
+
+    with patch.object(OffSpecParametersDialog, "draw_plot"):
+        dlg = OffSpecParametersDialog(
+            mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=False
+        )
+        qtbot.addWidget(dlg)
+
+    # Coupled mode already active in the default coordinate system, so draw_plot's
+    # own setChecked(True) is a no-op and emits no toggled signal
+    dlg.ui.kizmkfzVSqz.setChecked(True)
+    dlg.ui.sigmasCoupled.setChecked(True)
+
+    dlg.draw_plot()
+
+    sigma_x = dlg.ui.sigmaX.value()
+    assert dlg.ui.sigmaY.value() == sigma_x
+    assert dlg.sigma_1.width == pytest.approx(2 * sigma_x)
+    assert dlg.sigma_1.height == pytest.approx(2 * sigma_x)
+    assert dlg.sigma_3.height == pytest.approx(6 * sigma_x)
 
 
 def test_sigma_y_follows_sigma_x_when_coupled(dialog_smoothing_only):
