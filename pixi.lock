@@ -320,7 +320,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/wheel-0.47.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/mantid/linux-64/mantid-6.15.0-np21py311h131b964_0.conda
-      - conda: https://conda.anaconda.org/neutrons/noarch/mr_reduction-2.18.0-pyh4616a5c_0.conda
+      - conda: https://conda.anaconda.org/neutrons/noarch/mr_reduction-2.19.0-pyh4616a5c_0.conda
       - conda: https://conda.anaconda.org/neutrons/noarch/plot-publisher-1.4.0-pyhbf21a9e_0.conda
       - conda: https://conda.anaconda.org/oncat/noarch/pyoncat-2.6-pyh4616a5c_0.conda
       - pypi: ./
@@ -3356,7 +3356,7 @@ packages:
   - python >=3.10
   license: ISC
   purls:
-  - pkg:pypi/certifi?source=compressed-mapping
+  - pkg:pypi/certifi?source=hash-mapping
   size: 134201
   timestamp: 1779285131141
 - conda: https://conda.anaconda.org/conda-forge/noarch/cfgv-3.5.0-pyhd8ed1ab_0.conda
@@ -3391,7 +3391,7 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/click?source=compressed-mapping
+  - pkg:pypi/click?source=hash-mapping
   size: 104999
   timestamp: 1779900548735
 - conda: https://conda.anaconda.org/conda-forge/noarch/codecov-2.1.13-pyhd8ed1ab_1.conda
@@ -3652,7 +3652,7 @@ packages:
   license: Apache-2.0
   license_family: APACHE
   purls:
-  - pkg:pypi/importlib-metadata?source=compressed-mapping
+  - pkg:pypi/importlib-metadata?source=hash-mapping
   size: 34766
   timestamp: 1779714582554
 - conda: https://conda.anaconda.org/conda-forge/noarch/importlib-resources-7.1.0-pyhd8ed1ab_0.conda
@@ -3747,7 +3747,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/narwhals?source=compressed-mapping
+  - pkg:pypi/narwhals?source=hash-mapping
   size: 285532
   timestamp: 1780672242196
 - conda: https://conda.anaconda.org/conda-forge/noarch/nodeenv-1.10.0-pyhd8ed1ab_0.conda
@@ -3828,7 +3828,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/pip?source=compressed-mapping
+  - pkg:pypi/pip?source=hash-mapping
   size: 1203173
   timestamp: 1780262795392
 - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.10.0-pyhcf101f3_0.conda
@@ -3840,7 +3840,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/platformdirs?source=compressed-mapping
+  - pkg:pypi/platformdirs?source=hash-mapping
   size: 26308
   timestamp: 1779972894916
 - conda: https://conda.anaconda.org/conda-forge/noarch/plotly-6.8.0-pyhd8ed1ab_0.conda
@@ -3920,7 +3920,7 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/pycparser?source=compressed-mapping
+  - pkg:pypi/pycparser?source=hash-mapping
   size: 55886
   timestamp: 1779293633166
 - conda: https://conda.anaconda.org/conda-forge/noarch/pydantic-2.13.4-pyhcf101f3_0.conda
@@ -4166,7 +4166,7 @@ packages:
   license: Apache-2.0
   license_family: APACHE
   purls:
-  - pkg:pypi/requests?source=compressed-mapping
+  - pkg:pypi/requests?source=hash-mapping
   size: 68709
   timestamp: 1778851103479
 - conda: https://conda.anaconda.org/conda-forge/noarch/requests-oauthlib-2.0.0-pyhd8ed1ab_1.conda
@@ -4370,7 +4370,7 @@ packages:
   license: BSD-2-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/sphinxcontrib-serializinghtml?source=compressed-mapping
+  - pkg:pypi/sphinxcontrib-serializinghtml?source=hash-mapping
   size: 30640
   timestamp: 1781260357443
 - conda: https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda
@@ -4553,7 +4553,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/zipp?source=compressed-mapping
+  - pkg:pypi/zipp?source=hash-mapping
   size: 24190
   timestamp: 1779159948016
 - conda: https://conda.anaconda.org/mantid/linux-64/mantid-6.15.0-np21py311h131b964_0.conda
@@ -4617,9 +4617,9 @@ packages:
   license: GPL-3.0-or-later
   size: 39771829
   timestamp: 1771534620695
-- conda: https://conda.anaconda.org/neutrons/noarch/mr_reduction-2.18.0-pyh4616a5c_0.conda
-  sha256: edd8f01fbc4120704b84b222a71fd7006ddc3d47e19642a7b7c3f56bb8f95bc9
-  md5: 9e858e791bdcc82cfaf0078d10319d29
+- conda: https://conda.anaconda.org/neutrons/noarch/mr_reduction-2.19.0-pyh4616a5c_0.conda
+  sha256: 761251cd7d527d2c6b4cd42debd95b69d4c422ec88a800797143c35c979a6956
+  md5: 1890bf7473f770d94f7adfd18f489eb7
   depends:
   - mantid >=6.15.0,<6.16.0
   - plot-publisher >=1.0,<2.0
@@ -4632,8 +4632,8 @@ packages:
   - python >=3.11,<3.12
   - python *
   license: MIT
-  size: 74045
-  timestamp: 1774880661892
+  size: 76586
+  timestamp: 1787149477643
 - conda: https://conda.anaconda.org/neutrons/noarch/plot-publisher-1.4.0-pyhbf21a9e_0.conda
   sha256: 81a62caaffa7106937f64a656d442a5ce596455e08616cd509851813246a9f50
   md5: 7e098c2f9ddcf73f6d0a54692e6d6cbe
