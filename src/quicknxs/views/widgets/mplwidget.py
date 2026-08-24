@@ -144,27 +144,51 @@ def _extract_imshow_data(ax):
 def _extract_pcolormesh_data(ax):
     """Extract mesh coordinates and Z values from all QuadMesh objects on the axes.
 
-    Handles both flat shading (1D edge arrays, z is one smaller per dim) and
-    gouraud shading (2D node grids, z matches coordinate dims).  For gouraud
-    meshes the full 2D coordinate grids are preserved because off-specular and
-    GISANS data use irregular grids where each cell has unique (x, y).
+    Handles flat shading over regular grids (1D edge arrays, z is one smaller
+    per dim), gouraud shading (2D node grids, z matches coordinate dims), and
+    flat/nearest shading over curvilinear grids (2D cell-center grids, z
+    matches center-grid dims).  The full 2D coordinate grids are preserved for
+    the latter two because off-specular and GISANS data use irregular grids
+    where each cell has unique (x, y).
     Multiple surfaces (one per run file) are captured as a list.
     """
     quadmeshes = [c for c in ax.collections if isinstance(c, QuadMesh)]
     qm0 = quadmeshes[0]
     norm = qm0.norm
 
+    def _classify(coords, z_data):
+        if z_data.shape == (coords.shape[0], coords.shape[1]):
+            return "gouraud"
+        x_corners = coords[:, :, 0]
+        y_corners = coords[:, :, 1]
+        is_regular = np.allclose(x_corners, x_corners[0:1, :]) and np.allclose(y_corners, y_corners[:, 0:1])
+        return "flat" if is_regular else "nearest"
+
     surfaces = []
     for qm in quadmeshes:
         coords = qm.get_coordinates()
         z_data = np.array(qm.get_array(), dtype=float)
-        is_gouraud = z_data.shape == (coords.shape[0], coords.shape[1])
+        mesh_form = _classify(coords, z_data)
 
-        if is_gouraud:
+        if mesh_form == "gouraud":
             surfaces.append(
                 {
                     "x_grid": np.array(coords[:, :, 0], dtype=float),
                     "y_grid": np.array(coords[:, :, 1], dtype=float),
+                    "z_data": z_data,
+                }
+            )
+        elif mesh_form == "nearest":
+            # Curvilinear flat quads: reduce corner grids to cell-center grids matching z
+            corners = np.asarray(coords, dtype=float)
+            centers = (corners[:-1, :-1] + corners[1:, :-1] + corners[:-1, 1:] + corners[1:, 1:]) / 4.0
+            ny, nx = corners.shape[0] - 1, corners.shape[1] - 1
+            if z_data.ndim == 1:
+                z_data = z_data.reshape(ny, nx)
+            surfaces.append(
+                {
+                    "x_grid": centers[:, :, 0],
+                    "y_grid": centers[:, :, 1],
                     "z_data": z_data,
                 }
             )
@@ -185,9 +209,8 @@ def _extract_pcolormesh_data(ax):
             )
 
     # Use first surface to determine shading type
-    first_coords = quadmeshes[0].get_coordinates()
     first_z = np.array(quadmeshes[0].get_array(), dtype=float)
-    shading = "gouraud" if first_z.shape == (first_coords.shape[0], first_coords.shape[1]) else "flat"
+    shading = _classify(quadmeshes[0].get_coordinates(), first_z)
 
     return {
         "surfaces": surfaces,
@@ -310,7 +333,7 @@ def _save_dat_pcolormesh(fname, extracted):
         for si, surf in enumerate(surfaces):
             z_data = surf["z_data"]
             s_ny, s_nx = z_data.shape
-            if shading == "gouraud":
+            if "x_grid" in surf:
                 x_grid = surf["x_grid"]
                 y_grid = surf["y_grid"]
                 for iy in range(s_ny):
@@ -367,7 +390,7 @@ def _save_npz(fname, extracted, plot_type):
             save_dict["norm_vmax"] = np.array(extracted["norm_vmax"])
         for i, surf in enumerate(surfaces):
             save_dict[f"z_data_{i}"] = surf["z_data"]
-            if shading == "gouraud":
+            if "x_grid" in surf:
                 save_dict[f"x_grid_{i}"] = surf["x_grid"]
                 save_dict[f"y_grid_{i}"] = surf["y_grid"]
             else:

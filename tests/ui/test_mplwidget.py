@@ -364,6 +364,51 @@ class TestSaveData:
         assert_allclose(data["x_grid_0"], x2d)
         assert_allclose(data["y_grid_0"], y2d)
 
+    # -- pcolormesh saves (nearest shading, curvilinear 2D center grids) --
+
+    @staticmethod
+    def _sheared_grid():
+        # Curvilinear (sheared) but affine grid, so nearest-shading quad
+        # centers recover the input points exactly
+        jj, ii = np.meshgrid(np.arange(3.0), np.arange(3.0))
+        x2d = jj + 0.3 * ii
+        y2d = ii + 0.1 * jj
+        z2d = np.arange(1.0, 10.0).reshape(3, 3)
+        return x2d, y2d, z2d
+
+    def test_save_pcolormesh_nearest_npz(self, qtbot, tmp_path, monkeypatch):
+        """Nearest shading over a curvilinear grid must keep per-cell 2D coords."""
+        w = self._make_widget(qtbot)
+        x2d, y2d, z2d = self._sheared_grid()
+        w.pcolormesh(x2d, y2d, z2d, shading="nearest")
+        out = str(tmp_path / "test.npz")
+        self._mock_dialog(monkeypatch, out, "Numpy archive (*.npz)")
+        w.toolbar.save_data()
+        data = np.load(out)
+        assert str(data["plot_type"]) == "pcolormesh"
+        assert str(data["shading"]) == "nearest"
+        assert_allclose(data["z_data_0"], z2d)
+        # Cell centers from the rendered quad corners recover the input points
+        assert_allclose(data["x_grid_0"], x2d)
+        assert_allclose(data["y_grid_0"], y2d)
+
+    def test_save_pcolormesh_nearest_dat(self, qtbot, tmp_path, monkeypatch):
+        """Nearest xyz output must have ALL z_data points with per-cell coords."""
+        w = self._make_widget(qtbot)
+        x2d, y2d, z2d = self._sheared_grid()
+        w.pcolormesh(x2d, y2d, z2d, shading="nearest")
+        out = str(tmp_path / "test.dat")
+        self._mock_dialog(monkeypatch, out)
+        w.toolbar.save_data()
+        text = open(out).read()
+        assert "shading: nearest" in text
+        assert "grid: 3 3" in text
+        rows = np.loadtxt(out)
+        assert rows.shape == (9, 3)
+        assert_allclose(rows[0], [x2d[0, 0], y2d[0, 0], 1.0])
+        assert_allclose(rows[3], [x2d[1, 0], y2d[1, 0], 4.0])
+        assert_allclose(rows[8], [x2d[2, 2], y2d[2, 2], 9.0])
+
     # -- line saves --
 
     def test_save_line_dat(self, qtbot, tmp_path, monkeypatch):
