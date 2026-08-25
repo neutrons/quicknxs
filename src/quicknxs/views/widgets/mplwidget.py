@@ -141,6 +141,41 @@ def _extract_imshow_data(ax):
     }
 
 
+def _centers_to_edges_2d(centers: np.ndarray) -> np.ndarray:
+    """Convert a 2D grid of cell centers to the (ny+1, nx+1) grid of cell corners.
+
+    Corners are the midpoints between neighboring centers, linearly extrapolated
+    at the boundaries — the same construction matplotlib uses for nearest shading.
+    """
+
+    def interp(grid, axis):
+        half_step = np.diff(grid, axis=axis) / 2.0
+        if axis == 0:
+            return np.vstack((grid[:1] - half_step[:1], grid[:-1] + half_step, grid[-1:] + half_step[-1:]))
+        return np.hstack((grid[:, :1] - half_step[:, :1], grid[:, :-1] + half_step, grid[:, -1:] + half_step[:, -1:]))
+
+    return interp(interp(np.asarray(centers, dtype=float), 0), 1)
+
+
+def _explicit_cell_edges(datax, datay, dataz, opts):
+    """Replace nearest/auto shading over same-shape 2D coordinate grids with explicit cell edges.
+
+    matplotlib warns when it derives cell edges from center coordinates that are not
+    monotonic, as is the case for curvilinear Q-space grids (e.g. Qx changes sign around
+    the specular ridge). Computing the same midpoint edges explicitly keeps the identical
+    flat-color rendering without the warning.
+    """
+    shading = opts.get("shading", "auto")
+    if shading not in ("auto", "nearest"):
+        return datax, datay, opts
+    x = np.asarray(datax)
+    y = np.asarray(datay)
+    z_shape = np.shape(dataz)
+    if not (x.ndim == 2 and x.shape == z_shape and y.shape == z_shape and min(x.shape) >= 2):
+        return datax, datay, opts
+    return _centers_to_edges_2d(x), _centers_to_edges_2d(y), {**opts, "shading": "flat"}
+
+
 def _extract_pcolormesh_data(ax):
     """Extract mesh coordinates and Z values from all QuadMesh objects on the axes.
 
@@ -844,6 +879,7 @@ class MPLWidget(QtWidgets.QWidget):
     def pcolormesh(self, datax, datay, dataz, log=False, imin=None, imax=None, update=False, **opts):
         """Convenience wrapper for self.canvas.ax.plot."""
         if self.cplot is None or not update:
+            datax, datay, opts = _explicit_cell_edges(datax, datay, dataz, opts)
             if log:
                 self.cplot = self.canvas.ax.pcolormesh(datax, datay, dataz, norm=LogNorm(imin, imax), **opts)
             else:

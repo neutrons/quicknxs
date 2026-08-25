@@ -389,8 +389,21 @@ class TestSaveData:
         assert str(data["shading"]) == "nearest"
         assert_allclose(data["z_data_0"], z2d)
         # Cell centers from the rendered quad corners recover the input points
-        assert_allclose(data["x_grid_0"], x2d)
-        assert_allclose(data["y_grid_0"], y2d)
+        assert_allclose(data["x_grid_0"], x2d, atol=1e-12)
+        assert_allclose(data["y_grid_0"], y2d, atol=1e-12)
+
+    def test_nearest_nonmonotonic_grid_no_warning(self, qtbot):
+        """Non-monotonic center coordinates (e.g. Qx around the specular ridge) must not warn."""
+        import warnings
+
+        w = self._make_widget(qtbot)
+        jj, ii = np.meshgrid(np.arange(5.0), np.arange(4.0))
+        x2d = (jj - 2.0) ** 2 + 0.1 * ii  # non-monotonic along rows
+        y2d = ii + 0.1 * jj
+        z2d = np.arange(20.0).reshape(4, 5)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            w.pcolormesh(x2d, y2d, z2d, shading="nearest")
 
     def test_save_pcolormesh_nearest_dat(self, qtbot, tmp_path, monkeypatch):
         """Nearest xyz output must have ALL z_data points with per-cell coords."""
@@ -405,9 +418,9 @@ class TestSaveData:
         assert "grid: 3 3" in text
         rows = np.loadtxt(out)
         assert rows.shape == (9, 3)
-        assert_allclose(rows[0], [x2d[0, 0], y2d[0, 0], 1.0])
-        assert_allclose(rows[3], [x2d[1, 0], y2d[1, 0], 4.0])
-        assert_allclose(rows[8], [x2d[2, 2], y2d[2, 2], 9.0])
+        assert_allclose(rows[0], [x2d[0, 0], y2d[0, 0], 1.0], atol=1e-12)
+        assert_allclose(rows[3], [x2d[1, 0], y2d[1, 0], 4.0], atol=1e-12)
+        assert_allclose(rows[8], [x2d[2, 2], y2d[2, 2], 9.0], atol=1e-12)
 
     # -- line saves --
 
