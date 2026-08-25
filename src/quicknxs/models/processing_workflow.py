@@ -592,8 +592,11 @@ class ProcessingWorkflow:
         """Create a smoothed dataset from the off-specular scattering.
 
         The smoothing is evaluated at the original data points, preserving the
-        irregular grid of the input. Qz slices are not extracted here because
-        they require a regular grid; they come from the binned data instead.
+        irregular grid of the input: the output has the same per-run array
+        structure as the raw data, with only the intensities changed. All runs
+        contribute jointly to the smoothed intensities. Qz slices are not
+        extracted here because they require a regular grid; they come from the
+        binned data instead.
 
         Note for my own integrity (MD):
            I don't think one should smooth data distributions and do any quantitative
@@ -621,33 +624,33 @@ class ProcessingWorkflow:
             "cross_sections": {},
         }
 
+        if axes == OffSpecXAxis.QX_VS_QZ:
+            x_column, y_column = 0, 1
+            columns = ["Qx", "Qz", "I"]
+            axis_sigma_scaling = 2
+            qzmax_scale = 1.0 / 3.0
+        elif axes == OffSpecXAxis.KZI_VS_KZF:
+            x_column, y_column = 2, 3
+            columns = ["ki_z", "kf_z", "I"]
+            axis_sigma_scaling = 3
+            qzmax_scale = 1.0 / 6.0
+        else:
+            x_column, y_column = 4, 1
+            columns = ["ki_z-kf_z", "Qz", "I"]
+            axis_sigma_scaling = 2
+            qzmax_scale = 1.0 / 3.0
+        output_data["units"] = ["1/A", "1/A", "a.u."]
+        output_data["columns"] = columns
+
         for xs in data_dict["cross_sections"].keys():
-            if not data_dict[xs]:
+            run_arrays = data_dict[xs]
+            if not run_arrays:
                 continue
-            data = np.hstack(data_dict[xs])
-            I = data[:, :, 5]
-            Qzmax = data[:, :, 2].max() * 2.0
-            if axes == OffSpecXAxis.QX_VS_QZ:
-                x = data[:, :, 0]
-                y = data[:, :, 1]
-                output_data["units"] = ["1/A", "1/A", "a.u."]
-                output_data["columns"] = ["Qx", "Qz", "I"]
-                axis_sigma_scaling = 2
-                xysigma0 = Qzmax / 3.0
-            elif axes == OffSpecXAxis.KZI_VS_KZF:
-                x = data[:, :, 2]
-                y = data[:, :, 3]
-                output_data["units"] = ["1/A", "1/A", "a.u."]
-                output_data["columns"] = ["ki_z", "kf_z", "I"]
-                axis_sigma_scaling = 3
-                xysigma0 = Qzmax / 6.0
-            else:
-                x = data[:, :, 4]
-                y = data[:, :, 1]
-                output_data["units"] = ["1/A", "1/A", "a.u."]
-                output_data["columns"] = ["ki_z-kf_z", "Qz", "I"]
-                axis_sigma_scaling = 2
-                xysigma0 = Qzmax / 3.0
+            # Smooth over the merged points of all runs so they contribute jointly
+            x = np.concatenate([run[:, :, x_column].ravel() for run in run_arrays])
+            y = np.concatenate([run[:, :, y_column].ravel() for run in run_arrays])
+            I = np.concatenate([run[:, :, 5].ravel() for run in run_arrays])
+            Qzmax = max(run[:, :, 2].max() for run in run_arrays) * 2.0
 
             I = off_specular.smooth_data_irregular(
                 x,
@@ -657,9 +660,21 @@ class ProcessingWorkflow:
                 sigmax=self.output_options.off_spec_sigmax,
                 sigmay=self.output_options.off_spec_sigmay,
                 axis_sigma_scaling=axis_sigma_scaling,
-                xysigma0=xysigma0,
+                xysigma0=Qzmax * qzmax_scale,
             )
-            output_data[xs] = [np.array([x, y, I]).transpose((1, 2, 0))]
+
+            # Split back into the per-run pixel-by-TOF arrays of the input
+            smoothed_runs = []
+            offset = 0
+            for run in run_arrays:
+                run_shape = run.shape[:2]
+                run_size = run_shape[0] * run_shape[1]
+                run_intensity = I[offset : offset + run_size].reshape(run_shape)
+                offset += run_size
+                smoothed_runs.append(
+                    np.array([run[:, :, x_column], run[:, :, y_column], run_intensity]).transpose((1, 2, 0))
+                )
+            output_data[xs] = smoothed_runs
             output_data["cross_sections"][xs] = data_dict["cross_sections"][xs]
 
         output_data["ki_max"] = data_dict["ki_max"]

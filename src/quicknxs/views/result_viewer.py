@@ -79,8 +79,9 @@ class ResultViewer(QtWidgets.QDialog):
             plot = plots[i]
             plot.show()
             plots[i].clear_fig()
-            _data = off_spec_data[xs][0].T
-            plots[i].pcolormesh(_data[0], _data[1], _data[2], log=True, imin=i_min, imax=i_max)
+            for surface in off_spec_data[xs]:
+                _data = surface.T
+                plots[i].pcolormesh(_data[0], _data[1], _data[2], log=True, imin=i_min, imax=i_max)
             plots[i].set_xlabel(f"{off_spec_data['columns'][0]} [{off_spec_data['units'][0]}]")
             plots[i].set_ylabel(f"{off_spec_data['columns'][1]} [{off_spec_data['units'][1]}]")
             plots[i].set_title(xs)
