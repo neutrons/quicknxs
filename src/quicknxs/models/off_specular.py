@@ -6,6 +6,7 @@ from multiprocessing import Pool
 from typing import TYPE_CHECKING
 
 import numpy as np
+import scipy.spatial
 import scipy.stats
 
 from quicknxs.enums import OffSpecXAxis
@@ -469,3 +470,93 @@ def smooth_data(
     intensity_out = reduce((lambda x, y: x + y), _data)
 
     return x_out, y_out, intensity_out
+
+
+def smooth_data_irregular(
+    x: np.ndarray,
+    y: np.ndarray,
+    I: np.ndarray,
+    sigmas: float = 3.0,
+    sigmax: float = 0.0005,
+    sigmay: float = 0.0005,
+    axis_sigma_scaling: int | None = None,
+    xysigma0: float = 0.06,
+) -> np.ndarray:
+    """Smooth a dataset in place on its own (irregular) grid.
+
+    Evaluates the same Gaussian-weighted average as `smooth_data` at every
+    input point instead of on a regular output grid: each smoothed intensity
+    is the average of all intensities within `sigmas` normalized distance,
+    weighted by the Gaussian of the distance. The sampling of the input data
+    is preserved.
+
+    Parameters
+    ----------
+    x:
+        x-values of the data (any shape); same units as `sigmax`
+    y:
+        y-values of the data (same shape as x); same units as `sigmay`
+    I:
+        Intensity values of the data (same shape as x)
+    sigmas:
+        Range in units of sigma to search around each point
+    sigmax:
+        Sigma in x direction
+    sigmay:
+        Sigma in y direction
+    axis_sigma_scaling:
+        Defines how the sigmas change with the x/y value:
+        1 scales the variances with x, 2 with y, 3 with x + y
+    xysigma0:
+        x/y value where the given sigmas apply exactly
+
+    Returns
+    -------
+    np.ndarray
+        Smoothed intensities, same shape as I
+    """
+    shape = np.shape(I)
+    x_flat = np.ravel(np.asarray(x, dtype=float))
+    y_flat = np.ravel(np.asarray(y, dtype=float))
+    intensity_flat = np.ravel(np.asarray(I, dtype=float))
+
+    # In sigma-scaled coordinates the Gaussian is isotropic with unit width,
+    # so the cutoff becomes a fixed Euclidean radius suitable for a KD-tree
+    points = np.column_stack((x_flat / sigmax, y_flat / sigmay))
+    tree = scipy.spatial.cKDTree(points)
+
+    # Per-point variance scale factor: sigma_eff^2 = sigma^2 * (xy / xysigma0)
+    if axis_sigma_scaling:
+        if axis_sigma_scaling == 1:
+            xy = x_flat
+        elif axis_sigma_scaling == 2:
+            xy = y_flat
+        elif axis_sigma_scaling == 3:
+            xy = x_flat + y_flat
+        else:
+            raise ValueError(f"Unknown axis_sigma_scaling: {axis_sigma_scaling}")
+        variance_scale = xy / xysigma0
+    else:
+        variance_scale = np.ones_like(x_flat)
+
+    result = np.zeros_like(intensity_flat)
+    # Points with a non-positive variance scale keep a zero intensity, like in smooth_data
+    valid = np.flatnonzero(variance_scale > 0)
+
+    # Evaluate in chunks to bound the size of the neighbor arrays
+    chunk_size = 5000
+    for start in range(0, len(valid), chunk_size):
+        idx = valid[start : start + chunk_size]
+        radii = sigmas * np.sqrt(variance_scale[idx])
+        neighbors = tree.query_ball_point(points[idx], r=radii)
+        counts = np.fromiter((len(nb) for nb in neighbors), dtype=np.intp, count=len(neighbors))
+        flat = np.concatenate([np.asarray(nb, dtype=np.intp) for nb in neighbors])
+        rows = np.repeat(np.arange(len(idx)), counts)
+        distance_sq = np.sum((points[flat] - points[idx][rows]) ** 2, axis=1)
+        weights = np.exp(-0.5 * distance_sq / variance_scale[idx][rows])
+        weight_sum = np.bincount(rows, weights=weights, minlength=len(idx))
+        weighted_intensity = np.bincount(rows, weights=weights * intensity_flat[flat], minlength=len(idx))
+        # Every point is inside its own radius, so weight_sum >= 1
+        result[idx] = weighted_intensity / weight_sum
+
+    return result.reshape(shape)

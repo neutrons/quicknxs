@@ -358,21 +358,14 @@ class ProcessingWorkflow:
             output_file_base = self.get_file_name(run_list, process_type="OffSpec")
             self.write_quicknxs(output_data, output_file_base, include_offspec=True)
 
-        # Export smoothed result
+        # Export smoothed result. The smoothing preserves the irregular grid of the
+        # input data, so Qz slices of the smoothed data are not available; slices
+        # come from the binned data below.
         if smooth:
             try:
-                smooth_output, slice_data_dict = self.smooth_offspec(output_data)
+                smooth_output = self.smooth_offspec(output_data)
                 output_file_base = self.get_file_name(run_list, process_type="OffSpecSmooth")
                 self.write_quicknxs(smooth_output, output_file_base, include_offspec=True)
-                # Only output smooth slices if both smooth and slices are requested
-                if slices and slice_data_dict is not None and "cross_sections" in slice_data_dict:
-                    output_file_base = self.get_file_name(run_list, process_type="OffSpecSmoothSlice")
-                    self.write_quicknxs(
-                        slice_data_dict,
-                        output_file_base,
-                        xs=slice_data_dict["cross_sections"].keys(),
-                        include_offspec=True,
-                    )
                 # Cache smooth output if no binned output requested, otherwise cache binned
                 if not binned:
                     self.data_manager.cached_offspec = smooth_output
@@ -595,8 +588,12 @@ class ProcessingWorkflow:
         data_dict["ki_max"] = ki_max
         return data_dict
 
-    def smooth_offspec(self, data_dict: dict) -> tuple[dict, dict]:
+    def smooth_offspec(self, data_dict: dict) -> dict:
         """Create a smoothed dataset from the off-specular scattering.
+
+        The smoothing is evaluated at the original data points, preserving the
+        irregular grid of the input. Qz slices are not extracted here because
+        they require a regular grid; they come from the binned data instead.
 
         Note for my own integrity (MD):
            I don't think one should smooth data distributions and do any quantitative
@@ -613,8 +610,8 @@ class ProcessingWorkflow:
 
         Returns
         -------
-        Tuple[dict, dict]
-            A tuple containing the smoothed data dictionary and a slice data dictionary.
+        dict
+            The smoothed data dictionary.
         """
         # Coordinate system comes from the OffSpecParametersDialog
         axes = self.output_options.off_spec_x_axis
@@ -623,62 +620,50 @@ class ProcessingWorkflow:
             "columns": [],
             "cross_sections": {},
         }
-        slice_data_dict = {}
 
         for xs in data_dict["cross_sections"].keys():
             if not data_dict[xs]:
                 continue
             data = np.hstack(data_dict[xs])
-            I = data[:, :, 5].flatten()
+            I = data[:, :, 5]
             Qzmax = data[:, :, 2].max() * 2.0
-            y_label = "Qz"
             if axes == OffSpecXAxis.QX_VS_QZ:
-                x = data[:, :, 0].flatten()
-                y = data[:, :, 1].flatten()
+                x = data[:, :, 0]
+                y = data[:, :, 1]
                 output_data["units"] = ["1/A", "1/A", "a.u."]
                 output_data["columns"] = ["Qx", "Qz", "I"]
                 axis_sigma_scaling = 2
                 xysigma0 = Qzmax / 3.0
             elif axes == OffSpecXAxis.KZI_VS_KZF:
-                y_label = "kf_z"
-                x = data[:, :, 2].flatten()
-                y = data[:, :, 3].flatten()
+                x = data[:, :, 2]
+                y = data[:, :, 3]
                 output_data["units"] = ["1/A", "1/A", "a.u."]
                 output_data["columns"] = ["ki_z", "kf_z", "I"]
                 axis_sigma_scaling = 3
                 xysigma0 = Qzmax / 6.0
             else:
-                x = data[:, :, 4].flatten()
-                y = data[:, :, 1].flatten()
+                x = data[:, :, 4]
+                y = data[:, :, 1]
                 output_data["units"] = ["1/A", "1/A", "a.u."]
                 output_data["columns"] = ["ki_z-kf_z", "Qz", "I"]
                 axis_sigma_scaling = 2
                 xysigma0 = Qzmax / 3.0
 
-            x, y, I = off_specular.smooth_data(
+            I = off_specular.smooth_data_irregular(
                 x,
                 y,
                 I,
                 sigmas=self.output_options.off_spec_sigmas,
-                gridx=self.output_options.off_spec_nxbins,
-                gridy=self.output_options.off_spec_nybins,
                 sigmax=self.output_options.off_spec_sigmax,
                 sigmay=self.output_options.off_spec_sigmay,
-                x1=self.output_options.off_spec_x_min,
-                x2=self.output_options.off_spec_x_max,
-                y1=self.output_options.off_spec_y_min,
-                y2=self.output_options.off_spec_y_max,
                 axis_sigma_scaling=axis_sigma_scaling,
                 xysigma0=xysigma0,
             )
             output_data[xs] = [np.array([x, y, I]).transpose((1, 2, 0))]
             output_data["cross_sections"][xs] = data_dict["cross_sections"][xs]
 
-            # Slices
-            slice_data_dict = self.get_slice_output_data(x[0], y.T[0], I, None, xs, y_label, **slice_data_dict)
-
         output_data["ki_max"] = data_dict["ki_max"]
-        return output_data, slice_data_dict
+        return output_data
 
     def get_slice_output_data(self, qx, qz, r, dr, pol_state, label, **slice_data_dict):
         """Produce a data dictionary with a slice of the data."""
