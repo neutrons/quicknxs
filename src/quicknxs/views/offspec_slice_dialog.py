@@ -198,7 +198,7 @@ class OffSpecSliceDialog(QtWidgets.QDialog):
             "imin": self.INTENSITY_MIN,
             "imax": self.INTENSITY_MAX,
             "cmap": "jet",
-            "shading": "gouraud",
+            "shading": "nearest",
         }
 
         if self.ui.kizmkfzVSqz.isChecked():
