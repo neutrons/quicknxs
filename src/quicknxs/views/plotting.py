@@ -509,7 +509,7 @@ class PlotView:
                         imin=i_min,
                         imax=i_max,
                         cmap=self.color,
-                        shading="gouraud",
+                        shading="nearest",
                     )
                 elif self.main_window.ui.qxVSqz.isChecked():
                     plot.pcolormesh(
@@ -520,7 +520,7 @@ class PlotView:
                         imin=i_min,
                         imax=i_max,
                         cmap=self.color,
-                        shading="gouraud",
+                        shading="nearest",
                     )
                 else:
                     plot.pcolormesh(
@@ -531,7 +531,7 @@ class PlotView:
                         imin=i_min,
                         imax=i_max,
                         cmap=self.color,
-                        shading="gouraud",
+                        shading="nearest",
                     )
         # Set axes labels and limits after after plotting
         for i, xs in enumerate(data_set_keys):
