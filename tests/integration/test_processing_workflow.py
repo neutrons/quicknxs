@@ -92,6 +92,8 @@ def test_smoothing_without_slice_export(data_server, tmpdir):
         off_spec_y_max=0.15,
         off_spec_nxbins=120,
         off_spec_nybins=120,
+        off_spec_smooth_nxbins=100,
+        off_spec_smooth_nybins=80,
         off_spec_sigmas=3,
         off_spec_sigmax=0.001,
         off_spec_sigmay=0.001,
@@ -116,3 +118,9 @@ def test_smoothing_without_slice_export(data_server, tmpdir):
 
     # This should NOT raise an error due to missing slice parameters
     pw.offspec(raw=False, binned=False, smooth=True, slices=False)
+
+    # The smoothed output is on the requested regular grid
+    smooth_output = manager.cached_offspec
+    assert smooth_output is not None
+    for xs in smooth_output["cross_sections"]:
+        assert smooth_output[xs][0].shape == (80, 100, 3)

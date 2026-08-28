@@ -278,3 +278,102 @@ def test_dialog_settings_persistence(dialog_both, qtbot):
 
     # Check that coupling states were loaded
     assert new_dialog.ui.sigmasCoupled.isChecked() is False
+
+
+@pytest.fixture
+def dialog_with_auto_grid(qtbot, mock_main_window, mocker):
+    """Dialog with data available and finest_intervals mocked to known values."""
+    mock_main_window.data_manager.reduction_states = ["Off_Off"]
+    intervals = mocker.patch("quicknxs.views.smooth_dialog.finest_intervals", return_value=(0.001, 0.0005))
+    # Patch for the dialog's lifetime: the real draw_plot would reset the region
+    # spinboxes from the (mocked, empty) data on every axis change
+    mocker.patch.object(OffSpecParametersDialog, "draw_plot")
+    dlg = OffSpecParametersDialog(
+        mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=False
+    )
+    qtbot.addWidget(dlg)
+    # Fixed region so the expected bin counts are deterministic
+    dlg.ui.offspec_x_min.setValue(-0.015)
+    dlg.ui.offspec_x_max.setValue(0.015)
+    dlg.ui.offspec_y_min.setValue(0.0)
+    dlg.ui.offspec_y_max.setValue(0.15)
+    return dlg, intervals
+
+
+def test_auto_grid_defaults(dialog_with_auto_grid):
+    """Auto grid is on by default and locks the spinboxes."""
+    dlg, _ = dialog_with_auto_grid
+    assert dlg.ui.autoGridBins.isChecked()
+    assert not dlg.ui.smooth_grid_x.isEnabled()
+    assert not dlg.ui.smooth_grid_y.isEnabled()
+
+
+def test_auto_grid_computes_bins_from_intervals(dialog_with_auto_grid):
+    """Bins are region extent / finest interval, per axis."""
+    dlg, _ = dialog_with_auto_grid
+    # x: 0.03 / 0.001 = 30, y: 0.15 / 0.0005 = 300
+    assert dlg.ui.smooth_grid_x.value() == 30
+    assert dlg.ui.smooth_grid_y.value() == 300
+
+
+def test_auto_grid_recomputes_on_axis_change(dialog_with_auto_grid):
+    dlg, intervals = dialog_with_auto_grid
+    intervals.return_value = (0.003, 0.001)
+    dlg.ui.qxVSqz.setChecked(True)
+    assert dlg.ui.smooth_grid_x.value() == 10  # 0.03 / 0.003
+    assert dlg.ui.smooth_grid_y.value() == 150  # 0.15 / 0.001
+
+
+def test_auto_grid_clamps_to_spinbox_maximum(dialog_with_auto_grid):
+    dlg, intervals = dialog_with_auto_grid
+    intervals.return_value = (1e-9, 1e-9)
+    dlg.update_auto_bins()
+    assert dlg.ui.smooth_grid_x.value() == dlg.ui.smooth_grid_x.maximum() == 5000
+    assert dlg.ui.smooth_grid_y.value() == dlg.ui.smooth_grid_y.maximum() == 5000
+
+
+def test_manual_grid_when_auto_unchecked(dialog_with_auto_grid):
+    """Unchecking Auto enables editing and stops automatic recomputation."""
+    dlg, intervals = dialog_with_auto_grid
+    dlg.ui.autoGridBins.setChecked(False)
+    assert dlg.ui.smooth_grid_x.isEnabled()
+    assert dlg.ui.smooth_grid_y.isEnabled()
+    dlg.ui.smooth_grid_x.setValue(77)
+    intervals.return_value = (0.003, 0.001)
+    dlg.ui.qxVSqz.setChecked(True)
+    assert dlg.ui.smooth_grid_x.value() == 77
+
+
+def test_auto_grid_without_data_keeps_values(qtbot, mock_main_window):
+    """With no data loaded the spinboxes keep their stored values."""
+    with patch.object(OffSpecParametersDialog, "draw_plot"):
+        dlg = OffSpecParametersDialog(
+            mock_main_window, mock_main_window.data_manager, show_smoothing=True, show_binning=False
+        )
+        qtbot.addWidget(dlg)
+    assert dlg.ui.smooth_grid_x.value() >= 1  # unchanged stored/default value, no crash
+
+
+def test_get_parameters_includes_smooth_grid(dialog_with_auto_grid):
+    dlg, _ = dialog_with_auto_grid
+    params = dlg.get_parameters()
+    assert params["off_spec_smooth_nxbins"] == dlg.ui.smooth_grid_x.value()
+    assert params["off_spec_smooth_nybins"] == dlg.ui.smooth_grid_y.value()
+
+
+def test_auto_grid_settings_round_trip(dialog_with_auto_grid, qtbot, mocker):
+    """Auto state and manual grid values persist through QSettings."""
+    dlg, intervals = dialog_with_auto_grid
+    dlg.ui.autoGridBins.setChecked(False)
+    dlg.ui.smooth_grid_x.setValue(111)
+    dlg.ui.smooth_grid_y.setValue(222)
+    dlg.save_settings()
+
+    with patch.object(OffSpecParametersDialog, "draw_plot"):
+        new_dlg = OffSpecParametersDialog(
+            dlg.parent(), dlg.parent().data_manager, show_smoothing=True, show_binning=False
+        )
+        qtbot.addWidget(new_dlg)
+    assert new_dlg.ui.autoGridBins.isChecked() is False
+    assert new_dlg.ui.smooth_grid_x.value() == 111
+    assert new_dlg.ui.smooth_grid_y.value() == 222

@@ -1,5 +1,7 @@
 """Dialog to configure off-specular parameters (smoothing and/or binning)."""
 
+import math
+
 from mantid.simpleapi import logger
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
@@ -8,6 +10,7 @@ from numpy.typing import NDArray
 from qtpy import QtCore, QtWidgets
 
 from quicknxs.enums import OffSpecXAxis
+from quicknxs.models.off_specular import finest_intervals
 from quicknxs.presenters.data_manager import DataManager
 from quicknxs.views import load_ui
 from quicknxs.views.widgets import MPLWidget
@@ -65,6 +68,12 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.ui.sigmaY.valueChanged.connect(self.update_settings)
             self.ui.sigmasCoupled.toggled.connect(self.update_sigma_coupling)
             self.ui.rSigmas.valueChanged.connect(self.update_settings)
+            self.ui.autoGridBins.toggled.connect(self.update_auto_grid_state)
+            # Recompute the automatic smoothing grid when the region changes
+            self.ui.offspec_x_min.valueChanged.connect(self.update_auto_bins)
+            self.ui.offspec_x_max.valueChanged.connect(self.update_auto_bins)
+            self.ui.offspec_y_min.valueChanged.connect(self.update_auto_bins)
+            self.ui.offspec_y_max.valueChanged.connect(self.update_auto_bins)
 
         # Connect plot interaction for region selection (common to both binning and smoothing)
         self.ui.plot.canvas.mpl_connect("motion_notify_event", self.plot_select)
@@ -84,6 +93,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         # Update bin width display on initialization if binning is shown
         if show_binning:
             self.update_bin_width()
+
+        # Apply the auto-grid state (and compute the grid if auto is enabled)
+        if show_smoothing:
+            self.update_auto_grid_state()
 
         # Draw the initial plot (deferred to avoid blocking)
         QtCore.QTimer.singleShot(0, self.draw_plot)
@@ -337,7 +350,62 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         """Handle coordinate system radio button changes - recalculate ranges from data."""
         if self.drawing:
             return
+        if self.show_smoothing:
+            self.update_auto_bins()
         self.draw_plot()
+
+    def _selected_axes(self) -> OffSpecXAxis:
+        """Return the coordinate system currently selected by the radio buttons."""
+        if self.ui.kizVSkfz.isChecked():
+            return OffSpecXAxis.KZI_VS_KZF
+        if self.ui.qxVSqz.isChecked():
+            return OffSpecXAxis.QX_VS_QZ
+        return OffSpecXAxis.DELTA_KZ_VS_QZ
+
+    def update_auto_grid_state(self):
+        """Enable or disable manual grid editing based on the Auto checkbox."""
+        auto = self.ui.autoGridBins.isChecked()
+        self.ui.smooth_grid_x.setEnabled(not auto)
+        self.ui.smooth_grid_y.setEnabled(not auto)
+        if auto:
+            self.update_auto_bins()
+
+    def update_auto_bins(self):
+        """Set the smoothing grid size from the finest x/y intervals in the raw data.
+
+        For each axis the number of bins is the region extent divided by the
+        finest interval present in the off-specular data (a low percentile of
+        the adjacent-point differences), clamped to the spinbox range. Does
+        nothing when the Auto checkbox is unchecked or no data is loaded.
+        """
+        if not self.show_smoothing or not self.ui.autoGridBins.isChecked():
+            return
+        if not self.data_manager.reduction_states:
+            return
+
+        x_range = (self.ui.offspec_x_min.value(), self.ui.offspec_x_max.value())
+        y_range = (self.ui.offspec_y_min.value(), self.ui.offspec_y_max.value())
+        intervals = finest_intervals(
+            self.data_manager.reduction_list,
+            self.data_manager.reduction_states[0],
+            axes=self._selected_axes(),
+            x_range=x_range,
+            y_range=y_range,
+        )
+        if intervals is None:
+            return
+
+        for spinbox, (low, high), interval in (
+            (self.ui.smooth_grid_x, x_range, intervals[0]),
+            (self.ui.smooth_grid_y, y_range, intervals[1]),
+        ):
+            extent = high - low
+            if extent <= 0 or interval <= 0:
+                continue
+            n_bins = min(max(math.ceil(extent / interval), spinbox.minimum()), spinbox.maximum())
+            spinbox.blockSignals(True)
+            spinbox.setValue(n_bins)
+            spinbox.blockSignals(False)
 
     def update_region(self):
         """Update the rectangle overlay showing the region."""
@@ -461,6 +529,12 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
                 self.ui.rSigmas.setValue(float(settings.value("offspec_smoothing/r_sigmas")))
             if settings.contains("offspec_smoothing/sigmas_coupled"):
                 self.ui.sigmasCoupled.setChecked(settings.value("offspec_smoothing/sigmas_coupled", True, type=bool))
+            if settings.contains("offspec_smoothing/grid_x"):
+                self.ui.smooth_grid_x.setValue(int(settings.value("offspec_smoothing/grid_x")))
+            if settings.contains("offspec_smoothing/grid_y"):
+                self.ui.smooth_grid_y.setValue(int(settings.value("offspec_smoothing/grid_y")))
+            if settings.contains("offspec_smoothing/auto_grid"):
+                self.ui.autoGridBins.setChecked(settings.value("offspec_smoothing/auto_grid", True, type=bool))
 
         # Load coordinate system
         if settings.contains("offspec_binned/coordinate_system"):
@@ -505,6 +579,9 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             settings.setValue("offspec_smoothing/sigma_y", self.ui.sigmaY.value())
             settings.setValue("offspec_smoothing/r_sigmas", self.ui.rSigmas.value())
             settings.setValue("offspec_smoothing/sigmas_coupled", self.ui.sigmasCoupled.isChecked())
+            settings.setValue("offspec_smoothing/grid_x", self.ui.smooth_grid_x.value())
+            settings.setValue("offspec_smoothing/grid_y", self.ui.smooth_grid_y.value())
+            settings.setValue("offspec_smoothing/auto_grid", self.ui.autoGridBins.isChecked())
 
     def update_bin_width(self):
         """Calculate and display the Qz bin width based on current settings."""
@@ -530,12 +607,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         params = {}
 
         # Determine coordinate system setting
-        if self.ui.kizVSkfz.isChecked():
-            params["off_spec_x_axis"] = OffSpecXAxis.KZI_VS_KZF
-        elif self.ui.qxVSqz.isChecked():
-            params["off_spec_x_axis"] = OffSpecXAxis.QX_VS_QZ
-        else:
-            params["off_spec_x_axis"] = OffSpecXAxis.DELTA_KZ_VS_QZ
+        params["off_spec_x_axis"] = self._selected_axes()
 
         # Shared region parameters
         params["off_spec_x_min"] = self.ui.offspec_x_min.value()
@@ -556,6 +628,8 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             params["off_spec_sigmas"] = self.ui.rSigmas.value()
             params["off_spec_sigmax"] = self.ui.sigmaX.value()
             params["off_spec_sigmay"] = self.ui.sigmaY.value()
+            params["off_spec_smooth_nxbins"] = self.ui.smooth_grid_x.value()
+            params["off_spec_smooth_nybins"] = self.ui.smooth_grid_y.value()
 
         return params
 

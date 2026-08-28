@@ -115,6 +115,8 @@ def _get_all_config_attributes(conf: Configuration):
         "off_spec_err_weight",
         "off_spec_nxbins",
         "off_spec_nybins",
+        "off_spec_smooth_nxbins",
+        "off_spec_smooth_nybins",
         "apply_smoothing",
         "off_spec_sigmas",
         "off_spec_sigmax",

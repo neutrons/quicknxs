@@ -1,11 +1,10 @@
 """Class to execute and hold the off-specular reflectivity calculation."""
 
 import logging
-from functools import reduce
-from multiprocessing import Pool
 from typing import TYPE_CHECKING
 
 import numpy as np
+import scipy.spatial
 import scipy.stats
 
 from quicknxs.enums import OffSpecXAxis
@@ -299,83 +298,105 @@ def get_slice(qz, data, error, q_min, q_max):
     return _data, _err
 
 
-def _smooth_data(
+def _kernel_average(
     x: np.ndarray,
     y: np.ndarray,
     I: np.ndarray,
-    sigmas: float = 3.0,
-    gridx=150,
-    gridy=50,
-    sigmax=0.0005,
-    sigmay=0.0005,
-    x1=-0.03,
-    x2=0.03,
-    y1=0.0,
-    y2=0.1,
-    axis_sigma_scaling: int | None = None,
-    xysigma0: float = 0.06,
-    indices: list | None = None,
-):
-    """Smooth a irregular spaced dataset onto a regular grid.
+    eval_x: np.ndarray,
+    eval_y: np.ndarray,
+    sigmas: float,
+    sigmax: float,
+    sigmay: float,
+    axis_sigma_scaling: int | None,
+    xysigma0: float,
+) -> np.ndarray:
+    """Truncated-Gaussian weighted average of scattered intensities at arbitrary points.
 
-    Takes each intensities with a distance < 3*sigma
-    to a given grid point and averages their intensities
-    weighted by the gaussian of the distance.
+    Each evaluated intensity is the average of all input intensities within
+    `sigmas` normalized distance of the evaluation point, weighted by the
+    Gaussian of the distance. Evaluation points with no input point in range
+    (or with a non-positive sigma-scaling coordinate) get intensity 0.
+
+    A KD-tree on sigma-scaled coordinates, where the anisotropic Gaussian is
+    isotropic with unit width, makes the neighbor search fast; the position-
+    dependent sigma scaling becomes a per-point search radius.
+
+    Parameters
+    ----------
+    x:
+        x-values of the input data (any shape); same units as `sigmax`
+    y:
+        y-values of the input data (same shape as x); same units as `sigmay`
+    I:
+        Intensity values of the input data (same shape as x)
+    eval_x:
+        x-values of the evaluation points (any shape)
+    eval_y:
+        y-values of the evaluation points (same shape as eval_x)
+    sigmas:
+        Range in units of sigma to search around each evaluation point
+    sigmax:
+        Sigma in x direction
+    sigmay:
+        Sigma in y direction
+    axis_sigma_scaling:
+        Defines how the variances change with the x/y value:
+        1 scales them with x, 2 with y, 3 with x + y
+    xysigma0:
+        x/y value where the given sigmas apply exactly
+
+    Returns
+    -------
+    np.ndarray
+        Averaged intensities, 1D, one per evaluation point
     """
-    xout = np.linspace(x1, x2, gridx)
-    yout = np.linspace(y1, y2, gridy)
-    Xout, Yout = np.meshgrid(xout, yout)
-    Iout = np.zeros_like(Xout)
-    ssigmax, ssigmay = sigmax**2, sigmay**2
-
-    imax = len(Xout)
-    for i in range(imax):
-        # for j in range(len(Xout[0])):
-        for j in range(indices[0], indices[1]):
-            xij = Xout[i, j]
-            yij = Yout[i, j]
-            if axis_sigma_scaling:
-                if axis_sigma_scaling == 1:
-                    xyij = xij
-                elif axis_sigma_scaling == 2:
-                    xyij = yij
-                elif axis_sigma_scaling == 3:
-                    xyij = xij + yij
-                if xyij == 0:
-                    continue
-                ssigmaxi = ssigmax / xysigma0 * xyij
-                ssigmayi = ssigmay / xysigma0 * xyij
-                rij = (x - xij) ** 2 / ssigmaxi + (y - yij) ** 2 / ssigmayi  # normalized distance^2
-            else:
-                rij = (x - xij) ** 2 / ssigmax + (y - yij) ** 2 / ssigmay  # normalized distance^2
-            take = np.where(rij < sigmas**2)  # take points up to 3 sigma distance
-            if len(take[0]) == 0:
-                continue
-            Pij = np.exp(-0.5 * rij[take])
-            Pij /= Pij.sum()
-            Iout[i, j] = (Pij * I[take]).sum()
-    return Xout, Yout, Iout
-
-
-def proc(data: dict) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Serializable function to be called by each thread."""
-    return _smooth_data(
-        x=data["x"],
-        y=data["y"],
-        I=data["I"],
-        sigmas=data["sigmas"],
-        gridx=data["gridx"],
-        gridy=data["gridy"],
-        sigmax=data["sigmax"],
-        sigmay=data["sigmay"],
-        x1=data["x1"],
-        x2=data["x2"],
-        y1=data["y1"],
-        y2=data["y2"],
-        axis_sigma_scaling=data["axis_sigma_scaling"],
-        xysigma0=data["xysigma0"],
-        indices=data["indices"],
+    data_points = np.column_stack(
+        (np.ravel(np.asarray(x, dtype=float)) / sigmax, np.ravel(np.asarray(y, dtype=float)) / sigmay)
     )
+    intensity = np.ravel(np.asarray(I, dtype=float))
+    tree = scipy.spatial.cKDTree(data_points)
+
+    eval_x = np.ravel(np.asarray(eval_x, dtype=float))
+    eval_y = np.ravel(np.asarray(eval_y, dtype=float))
+    eval_points = np.column_stack((eval_x / sigmax, eval_y / sigmay))
+
+    # Per-point variance scale factor: sigma_eff^2 = sigma^2 * (xy / xysigma0)
+    if axis_sigma_scaling:
+        if axis_sigma_scaling == 1:
+            xy = eval_x
+        elif axis_sigma_scaling == 2:
+            xy = eval_y
+        elif axis_sigma_scaling == 3:
+            xy = eval_x + eval_y
+        else:
+            raise ValueError(f"Unknown axis_sigma_scaling: {axis_sigma_scaling}")
+        variance_scale = xy / xysigma0
+    else:
+        variance_scale = np.ones_like(eval_x)
+
+    result = np.zeros_like(eval_x)
+    # Points with a non-positive variance scale keep a zero intensity
+    valid = np.flatnonzero(variance_scale > 0)
+
+    # Evaluate in chunks to bound the size of the neighbor arrays
+    chunk_size = 5000
+    for start in range(0, len(valid), chunk_size):
+        idx = valid[start : start + chunk_size]
+        radii = sigmas * np.sqrt(variance_scale[idx])
+        neighbors = tree.query_ball_point(eval_points[idx], r=radii, workers=-1)
+        counts = np.fromiter((len(nb) for nb in neighbors), dtype=np.intp, count=len(neighbors))
+        if counts.sum() == 0:
+            continue
+        flat = np.concatenate([np.asarray(nb, dtype=np.intp) for nb in neighbors if nb])
+        rows = np.repeat(np.arange(len(idx)), counts)
+        distance_sq = np.sum((data_points[flat] - eval_points[idx][rows]) ** 2, axis=1)
+        weights = np.exp(-0.5 * distance_sq / variance_scale[idx][rows])
+        weight_sum = np.bincount(rows, weights=weights, minlength=len(idx))
+        weighted_intensity = np.bincount(rows, weights=weights * intensity[flat], minlength=len(idx))
+        nonzero = weight_sum > 0
+        result[idx[nonzero]] = weighted_intensity[nonzero] / weight_sum[nonzero]
+
+    return result
 
 
 def smooth_data(
@@ -383,27 +404,29 @@ def smooth_data(
     y: np.ndarray,
     I: np.ndarray,
     sigmas: float = 3.0,
-    gridx=150,
-    gridy=50,
-    sigmax=0.0005,
-    sigmay=0.0005,
-    x1=-0.03,
-    x2=0.03,
-    y1=0.0,
-    y2=0.1,
+    gridx: int = 150,
+    gridy: int = 50,
+    sigmax: float = 0.0005,
+    sigmay: float = 0.0005,
+    x1: float = -0.03,
+    x2: float = 0.03,
+    y1: float = 0.0,
+    y2: float = 0.1,
     axis_sigma_scaling: int | None = None,
     xysigma0: float = 0.06,
-    indices: list | None = None,
-    pool=5,
-):
-    """Execute legacy smoothing process by spreading it to a pool of processes.
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Smooth an irregularly spaced dataset onto a regular grid.
+
+    Takes each intensity within a distance of `sigmas` normalized sigma units
+    of a given grid point and averages the intensities weighted by the
+    Gaussian of the distance.
 
     Parameters
     ----------
     x:
-        x-values of the original data
+        x-values of the original data; same units as `sigmax`
     y:
-        y-values of the original data
+        y-values of the original data; same units as `sigmay`
     I:
         Intensity values of the original data
     sigmas:
@@ -425,47 +448,105 @@ def smooth_data(
     y2:
         Upper y bound of the grid
     axis_sigma_scaling:
-        Defines how the sigmas change with the x/y value
+        Defines how the sigmas change with the x/y value:
+        1 scales the variances with x, 2 with y, 3 with x + y
     xysigma0:
-        x/y value where the given sigmas are used
-    indices:
-        List of indices to run over
-    pool:
-        Number of processes to use for the smoothing
+        x/y value where the given sigmas apply exactly
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray, np.ndarray]
+        X grid, Y grid, and smoothed intensities, each of shape (gridy, gridx)
     """
-    pool = int(pool)
     xout = np.linspace(x1, x2, gridx)
-    p = Pool(pool)
-    n = len(xout)
-    step = int(n / pool)
-    indices = [[step * i, step * (i + 1)] for i in range(pool)]
-    indices[-1][1] = n
+    yout = np.linspace(y1, y2, gridy)
+    Xout, Yout = np.meshgrid(xout, yout)
+    Iout = _kernel_average(x, y, I, Xout, Yout, sigmas, sigmax, sigmay, axis_sigma_scaling, xysigma0)
+    return Xout, Yout, Iout.reshape(Xout.shape)
 
-    inputs = []
-    for i in range(pool):
-        _d = dict(
-            x=x,
-            y=y,
-            I=I,
-            sigmas=sigmas,
-            gridx=gridx,
-            gridy=gridy,
-            sigmax=sigmax,
-            sigmay=sigmay,
-            x1=x1,
-            x2=x2,
-            y1=y1,
-            y2=y2,
-            axis_sigma_scaling=axis_sigma_scaling,
-            xysigma0=xysigma0,
-            indices=indices[i],
-        )
-        inputs.append(_d)
 
-    results = p.map(proc, inputs)
-    x_out = results[0][0]
-    y_out = results[0][1]
-    _data = [r[2] for r in results]
-    intensity_out = reduce((lambda x, y: x + y), _data)
+def finest_intervals(
+    reduction_list: list["NexusData"],
+    pol_state: str,
+    axes=None,
+    x_range: tuple[float, float] | None = None,
+    y_range: tuple[float, float] | None = None,
+    percentile: float = 1.0,
+) -> tuple[float, float] | None:
+    """Estimate the finest x and y spacings present in the off-specular data.
 
-    return x_out, y_out, intensity_out
+    Looks at the absolute differences between adjacent points of the 2D
+    (detector pixel by TOF) coordinate arrays, along both array axes, over all
+    runs. A low percentile of the positive differences is used instead of the
+    strict minimum, which can be pathologically small where a coordinate
+    passes through a turning point (e.g. Qx around the specular ridge).
+
+    Parameters
+    ----------
+    reduction_list:
+        Loaded runs to inspect
+    pol_state:
+        Cross-section to read the off-specular data from
+    axes:
+        `OffSpecXAxis` coordinate-system choice; defaults to ki_z-kf_z vs Qz
+    x_range:
+        If given, only differences between points inside [min, max] in x count
+    y_range:
+        If given, only differences between points inside [min, max] in y count
+    percentile:
+        Percentile of the positive differences to report, in percent
+
+    Returns
+    -------
+    tuple[float, float] or None
+        Finest (x, y) intervals in 1/A, or None when no off-specular data is
+        available
+    """
+    x_diffs: list[np.ndarray] = []
+    y_diffs: list[np.ndarray] = []
+
+    for item in reduction_list:
+        if pol_state not in item.cross_sections:
+            continue
+        cross_section = item.cross_sections[pol_state]
+        offspec = cross_section.off_spec
+        if offspec is None or offspec.S is None:
+            continue
+
+        n_total = len(offspec.S[0])
+        p_0 = cross_section.configuration.cut_first_n_points
+        p_n = n_total - cross_section.configuration.cut_last_n_points
+
+        if axes == OffSpecXAxis.QX_VS_QZ:
+            x = offspec.Qx[:, p_0:p_n]
+            y = offspec.Qz[:, p_0:p_n]
+        elif axes == OffSpecXAxis.KZI_VS_KZF:
+            x = offspec.ki_z[:, p_0:p_n]
+            y = offspec.kf_z[:, p_0:p_n]
+        else:
+            x = (offspec.ki_z - offspec.kf_z)[:, p_0:p_n]
+            y = offspec.Qz[:, p_0:p_n]
+
+        in_region = np.ones(x.shape, dtype=bool)
+        if x_range is not None:
+            in_region &= (x >= x_range[0]) & (x <= x_range[1])
+        if y_range is not None:
+            in_region &= (y >= y_range[0]) & (y <= y_range[1])
+
+        for axis in (0, 1):
+            # Count a difference only when both of its points are in the region
+            if axis == 0:
+                pair_in_region = in_region[:-1, :] & in_region[1:, :]
+            else:
+                pair_in_region = in_region[:, :-1] & in_region[:, 1:]
+            for values, collected in ((x, x_diffs), (y, y_diffs)):
+                diffs = np.abs(np.diff(values, axis=axis))[pair_in_region]
+                collected.append(diffs[diffs > 0])
+
+    if not x_diffs:
+        return None
+    x_all = np.concatenate(x_diffs)
+    y_all = np.concatenate(y_diffs)
+    if len(x_all) == 0 or len(y_all) == 0:
+        return None
+    return float(np.percentile(x_all, percentile)), float(np.percentile(y_all, percentile))

@@ -46,6 +46,9 @@ class OutputOptions:
     off_spec_y_max: float = 0.15
     off_spec_nxbins: int = 450
     off_spec_nybins: int = 200
+    # Smoothing output grid, separate from the binned-output bins above
+    off_spec_smooth_nxbins: int = 450
+    off_spec_smooth_nybins: int = 200
     off_spec_err_weight: bool = False
     off_spec_sigmas: int = 3
     off_spec_sigmax: float = 0.0005
@@ -202,6 +205,9 @@ class Configuration:
         self.off_spec_nybins = 200
         # Off-specular smoothing
         self.apply_smoothing = False
+        # Smoothing output grid, separate from the binned-output bins above
+        self.off_spec_smooth_nxbins = 450
+        self.off_spec_smooth_nybins = 200
         self.off_spec_sigmas = 3
         self.off_spec_sigmax = 0.0005
         self.off_spec_sigmay = 0.0005
