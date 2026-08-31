@@ -371,11 +371,11 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.update_auto_bins()
 
     def update_auto_bins(self):
-        """Set the smoothing grid size from the finest x/y intervals in the raw data.
+        """Set the smoothing grid size from the typical x/y intervals in the raw data.
 
         For each axis the number of bins is the region extent divided by the
-        finest interval present in the off-specular data (a low percentile of
-        the adjacent-point differences), clamped to the spinbox range. Does
+        typical interval present in the off-specular data (the median of the
+        adjacent-point differences), clamped to the spinbox range. Does
         nothing when the Auto checkbox is unchecked or no data is loaded.
         """
         if not self.show_smoothing or not self.ui.autoGridBins.isChecked():

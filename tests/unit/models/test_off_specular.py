@@ -169,12 +169,12 @@ class TestFinestIntervals:
         assert result[0] == pytest.approx(0.01)
         assert result[1] == pytest.approx(0.002)
 
-    def test_minimum_over_runs(self):
+    def test_pooled_over_runs(self):
         runs = [_fake_run(ki_step=0.01, kf_step=0.002), _fake_run(ki_step=0.004, kf_step=0.005)]
         dx, dy = finest_intervals(runs, "Off_Off", axes=OffSpecXAxis.KZI_VS_KZF)
-        # 1st percentile of the pooled differences sits at the finer run's spacing
-        assert dx == pytest.approx(0.004)
-        assert dy == pytest.approx(0.002)
+        # The median of the pooled differences sits between the two runs' spacings
+        assert 0.004 < dx < 0.01
+        assert 0.002 < dy < 0.005
 
     def test_region_restriction(self):
         # Without a region the y estimate is dominated by the fine kf steps of
@@ -190,9 +190,11 @@ class TestFinestIntervals:
         assert single_column is None  # no in-region y differences left
 
     def test_cut_points_are_excluded(self):
-        # Make the first TOF column pathologically close to the second one;
-        # cutting it must remove its tiny interval from the estimate
-        run = _fake_run(kf_step=0.002, n_tof=20)
+        # With three TOF columns, make the first pathologically close to the
+        # second: the median y interval per pixel row is then the average of
+        # the tiny and the real step. Cutting the first column must remove the
+        # tiny interval from the estimate entirely.
+        run = _fake_run(kf_step=0.002, n_tof=3)
         off_spec = run.cross_sections["Off_Off"].off_spec
         off_spec.kf_z[:, 0] = off_spec.kf_z[:, 1] - 1e-8
         uncut = finest_intervals([run], "Off_Off", axes=OffSpecXAxis.KZI_VS_KZF)
@@ -200,6 +202,20 @@ class TestFinestIntervals:
         run.cross_sections["Off_Off"].configuration.cut_first_n_points = 1
         cut = finest_intervals([run], "Off_Off", axes=OffSpecXAxis.KZI_VS_KZF)
         assert cut[1] == pytest.approx(0.002)
+
+    def test_structural_near_zero_spacings_do_not_dominate(self):
+        """A structural population of near-zero spacings must not sink the estimate.
+
+        Rows near the specular ridge have near-zero steps across their whole
+        TOF range - far more than a percent of the differences.
+        """
+        run = _fake_run(ki_step=0.01, kf_step=0.002, n_pix=10, n_tof=20)
+        off_spec = run.cross_sections["Off_Off"].off_spec
+        # Three near-ridge rows: ki_z varies by only 1e-7 per TOF step
+        for row in range(3):
+            off_spec.ki_z[row, :] = 0.01 + 1e-7 * np.arange(20)
+        dx, _ = finest_intervals([run], "Off_Off", axes=OffSpecXAxis.KZI_VS_KZF)
+        assert dx > 0.001
 
     def test_no_data_returns_none(self):
         assert finest_intervals([], "Off_Off", axes=OffSpecXAxis.KZI_VS_KZF) is None

@@ -471,15 +471,18 @@ def finest_intervals(
     axes=None,
     x_range: tuple[float, float] | None = None,
     y_range: tuple[float, float] | None = None,
-    percentile: float = 1.0,
+    percentile: float = 50.0,
 ) -> tuple[float, float] | None:
-    """Estimate the finest x and y spacings present in the off-specular data.
+    """Estimate the typical x and y spacings present in the off-specular data.
 
     Looks at the absolute differences between adjacent points of the 2D
     (detector pixel by TOF) coordinate arrays, along both array axes, over all
-    runs. A low percentile of the positive differences is used instead of the
-    strict minimum, which can be pathologically small where a coordinate
-    passes through a turning point (e.g. Qx around the specular ridge).
+    runs. The median of the positive differences is used instead of the
+    strict minimum (or a low percentile) because near-zero spacings are
+    structural, not rare outliers: every detector row near the specular ridge
+    has ki_z-kf_z (and Qx) close to 0 across its whole TOF range, and Qz steps
+    shrink toward the low-Q end, so a low percentile still lands on values
+    that would ask for an absurdly fine grid.
 
     Parameters
     ----------
@@ -499,7 +502,7 @@ def finest_intervals(
     Returns
     -------
     tuple[float, float] or None
-        Finest (x, y) intervals in 1/A, or None when no off-specular data is
+        Typical (x, y) intervals in 1/A, or None when no off-specular data is
         available
     """
     x_diffs: list[np.ndarray] = []
