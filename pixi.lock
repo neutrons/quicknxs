@@ -320,7 +320,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/wheel-0.47.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/mantid/linux-64/mantid-6.15.0-np21py311h131b964_0.conda
-      - conda: https://conda.anaconda.org/neutrons/noarch/mr_reduction-2.19.0-pyh4616a5c_0.conda
+      - conda: https://conda.anaconda.org/neutrons/noarch/mr_reduction-2.20.0-pyh4616a5c_0.conda
       - conda: https://conda.anaconda.org/neutrons/noarch/plot-publisher-1.4.0-pyhbf21a9e_0.conda
       - conda: https://conda.anaconda.org/oncat/noarch/pyoncat-2.6-pyh4616a5c_0.conda
       - pypi: ./
@@ -4617,9 +4617,9 @@ packages:
   license: GPL-3.0-or-later
   size: 39771829
   timestamp: 1771534620695
-- conda: https://conda.anaconda.org/neutrons/noarch/mr_reduction-2.19.0-pyh4616a5c_0.conda
-  sha256: 761251cd7d527d2c6b4cd42debd95b69d4c422ec88a800797143c35c979a6956
-  md5: 1890bf7473f770d94f7adfd18f489eb7
+- conda: https://conda.anaconda.org/neutrons/noarch/mr_reduction-2.20.0-pyh4616a5c_0.conda
+  sha256: e038bcb145cb4214cad4589526e3a09d0dae45015bb3fe84cbe0fc3c714e6a6b
+  md5: 63eac6b13db1d480c9e2e9502f29446b
   depends:
   - mantid >=6.15.0,<6.16.0
   - plot-publisher >=1.0,<2.0
@@ -4632,8 +4632,8 @@ packages:
   - python >=3.11,<3.12
   - python *
   license: MIT
-  size: 76586
-  timestamp: 1787149477643
+  size: 76697
+  timestamp: 1789489051222
 - conda: https://conda.anaconda.org/neutrons/noarch/plot-publisher-1.4.0-pyhbf21a9e_0.conda
   sha256: 81a62caaffa7106937f64a656d442a5ce596455e08616cd509851813246a9f50
   md5: 7e098c2f9ddcf73f6d0a54692e6d6cbe
