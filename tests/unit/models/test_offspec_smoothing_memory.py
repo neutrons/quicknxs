@@ -1,4 +1,4 @@
-"""Tests for the session memory behind the off specular smoothing dialog."""
+"""Tests for the off-specular smoothing session memory."""
 
 import pytest
 
@@ -17,16 +17,14 @@ from quicknxs.models.offspec_smoothing_memory import (
 SIGMA_MIN = 1e-6
 SIGMA_MAX = 1.0
 
-# Region extents of the three coordinate systems, close to what run 42112 produces.
-# The horizontal extents differ by two orders of magnitude between systems, which is
-# what makes rescaling by fraction rather than by absolute value matter.
+# Regions similar to run 42112. The x extents differ a lot between coordinate systems.
 REGION_DELTA_KZ = OffSpecRegion(-0.1515, 0.1054, -0.0872, 0.1630)
 REGION_QX = OffSpecRegion(-0.0041, 0.0000, -0.0872, 0.1630)
 REGION_KIZ_KFZ = OffSpecRegion(0.0024, 0.0091, -0.0963, 0.1539)
 
 
 class TestDefaultCoupled:
-    """Uniformity defaults per coordinate system."""
+    """Default uniformity per coordinate system."""
 
     @pytest.mark.parametrize(
         "axis, expected",
@@ -40,7 +38,7 @@ class TestDefaultCoupled:
         assert default_coupled(axis) is expected
 
     def test_accepts_plain_integers(self):
-        """Configuration stores the axis as an int, so the helper must accept one."""
+        """The axis is sometimes stored as an int."""
         assert default_coupled(int(OffSpecXAxis.QX_VS_QZ)) is False
 
 
@@ -53,14 +51,14 @@ class TestOffSpecRegion:
         assert region.height == pytest.approx(0.2)
 
     def test_is_hashable_and_comparable(self):
-        """Frozen so a stored region cannot be mutated behind the memory's back."""
+        """Regions are frozen so stored ones can't be changed."""
         assert OffSpecRegion(0.0, 1.0, 0.0, 1.0) == OffSpecRegion(0.0, 1.0, 0.0, 1.0)
         with pytest.raises(AttributeError):
             OffSpecRegion(0.0, 1.0, 0.0, 1.0).x_min = 5.0
 
 
 class TestRadiiFromFractions:
-    """Scaling remembered fractions into radii."""
+    """Converting fractions to radii."""
 
     def test_scales_each_axis_by_its_own_extent(self):
         sigma_x, sigma_y = radii_from_fractions(0.01, 0.02, OffSpecRegion(0.0, 2.0, 0.0, 5.0))
@@ -72,7 +70,6 @@ class TestRadiiFromFractions:
         assert radii == (SIGMA_MIN, SIGMA_MIN)
 
     def test_clamps_to_maximum(self):
-        """Clamping here keeps the remembered value from disagreeing with the widget."""
         radii = radii_from_fractions(500.0, 500.0, REGION_DELTA_KZ, SIGMA_MIN, SIGMA_MAX)
         assert radii == (SIGMA_MAX, SIGMA_MAX)
 
@@ -82,7 +79,7 @@ class TestRadiiFromFractions:
 
 
 class TestDefaultRadius:
-    """What a view shows before the user chooses a radius."""
+    """Radii shown before the user picks one."""
 
     def test_is_a_quarter_percent_of_a_wide_box(self):
         sigma_x, sigma_y = radii_from_fractions(None, None, REGION_DELTA_KZ, SIGMA_MIN, SIGMA_MAX)
@@ -90,7 +87,7 @@ class TestDefaultRadius:
         assert sigma_y == pytest.approx(DEFAULT_SIGMA_FRACTION * REGION_DELTA_KZ.height)
 
     def test_never_drops_below_the_floor_in_a_narrow_box(self):
-        """A quarter percent of the Qx width would leave the smoothed map full of empty nodes."""
+        """Without the floor the Qx default is too small to reach the data."""
         assert DEFAULT_SIGMA_FRACTION * REGION_QX.width < DEFAULT_MINIMUM_RADIUS
         sigma_x, _ = radii_from_fractions(None, None, REGION_QX, SIGMA_MIN, SIGMA_MAX)
         assert sigma_x == DEFAULT_MINIMUM_RADIUS
@@ -102,26 +99,25 @@ class TestDefaultRadius:
         assert sigma_x < DEFAULT_MINIMUM_RADIUS
 
     def test_each_axis_defaults_independently(self):
-        """Choosing one radius leaves the other on its own default."""
         sigma_x, sigma_y = radii_from_fractions(0.01, None, REGION_QX, SIGMA_MIN, SIGMA_MAX)
         assert sigma_x == pytest.approx(0.01 * REGION_QX.width)
         assert sigma_y == pytest.approx(DEFAULT_SIGMA_FRACTION * REGION_QX.height)
 
 
 class TestFractionFromRadius:
-    """Expressing a radius as a fraction of an extent."""
+    """Converting a radius to a fraction."""
 
     def test_divides_by_the_extent(self):
         assert fraction_from_radius(0.02, 2.0, fallback=0.5) == pytest.approx(0.01)
 
     @pytest.mark.parametrize("extent", [0.0, -0.3])
     def test_keeps_the_fallback_for_a_degenerate_extent(self, extent):
-        """A box collapsed mid edit says nothing about the fraction the user wants."""
+        """A collapsed box says nothing about the fraction, so the old one is kept."""
         assert fraction_from_radius(0.02, extent, fallback=0.5) == 0.5
 
 
 class TestLookups:
-    """Reading state back out of the memory."""
+    """Reading from the memory."""
 
     def test_no_fraction_is_chosen_until_the_user_picks_a_radius(self):
         memory = OffSpecSmoothingMemory()
@@ -158,7 +154,6 @@ class TestLookups:
         assert memory.r_sigmas_for(3.0) == 5.0
 
     def test_axis_keys_are_normalised_from_integers(self):
-        """Storing with an int and reading with the enum must hit the same entry."""
         memory = OffSpecSmoothingMemory()
         memory.store_region(int(OffSpecXAxis.KZI_VS_KZF), REGION_KIZ_KFZ)
         memory.store_coupled(int(OffSpecXAxis.KZI_VS_KZF), False)
@@ -167,10 +162,10 @@ class TestLookups:
 
 
 class TestSwitchingCoordinateSystem:
-    """The behaviour the story is about: radii follow the box, without drifting."""
+    """Radii follow the box when switching, without drifting."""
 
     def test_same_fraction_gives_a_different_radius_per_system(self):
-        """The whole point of storing a fraction: the spot keeps its apparent size."""
+        """Same fraction, different radius, so the spot keeps its apparent size."""
         memory = OffSpecSmoothingMemory(fraction_x=0.01)
         in_delta_kz, _ = memory.radii_for(REGION_DELTA_KZ, SIGMA_MIN, SIGMA_MAX)
         in_qx, _ = memory.radii_for(REGION_QX, SIGMA_MIN, SIGMA_MAX)
@@ -178,12 +173,7 @@ class TestSwitchingCoordinateSystem:
         assert in_delta_kz > in_qx
 
     def test_round_trip_without_an_edit_is_exact(self):
-        """Showing a system must never feed the rounded display back into the memory.
-
-        The Qx radius is two orders of magnitude smaller than the one in the default
-        system, so six decimals of display would lose several percent per switch if the
-        fractions were re-derived on every repaint.
-        """
+        """Just showing a coordinate system must not change the stored fractions."""
         memory = OffSpecSmoothingMemory()
         start = memory.radii_for(REGION_DELTA_KZ, SIGMA_MIN, SIGMA_MAX)
 
@@ -194,7 +184,7 @@ class TestSwitchingCoordinateSystem:
 
 
 class TestStoreFractions:
-    """Re-deriving the fractions, which only a user edit may do."""
+    """Updating the fractions after a user edit."""
 
     def test_an_uncoupled_edit_updates_both_fractions(self):
         memory = OffSpecSmoothingMemory()
@@ -203,11 +193,7 @@ class TestStoreFractions:
         assert memory.fraction_y == pytest.approx(0.02 / REGION_QX.height)
 
     def test_a_coupled_edit_leaves_the_vertical_fraction_alone(self):
-        """While coupled, sigmaY mirrors sigmaX rather than being a user choice.
-
-        Keeping it protects a vertical fraction chosen in Qx vs Qz from being
-        overwritten by a detour through a uniform system.
-        """
+        """While coupled, y is just a copy of x, so the y fraction is kept."""
         memory = OffSpecSmoothingMemory()
         memory.store_fractions(0.0002, 0.02, REGION_QX, coupled=False)
         chosen_y = memory.fraction_y
@@ -218,11 +204,7 @@ class TestStoreFractions:
         assert memory.fraction_y == chosen_y
 
     def test_editing_only_the_vertical_radius_leaves_the_horizontal_fraction_alone(self):
-        """The horizontal radius on screen is rounded, so re-reading it would shift its fraction.
-
-        In Qx vs Qz the default horizontal radius is a few millionths of an inverse
-        Angstrom, where a single step of display rounding is a several percent change.
-        """
+        """The rounded x radius on screen must not be read back when only y was edited."""
         memory = OffSpecSmoothingMemory()
         rounded_on_screen = 0.000005  # true value 0.0000045 before the spin box rounded it
 
@@ -240,7 +222,7 @@ class TestStoreFractions:
         assert memory.fraction_y is None
 
     def test_moving_the_region_re_derives_the_fraction(self):
-        """Bogdan's rule: the radius stays put and the percentage it represents moves."""
+        """The radius stays the same and its fraction of the box changes."""
         memory = OffSpecSmoothingMemory()
         radius = 0.0002
         memory.store_fractions(radius, 0.02, OffSpecRegion(-0.004, 0.0, 0.0, 0.1), coupled=False)
@@ -269,7 +251,7 @@ class TestStoreFractions:
 
 
 class TestWorkingCopies:
-    """Giving the dialog a private working copy that is committed only on OK."""
+    """Working copy that is only committed on OK."""
 
     def test_snapshot_is_independent(self):
         memory = OffSpecSmoothingMemory()
@@ -283,7 +265,7 @@ class TestWorkingCopies:
         assert snapshot.fraction_x is None
 
     def test_copy_from_mutates_in_place(self):
-        """The main window holds the instance, so committing must not rebind it."""
+        """The main window holds this instance, so it has to be updated in place."""
         memory = OffSpecSmoothingMemory()
         snapshot = memory.snapshot()
 

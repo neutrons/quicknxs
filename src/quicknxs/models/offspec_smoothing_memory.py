@@ -1,39 +1,21 @@
-"""Session scoped memory for the off specular smoothing dialog.
+"""Session memory for the off-specular smoothing dialog.
 
-The smoothing dialog lets the user pick a region of reciprocal space (the "blue box")
-and a pair of smoothing radii, in one of the coordinate systems of :class:`OffSpecXAxis`.
-This module holds what the dialog remembers between visits within one application run.
-Nothing here is written to disk: closing the application discards it.
-
-The radii are remembered as *fractions* of the region extent rather than as absolute
-values. Switching coordinate system therefore re-derives the radii from the new region,
-so the smoothing spot keeps the same apparent size on the plot. The region and the
-uniformity flag are physical choices tied to the system they were made in, so those are
-remembered per coordinate system instead.
-
-Until the user chooses a radius, each view shows its own default: a fixed fraction of
-its box, but never less than a floor. The floor matters in the two diagnostic views,
-where the horizontal axis is narrow enough that the fraction alone gives a radius too
-small to reach the data points, and the smoothed map comes out full of empty nodes.
-
-All lengths are in inverse Angstrom. Fractions are dimensionless.
+Nothing here is saved to disk. The radii are stored as fractions of the region box so
+they keep the same apparent size when switching coordinate system. Regions and
+uniformity are stored per coordinate system. All lengths are in 1/Angstrom.
 """
 
 from dataclasses import dataclass, field, replace
 
 from quicknxs.enums import OffSpecXAxis
 
+# Default radius as a fraction of the region box
 DEFAULT_SIGMA_FRACTION = 0.0025
-"""Smoothing radius as a fraction of the region extent, before the user changes anything."""
 
+# Smallest default radius, kept from the old defaults. Without it the narrow Qx and ki_z
+# axes get radii too small to reach the data and the smoothed map has empty nodes.
+# Typed radii are not clamped.
 DEFAULT_MINIMUM_RADIUS = 1e-4
-"""Smallest default smoothing radius, in inverse Angstrom.
-
-Applies to defaults only; a radius the user types is used as is. Kept from the previous
-default rule, which clamped at the same value. Without it, run 42112 smoothed on the
-default grid leaves about 36% (Qx vs Qz) and 30% (ki_z vs kf_z) of the nodes that the
-previous defaults filled empty. With it, under 1%.
-"""
 
 _DEFAULT_COUPLED: dict[OffSpecXAxis, bool] = {
     OffSpecXAxis.DELTA_KZ_VS_QZ: True,
@@ -43,28 +25,13 @@ _DEFAULT_COUPLED: dict[OffSpecXAxis, bool] = {
 
 
 def default_coupled(axis: OffSpecXAxis | int) -> bool:
-    """Return whether the radii are uniform by default in the given coordinate system.
-
-    Parameters
-    ----------
-    axis:
-        Coordinate system, as an :class:`OffSpecXAxis` member or its integer value.
-
-    Returns
-    -------
-    bool
-        True when the Y radius mirrors the X radius by default.
-    """
+    """Return whether the radii are uniform by default for this coordinate system."""
     return _DEFAULT_COUPLED.get(OffSpecXAxis(axis), True)
 
 
 @dataclass(frozen=True)
 class OffSpecRegion:
-    """The rectangular region of reciprocal space shown as the blue box on the plot.
-
-    The bounds belong to whichever coordinate system was active when they were chosen,
-    so a region is only meaningful alongside its :class:`OffSpecXAxis`.
-    """
+    """Region box (the blue box) in the coordinate system it was picked in."""
 
     x_min: float
     x_max: float
@@ -73,12 +40,10 @@ class OffSpecRegion:
 
     @property
     def width(self) -> float:
-        """Extent along the horizontal axis, in inverse Angstrom."""
         return self.x_max - self.x_min
 
     @property
     def height(self) -> float:
-        """Extent along the vertical axis, in inverse Angstrom."""
         return self.y_max - self.y_min
 
 
@@ -89,29 +54,10 @@ def radii_from_fractions(
     minimum: float = 0.0,
     maximum: float | None = None,
 ) -> tuple[float, float]:
-    """Scale the remembered fractions into radii for a region.
+    """Return the (x, y) radii for a region.
 
-    Parameters
-    ----------
-    fraction_x:
-        Horizontal radius as a fraction of the region width, or None while the user has
-        not chosen one, in which case the default applies: `DEFAULT_SIGMA_FRACTION` of
-        the width, but at least `DEFAULT_MINIMUM_RADIUS`.
-    fraction_y:
-        Vertical radius as a fraction of the region height; see `fraction_x`.
-    region:
-        Region to scale against, in the coordinate system being shown.
-    minimum:
-        Lower clamp, normally the smallest value the radius spin box accepts.
-    maximum:
-        Upper clamp, normally the largest value the radius spin box accepts.
-        Clamping here keeps the remembered value and the displayed value in step,
-        rather than letting the widget silently truncate it.
-
-    Returns
-    -------
-    tuple[float, float]
-        The horizontal and vertical radii, in inverse Angstrom.
+    A fraction of None means the user hasn't picked one, so the default is used.
+    `minimum` and `maximum` are the spin box limits.
     """
 
     def _radius(fraction: float | None, extent: float) -> float:
@@ -126,26 +72,7 @@ def radii_from_fractions(
 
 
 def fraction_from_radius(radius: float, extent: float, fallback: float | None) -> float | None:
-    """Express a radius as a fraction of an extent.
-
-    A region can be collapsed to zero width or height while the user is editing its
-    bounds, which carries no information about the fraction they want. In that case the
-    previous fraction is kept rather than raising or storing an infinity.
-
-    Parameters
-    ----------
-    radius:
-        Smoothing radius along one axis, in inverse Angstrom.
-    extent:
-        Region extent along the same axis, in inverse Angstrom.
-    fallback:
-        Fraction to keep when `extent` is not positive. May be None, meaning the default.
-
-    Returns
-    -------
-    float | None
-        The radius as a fraction of the extent, or `fallback`.
-    """
+    """Return the radius as a fraction of the extent, or `fallback` if the extent is not positive."""
     if extent <= 0.0:
         return fallback
     return radius / extent
@@ -153,26 +80,19 @@ def fraction_from_radius(radius: float, extent: float, fallback: float | None) -
 
 @dataclass
 class OffSpecSmoothingMemory:
-    """What the smoothing dialog carries between visits within one application run.
+    """Settings the smoothing dialog remembers for the rest of the session.
 
     Parameters
     ----------
     regions:
-        Region last used in each coordinate system. A system absent from the mapping has
-        not been visited yet and falls back to the region derived from the data extents.
+        Last region used in each coordinate system.
     coupled:
-        Uniformity flag last used in each coordinate system. A system absent from the
-        mapping falls back to :func:`default_coupled`.
-    fraction_x:
-        Horizontal radius as a fraction of the region width. Shared across coordinate
-        systems: this is what makes the spot keep its apparent size when switching.
-        None until the user chooses a radius, which gives every view its own default.
-    fraction_y:
-        Vertical radius as a fraction of the region height, or None as for `fraction_x`.
-        Only meaningful while the radii are not coupled, since coupling drives the Y
-        radius from the X radius.
+        Last uniformity setting used in each coordinate system.
+    fraction_x, fraction_y:
+        Radii as fractions of the region width and height, shared by all coordinate
+        systems. None until the user picks a radius.
     r_sigmas:
-        Search range in units of sigma, or None while the user has not set one.
+        Search range in units of sigma, or None until the user sets it.
     """
 
     regions: dict[OffSpecXAxis, OffSpecRegion] = field(default_factory=dict)
@@ -181,14 +101,10 @@ class OffSpecSmoothingMemory:
     fraction_y: float | None = None
     r_sigmas: float | None = None
 
-    ### Lookups
-
     def region_for(self, axis: OffSpecXAxis | int, fallback: OffSpecRegion) -> OffSpecRegion:
-        """Return the remembered region for `axis`, or `fallback` if there is none."""
         return self.regions.get(OffSpecXAxis(axis), fallback)
 
     def coupled_for(self, axis: OffSpecXAxis | int) -> bool:
-        """Return the remembered uniformity flag for `axis`, or its default."""
         return self.coupled.get(OffSpecXAxis(axis), default_coupled(axis))
 
     def radii_for(
@@ -197,29 +113,19 @@ class OffSpecSmoothingMemory:
         minimum: float = 0.0,
         maximum: float | None = None,
     ) -> tuple[float, float]:
-        """Return the radii to show for a region, derived from the remembered fractions.
-
-        The caller is expected to apply coupling afterwards, which overwrites the Y
-        radius with the X radius when the active system is uniform.
-        """
+        """Return the (x, y) radii for a region. Coupling is left to the caller."""
         return radii_from_fractions(self.fraction_x, self.fraction_y, region, minimum, maximum)
 
     def r_sigmas_for(self, fallback: float) -> float:
-        """Return the remembered sigma search range, or `fallback` if there is none."""
         return fallback if self.r_sigmas is None else self.r_sigmas
 
-    ### Updates
-
     def store_region(self, axis: OffSpecXAxis | int, region: OffSpecRegion) -> None:
-        """Remember `region` as the region for `axis`."""
         self.regions[OffSpecXAxis(axis)] = region
 
     def store_coupled(self, axis: OffSpecXAxis | int, coupled: bool) -> None:
-        """Remember `coupled` as the uniformity flag for `axis`."""
         self.coupled[OffSpecXAxis(axis)] = bool(coupled)
 
     def store_r_sigmas(self, r_sigmas: float) -> None:
-        """Remember the sigma search range."""
         self.r_sigmas = float(r_sigmas)
 
     def store_fractions(
@@ -232,52 +138,25 @@ class OffSpecSmoothingMemory:
         update_x: bool = True,
         update_y: bool = True,
     ) -> None:
-        """Re-derive the remembered fractions from radii shown against `region`.
+        """Update the fractions from the radii shown against `region`.
 
-        Called when the user edits a radius or moves the region, which are the only two
-        actions that change what fraction of the box the smoothing spot covers. Showing a
-        coordinate system must not call this, otherwise the rounding of the spin box
-        would be fed back into the fractions and the values would drift on every switch.
+        Only call this after the user edits a radius or the region. Calling it when just
+        showing a coordinate system would feed spin box rounding back into the fractions.
+        Use `update_x` / `update_y` to update only the radius that was edited.
 
-        When the radii are coupled the Y radius is a mirror of the X radius rather than a
-        choice the user made, so the vertical fraction is left as it was. That keeps a
-        vertical fraction chosen in a non uniform system from being overwritten by a
-        detour through a uniform one.
-
-        Parameters
-        ----------
-        radius_x:
-            Horizontal radius currently shown, in inverse Angstrom.
-        radius_y:
-            Vertical radius currently shown, in inverse Angstrom.
-        region:
-            Region the radii are shown against, in the active coordinate system.
-        coupled:
-            Whether the radii are currently uniform.
-        update_x:
-            Whether to re-derive the horizontal fraction. Pass False when the user only
-            edited the vertical radius, so the horizontal one is not re-read from the
-            spin box and nudged by its rounding.
-        update_y:
-            Whether to re-derive the vertical fraction; see `update_x`.
+        The y fraction is not updated while coupled, since y is then just a copy of x.
         """
         if update_x:
             self.fraction_x = fraction_from_radius(radius_x, region.width, self.fraction_x)
         if update_y and not coupled:
             self.fraction_y = fraction_from_radius(radius_y, region.height, self.fraction_y)
 
-    ### Working copies, so the dialog only commits what the user confirmed with OK
-
     def snapshot(self) -> "OffSpecSmoothingMemory":
-        """Return an independent copy of this memory."""
+        """Return an independent copy."""
         return replace(self, regions=dict(self.regions), coupled=dict(self.coupled))
 
     def copy_from(self, other: "OffSpecSmoothingMemory") -> None:
-        """Overwrite this memory in place with the contents of `other`.
-
-        Mutates rather than replaces so that holders of this object, such as the main
-        window, keep seeing the same instance.
-        """
+        """Copy `other` into this object in place, so the main window keeps the same instance."""
         self.regions = dict(other.regions)
         self.coupled = dict(other.coupled)
         self.fraction_x = other.fraction_x

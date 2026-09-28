@@ -1,8 +1,6 @@
-"""End to end: the steps from the defect report, driven through the real main window.
+"""End to end test of the defect report steps through the main window.
 
-Load a run, add it to the Data table, press Reduce, tick "Off-Specular Intensity Smoothing",
-change the smoothing radius, switch output type and back, press OK, then press Reduce again.
-The reduction itself is mocked; only the parameters it receives are checked here.
+The reduction is mocked, only the parameters it receives are checked.
 """
 
 import pytest
@@ -15,16 +13,14 @@ from quicknxs.views.reduction_dialog import ReductionDialog
 from quicknxs.views.smooth_dialog import OffSpecParametersDialog
 
 POLL_MS = 50
-MAX_POLLS = 200  # ten seconds before giving up and closing whatever is open
+MAX_POLLS = 200  # 10 s
 
 
 def _when_modal(dialog_type, action, observed, max_polls=MAX_POLLS):
-    """Run `action` on the modal dialog of `dialog_type` once it is open and has drawn.
+    """Run `action` on a modal dialog once it's open and drawn.
 
-    Modal dialogs block in exec_, so the test acts on them from a timer. The action always
-    ends by closing the dialog, and a dialog that never shows up is closed anyway, so a
-    failing step cannot leave the test hanging in exec_. Errors are recorded rather than
-    raised, because an exception inside a timer callback does not fail the test.
+    The dialog is always closed so the test can't hang in exec_. Errors are recorded in
+    `observed` because exceptions in a timer callback don't fail the test.
     """
 
     def _poll(remaining):
@@ -40,7 +36,7 @@ def _when_modal(dialog_type, action, observed, max_polls=MAX_POLLS):
             return
         try:
             action(dialog)
-        except Exception as error:  # recorded and asserted on after exec_ returns
+        except Exception as error:
             observed.setdefault("errors", []).append(f"{dialog_type.__name__}: {error!r}")
             dialog.reject()
 
@@ -48,7 +44,7 @@ def _when_modal(dialog_type, action, observed, max_polls=MAX_POLLS):
 
 
 def _press_reduce(main_window, smoothing_action, observed):
-    """Press Reduce, tick only the smoothing output, then hand the smoothing dialog to the action."""
+    """Press Reduce with only smoothing ticked and run `smoothing_action` on the smoothing dialog."""
 
     def _reduction_options(dialog):
         for name in ("exportSpecular", "export_SA", "exportGISANS", "exportOffSpecular", "exportOffSpecularSlices"):
@@ -64,7 +60,7 @@ def _press_reduce(main_window, smoothing_action, observed):
 @pytest.mark.datarepo
 def test_smoothing_settings_survive_switching_output_type_and_reopening(qtbot, mocker, data_server, tmp_path):
     Configuration.setup_default_values()
-    # Keep the reduction dialog's output directory away from the user's home directory
+    # Don't point the output directory at the home directory
     QtCore.QSettings(".quicknxs").setValue("output_directory", str(tmp_path))
     workflow = mocker.patch("quicknxs.views.main_window.ProcessingWorkflow")
 
@@ -95,18 +91,18 @@ def test_smoothing_settings_survive_switching_output_type_and_reopening(qtbot, m
 
     assert observed.get("errors") is None, observed.get("errors")
 
-    # The defect: switching output type used to throw away what the user entered
+    # The defect: switching output type lost the user's values
     assert observed["opened_on_default_view"]
     assert observed["qx_radius"] != chosen, "the radius should be rescaled to the Qx box"
     assert observed["radius_after_coming_back"] == chosen
 
-    # The reduction received what the user left in the dialog
+    # The reduction got the values left in the dialog
     assert workflow.call_count == 1, "the second visit was cancelled, so only one reduction ran"
     output_options = workflow.call_args.args[1]
     assert output_options.apply_smoothing
     assert output_options.off_spec_x_axis == OffSpecXAxis.DELTA_KZ_VS_QZ
     assert output_options.off_spec_sigmax == chosen
 
-    # Remembered for the rest of the session, and still opening on the default view
+    # Remembered for the session, still opening on the default view
     assert observed["reopened_on_default_view"]
     assert observed["radius_on_reopening"] == chosen

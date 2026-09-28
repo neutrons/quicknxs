@@ -13,7 +13,7 @@ from quicknxs.presenters.data_manager import DataManager
 from quicknxs.views import load_ui
 from quicknxs.views.widgets import MPLWidget
 
-# Axis labels per coordinate system, as (horizontal, vertical)
+# (x, y) axis labels for each coordinate system
 _AXIS_LABELS: dict[OffSpecXAxis, tuple[str, str]] = {
     OffSpecXAxis.DELTA_KZ_VS_QZ: ("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]", "Q$_z$ [Å$^{-1}$]"),
     OffSpecXAxis.QX_VS_QZ: ("Q$_x$ [Å$^{-1}$]", "Q$_z$ [Å$^{-1}$]"),
@@ -22,11 +22,7 @@ _AXIS_LABELS: dict[OffSpecXAxis, tuple[str, str]] = {
 
 
 def _set_blocked(spin_box, value: float) -> None:
-    """Write a value into a spin box without emitting its change signal.
-
-    A programmatic write must not look like a user edit, because only a real edit may
-    re-derive the remembered smoothing fractions.
-    """
+    """Set a spin box value without emitting valueChanged, so it doesn't count as a user edit."""
     spin_box.blockSignals(True)
     spin_box.setValue(value)
     spin_box.blockSignals(False)
@@ -63,9 +59,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         show_binning : bool
             Whether to show binning parameters
         memory : OffSpecSmoothingMemory | None
-            Region, uniformity and smoothing radii carried over from earlier visits in
-            this session. A fresh memory is used when none is supplied, which makes the
-            dialog behave as if it were being opened for the first time.
+            Settings remembered from earlier in the session. A new one is used if None.
         """
         QtWidgets.QDialog.__init__(self, parent)
         self.ui = load_ui("ui_smooth_dialog.ui", base_instance=self)
@@ -77,24 +71,20 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self.sigma_2 = None
         self.sigma_3 = None
 
-        # Session memory shared with the main window, and a private working copy of it.
-        # Everything during the visit goes to the working copy, which is committed only
-        # on OK, so cancelling or closing the dialog leaves the session memory untouched.
+        # Shared with the main window. Edits go to a copy that is only saved on OK.
         self.memory = OffSpecSmoothingMemory() if memory is None else memory
         self._state = self.memory.snapshot()
 
-        # What the user changed in the active coordinate system since it was shown
         self._clear_edits()
 
-        # Off-specular data and its extents, read once and reused on every repaint.
-        # The dialog is modal, so the reduction list cannot change while it is open.
+        # Cached off-specular data. The dialog is modal, so it can't change while open.
         self._plot_runs: list[tuple[NDArray[float64], ...]] | None = None
         self._extents: dict[OffSpecXAxis, OffSpecRegion] = {}
         self._qz_max = 0.001
 
-        # Always open on the (ki_z - kf_z) vs Qz view, whichever view was used last
+        # Always open on (ki_z-kf_z) vs Qz
         self.ui.kizmkfzVSqz.setChecked(True)
-        # Coordinate system the spin boxes currently belong to
+        # Coordinate system the spin boxes are showing
         self._active_axis = self._current_axis()
 
         # Show/hide sections based on what's requested
@@ -115,7 +105,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.ui.sigmaY.valueChanged.connect(self.update_settings)
             self.ui.sigmasCoupled.toggled.connect(self.update_sigma_coupling)
             self.ui.rSigmas.valueChanged.connect(self.update_settings)
-            # Record user edits, so that only what the user changed gets remembered
+            # Track user edits so only changed values get remembered
             self.ui.sigmaX.valueChanged.connect(self._on_radius_x_edited)
             self.ui.sigmaY.valueChanged.connect(self._on_radius_y_edited)
             self.ui.sigmasCoupled.toggled.connect(self._on_coupled_edited)
@@ -194,7 +184,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         return x_min + x_offset, x_max - x_offset, y_min + y_offset, y_max - y_offset
 
     def _current_axis(self) -> OffSpecXAxis:
-        """Return the coordinate system the radio buttons currently select."""
+        """Return the selected coordinate system."""
         if self.ui.qxVSqz.isChecked():
             return OffSpecXAxis.QX_VS_QZ
         if self.ui.kizVSkfz.isChecked():
@@ -202,7 +192,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         return OffSpecXAxis.DELTA_KZ_VS_QZ
 
     def _current_region(self) -> OffSpecRegion:
-        """Return the region box as the spin boxes currently show it."""
+        """Return the region shown in the spin boxes."""
         return OffSpecRegion(
             self.ui.offspec_x_min.value(),
             self.ui.offspec_x_max.value(),
@@ -211,7 +201,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         )
 
     def _default_region(self, axis: OffSpecXAxis) -> OffSpecRegion:
-        """Return the region derived from the data extents, used until the user picks one."""
+        """Return the default region for `axis`, based on the data extents."""
         extent = self._extents[axis]
         x_min, x_max, y_min, y_max = self._grid_region_coordinates(
             extent.x_min, extent.x_max, extent.y_min, extent.y_max
@@ -246,7 +236,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         plot : MPLWidget
             The plot object to draw on
         axis : OffSpecXAxis
-            Coordinate system to paint against
+            Coordinate system to plot
         """
         common_args = {
             "log": True,
@@ -266,14 +256,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         plot.pcolormesh(x, y, I, **common_args)
 
     def _collect_extents(self) -> None:
-        """Read the off-specular data once and cache what every repaint needs.
-
-        Fills `_plot_runs` with the trimmed arrays to paint, `_extents` with the data
-        extents of each coordinate system, and `_qz_max` with the anchor for the sigma
-        ellipses. Switching coordinate system then reuses the cache instead of walking
-        the reduction list again; the dialog is modal, so the data cannot change
-        underneath it.
-        """
+        """Read the off-specular data once and cache the arrays, extents and ellipse anchor."""
         self._plot_runs = []
         self._extents = {}
         self._qz_max = 0.001
@@ -282,8 +265,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         if not self.data_manager.reduction_states:
             return
 
-        # Initialize limits. These seeds also bound the plotted range from outside when
-        # the data itself is narrower, so they are kept as they were.
+        # Initialize limits (these also bound the plotted range)
         qz_min, qz_max = 0.5, -0.1
         qx_min, qx_max = -0.001, 0.001
         ki_z_min, ki_z_max = 0.1, -0.1
@@ -341,13 +323,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         }
 
     def _apply_axis_state(self, axis: OffSpecXAxis) -> None:
-        """Show the remembered region, uniformity and radii for a coordinate system.
+        """Set the spin boxes to the remembered state for `axis`.
 
-        Writes spin boxes only; painting is left to `_paint`. Every write blocks the
-        widget's change signal, so showing a coordinate system never looks like a user
-        edit and therefore never re-derives the remembered smoothing fractions.
+        Signals are blocked, so this doesn't count as a user edit.
         """
-        # A freshly shown coordinate system has no edits yet
         self._clear_edits()
 
         region = self._state.region_for(axis, self._default_region(axis))
@@ -364,8 +343,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         if not self.show_smoothing:
             return
 
-        # Scale against the region as the spin boxes rounded it, so that the box and the
-        # smoothing spot drawn inside it stay consistent with each other.
+        # Use the region as rounded by the spin boxes so the box and ellipses match
         sigma_x, sigma_y = self._state.radii_for(
             self._current_region(), self.ui.sigmaX.minimum(), self.ui.sigmaX.maximum()
         )
@@ -381,11 +359,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self.ui.sigmaY.setEnabled(not coupled)
 
     def _paint(self, axis: OffSpecXAxis) -> None:
-        """Repaint the plot for a coordinate system from the cache and the spin boxes.
-
-        Reads the region and the radii from the widgets rather than deciding them, so it
-        can be called after any change without disturbing what is on display.
-        """
+        """Redraw the plot from the cached data and the current spin box values."""
         plot = self.ui.plot
         plot.clear()
         plot.set_xticks_fontsize(8)
@@ -412,7 +386,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
         # Configure smoothing-specific elements if smoothing is enabled
         if self.show_smoothing:
-            # Anchor the ellipses on the specular ridge of the active coordinate system
+            # Draw the ellipses near the specular ridge
             if axis == OffSpecXAxis.KZI_VS_KZF:
                 sigma_pos = (self._qz_max / 6.0, self._qz_max / 6.0)
             else:
@@ -444,7 +418,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
                 self._collect_extents()
 
             if not self._extents:
-                # No data to work from: leave an empty plot behind
+                # No data, leave the plot empty
                 plot = self.ui.plot
                 plot.clear()
                 plot.set_xticks_fontsize(8)
@@ -458,13 +432,9 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.drawing = False
 
     def on_coordinate_system_changed(self, checked: bool = True):
-        """Switch coordinate system, carrying what the user changed over to the new one.
+        """Save the edits in the current coordinate system and show the new one.
 
-        Parameters
-        ----------
-        checked : bool
-            State of the radio button that emitted ``toggled``. The signal also fires for
-            the button being switched off, which is ignored so the switch happens once.
+        `toggled` also fires for the button being unchecked, which is ignored.
         """
         if not checked or self.drawing:
             return
@@ -476,18 +446,12 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self.draw_plot()
 
     def _store_current_state(self, axis: OffSpecXAxis) -> None:
-        """Record what the user changed in the coordinate system being left.
+        """Save the user's edits for `axis` to the working copy.
 
-        Writes to the working copy only; nothing reaches the session memory until the
-        dialog is accepted. Only actual edits are recorded. In particular a region the
-        user never touched stays derived from the data, so reducing a different dataset
-        later in the session does not inherit a box that was drawn for this one.
-
-        Moving the region leaves the radii where they are, as agreed, but it changes what
-        fraction of the box they cover, so it re-derives both fractions. Editing a radius
-        re-derives only that radius's fraction, so the other one is never re-read from its
-        spin box and nudged by rounding. The fraction is what the next coordinate system
-        is scaled by.
+        Only edited values are saved, so a region the user never touched stays based on
+        the data and isn't carried over to the next dataset. Moving the region keeps the
+        radii but changes the fraction of the box they cover, so both fractions are
+        updated. Editing a radius only updates that radius's fraction.
         """
         region = self._current_region()
 
@@ -514,34 +478,29 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self._clear_edits()
 
     def _clear_edits(self) -> None:
-        """Forget which values the user changed in the active coordinate system."""
+        """Reset the edit flags."""
         self._region_edited = False
         self._radius_x_edited = False
         self._radius_y_edited = False
         self._coupled_edited = False
 
-    # The slots below only note that an edit happened. They are deliberately not guarded
-    # by `drawing`: a click on the plot writes the region while `drawing` is set, and that
-    # is a user edit like any other. Programmatic writes block signals instead.
+    # These slots only record that an edit happened. They don't check `drawing`, because
+    # clicking the plot changes the region while `drawing` is set.
 
     def _on_region_edited(self):
-        """Note that the user moved the region box."""
+        """Called when the user moves the region."""
         self._region_edited = True
 
     def _on_radius_x_edited(self):
-        """Note that the user changed the horizontal smoothing radius."""
+        """Called when the user edits sigmaX."""
         self._radius_x_edited = True
 
     def _on_radius_y_edited(self):
-        """Note that the user changed the vertical smoothing radius.
-
-        While the radii are coupled, `update_sigma_coupling` writes sigmaY with signals
-        blocked, so a mirrored value never lands here: only a genuine edit does.
-        """
+        """Called when the user edits sigmaY (not when it's copied from sigmaX while coupled)."""
         self._radius_y_edited = True
 
     def _on_coupled_edited(self):
-        """Note that the user changed whether the radii are uniform."""
+        """Called when the user toggles uniform radii."""
         self._coupled_edited = True
 
     def update_region(self):
@@ -636,9 +595,8 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
     def load_settings(self):
         """Load the binning parameters from QSettings.
 
-        The region, the smoothing radii, their uniformity and the coordinate system are
-        deliberately not persisted between application runs: they live in the session
-        memory instead, and a new session starts from defaults derived from the data.
+        The region, radii, uniformity and coordinate system are only kept for the session,
+        so they aren't saved here.
         """
         settings = QtCore.QSettings(".quicknxs")
 
@@ -654,7 +612,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
                 )
 
     def save_settings(self):
-        """Save the binning parameters to QSettings. See `load_settings` for what is not saved."""
+        """Save the binning parameters to QSettings."""
         settings = QtCore.QSettings(".quicknxs")
 
         # Save bins parameters (common to both binning and smoothing)
@@ -714,11 +672,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         return params
 
     def accept(self):
-        """Commit this visit to the session memory, save the binning settings, and close.
+        """Save the edits to the session memory and close.
 
-        There is no matching override of ``reject``: the visit was only ever recorded in
-        the working copy, so cancelling, pressing Escape or closing the window simply
-        discards it.
+        No `reject` override is needed: edits only go to the working copy, so Cancel,
+        Escape or closing the window just drops them.
         """
         self._store_current_state(self._active_axis)
         self.memory.copy_from(self._state)

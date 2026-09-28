@@ -317,11 +317,7 @@ def test_dialog_get_parameters_binning_only(dialog_binning_only):
 
 
 def test_only_binning_settings_are_persisted(dialog_both, qtbot):
-    """Region, radii, uniformity and coordinate system live in the session memory only.
-
-    Bins and error weighting keep their QSettings behaviour, which is outside the scope of
-    the session memory.
-    """
+    """Only bins and error weighting are saved to QSettings."""
     dialog_both.ui.offspec_x_min.setValue(-0.02)
     dialog_both.ui.offspec_bins_x.setValue(200)
     dialog_both.ui.offspec_bins_y.setValue(250)
@@ -357,7 +353,7 @@ def test_only_binning_settings_are_persisted(dialog_both, qtbot):
     assert new_dialog.ui.offspec_bins_x.value() == 200
     assert new_dialog.ui.offspec_bins_y.value() == 250
     assert new_dialog.ui.error_weighting_checkbox.isChecked() is True
-    # Nothing else carried over into the new session
+    # Everything else is back to the defaults
     assert new_dialog.ui.offspec_x_min.value() == -0.015
     assert new_dialog.ui.sigmaX.value() == 0.0005
     assert new_dialog.ui.rSigmas.value() == 3.0
@@ -365,7 +361,7 @@ def test_only_binning_settings_are_persisted(dialog_both, qtbot):
 
 
 def test_opens_on_the_default_system_despite_a_legacy_setting(mock_main_window, qtbot):
-    """Configuration files from earlier versions still hold the last coordinate system."""
+    """Old config files can still contain the last coordinate system."""
     QtCore.QSettings(".quicknxs").setValue("offspec_binned/coordinate_system", OffSpecXAxis.QX_VS_QZ)
 
     with patch.object(OffSpecParametersDialog, "draw_plot"):
@@ -376,17 +372,14 @@ def test_opens_on_the_default_system_despite_a_legacy_setting(mock_main_window, 
     assert dlg._active_axis == OffSpecXAxis.DELTA_KZ_VS_QZ
 
 
-########################################################################################
-# Session memory: what the dialog remembers between coordinate systems and between visits
-########################################################################################
+# Session memory tests
 
 STATE = "Off_Off"
 DELTA_KZ = OffSpecXAxis.DELTA_KZ_VS_QZ
 QX = OffSpecXAxis.QX_VS_QZ
 KIZ_KFZ = OffSpecXAxis.KZI_VS_KZF
 
-# Default region boxes for `_fake_reduction_item`, one per coordinate system: the data
-# extents, bounded from outside by the seed values of `_collect_extents`, inset by 5%.
+# Default regions for `_fake_reduction_item`: the data extents inset by 5%
 DEFAULT_REGION = {
     DELTA_KZ: (0.012, 0.048, 0.11, 0.29),
     QX: (-0.0009, 0.0009, 0.11, 0.29),
@@ -395,12 +388,12 @@ DEFAULT_REGION = {
 WIDTH = {axis: box[1] - box[0] for axis, box in DEFAULT_REGION.items()}
 HEIGHT = {axis: box[3] - box[2] for axis, box in DEFAULT_REGION.items()}
 COUPLED_BY_DEFAULT = {DELTA_KZ: True, QX: False, KIZ_KFZ: True}
-# sigmaX and sigmaY show six decimals, so a radius read back is only exact to within this
+# sigmaX and sigmaY show six decimals
 DISPLAY_RESOLUTION = 1e-6
 
 
 def _default_radius(extent: float) -> float:
-    """The radius a view shows before the user chooses one."""
+    """Default radius for an extent."""
     return max(DEFAULT_SIGMA_FRACTION * extent, DEFAULT_MINIMUM_RADIUS)
 
 
@@ -409,7 +402,7 @@ _RADIO_BUTTON = {DELTA_KZ: "kizmkfzVSqz", QX: "qxVSqz", KIZ_KFZ: "kizVSkfz"}
 
 @pytest.fixture
 def data_window(mock_main_window):
-    """Main window mock whose reduction list holds one run with off-specular data."""
+    """Main window mock with one run of off-specular data."""
     mock_main_window.data_manager.reduction_states = [STATE]
     mock_main_window.data_manager.reduction_list = [_fake_reduction_item(STATE)]
     return mock_main_window
@@ -417,11 +410,10 @@ def data_window(mock_main_window):
 
 @pytest.fixture
 def open_dialog(qtbot, data_window):
-    """Open the smoothing dialog on the fake data, the way the main window does."""
+    """Open the smoothing dialog on the fake data."""
 
     def _open(memory: OffSpecSmoothingMemory | None = None) -> OffSpecParametersDialog:
-        # Patched only while constructing, so the deferred first draw is a no op and cannot
-        # fire later in the test and wipe the edits it is making
+        # Patch the deferred first draw so it can't fire later and reset the test's edits
         with patch.object(OffSpecParametersDialog, "draw_plot"):
             dlg = OffSpecParametersDialog(data_window, data_window.data_manager, show_smoothing=True, memory=memory)
         qtbot.addWidget(dlg)
@@ -432,7 +424,7 @@ def open_dialog(qtbot, data_window):
 
 
 def _switch(dlg: OffSpecParametersDialog, axis: OffSpecXAxis) -> None:
-    """Select a coordinate system with its radio button, as the user would."""
+    """Select a coordinate system with its radio button."""
     getattr(dlg.ui, _RADIO_BUTTON[axis]).setChecked(True)
     assert dlg._active_axis == axis
 
@@ -447,7 +439,7 @@ def _region(dlg: OffSpecParametersDialog) -> tuple[float, float, float, float]:
 
 
 class TestDefaults:
-    """What a first visit in the session shows."""
+    """First visit in the session."""
 
     @pytest.mark.parametrize("axis", [DELTA_KZ, QX, KIZ_KFZ])
     def test_region_is_derived_from_the_data(self, open_dialog, axis):
@@ -488,7 +480,7 @@ class TestDefaults:
 
 
 class TestSwitchingCoordinateSystem:
-    """Bogdan's rule: radii carry over as a percentage of the box, so the spot keeps its size."""
+    """Radii carry over as a percentage of the box."""
 
     def test_the_radius_is_rescaled_to_the_new_box(self, open_dialog):
         dlg = open_dialog()
@@ -497,12 +489,12 @@ class TestSwitchingCoordinateSystem:
         _switch(dlg, QX)
 
         assert dlg.ui.sigmaX.value() == pytest.approx(0.001 * WIDTH[QX] / WIDTH[DELTA_KZ], abs=DISPLAY_RESOLUTION)
-        # The vertical fraction was not touched while the radii were coupled
+        # y fraction wasn't changed while coupled
         assert dlg.ui.sigmaY.value() == pytest.approx(_default_radius(HEIGHT[QX]), abs=DISPLAY_RESOLUTION)
 
     @pytest.mark.parametrize("detour", [QX, KIZ_KFZ])
     def test_coming_back_restores_the_radius_exactly(self, open_dialog, detour):
-        """Showing a view never re-derives a fraction, so a round trip cannot drift."""
+        """A round trip must not drift."""
         dlg = open_dialog()
         dlg.ui.sigmaX.setValue(0.000123)
 
@@ -523,12 +515,7 @@ class TestSwitchingCoordinateSystem:
         assert dlg.ui.sigmaY.value() == pytest.approx(0.002, abs=DISPLAY_RESOLUTION)
 
     def test_editing_the_vertical_radius_does_not_nudge_the_horizontal_one(self, open_dialog):
-        """The untouched horizontal radius must stay a per-view default.
-
-        Re-reading it from its spin box would turn the Qx default, which sits on the floor,
-        into a chosen fraction twenty times larger than the default fraction, and every
-        other view would inherit a radius twenty times too big.
-        """
+        """Editing y must not turn the untouched Qx default for x into a chosen fraction."""
         dlg = open_dialog()
         _switch(dlg, QX)
 
@@ -538,7 +525,6 @@ class TestSwitchingCoordinateSystem:
         assert dlg.ui.sigmaX.value() == pytest.approx(_default_radius(WIDTH[DELTA_KZ]), abs=DISPLAY_RESOLUTION)
 
     def test_editing_one_radius_marks_only_that_radius(self, open_dialog):
-        """The other radius must not be re-read, or its rounding would nudge its fraction."""
         dlg = open_dialog()
         _switch(dlg, QX)
 
@@ -569,7 +555,7 @@ class TestSwitchingCoordinateSystem:
 
 
 class TestRegion:
-    """The blue box: moving it keeps the radii, and changes the percentage that carries over."""
+    """Moving the blue box keeps the radii and changes the percentage that carries over."""
 
     def test_moving_the_region_keeps_the_radius(self, open_dialog):
         dlg = open_dialog()
@@ -616,7 +602,7 @@ class TestRegion:
 
 
 class TestSessionMemory:
-    """Carrying the visit over to the next time the dialog is opened."""
+    """Remembering settings for the next time the dialog opens."""
 
     def test_ok_commits_and_reopening_restores(self, open_dialog):
         memory = OffSpecSmoothingMemory()
@@ -647,7 +633,7 @@ class TestSessionMemory:
         assert second.ui.offspec_x_min.value() == -0.0005
 
     def test_an_untouched_region_is_not_remembered(self, open_dialog):
-        """Otherwise the next dataset reduced in the session would inherit this box."""
+        """Otherwise the next dataset would inherit this box."""
         memory = OffSpecSmoothingMemory()
         dlg = open_dialog(memory)
         _switch(dlg, QX)
@@ -675,7 +661,6 @@ class TestSessionMemory:
         assert memory == before
 
     def test_the_session_memory_is_the_one_the_main_window_holds(self, open_dialog):
-        """Committing must write into the caller's object rather than rebinding it."""
         memory = OffSpecSmoothingMemory()
         dlg = open_dialog(memory)
         dlg.ui.offspec_x_min.setValue(0.02)

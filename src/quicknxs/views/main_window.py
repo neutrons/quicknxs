@@ -75,8 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_manager = DataManager(self.settings.value("current_directory", os.path.expanduser("~")))
         self.plot_view = PlotView(self)
 
-        # What the off-specular smoothing dialog remembers between visits. Lives as long
-        # as this window, so it lasts for the session and is never written to disk.
+        # Smoothing dialog settings, kept for the session only
         self.offspec_smoothing_memory = OffSpecSmoothingMemory()
 
         r"""Setting `auto_change_active = True` bypasses execution of:
