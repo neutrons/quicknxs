@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from qtpy import QtCore, QtWidgets
 
 from quicknxs import __version__ as quicknxs_version
+from quicknxs.models.offspec_smoothing_memory import OffSpecSmoothingMemory
 from quicknxs.models.processing_workflow import ProcessingWorkflow
 from quicknxs.presenters.configuration_handler import ConfigurationHandler
 from quicknxs.presenters.data_manager import DataManager
@@ -73,6 +74,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # Object managers
         self.data_manager = DataManager(self.settings.value("current_directory", os.path.expanduser("~")))
         self.plot_view = PlotView(self)
+
+        # What the off-specular smoothing dialog remembers between visits. Lives as long
+        # as this window, so it lasts for the session and is never written to disk.
+        self.offspec_smoothing_memory = OffSpecSmoothingMemory()
 
         r"""Setting `auto_change_active = True` bypasses execution of:
         - MainWindow.file_open_from_list()
@@ -542,6 +547,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self,
                     self.data_manager,
                     show_smoothing=show_smoothing,
+                    memory=self.offspec_smoothing_memory,
                 )
                 if not dia.exec_():
                     logging.info("Skipping off-specular parameters")

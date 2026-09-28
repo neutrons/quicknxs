@@ -8,9 +8,28 @@ from numpy.typing import NDArray
 from qtpy import QtCore, QtWidgets
 
 from quicknxs.enums import OffSpecXAxis
+from quicknxs.models.offspec_smoothing_memory import OffSpecRegion, OffSpecSmoothingMemory
 from quicknxs.presenters.data_manager import DataManager
 from quicknxs.views import load_ui
 from quicknxs.views.widgets import MPLWidget
+
+# Axis labels per coordinate system, as (horizontal, vertical)
+_AXIS_LABELS: dict[OffSpecXAxis, tuple[str, str]] = {
+    OffSpecXAxis.DELTA_KZ_VS_QZ: ("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]", "Q$_z$ [Å$^{-1}$]"),
+    OffSpecXAxis.QX_VS_QZ: ("Q$_x$ [Å$^{-1}$]", "Q$_z$ [Å$^{-1}$]"),
+    OffSpecXAxis.KZI_VS_KZF: ("k$_{i,z}$ [Å$^{-1}$]", "k$_{f,z}$ [Å$^{-1}$]"),
+}
+
+
+def _set_blocked(spin_box, value: float) -> None:
+    """Write a value into a spin box without emitting its change signal.
+
+    A programmatic write must not look like a user edit, because only a real edit may
+    re-derive the remembered smoothing fractions.
+    """
+    spin_box.blockSignals(True)
+    spin_box.setValue(value)
+    spin_box.blockSignals(False)
 
 
 class OffSpecParametersDialog(QtWidgets.QDialog):
@@ -22,7 +41,14 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
     drawing = False
 
-    def __init__(self, parent, data_manager: DataManager, show_smoothing: bool = False, show_binning: bool = False):
+    def __init__(
+        self,
+        parent,
+        data_manager: DataManager,
+        show_smoothing: bool = False,
+        show_binning: bool = False,
+        memory: OffSpecSmoothingMemory | None = None,
+    ):
         """
         Initialize the combined off-specular parameters dialog.
 
@@ -36,6 +62,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             Whether to show smoothing parameters
         show_binning : bool
             Whether to show binning parameters
+        memory : OffSpecSmoothingMemory | None
+            Region, uniformity and smoothing radii carried over from earlier visits in
+            this session. A fresh memory is used when none is supplied, which makes the
+            dialog behave as if it were being opened for the first time.
         """
         QtWidgets.QDialog.__init__(self, parent)
         self.ui = load_ui("ui_smooth_dialog.ui", base_instance=self)
@@ -46,6 +76,26 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self.sigma_1 = None
         self.sigma_2 = None
         self.sigma_3 = None
+
+        # Session memory shared with the main window, and a private working copy of it.
+        # Everything during the visit goes to the working copy, which is committed only
+        # on OK, so cancelling or closing the dialog leaves the session memory untouched.
+        self.memory = OffSpecSmoothingMemory() if memory is None else memory
+        self._state = self.memory.snapshot()
+
+        # What the user changed in the active coordinate system since it was shown
+        self._clear_edits()
+
+        # Off-specular data and its extents, read once and reused on every repaint.
+        # The dialog is modal, so the reduction list cannot change while it is open.
+        self._plot_runs: list[tuple[NDArray[float64], ...]] | None = None
+        self._extents: dict[OffSpecXAxis, OffSpecRegion] = {}
+        self._qz_max = 0.001
+
+        # Always open on the (ki_z - kf_z) vs Qz view, whichever view was used last
+        self.ui.kizmkfzVSqz.setChecked(True)
+        # Coordinate system the spin boxes currently belong to
+        self._active_axis = self._current_axis()
 
         # Show/hide sections based on what's requested
         self._configure_visibility()
@@ -65,6 +115,10 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             self.ui.sigmaY.valueChanged.connect(self.update_settings)
             self.ui.sigmasCoupled.toggled.connect(self.update_sigma_coupling)
             self.ui.rSigmas.valueChanged.connect(self.update_settings)
+            # Record user edits, so that only what the user changed gets remembered
+            self.ui.sigmaX.valueChanged.connect(self._on_radius_x_edited)
+            self.ui.sigmaY.valueChanged.connect(self._on_radius_y_edited)
+            self.ui.sigmasCoupled.toggled.connect(self._on_coupled_edited)
 
         # Connect plot interaction for region selection (common to both binning and smoothing)
         self.ui.plot.canvas.mpl_connect("motion_notify_event", self.plot_select)
@@ -75,6 +129,8 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self.ui.offspec_x_max.valueChanged.connect(self.update_region)
         self.ui.offspec_y_min.valueChanged.connect(self.update_region)
         self.ui.offspec_y_max.valueChanged.connect(self.update_region)
+        for spin_box in (self.ui.offspec_x_min, self.ui.offspec_x_max, self.ui.offspec_y_min, self.ui.offspec_y_max):
+            spin_box.valueChanged.connect(self._on_region_edited)
 
         # Connect radio buttons to update coordinate ranges and redraw plot
         self.ui.kizmkfzVSqz.toggled.connect(self.on_coordinate_system_changed)
@@ -137,6 +193,31 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         y_offset = (y_max - y_min) * self.GRID_OFFSET
         return x_min + x_offset, x_max - x_offset, y_min + y_offset, y_max - y_offset
 
+    def _current_axis(self) -> OffSpecXAxis:
+        """Return the coordinate system the radio buttons currently select."""
+        if self.ui.qxVSqz.isChecked():
+            return OffSpecXAxis.QX_VS_QZ
+        if self.ui.kizVSkfz.isChecked():
+            return OffSpecXAxis.KZI_VS_KZF
+        return OffSpecXAxis.DELTA_KZ_VS_QZ
+
+    def _current_region(self) -> OffSpecRegion:
+        """Return the region box as the spin boxes currently show it."""
+        return OffSpecRegion(
+            self.ui.offspec_x_min.value(),
+            self.ui.offspec_x_max.value(),
+            self.ui.offspec_y_min.value(),
+            self.ui.offspec_y_max.value(),
+        )
+
+    def _default_region(self, axis: OffSpecXAxis) -> OffSpecRegion:
+        """Return the region derived from the data extents, used until the user picks one."""
+        extent = self._extents[axis]
+        x_min, x_max, y_min, y_max = self._grid_region_coordinates(
+            extent.x_min, extent.x_max, extent.y_min, extent.y_max
+        )
+        return OffSpecRegion(x_min, x_max, y_min, y_max)
+
     def _paint_intensities(
         self,
         ki_z: NDArray[float64],
@@ -145,6 +226,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         Qz: NDArray[float64],
         I: NDArray[float64],
         plot: MPLWidget,
+        axis: OffSpecXAxis,
     ):
         """
         Color-paint the intensities versus appropriate X and Y coordinates.
@@ -163,6 +245,8 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             Intensity array
         plot : MPLWidget
             The plot object to draw on
+        axis : OffSpecXAxis
+            Coordinate system to paint against
         """
         common_args = {
             "log": True,
@@ -172,44 +256,43 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             "shading": "gouraud",
         }
 
-        if self.ui.kizmkfzVSqz.isChecked():
-            x, y = (ki_z - kf_z), Qz
-        elif self.ui.qxVSqz.isChecked():
+        if axis == OffSpecXAxis.QX_VS_QZ:
             x, y = Qx, Qz
-        elif self.ui.kizVSkfz.isChecked():
+        elif axis == OffSpecXAxis.KZI_VS_KZF:
             x, y = ki_z, kf_z
         else:
-            x, y = (ki_z - kf_z), Qz  # Default
+            x, y = (ki_z - kf_z), Qz
 
         plot.pcolormesh(x, y, I, **common_args)
 
-    def draw_plot(self):
-        """Draw the off-specular data with the configured region overlay."""
-        if self.drawing:
+    def _collect_extents(self) -> None:
+        """Read the off-specular data once and cache what every repaint needs.
+
+        Fills `_plot_runs` with the trimmed arrays to paint, `_extents` with the data
+        extents of each coordinate system, and `_qz_max` with the anchor for the sigma
+        ellipses. Switching coordinate system then reuses the cache instead of walking
+        the reduction list again; the dialog is modal, so the data cannot change
+        underneath it.
+        """
+        self._plot_runs = []
+        self._extents = {}
+        self._qz_max = 0.001
+
+        # Get first state from reduction_states
+        if not self.data_manager.reduction_states:
             return
-        self.drawing = True
 
-        plot = self.ui.plot
-        plot.clear()
-        plot.set_xticks_fontsize(8)
-        plot.set_yticks_fontsize(8)
-
-        # Initialize limits
+        # Initialize limits. These seeds also bound the plotted range from outside when
+        # the data itself is narrower, so they are kept as they were.
         qz_min, qz_max = 0.5, -0.1
         qx_min, qx_max = -0.001, 0.001
         ki_z_min, ki_z_max = 0.1, -0.1
         kf_z_min, kf_z_max = 0.1, -0.1
         k_diff_min, k_diff_max = 0.01, -0.01
-        Qzmax = 0.001
-
-        # Get first state from reduction_states
-        if not self.data_manager.reduction_states:
-            self.drawing = False
-            return
 
         first_state = self.data_manager.reduction_states[0]
 
-        # Plot data from all runs in the reduction list
+        # Collect data from all runs in the reduction list
         for item in self.data_manager.reduction_list:
             # Check if off_spec data exists
             if first_state not in item.cross_sections:
@@ -235,7 +318,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
 
             # Extend the X and Y limits of the plotting area
             try:
-                Qzmax = max(ki_z.max() * 2.0, Qzmax)
+                self._qz_max = max(ki_z.max() * 2.0, self._qz_max)
                 qz_max = max(Qz[I > 0].max(), qz_max)
                 qz_min = min(Qz[I > 0].min(), qz_min)
                 qx_min = min(qx_min, Qx[I > 0].min())
@@ -249,80 +332,99 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             except Exception as exception:
                 logger.error(f"Error extending plotting limits: {exception}")
 
-            self._paint_intensities(ki_z, kf_z, Qx, Qz, I, plot)
+            self._plot_runs.append((ki_z, kf_z, Qx, Qz, I))
+
+        self._extents = {
+            OffSpecXAxis.DELTA_KZ_VS_QZ: OffSpecRegion(k_diff_min, k_diff_max, qz_min, qz_max),
+            OffSpecXAxis.QX_VS_QZ: OffSpecRegion(qx_min, qx_max, qz_min, qz_max),
+            OffSpecXAxis.KZI_VS_KZF: OffSpecRegion(ki_z_min, ki_z_max, kf_z_min, kf_z_max),
+        }
+
+    def _apply_axis_state(self, axis: OffSpecXAxis) -> None:
+        """Show the remembered region, uniformity and radii for a coordinate system.
+
+        Writes spin boxes only; painting is left to `_paint`. Every write blocks the
+        widget's change signal, so showing a coordinate system never looks like a user
+        edit and therefore never re-derives the remembered smoothing fractions.
+        """
+        # A freshly shown coordinate system has no edits yet
+        self._clear_edits()
+
+        region = self._state.region_for(axis, self._default_region(axis))
+        coupled = self._state.coupled_for(axis)
+
+        for spin_box, value in (
+            (self.ui.offspec_x_min, region.x_min),
+            (self.ui.offspec_x_max, region.x_max),
+            (self.ui.offspec_y_min, region.y_min),
+            (self.ui.offspec_y_max, region.y_max),
+        ):
+            _set_blocked(spin_box, value)
+
+        if not self.show_smoothing:
+            return
+
+        # Scale against the region as the spin boxes rounded it, so that the box and the
+        # smoothing spot drawn inside it stay consistent with each other.
+        sigma_x, sigma_y = self._state.radii_for(
+            self._current_region(), self.ui.sigmaX.minimum(), self.ui.sigmaX.maximum()
+        )
+        if coupled:
+            sigma_y = sigma_x
+        _set_blocked(self.ui.sigmaX, sigma_x)
+        _set_blocked(self.ui.sigmaY, sigma_y)
+        _set_blocked(self.ui.rSigmas, self._state.r_sigmas_for(self.ui.rSigmas.value()))
+
+        self.ui.sigmasCoupled.blockSignals(True)
+        self.ui.sigmasCoupled.setChecked(coupled)
+        self.ui.sigmasCoupled.blockSignals(False)
+        self.ui.sigmaY.setEnabled(not coupled)
+
+    def _paint(self, axis: OffSpecXAxis) -> None:
+        """Repaint the plot for a coordinate system from the cache and the spin boxes.
+
+        Reads the region and the radii from the widgets rather than deciding them, so it
+        can be called after any change without disturbing what is on display.
+        """
+        plot = self.ui.plot
+        plot.clear()
+        plot.set_xticks_fontsize(8)
+        plot.set_yticks_fontsize(8)
+
+        for ki_z, kf_z, Qx, Qz, I in self._plot_runs or ():
+            self._paint_intensities(ki_z, kf_z, Qx, Qz, I, plot, axis)
 
         # Set plot limits and labels based on selected axis type
-        if self.ui.qxVSqz.isChecked():
-            plot.canvas.ax.set_xlim([qx_min, qx_max])
-            plot.canvas.ax.set_ylim([qz_min, qz_max])
-            plot.set_xlabel("Q$_x$ [Å$^{-1}$]", fontsize=14)
-            plot.set_ylabel("Q$_z$ [Å$^{-1}$]", fontsize=14)
-            x1, x2, y1, y2 = self._grid_region_coordinates(qx_min, qx_max, qz_min, qz_max)
-            sigma_pos = (0.0, Qzmax / 3.0)
-            sigma_y_enabled = True
-        elif self.ui.kizVSkfz.isChecked():
-            plot.canvas.ax.set_xlim([ki_z_min, ki_z_max])
-            plot.canvas.ax.set_ylim([kf_z_min, kf_z_max])
-            plot.set_xlabel("k$_{i,z}$ [Å$^{-1}$]", fontsize=14)
-            plot.set_ylabel("k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
-            x1, x2, y1, y2 = self._grid_region_coordinates(ki_z_min, ki_z_max, kf_z_min, kf_z_max)
-            sigma_pos = (Qzmax / 6.0, Qzmax / 6.0)
-            sigma_y_enabled = True
-        else:
-            # Default: k_i,z - k_f,z vs Q_z
-            plot.canvas.ax.set_xlim([k_diff_min, k_diff_max])
-            plot.canvas.ax.set_ylim([qz_min, qz_max])
-            plot.set_xlabel("k$_{i,z}$-k$_{f,z}$ [Å$^{-1}$]", fontsize=14)
-            plot.set_ylabel("Q$_z$ [Å$^{-1}$]", fontsize=14)
-            x1, x2, y1, y2 = self._grid_region_coordinates(k_diff_min, k_diff_max, qz_min, qz_max)
-            sigma_pos = (0.0, Qzmax / 3.0)
-            sigma_y_enabled = False
-
-        # Update spinboxes with calculated default values
-        self.ui.offspec_x_min.setValue(x1)
-        self.ui.offspec_x_max.setValue(x2)
-        self.ui.offspec_y_min.setValue(y1)
-        self.ui.offspec_y_max.setValue(y2)
+        extent = self._extents[axis]
+        plot.canvas.ax.set_xlim([extent.x_min, extent.x_max])
+        plot.canvas.ax.set_ylim([extent.y_min, extent.y_max])
+        x_label, y_label = _AXIS_LABELS[axis]
+        plot.set_xlabel(x_label, fontsize=14)
+        plot.set_ylabel(y_label, fontsize=14)
 
         # Draw the region rectangle
-        self.rect_region = Line2D([x1, x1, x2, x2, x1], [y1, y2, y2, y1, y1])
+        region = self._current_region()
+        self.rect_region = Line2D(
+            [region.x_min, region.x_min, region.x_max, region.x_max, region.x_min],
+            [region.y_min, region.y_max, region.y_max, region.y_min, region.y_min],
+        )
         plot.canvas.ax.add_line(self.rect_region)
 
         # Configure smoothing-specific elements if smoothing is enabled
         if self.show_smoothing:
-            # Calculate sigma values
-            sigma_percentage = 0.005
-            min_sigma_size = 0.0001
-            sigma_x = max((x2 - x1) * sigma_percentage, min_sigma_size)
-            sigma_y = max((y2 - y1) * sigma_percentage, min_sigma_size)
-
-            self.ui.sigmaX.setValue(sigma_x)
-            self.ui.sigmaY.setValue(sigma_y)
-            self.ui.sigmaY.setEnabled(sigma_y_enabled)
-
-            # Set sigma coupling based on coordinate system
-            if self.ui.kizmkfzVSqz.isChecked():
-                self.ui.sigmasCoupled.setChecked(True)
-            elif self.ui.qxVSqz.isChecked():
-                self.ui.sigmasCoupled.setChecked(False)
+            # Anchor the ellipses on the specular ridge of the active coordinate system
+            if axis == OffSpecXAxis.KZI_VS_KZF:
+                sigma_pos = (self._qz_max / 6.0, self._qz_max / 6.0)
             else:
-                self.ui.sigmasCoupled.setChecked(True)
-
-            # Apply coupling before constructing the ellipses: update_settings() cannot
-            # resize them later in this method because self.drawing is still True
-            self.update_sigma_coupling()
+                sigma_pos = (0.0, self._qz_max / 3.0)
 
             # Create sigma ellipses
             sigma_ang = 0.0
-            self.sigma_1 = Ellipse(
-                sigma_pos, self.ui.sigmaX.value() * 2, self.ui.sigmaY.value() * 2, angle=sigma_ang, fill=False
-            )
-            self.sigma_2 = Ellipse(
-                sigma_pos, self.ui.sigmaX.value() * 4, self.ui.sigmaY.value() * 4, angle=sigma_ang, fill=False
-            )
-            self.sigma_3 = Ellipse(
-                sigma_pos, self.ui.sigmaX.value() * 6, self.ui.sigmaY.value() * 6, angle=sigma_ang, fill=False
-            )
+            sigma_x = self.ui.sigmaX.value()
+            sigma_y = self.ui.sigmaY.value()
+            self.sigma_1 = Ellipse(sigma_pos, sigma_x * 2, sigma_y * 2, angle=sigma_ang, fill=False)
+            self.sigma_2 = Ellipse(sigma_pos, sigma_x * 4, sigma_y * 4, angle=sigma_ang, fill=False)
+            self.sigma_3 = Ellipse(sigma_pos, sigma_x * 6, sigma_y * 6, angle=sigma_ang, fill=False)
             plot.canvas.ax.add_artist(self.sigma_1)
             plot.canvas.ax.add_artist(self.sigma_2)
             plot.canvas.ax.add_artist(self.sigma_3)
@@ -332,13 +434,115 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             plot.cplot.set_clim([self.INTENSITY_MIN, self.INTENSITY_MAX])
         plot.draw()
 
-        self.drawing = False
-
-    def on_coordinate_system_changed(self):
-        """Handle coordinate system radio button changes - recalculate ranges from data."""
+    def draw_plot(self):
+        """Draw the off-specular data with the configured region overlay."""
         if self.drawing:
             return
+        self.drawing = True
+        try:
+            if self._plot_runs is None:
+                self._collect_extents()
+
+            if not self._extents:
+                # No data to work from: leave an empty plot behind
+                plot = self.ui.plot
+                plot.clear()
+                plot.set_xticks_fontsize(8)
+                plot.set_yticks_fontsize(8)
+                return
+
+            self._active_axis = self._current_axis()
+            self._apply_axis_state(self._active_axis)
+            self._paint(self._active_axis)
+        finally:
+            self.drawing = False
+
+    def on_coordinate_system_changed(self, checked: bool = True):
+        """Switch coordinate system, carrying what the user changed over to the new one.
+
+        Parameters
+        ----------
+        checked : bool
+            State of the radio button that emitted ``toggled``. The signal also fires for
+            the button being switched off, which is ignored so the switch happens once.
+        """
+        if not checked or self.drawing:
+            return
+        new_axis = self._current_axis()
+        if new_axis == self._active_axis:
+            return
+        self._store_current_state(self._active_axis)
+        self._active_axis = new_axis
         self.draw_plot()
+
+    def _store_current_state(self, axis: OffSpecXAxis) -> None:
+        """Record what the user changed in the coordinate system being left.
+
+        Writes to the working copy only; nothing reaches the session memory until the
+        dialog is accepted. Only actual edits are recorded. In particular a region the
+        user never touched stays derived from the data, so reducing a different dataset
+        later in the session does not inherit a box that was drawn for this one.
+
+        Moving the region leaves the radii where they are, as agreed, but it changes what
+        fraction of the box they cover, so it re-derives both fractions. Editing a radius
+        re-derives only that radius's fraction, so the other one is never re-read from its
+        spin box and nudged by rounding. The fraction is what the next coordinate system
+        is scaled by.
+        """
+        region = self._current_region()
+
+        if self._region_edited:
+            self._state.store_region(axis, region)
+
+        if self.show_smoothing:
+            coupled = self.ui.sigmasCoupled.isChecked()
+            if self._coupled_edited:
+                self._state.store_coupled(axis, coupled)
+            update_x = self._region_edited or self._radius_x_edited
+            update_y = self._region_edited or self._radius_y_edited
+            if update_x or update_y:
+                self._state.store_fractions(
+                    self.ui.sigmaX.value(),
+                    self.ui.sigmaY.value(),
+                    region,
+                    coupled,
+                    update_x=update_x,
+                    update_y=update_y,
+                )
+            self._state.store_r_sigmas(self.ui.rSigmas.value())
+
+        self._clear_edits()
+
+    def _clear_edits(self) -> None:
+        """Forget which values the user changed in the active coordinate system."""
+        self._region_edited = False
+        self._radius_x_edited = False
+        self._radius_y_edited = False
+        self._coupled_edited = False
+
+    # The slots below only note that an edit happened. They are deliberately not guarded
+    # by `drawing`: a click on the plot writes the region while `drawing` is set, and that
+    # is a user edit like any other. Programmatic writes block signals instead.
+
+    def _on_region_edited(self):
+        """Note that the user moved the region box."""
+        self._region_edited = True
+
+    def _on_radius_x_edited(self):
+        """Note that the user changed the horizontal smoothing radius."""
+        self._radius_x_edited = True
+
+    def _on_radius_y_edited(self):
+        """Note that the user changed the vertical smoothing radius.
+
+        While the radii are coupled, `update_sigma_coupling` writes sigmaY with signals
+        blocked, so a mirrored value never lands here: only a genuine edit does.
+        """
+        self._radius_y_edited = True
+
+    def _on_coupled_edited(self):
+        """Note that the user changed whether the radii are uniform."""
+        self._coupled_edited = True
 
     def update_region(self):
         """Update the rectangle overlay showing the region."""
@@ -430,18 +634,13 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
                 self.update_region()  # Updates only rectangle
 
     def load_settings(self):
-        """Load parameter values from QSettings."""
-        settings = QtCore.QSettings(".quicknxs")
+        """Load the binning parameters from QSettings.
 
-        # Load shared region parameters
-        if settings.contains("offspec_binned/x_min"):
-            self.ui.offspec_x_min.setValue(float(settings.value("offspec_binned/x_min")))
-        if settings.contains("offspec_binned/x_max"):
-            self.ui.offspec_x_max.setValue(float(settings.value("offspec_binned/x_max")))
-        if settings.contains("offspec_binned/y_min"):
-            self.ui.offspec_y_min.setValue(float(settings.value("offspec_binned/y_min")))
-        if settings.contains("offspec_binned/y_max"):
-            self.ui.offspec_y_max.setValue(float(settings.value("offspec_binned/y_max")))
+        The region, the smoothing radii, their uniformity and the coordinate system are
+        deliberately not persisted between application runs: they live in the session
+        memory instead, and a new session starts from defaults derived from the data.
+        """
+        settings = QtCore.QSettings(".quicknxs")
 
         # Load binning-specific parameters
         if self.show_binning:
@@ -454,45 +653,9 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
                     settings.value("offspec_binned/error_weighting", False, type=bool)
                 )
 
-        # Load smoothing-specific parameters
-        if self.show_smoothing:
-            if settings.contains("offspec_smoothing/sigma_x"):
-                self.ui.sigmaX.setValue(float(settings.value("offspec_smoothing/sigma_x")))
-            if settings.contains("offspec_smoothing/sigma_y"):
-                self.ui.sigmaY.setValue(float(settings.value("offspec_smoothing/sigma_y")))
-            if settings.contains("offspec_smoothing/r_sigmas"):
-                self.ui.rSigmas.setValue(float(settings.value("offspec_smoothing/r_sigmas")))
-            if settings.contains("offspec_smoothing/sigmas_coupled"):
-                self.ui.sigmasCoupled.setChecked(settings.value("offspec_smoothing/sigmas_coupled", True, type=bool))
-
-        # Load coordinate system
-        if settings.contains("offspec_binned/coordinate_system"):
-            coord_sys = settings.value("offspec_binned/coordinate_system")
-            if coord_sys == OffSpecXAxis.KZI_VS_KZF:
-                self.ui.kizVSkfz.setChecked(True)
-            elif coord_sys == OffSpecXAxis.QX_VS_QZ:
-                self.ui.qxVSqz.setChecked(True)
-            else:
-                self.ui.kizmkfzVSqz.setChecked(True)
-
     def save_settings(self):
-        """Save parameter values to QSettings."""
+        """Save the binning parameters to QSettings. See `load_settings` for what is not saved."""
         settings = QtCore.QSettings(".quicknxs")
-
-        # Save shared region parameters
-        settings.setValue("offspec_binned/x_min", self.ui.offspec_x_min.value())
-        settings.setValue("offspec_binned/x_max", self.ui.offspec_x_max.value())
-        settings.setValue("offspec_binned/y_min", self.ui.offspec_y_min.value())
-        settings.setValue("offspec_binned/y_max", self.ui.offspec_y_max.value())
-
-        # Save coordinate system
-        if self.ui.kizVSkfz.isChecked():
-            coord_sys = OffSpecXAxis.KZI_VS_KZF
-        elif self.ui.qxVSqz.isChecked():
-            coord_sys = OffSpecXAxis.QX_VS_QZ
-        else:
-            coord_sys = OffSpecXAxis.DELTA_KZ_VS_QZ
-        settings.setValue("offspec_binned/coordinate_system", coord_sys)
 
         # Save bins parameters (common to both binning and smoothing)
         settings.setValue("offspec_binned/bins_x", self.ui.offspec_bins_x.value())
@@ -501,13 +664,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         # Save binning-specific parameters
         if self.show_binning:
             settings.setValue("offspec_binned/error_weighting", self.ui.error_weighting_checkbox.isChecked())
-
-        # Save smoothing-specific parameters
-        if self.show_smoothing:
-            settings.setValue("offspec_smoothing/sigma_x", self.ui.sigmaX.value())
-            settings.setValue("offspec_smoothing/sigma_y", self.ui.sigmaY.value())
-            settings.setValue("offspec_smoothing/r_sigmas", self.ui.rSigmas.value())
-            settings.setValue("offspec_smoothing/sigmas_coupled", self.ui.sigmasCoupled.isChecked())
 
     def update_bin_width(self):
         """Calculate and display the Qz bin width based on current settings."""
@@ -533,12 +689,7 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         params = {}
 
         # Determine coordinate system setting
-        if self.ui.kizVSkfz.isChecked():
-            params["off_spec_x_axis"] = OffSpecXAxis.KZI_VS_KZF
-        elif self.ui.qxVSqz.isChecked():
-            params["off_spec_x_axis"] = OffSpecXAxis.QX_VS_QZ
-        else:
-            params["off_spec_x_axis"] = OffSpecXAxis.DELTA_KZ_VS_QZ
+        params["off_spec_x_axis"] = self._current_axis()
 
         # Shared region parameters
         params["off_spec_x_min"] = self.ui.offspec_x_min.value()
@@ -563,6 +714,13 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         return params
 
     def accept(self):
-        """Override accept to save settings before closing."""
+        """Commit this visit to the session memory, save the binning settings, and close.
+
+        There is no matching override of ``reject``: the visit was only ever recorded in
+        the working copy, so cancelling, pressing Escape or closing the window simply
+        discards it.
+        """
+        self._store_current_state(self._active_axis)
+        self.memory.copy_from(self._state)
         self.save_settings()
         super().accept()
