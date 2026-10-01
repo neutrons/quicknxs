@@ -20,6 +20,35 @@ See the image below for reference.
    ../images/reduction_options.png
    :alt: Reduction Options
 
+Off-Specular Smoothing Parameters
+---------------------------------
+
+The smoothing parameters dialog shows the off-specular data in one of three output types,
+selected with the radio buttons: **(ki_z-kf_z) vs. Qz**, **Qx vs. Qz** and **ki_z vs. kf_z**.
+The blue box is the region that will be smoothed, and the **X** and **Y** values under
+*Smoothing Parameters* are the smoothing radii, drawn as ellipses on the plot.
+
+- The dialog always opens in **(ki_z-kf_z) vs. Qz**.
+- Until you change them, the radii default to 0.25% of the width of the blue box in
+  **(ki_z-kf_z) vs. Qz**, but never less than 0.0001 1/Å.
+- The radii are uniform (Y follows X) by default in **(ki_z-kf_z) vs. Qz** and **ki_z vs. kf_z**,
+  and independent in **Qx vs. Qz**.
+- Moving the blue box, by editing the region values or by clicking on the plot, leaves the radii
+  unchanged.
+- Switching output type converts the radii with the relations between the axes, so the smoothing
+  spot covers the same region of reciprocal space:
+
+  - **Qx vs. Qz** shares the Qz axis, so Y is unchanged, and X is multiplied by tan(θ\ :sub:`i`),
+    using the mean incident angle of the runs.
+  - **ki_z vs. kf_z** uses ki_z = (Qz + (ki_z-kf_z)) / 2 and kf_z = (Qz - (ki_z-kf_z)) / 2, so
+    uniform radii are divided by √2.
+
+- Coming back to an output type restores the blue box and uniformity you left there.
+
+Clicking **OK** remembers the blue boxes, radii, uniformity and search range for the next time the
+dialog is opened. **Cancel** discards the changes. These settings last until QuickNXS is closed and
+are not saved between sessions.
+
 Reduction Output
 ----------------
 

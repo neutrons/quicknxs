@@ -1,11 +1,14 @@
 """Tests for the Off-Specular Parameters dialog (combined smoothing and binning)"""
 
+import math
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from qtpy import QtWidgets
+from qtpy import QtCore, QtWidgets
 
+from quicknxs.enums import OffSpecXAxis
+from quicknxs.models.offspec_smoothing_memory import DEFAULT_MINIMUM_RADIUS, OffSpecSmoothingMemory, radii_to_axis
 from quicknxs.views.smooth_dialog import OffSpecParametersDialog
 
 
@@ -114,7 +117,7 @@ def test_dialog_smoothing_defaults(dialog_both):
     assert dialog_both.ui.sigmasCoupled.isChecked()
 
 
-def _fake_reduction_item(state):
+def _fake_reduction_item(state, scattering_angle=1.0):
     """Build a mock reduction item with numpy off-specular data (units: 1/A)."""
     shape = (10, 20)
     ki_z = np.linspace(0.05, 0.10, shape[0] * shape[1]).reshape(shape)
@@ -130,6 +133,7 @@ def _fake_reduction_item(state):
     cross_section.off_spec = off_spec
     cross_section.configuration.cut_first_n_points = 0
     cross_section.configuration.cut_last_n_points = 0
+    cross_section.scattering_angle = scattering_angle
 
     item = Mock()
     item.cross_sections = {state: cross_section}
@@ -309,48 +313,385 @@ def test_dialog_get_parameters_binning_only(dialog_binning_only):
     assert "off_spec_sigmas" not in params
 
 
-def test_dialog_settings_persistence(dialog_both, qtbot):
-    """Test that settings are saved and loaded correctly."""
-    # Set custom values for region
+def test_only_binning_settings_are_persisted(dialog_both, qtbot):
+    """Only bins and error weighting are saved to QSettings."""
     dialog_both.ui.offspec_x_min.setValue(-0.02)
-    dialog_both.ui.offspec_x_max.setValue(0.03)
-    dialog_both.ui.offspec_y_min.setValue(0.02)
-    dialog_both.ui.offspec_y_max.setValue(0.25)
-
-    # Set custom values for binning
     dialog_both.ui.offspec_bins_x.setValue(200)
     dialog_both.ui.offspec_bins_y.setValue(250)
     dialog_both.ui.error_weighting_checkbox.setChecked(True)
-
-    # Set custom values for smoothing - uncouple first to set different values
     dialog_both.ui.sigmasCoupled.setChecked(False)
     dialog_both.ui.sigmaX.setValue(0.003)
     dialog_both.ui.sigmaY.setValue(0.004)
     dialog_both.ui.rSigmas.setValue(5.0)
+    dialog_both.ui.qxVSqz.setChecked(True)
 
-    # Save settings
     dialog_both.save_settings()
 
-    # Create a new dialog to test loading
+    settings = QtCore.QSettings(".quicknxs")
+    for key in ("offspec_binned/bins_x", "offspec_binned/bins_y", "offspec_binned/error_weighting"):
+        assert settings.contains(key), key
+    for key in (
+        "offspec_binned/x_min",
+        "offspec_binned/x_max",
+        "offspec_binned/y_min",
+        "offspec_binned/y_max",
+        "offspec_binned/coordinate_system",
+        "offspec_smoothing/sigma_x",
+        "offspec_smoothing/sigma_y",
+        "offspec_smoothing/r_sigmas",
+        "offspec_smoothing/sigmas_coupled",
+    ):
+        assert not settings.contains(key), key
+
     main_window = dialog_both.parent()
     new_dialog = OffSpecParametersDialog(main_window, main_window.data_manager, show_smoothing=True, show_binning=True)
     qtbot.addWidget(new_dialog)
 
-    # Check that region values were loaded
-    assert new_dialog.ui.offspec_x_min.value() == -0.02
-    assert new_dialog.ui.offspec_x_max.value() == 0.03
-    assert new_dialog.ui.offspec_y_min.value() == 0.02
-    assert new_dialog.ui.offspec_y_max.value() == 0.25
-
-    # Check that binning values were loaded
     assert new_dialog.ui.offspec_bins_x.value() == 200
     assert new_dialog.ui.offspec_bins_y.value() == 250
     assert new_dialog.ui.error_weighting_checkbox.isChecked() is True
+    # Everything else is back to the defaults
+    assert new_dialog.ui.offspec_x_min.value() == -0.015
+    assert new_dialog.ui.sigmaX.value() == 0.0005
+    assert new_dialog.ui.rSigmas.value() == 3.0
+    assert new_dialog.ui.kizmkfzVSqz.isChecked()
 
-    # Check that smoothing values were loaded
-    assert new_dialog.ui.sigmaX.value() == 0.003
-    assert new_dialog.ui.sigmaY.value() == 0.004
-    assert new_dialog.ui.rSigmas.value() == 5.0
 
-    # Check that coupling states were loaded
-    assert new_dialog.ui.sigmasCoupled.isChecked() is False
+def test_opens_on_the_default_system_despite_a_legacy_setting(mock_main_window, qtbot):
+    """Old config files can still contain the last coordinate system."""
+    QtCore.QSettings(".quicknxs").setValue("offspec_binned/coordinate_system", OffSpecXAxis.QX_VS_QZ)
+
+    with patch.object(OffSpecParametersDialog, "draw_plot"):
+        dlg = OffSpecParametersDialog(mock_main_window, mock_main_window.data_manager, show_smoothing=True)
+    qtbot.addWidget(dlg)
+
+    assert dlg.ui.kizmkfzVSqz.isChecked()
+    assert dlg._active_axis == OffSpecXAxis.DELTA_KZ_VS_QZ
+
+
+# Session memory tests
+
+STATE = "Off_Off"
+DELTA_KZ = OffSpecXAxis.DELTA_KZ_VS_QZ
+QX = OffSpecXAxis.QX_VS_QZ
+KIZ_KFZ = OffSpecXAxis.KZI_VS_KZF
+
+# Default regions for `_fake_reduction_item`: the data extents inset by 5%
+DEFAULT_REGION = {
+    DELTA_KZ: (0.012, 0.048, 0.11, 0.29),
+    QX: (-0.0009, 0.0009, 0.11, 0.29),
+    KIZ_KFZ: (0.0525, 0.0975, 0.02625, 0.04875),
+}
+COUPLED_BY_DEFAULT = {DELTA_KZ: True, QX: False, KIZ_KFZ: True}
+# The fake runs have a 1 degree incident angle
+TAN_THETA = math.tan(math.radians(1.0))
+# Default (dk, Qz) radii: 0.25% of the default (ki_z-kf_z) vs Qz box, raised to the floor
+DEFAULT_RADII = (DEFAULT_MINIMUM_RADIUS, DEFAULT_MINIMUM_RADIUS)
+# sigmaX and sigmaY show six decimals
+DISPLAY_RESOLUTION = 1e-6
+
+_RADIO_BUTTON = {DELTA_KZ: "kizmkfzVSqz", QX: "qxVSqz", KIZ_KFZ: "kizVSkfz"}
+
+
+@pytest.fixture
+def data_window(mock_main_window):
+    """Main window mock with one run of off-specular data."""
+    mock_main_window.data_manager.reduction_states = [STATE]
+    mock_main_window.data_manager.reduction_list = [_fake_reduction_item(STATE)]
+    return mock_main_window
+
+
+@pytest.fixture
+def open_dialog(qtbot, data_window):
+    """Open the smoothing dialog on the fake data."""
+
+    def _open(memory: OffSpecSmoothingMemory | None = None) -> OffSpecParametersDialog:
+        # Patch the deferred first draw so it can't fire later and reset the test's edits
+        with patch.object(OffSpecParametersDialog, "draw_plot"):
+            dlg = OffSpecParametersDialog(data_window, data_window.data_manager, show_smoothing=True, memory=memory)
+        qtbot.addWidget(dlg)
+        dlg.draw_plot()
+        return dlg
+
+    return _open
+
+
+def _switch(dlg: OffSpecParametersDialog, axis: OffSpecXAxis) -> None:
+    """Select a coordinate system with its radio button."""
+    getattr(dlg.ui, _RADIO_BUTTON[axis]).setChecked(True)
+    assert dlg._active_axis == axis
+
+
+def _region(dlg: OffSpecParametersDialog) -> tuple[float, float, float, float]:
+    return (
+        dlg.ui.offspec_x_min.value(),
+        dlg.ui.offspec_x_max.value(),
+        dlg.ui.offspec_y_min.value(),
+        dlg.ui.offspec_y_max.value(),
+    )
+
+
+def _radii(dlg: OffSpecParametersDialog) -> tuple[float, float]:
+    return dlg.ui.sigmaX.value(), dlg.ui.sigmaY.value()
+
+
+class TestDefaults:
+    """First visit in the session."""
+
+    @pytest.mark.parametrize("axis", [DELTA_KZ, QX, KIZ_KFZ])
+    def test_region_is_derived_from_the_data(self, open_dialog, axis):
+        dlg = open_dialog()
+        _switch(dlg, axis)
+        assert _region(dlg) == pytest.approx(DEFAULT_REGION[axis])
+
+    @pytest.mark.parametrize("axis", [DELTA_KZ, QX, KIZ_KFZ])
+    def test_radii_are_converted_from_the_first_view(self, open_dialog, axis):
+        dlg = open_dialog()
+        _switch(dlg, axis)
+        expected = radii_to_axis(*DEFAULT_RADII, axis, TAN_THETA)
+        assert _radii(dlg) == pytest.approx(expected, abs=DISPLAY_RESOLUTION)
+
+    @pytest.mark.parametrize("axis", [DELTA_KZ, QX, KIZ_KFZ])
+    def test_uniformity_follows_the_agreed_table(self, open_dialog, axis):
+        dlg = open_dialog()
+        _switch(dlg, axis)
+        assert dlg.ui.sigmasCoupled.isChecked() is COUPLED_BY_DEFAULT[axis]
+        assert dlg.ui.sigmaY.isEnabled() is not COUPLED_BY_DEFAULT[axis]
+
+    def test_ellipses_are_drawn_from_the_radii(self, open_dialog):
+        dlg = open_dialog()
+        sigma_x, sigma_y = _radii(dlg)
+        assert (dlg.sigma_1.width, dlg.sigma_1.height) == pytest.approx((2 * sigma_x, 2 * sigma_y))
+        assert (dlg.sigma_3.width, dlg.sigma_3.height) == pytest.approx((6 * sigma_x, 6 * sigma_y))
+
+    def test_the_data_is_read_once_however_often_the_view_changes(self, open_dialog):
+        dlg = open_dialog()
+        with patch.object(dlg, "_collect_extents") as collect:
+            _switch(dlg, QX)
+            _switch(dlg, KIZ_KFZ)
+            _switch(dlg, DELTA_KZ)
+        collect.assert_not_called()
+
+    def test_the_incident_angle_is_averaged_over_the_runs(self, open_dialog, data_window):
+        data_window.data_manager.reduction_list = [_fake_reduction_item(STATE, 0.5), _fake_reduction_item(STATE, 1.5)]
+        dlg = open_dialog()
+        expected = (math.tan(math.radians(0.5)) + math.tan(math.radians(1.5))) / 2
+        assert dlg._tan_theta == pytest.approx(expected)
+
+
+class TestSwitchingCoordinateSystem:
+    """Radii are converted with the relations between the axes."""
+
+    def test_the_qz_radius_is_unchanged_in_qx_vs_qz(self, open_dialog):
+        dlg = open_dialog()
+        dlg.ui.sigmaX.setValue(0.001)
+
+        _switch(dlg, QX)
+
+        assert dlg.ui.sigmaY.value() == 0.001
+        assert dlg.ui.sigmaX.value() == pytest.approx(0.001 * TAN_THETA, abs=DISPLAY_RESOLUTION)
+
+    def test_kiz_vs_kfz_radii_are_divided_by_root_two(self, open_dialog):
+        dlg = open_dialog()
+        dlg.ui.sigmaX.setValue(0.001)
+
+        _switch(dlg, KIZ_KFZ)
+
+        expected = 0.001 / math.sqrt(2)
+        assert _radii(dlg) == pytest.approx((expected, expected), abs=DISPLAY_RESOLUTION)
+
+    @pytest.mark.parametrize("detour", [QX, KIZ_KFZ])
+    def test_coming_back_restores_the_radius_exactly(self, open_dialog, detour):
+        """A round trip must not drift."""
+        dlg = open_dialog()
+        dlg.ui.sigmaX.setValue(0.000123)
+
+        _switch(dlg, detour)
+        _switch(dlg, DELTA_KZ)
+
+        assert _radii(dlg) == (0.000123, 0.000123)
+
+    def test_an_edit_in_qx_vs_qz_is_converted_back(self, open_dialog):
+        dlg = open_dialog()
+        _switch(dlg, QX)
+        dlg.ui.sigmaX.setValue(0.00005)
+
+        _switch(dlg, DELTA_KZ)
+
+        assert dlg.ui.sigmaX.value() == pytest.approx(0.00005 / TAN_THETA, abs=DISPLAY_RESOLUTION)
+
+    def test_a_vertical_radius_survives_a_detour_through_a_uniform_view(self, open_dialog):
+        dlg = open_dialog()
+        _switch(dlg, QX)
+        dlg.ui.sigmaY.setValue(0.002)
+
+        _switch(dlg, DELTA_KZ)
+        _switch(dlg, QX)
+
+        assert dlg.ui.sigmaY.value() == 0.002
+
+    def test_editing_the_vertical_radius_does_not_nudge_the_horizontal_one(self, open_dialog):
+        """The Qx radius on screen is rounded, so it must not be read back when only y was edited."""
+        dlg = open_dialog()
+        _switch(dlg, QX)
+
+        dlg.ui.sigmaY.setValue(0.002)
+        _switch(dlg, DELTA_KZ)
+
+        assert dlg.ui.sigmaX.value() == pytest.approx(DEFAULT_RADII[0], abs=DISPLAY_RESOLUTION)
+
+    def test_editing_one_radius_marks_only_that_radius(self, open_dialog):
+        dlg = open_dialog()
+        _switch(dlg, QX)
+
+        dlg.ui.sigmaY.setValue(0.002)
+
+        assert dlg._radius_y_edited is True
+        assert dlg._radius_x_edited is False
+
+    def test_a_mirrored_vertical_radius_counts_as_edited(self, open_dialog):
+        """While coupled, the y shown follows x, so that y is what gets remembered."""
+        dlg = open_dialog()
+
+        dlg.ui.sigmaX.setValue(0.001)
+
+        assert dlg.ui.sigmaY.value() == 0.001
+        assert dlg._radius_y_edited is True
+
+    def test_the_mirrored_y_is_kept_after_turning_uniform_off(self, open_dialog):
+        """Found by the randomized test: the y left on screen used to be replaced on the next switch."""
+        dlg = open_dialog()
+        _switch(dlg, KIZ_KFZ)
+        dlg.ui.sigmaX.setValue(0.0003)
+        dlg.ui.sigmasCoupled.setChecked(False)
+        dlg.ui.sigmaX.setValue(0.0008)
+        assert _radii(dlg) == (0.0008, 0.0003)
+
+        _switch(dlg, DELTA_KZ)
+
+        expected = math.hypot(0.0008, 0.0003)
+        assert _radii(dlg) == pytest.approx((expected, expected), abs=DISPLAY_RESOLUTION)
+
+    def test_uniformity_is_remembered_per_view(self, open_dialog):
+        dlg = open_dialog()
+        dlg.ui.sigmasCoupled.setChecked(False)
+
+        _switch(dlg, KIZ_KFZ)
+        assert dlg.ui.sigmasCoupled.isChecked(), "another view keeps its own default"
+
+        _switch(dlg, DELTA_KZ)
+        assert not dlg.ui.sigmasCoupled.isChecked()
+
+
+class TestRegion:
+    """Moving the blue box never changes the radii."""
+
+    def test_moving_the_region_keeps_the_radius(self, open_dialog):
+        dlg = open_dialog()
+        dlg.ui.sigmaX.setValue(0.001)
+
+        dlg.ui.offspec_x_max.setValue(0.066)
+
+        assert _radii(dlg) == (0.001, 0.001)
+
+    def test_moving_the_region_does_not_change_the_other_views(self, open_dialog):
+        dlg = open_dialog()
+        dlg.ui.sigmaX.setValue(0.001)
+        dlg.ui.offspec_x_max.setValue(0.066)
+
+        _switch(dlg, QX)
+
+        assert _radii(dlg) == pytest.approx((0.001 * TAN_THETA, 0.001), abs=DISPLAY_RESOLUTION)
+
+    def test_an_edited_region_is_remembered_per_view(self, open_dialog):
+        dlg = open_dialog()
+        dlg.ui.offspec_x_min.setValue(0.02)
+
+        _switch(dlg, QX)
+        assert _region(dlg) == pytest.approx(DEFAULT_REGION[QX])
+
+        _switch(dlg, DELTA_KZ)
+        assert dlg.ui.offspec_x_min.value() == 0.02
+
+    def test_a_click_on_the_plot_moves_the_region_and_keeps_the_radius(self, open_dialog):
+        dlg = open_dialog()
+        radius = dlg.ui.sigmaX.value()
+
+        dlg.plot_select(Mock(button=1, xdata=0.015, ydata=0.12))
+
+        moved = (0.015, DEFAULT_REGION[DELTA_KZ][1], 0.12, DEFAULT_REGION[DELTA_KZ][3])
+        assert _region(dlg) == pytest.approx(moved)
+        assert dlg.ui.sigmaX.value() == radius
+
+        _switch(dlg, QX)
+        _switch(dlg, DELTA_KZ)
+        assert _region(dlg) == pytest.approx(moved)
+
+
+class TestSessionMemory:
+    """Remembering settings for the next time the dialog opens."""
+
+    def test_ok_commits_and_reopening_restores(self, open_dialog):
+        memory = OffSpecSmoothingMemory()
+        first = open_dialog(memory)
+        first.ui.sigmaX.setValue(0.001)
+        first.ui.offspec_x_min.setValue(0.02)
+        first.ui.rSigmas.setValue(5.0)
+        first.accept()
+
+        second = open_dialog(memory)
+
+        assert second.ui.offspec_x_min.value() == 0.02
+        assert second.ui.sigmaX.value() == 0.001
+        assert second.ui.rSigmas.value() == 5.0
+
+    def test_reopening_always_starts_in_the_default_view(self, open_dialog):
+        memory = OffSpecSmoothingMemory()
+        first = open_dialog(memory)
+        _switch(first, QX)
+        first.ui.offspec_x_min.setValue(-0.0005)
+        first.accept()
+
+        second = open_dialog(memory)
+        assert second.ui.kizmkfzVSqz.isChecked()
+        assert second._active_axis == DELTA_KZ
+
+        _switch(second, QX)
+        assert second.ui.offspec_x_min.value() == -0.0005
+
+    def test_an_untouched_region_is_not_remembered(self, open_dialog):
+        """Otherwise the next dataset would inherit this box."""
+        memory = OffSpecSmoothingMemory()
+        dlg = open_dialog(memory)
+        _switch(dlg, QX)
+        _switch(dlg, DELTA_KZ)
+
+        dlg.accept()
+
+        assert memory.regions == {}
+        assert memory.coupled == {}
+        assert memory.sigma_x is None
+
+    def test_cancel_leaves_the_session_memory_untouched(self, open_dialog):
+        memory = OffSpecSmoothingMemory(sigma_x=0.0005, sigma_y=0.0005)
+        before = memory.snapshot()
+
+        dlg = open_dialog(memory)
+        _switch(dlg, QX)
+        dlg.ui.offspec_x_min.setValue(-0.0005)
+        dlg.ui.sigmaY.setValue(0.002)
+        _switch(dlg, KIZ_KFZ)
+        dlg.ui.sigmasCoupled.setChecked(False)
+        dlg.reject()
+
+        assert memory == before
+
+    def test_the_session_memory_is_the_one_the_main_window_holds(self, open_dialog):
+        memory = OffSpecSmoothingMemory()
+        dlg = open_dialog(memory)
+        dlg.ui.offspec_x_min.setValue(0.02)
+
+        dlg.accept()
+
+        assert dlg.memory is memory
+        assert DELTA_KZ in memory.regions

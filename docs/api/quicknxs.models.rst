@@ -75,6 +75,14 @@ quicknxs.models.off\_specular module
    :undoc-members:
    :show-inheritance:
 
+quicknxs.models.offspec\_smoothing\_memory module
+-------------------------------------------------
+
+.. automodule:: quicknxs.models.offspec_smoothing_memory
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 quicknxs.models.peak\_finding module
 -------------------------------------
 
