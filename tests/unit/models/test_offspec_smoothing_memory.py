@@ -1,7 +1,5 @@
 """Tests for the off-specular smoothing session memory."""
 
-import math
-
 import pytest
 
 from quicknxs.enums import OffSpecXAxis
@@ -12,8 +10,8 @@ from quicknxs.models.offspec_smoothing_memory import (
     OffSpecSmoothingMemory,
     default_coupled,
     default_radii,
-    radii_from_axis,
-    radii_to_axis,
+    fractions_to_radii,
+    radii_to_fractions,
 )
 
 DELTA_KZ = OffSpecXAxis.DELTA_KZ_VS_QZ
@@ -21,14 +19,18 @@ QX = OffSpecXAxis.QX_VS_QZ
 KIZ_KFZ = OffSpecXAxis.KZI_VS_KZF
 
 # Spin box limits from ui_smooth_dialog.ui
-SIGMA_MIN = 1e-6
+SIGMA_MIN = 1e-8
 SIGMA_MAX = 1.0
-
-# Incident angle of run 42113
-TAN_THETA = math.tan(math.radians(0.8534))
 
 # (ki_z-kf_z) vs Qz region similar to run 42112
 REGION = OffSpecRegion(-0.1515, 0.1054, -0.0872, 0.1630)
+
+# Plotted axis ranges similar to runs 47286-47288
+EXTENT = {
+    DELTA_KZ: OffSpecRegion(-0.115, 0.068, -0.05, 0.19),
+    QX: OffSpecRegion(-0.0044, 0.001, -0.05, 0.19),
+    KIZ_KFZ: OffSpecRegion(0.0035, 0.051, -0.06, 0.14),
+}
 
 
 class TestDefaultCoupled:
@@ -75,42 +77,45 @@ class TestDefaultRadii:
 
 
 class TestConversions:
-    """Converting (dk, Qz) radii to and from each coordinate system."""
+    """Converting radii to and from fractions of the plotted axis ranges."""
 
-    def test_the_default_system_is_unchanged(self):
-        assert radii_to_axis(0.001, 0.002, DELTA_KZ, TAN_THETA) == (0.001, 0.002)
-        assert radii_from_axis(0.001, 0.002, DELTA_KZ, TAN_THETA) == (0.001, 0.002)
+    def test_radii_are_divided_by_the_axis_ranges(self):
+        extent = OffSpecRegion(0.0, 0.04, 0.1, 0.3)
+        assert radii_to_fractions(0.001, 0.002, extent) == pytest.approx((0.025, 0.01))
 
-    def test_qz_is_shared_with_qx_vs_qz(self):
-        """Qx vs Qz has the same y axis, so the y radius must not change."""
-        _, sigma_y = radii_to_axis(0.001, 0.002, QX, TAN_THETA)
-        assert sigma_y == 0.002
+    def test_fractions_are_multiplied_by_the_axis_ranges(self):
+        extent = OffSpecRegion(0.0, 0.04, 0.1, 0.3)
+        assert fractions_to_radii(0.025, 0.01, extent, coupled=False) == pytest.approx((0.001, 0.002))
 
-    def test_qx_is_dk_times_tan_theta(self):
-        sigma_x, _ = radii_to_axis(0.001, 0.002, QX, TAN_THETA)
-        assert sigma_x == pytest.approx(0.001 * TAN_THETA)
-
-    def test_uniform_radii_shrink_by_root_two_in_kiz_vs_kfz(self):
-        sigma = 0.001
-        converted = radii_to_axis(sigma, sigma, KIZ_KFZ, TAN_THETA)
-        assert converted == pytest.approx((sigma / math.sqrt(2), sigma / math.sqrt(2)))
+    def test_a_uniform_view_takes_both_radii_from_x(self):
+        extent = OffSpecRegion(0.0, 0.04, 0.1, 0.3)
+        assert fractions_to_radii(0.025, 0.5, extent, coupled=True) == pytest.approx((0.001, 0.001))
 
     @pytest.mark.parametrize("axis", [DELTA_KZ, QX, KIZ_KFZ])
     def test_round_trip(self, axis):
-        sigma = 0.000123
-        shown = radii_to_axis(sigma, sigma, axis, TAN_THETA)
-        assert radii_from_axis(*shown, axis, TAN_THETA) == pytest.approx((sigma, sigma), rel=1e-12)
+        fractions = radii_to_fractions(0.000123, 0.000456, EXTENT[axis])
+        assert fractions_to_radii(*fractions, EXTENT[axis], coupled=False) == pytest.approx(
+            (0.000123, 0.000456), rel=1e-12
+        )
 
-    def test_non_uniform_radii_come_back_uniform_from_kiz_vs_kfz(self):
-        """The kernel can't represent the dk-Qz correlation, so that information is lost."""
-        shown = radii_to_axis(0.001, 0.003, KIZ_KFZ, TAN_THETA)
-        sigma_dk, sigma_qz = radii_from_axis(*shown, KIZ_KFZ, TAN_THETA)
-        assert sigma_dk == pytest.approx(sigma_qz)
+    @pytest.mark.parametrize("axis", [DELTA_KZ, QX, KIZ_KFZ])
+    def test_the_spot_is_the_same_fraction_of_every_plot(self, axis):
+        """The agreed rule: switching views must not make the spot jump in size."""
+        fractions = radii_to_fractions(0.000411, 0.000411, EXTENT[DELTA_KZ])
+        sigma_x, sigma_y = fractions_to_radii(*fractions, EXTENT[axis], coupled=False)
+        assert sigma_x / EXTENT[axis].width == pytest.approx(0.000411 / EXTENT[DELTA_KZ].width)
+        assert sigma_y / EXTENT[axis].height == pytest.approx(0.000411 / EXTENT[DELTA_KZ].height)
 
-    @pytest.mark.parametrize("tan_theta", [None, 0.0, -0.1])
-    def test_qx_is_left_unconverted_without_an_incident_angle(self, tan_theta):
-        assert radii_to_axis(0.001, 0.002, QX, tan_theta) == (0.001, 0.002)
-        assert radii_from_axis(0.001, 0.002, QX, tan_theta) == (0.001, 0.002)
+    def test_qz_radius_is_unchanged_in_qx_vs_qz(self):
+        """Both views plot the same Qz range, so the same fraction gives the same radius."""
+        fractions = radii_to_fractions(0.001, 0.002, EXTENT[DELTA_KZ])
+        _, sigma_y = fractions_to_radii(*fractions, EXTENT[QX], coupled=False)
+        assert sigma_y == pytest.approx(0.002)
+
+    def test_an_empty_axis_range_leaves_the_radius_unscaled(self):
+        empty = OffSpecRegion(0.1, -0.1, 0.5, -0.1)
+        assert radii_to_fractions(0.001, 0.002, empty) == (0.001, 0.002)
+        assert fractions_to_radii(0.001, 0.002, empty, coupled=False) == (0.001, 0.002)
 
 
 class TestLookups:
@@ -118,16 +123,22 @@ class TestLookups:
 
     def test_no_radii_until_the_user_picks_one(self):
         memory = OffSpecSmoothingMemory()
-        assert memory.sigma_x is None
-        assert memory.sigma_y is None
+        assert memory.fraction_x is None
+        assert memory.fraction_y is None
 
     def test_radii_for_uses_the_default_until_radii_are_stored(self):
         memory = OffSpecSmoothingMemory()
-        assert memory.radii_for(QX, (0.001, 0.002), TAN_THETA) == pytest.approx((0.001 * TAN_THETA, 0.002))
+        extent = OffSpecRegion(0.0, 0.04, 0.1, 0.3)
+        assert memory.radii_for(extent, (0.025, 0.01), coupled=False) == pytest.approx((0.001, 0.002))
+
+    def test_radii_for_couples_the_radii(self):
+        memory = OffSpecSmoothingMemory(fraction_x=0.025, fraction_y=0.01)
+        extent = OffSpecRegion(0.0, 0.04, 0.1, 0.3)
+        assert memory.radii_for(extent, (0.0, 0.0), coupled=True) == pytest.approx((0.001, 0.001))
 
     def test_radii_for_clamps_to_the_spin_box_limits(self):
-        memory = OffSpecSmoothingMemory(sigma_x=1e-9, sigma_y=50.0)
-        assert memory.radii_for(DELTA_KZ, (0.0, 0.0), TAN_THETA, SIGMA_MIN, SIGMA_MAX) == (SIGMA_MIN, SIGMA_MAX)
+        memory = OffSpecSmoothingMemory(fraction_x=1e-12, fraction_y=500.0)
+        assert memory.radii_for(EXTENT[DELTA_KZ], (0.0, 0.0), False, SIGMA_MIN, SIGMA_MAX) == (SIGMA_MIN, SIGMA_MAX)
 
     def test_region_for_falls_back_when_not_stored(self):
         assert OffSpecSmoothingMemory().region_for(QX, REGION) == REGION
@@ -161,47 +172,71 @@ class TestLookups:
 
 
 class TestStoreRadii:
-    """Storing radii the user edited, converted to (dk, Qz)."""
+    """Storing radii the user edited, as fractions of the plotted axis ranges."""
 
-    def _store(self, memory, axis, shown, edited_x=True, edited_y=True, coupled=False, default=(0.0004, 0.0004)):
-        memory.store_radii(axis, *shown, default, TAN_THETA, edited_x=edited_x, edited_y=edited_y, coupled=coupled)
+    def _store(self, memory, axis, shown, edited_x=True, edited_y=True, coupled=False, default=(0.002, 0.002)):
+        memory.store_radii(EXTENT[axis], *shown, default, edited_x=edited_x, edited_y=edited_y, coupled=coupled)
 
-    def test_an_edit_in_the_default_system_is_stored_as_is(self):
+    def _shown(self, memory, axis, coupled=False):
+        return memory.radii_for(EXTENT[axis], (0.0, 0.0), coupled)
+
+    def test_an_edit_is_stored_as_fractions(self):
         memory = OffSpecSmoothingMemory()
         self._store(memory, DELTA_KZ, (0.001, 0.002))
-        assert (memory.sigma_x, memory.sigma_y) == (0.001, 0.002)
+        assert (memory.fraction_x, memory.fraction_y) == pytest.approx(
+            (0.001 / EXTENT[DELTA_KZ].width, 0.002 / EXTENT[DELTA_KZ].height)
+        )
 
-    def test_an_edit_in_qx_vs_qz_is_converted_back(self):
+    def test_an_edit_is_shown_unchanged_when_coming_back(self):
         memory = OffSpecSmoothingMemory()
-        self._store(memory, QX, (0.00002, 0.002))
-        assert memory.sigma_x == pytest.approx(0.00002 / TAN_THETA)
-        assert memory.sigma_y == 0.002
+        self._store(memory, QX, (0.00001234, 0.000411))
+        assert self._shown(memory, QX) == pytest.approx((0.00001234, 0.000411), rel=1e-12)
 
     def test_the_unedited_radius_is_not_read_back_from_the_spin_box(self):
-        """The Qx radius is tiny, so its rounded display would shift the stored value."""
-        memory = OffSpecSmoothingMemory(sigma_x=0.0004, sigma_y=0.0004)
-        rounded_on_screen = round(0.0004 * TAN_THETA, 6)
+        """The Qx radius is small, so its rounded display would shift the stored value."""
+        memory = OffSpecSmoothingMemory(fraction_x=0.00224567, fraction_y=0.002)
+        rounded_on_screen = round(0.00224567 * EXTENT[QX].width, 8)
 
-        self._store(memory, QX, (rounded_on_screen, 0.002), edited_x=False)
+        self._store(memory, QX, (rounded_on_screen, 0.0005), edited_x=False)
 
-        assert memory.sigma_x == pytest.approx(0.0004, rel=1e-12)
-        assert memory.sigma_y == 0.002
+        assert memory.fraction_x == 0.00224567
+        assert memory.fraction_y == pytest.approx(0.0005 / EXTENT[QX].height)
 
     def test_while_coupled_y_follows_x(self):
         memory = OffSpecSmoothingMemory()
         self._store(memory, KIZ_KFZ, (0.001, 0.005), edited_y=False, coupled=True)
-        assert (memory.sigma_x, memory.sigma_y) == pytest.approx((0.001 * math.sqrt(2), 0.001 * math.sqrt(2)))
+        assert (memory.fraction_x, memory.fraction_y) == pytest.approx(
+            (0.001 / EXTENT[KIZ_KFZ].width, 0.001 / EXTENT[KIZ_KFZ].height)
+        )
 
     def test_the_default_is_used_for_an_unedited_radius(self):
         memory = OffSpecSmoothingMemory()
-        self._store(memory, DELTA_KZ, (0.001, 0.999), edited_y=False, default=(0.0004, 0.0007))
-        assert (memory.sigma_x, memory.sigma_y) == (0.001, 0.0007)
+        self._store(memory, DELTA_KZ, (0.001, 0.999), edited_y=False, default=(0.004, 0.007))
+        assert memory.fraction_y == 0.007
 
-    def test_showing_other_systems_does_not_change_the_stored_radii(self):
-        memory = OffSpecSmoothingMemory(sigma_x=0.000123, sigma_y=0.000456)
+    def test_uneven_radii_from_kiz_vs_kfz_are_kept(self):
+        """Bogdan's screenshots 5-7: these used to come back uniform."""
+        memory = OffSpecSmoothingMemory()
+        self._store(memory, KIZ_KFZ, (0.0001, 0.000291))
+        assert self._shown(memory, KIZ_KFZ) == pytest.approx((0.0001, 0.000291), rel=1e-12)
+
+    def test_a_qx_vertical_radius_does_not_change_the_uniform_views(self):
+        """Bogdan's screenshot 10: a y typed in Qx vs Qz used to change the ki_z vs kf_z spot."""
+        memory = OffSpecSmoothingMemory()
+        self._store(memory, DELTA_KZ, (0.000794, 0.000794), coupled=True)
+        before = self._shown(memory, KIZ_KFZ, coupled=True)
+
+        self._store(memory, QX, (0.0, 0.000411), edited_x=False)
+
+        assert self._shown(memory, KIZ_KFZ, coupled=True) == pytest.approx(before, rel=1e-12)
+        assert self._shown(memory, DELTA_KZ, coupled=True) == pytest.approx((0.000794, 0.000794), rel=1e-12)
+
+    def test_showing_other_systems_does_not_change_the_stored_fractions(self):
+        memory = OffSpecSmoothingMemory(fraction_x=0.00123, fraction_y=0.00456)
         for axis in (QX, KIZ_KFZ, DELTA_KZ):
-            memory.radii_for(axis, (0.0, 0.0), TAN_THETA, SIGMA_MIN, SIGMA_MAX)
-        assert (memory.sigma_x, memory.sigma_y) == (0.000123, 0.000456)
+            for coupled in (True, False):
+                self._shown(memory, axis, coupled)
+        assert (memory.fraction_x, memory.fraction_y) == (0.00123, 0.00456)
 
 
 class TestWorkingCopies:
@@ -213,10 +248,10 @@ class TestWorkingCopies:
         snapshot = memory.snapshot()
 
         memory.store_region(KIZ_KFZ, REGION)
-        memory.sigma_x = 9.9
+        memory.fraction_x = 9.9
 
         assert KIZ_KFZ not in snapshot.regions
-        assert snapshot.sigma_x is None
+        assert snapshot.fraction_x is None
 
     def test_copy_from_mutates_in_place(self):
         """The main window holds this instance, so it has to be updated in place."""
@@ -225,7 +260,8 @@ class TestWorkingCopies:
         memory.store_region(QX, REGION)
         memory.store_coupled(QX, True)
         memory.store_r_sigmas(5.0)
-        memory.sigma_x = 9.9
+        memory.fraction_x = 9.9
+        memory.fraction_y = 9.9
         identity = id(memory)
 
         memory.copy_from(snapshot)

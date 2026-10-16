@@ -1,7 +1,5 @@
 """Dialog to configure off-specular parameters (smoothing and/or binning)."""
 
-import math
-
 from mantid.simpleapi import logger
 from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse
@@ -10,7 +8,12 @@ from numpy.typing import NDArray
 from qtpy import QtCore, QtWidgets
 
 from quicknxs.enums import OffSpecXAxis
-from quicknxs.models.offspec_smoothing_memory import OffSpecRegion, OffSpecSmoothingMemory, default_radii
+from quicknxs.models.offspec_smoothing_memory import (
+    OffSpecRegion,
+    OffSpecSmoothingMemory,
+    default_radii,
+    radii_to_fractions,
+)
 from quicknxs.presenters.data_manager import DataManager
 from quicknxs.views import load_ui
 from quicknxs.views.widgets import MPLWidget
@@ -83,10 +86,8 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self._plot_runs: list[tuple[NDArray[float64], ...]] | None = None
         self._extents: dict[OffSpecXAxis, OffSpecRegion] = {}
         self._qz_max = 0.001
-        # Mean tan(theta_i) of the runs, for converting radii to Qx
-        self._tan_theta: float | None = None
-        # Default (dk, Qz) radii for this visit
-        self._default_radii = (0.0, 0.0)
+        # Default radii for this visit, as fractions of the plotted axis ranges
+        self._default_fractions = (0.0, 0.0)
 
         # Always open on (ki_z-kf_z) vs Qz
         self.ui.kizmkfzVSqz.setChecked(True)
@@ -266,8 +267,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self._plot_runs = []
         self._extents = {}
         self._qz_max = 0.001
-        self._tan_theta = None
-        tan_thetas = []
 
         # Get first state from reduction_states
         if not self.data_manager.reduction_states:
@@ -319,7 +318,6 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
                 kf_z_max = max(kf_z_max, kf_z[I > 0].max())
                 k_diff_min = min(k_diff_min, (ki_z - kf_z)[I > 0].min())
                 k_diff_max = max(k_diff_max, (ki_z - kf_z)[I > 0].max())
-                tan_thetas.append(math.tan(math.radians(item.cross_sections[first_state].scattering_angle)))
             except Exception as exception:
                 logger.error(f"Error extending plotting limits: {exception}")
 
@@ -330,13 +328,12 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             OffSpecXAxis.QX_VS_QZ: OffSpecRegion(qx_min, qx_max, qz_min, qz_max),
             OffSpecXAxis.KZI_VS_KZF: OffSpecRegion(ki_z_min, ki_z_max, kf_z_min, kf_z_max),
         }
-        if tan_thetas:
-            self._tan_theta = sum(tan_thetas) / len(tan_thetas)
 
         # 0.25% of the blue box as it is when the dialog opens, so later box edits don't change it
         axis = OffSpecXAxis.DELTA_KZ_VS_QZ
         region = self._state.region_for(axis, self._default_region(axis))
-        self._default_radii = default_radii(region, self._state.coupled_for(axis))
+        radii = default_radii(region, self._state.coupled_for(axis))
+        self._default_fractions = radii_to_fractions(*radii, self._extents[axis])
 
     def _apply_axis_state(self, axis: OffSpecXAxis) -> None:
         """Set the spin boxes to the remembered state for `axis`.
@@ -359,13 +356,13 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         if not self.show_smoothing:
             return
 
-        if axis == OffSpecXAxis.QX_VS_QZ and not (self._tan_theta and self._tan_theta > 0.0):
-            logger.warning("No incident angle available, Qx radii are shown without conversion")
         sigma_x, sigma_y = self._state.radii_for(
-            axis, self._default_radii, self._tan_theta, self.ui.sigmaX.minimum(), self.ui.sigmaX.maximum()
+            self._extents[axis],
+            self._default_fractions,
+            coupled,
+            self.ui.sigmaX.minimum(),
+            self.ui.sigmaX.maximum(),
         )
-        if coupled:
-            sigma_y = sigma_x
         _set_blocked(self.ui.sigmaX, sigma_x)
         _set_blocked(self.ui.sigmaY, sigma_y)
         _set_blocked(self.ui.rSigmas, self._state.r_sigmas_for(self.ui.rSigmas.value()))
@@ -476,13 +473,13 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
             coupled = self.ui.sigmasCoupled.isChecked()
             if self._coupled_edited:
                 self._state.store_coupled(axis, coupled)
-            if self._radius_x_edited or self._radius_y_edited:
+            # Without data there is no plot to measure the radii against
+            if (self._radius_x_edited or self._radius_y_edited) and axis in self._extents:
                 self._state.store_radii(
-                    axis,
+                    self._extents[axis],
                     self.ui.sigmaX.value(),
                     self.ui.sigmaY.value(),
-                    self._default_radii,
-                    self._tan_theta,
+                    self._default_fractions,
                     edited_x=self._radius_x_edited,
                     edited_y=self._radius_y_edited,
                     coupled=coupled,
@@ -514,8 +511,13 @@ class OffSpecParametersDialog(QtWidgets.QDialog):
         self._radius_y_edited = True
 
     def _on_coupled_edited(self):
-        """Called when the user toggles uniform radii."""
+        """Called when the user toggles uniform radii.
+
+        The y shown when the lock changes is the one the user now sees as theirs, so it is
+        remembered even if only x is edited afterwards.
+        """
         self._coupled_edited = True
+        self._radius_y_edited = True
 
     def update_region(self):
         """Update the rectangle overlay showing the region."""

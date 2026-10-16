@@ -35,13 +35,14 @@ The blue box is the region that will be smoothed, and the **X** and **Y** values
   and independent in **Qx vs. Qz**.
 - Moving the blue box, by editing the region values or by clicking on the plot, leaves the radii
   unchanged.
-- Switching output type converts the radii with the relations between the axes, so the smoothing
-  spot covers the same region of reciprocal space:
+- Switching output type keeps each radius the same fraction of the plotted axis range, so the
+  smoothing spot takes up the same part of the plot in every output type:
 
-  - **Qx vs. Qz** shares the Qz axis, so Y is unchanged, and X is multiplied by tan(θ\ :sub:`i`),
-    using the mean incident angle of the runs.
-  - **ki_z vs. kf_z** uses ki_z = (Qz + (ki_z-kf_z)) / 2 and kf_z = (Qz - (ki_z-kf_z)) / 2, so
-    uniform radii are divided by √2.
+  - X is the same fraction of the plotted x range, and Y the same fraction of the plotted y range.
+    Since **(ki_z-kf_z) vs. Qz** and **Qx vs. Qz** plot the same Qz range, Y is unchanged
+    between them.
+  - When the radii are uniform, both come from X. A Y typed in a non-uniform output type is kept
+    for that output type and doesn't change the uniform ones.
 
 - Coming back to an output type restores the blue box and uniformity you left there.
 
