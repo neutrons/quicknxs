@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94 # v0.11.2
 
       - name: Generate cache key for submodule
         id: generate-cache-key
@@ -89,7 +89,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94 # v0.11.2
 
       - name: Build conda package
         run: |
@@ -103,7 +103,7 @@ jobs:
       # and exposes the install directory for the Grype scan below.
       - name: Install built conda package
         id: install
-        uses: neutrons/gh-actions/pkg-install@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
+        uses: neutrons/gh-actions/pkg-install@46e28a74c8872901c571e0493d26871afe2662fb # v2
         with:
           package-name: ${{ env.PKG_NAME }}
           local-channel: ./local-channel
@@ -111,7 +111,7 @@ jobs:
           extra-channels: neutrons mantid oncat
 
       - name: Verify Conda Package
-        uses: neutrons/gh-actions/pkg-verify@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
+        uses: neutrons/gh-actions/pkg-verify@46e28a74c8872901c571e0493d26871afe2662fb # v2
         with:
           package-name: ${{ env.PKG_NAME }}
           conda-env-name: ${{ steps.install.outputs.conda-env }}
@@ -122,7 +122,7 @@ jobs:
       # Audit the dependencies of the conda package we just installed. SARIF
       # results are uploaded to GitHub code scanning by the grype action.
       - name: Scan installed environment with Grype
-        uses: neutrons/gh-actions/grype@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
+        uses: neutrons/gh-actions/grype@46e28a74c8872901c571e0493d26871afe2662fb # v2
         with:
           path: ${{ steps.install.outputs.conda-install-dir }}
 
@@ -146,7 +146,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94 # v0.11.2
 
       - name: Download conda package artifact
         uses: actions/download-artifact@v8
@@ -154,7 +154,7 @@ jobs:
           name: artifact-conda-package
 
       - name: Upload package to anaconda
-        uses: neutrons/gh-actions/publish@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
+        uses: neutrons/gh-actions/publish@46e28a74c8872901c571e0493d26871afe2662fb # v2
         with:
           anaconda-token: ${{ secrets.ANACONDA_TOKEN }}
           organization: neutrons
@@ -162,7 +162,7 @@ jobs:
 
       - name: Remove old packages
         if: github.ref == 'refs/heads/next'
-        uses: neutrons/gh-actions/pkg-remove@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
+        uses: neutrons/gh-actions/pkg-remove@46e28a74c8872901c571e0493d26871afe2662fb # v2
         with:
           anaconda-token: ${{ secrets.ANACONDA_TOKEN }}
           organization: neutrons
@@ -177,7 +177,7 @@ jobs:
     if: github.ref == 'refs/heads/next'
     steps:
       - name: Get Environment Name
-        uses: neutrons/gh-actions/branch-mapper@eb7a7c6fcfd0cda1a7b238329afc0afd09a4f4af # v2
+        uses: neutrons/gh-actions/branch-mapper@46e28a74c8872901c571e0493d26871afe2662fb # v2
         id: env_name
         with:
           prefix: quicknxs
