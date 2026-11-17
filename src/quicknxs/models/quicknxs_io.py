@@ -207,6 +207,7 @@ def write_reflectivity_header(
     pol_state: str,
     include_gisans: bool = False,
     include_offspec: bool = False,
+    data_type: str = "Specular",
 ):
     """
     Write out reflectivity header in a format readable by QuickNXS.
@@ -227,6 +228,9 @@ def write_reflectivity_header(
         Include GISANS specific variables
     include_offspec:
         Include Offspec specific variables
+    data_type:
+        Kind of data that follows the header, written to the ``# Type:`` line
+        (e.g. "Specular", "OffSpec", "OffSpecSmooth", "GISANS")
     """
     # Sanity check
     if active_list_index not in peak_reduction_lists or not peak_reduction_lists[active_list_index]:
@@ -259,7 +263,7 @@ def write_reflectivity_header(
     fd.write(f"# Datafile created using mr_reduction {mr_reduction.__version__}\n")
     fd.write(f"# Datafile created using Mantid {mantid.__version__}\n")
     fd.write(f"# Date: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-    fd.write("# Type: Specular\n")
+    fd.write(f"# Type: {data_type}\n")
     run_list = [str(item.run_number) for item in reduction_list]
     fd.write(f"# Input file indices: {','.join(run_list)}\n")
     fd.write(f"# Extracted states: {pol_state}\n")
@@ -460,14 +464,16 @@ def _get_cross_section_config_values(
 
 
 def write_reflectivity_data(output_path: str, data: list | np.ndarray, col_names: list[str], as_5col: bool = True):
-    """Write out reflectivity header in a format readable by QuickNXS.
+    """Write out reflectivity data in a format readable by QuickNXS.
 
-    If `as_5col` is False, only the first four columns passed will be written.
+    `data` is either a 2D array (one row per point) or, for raw off-specular data, a list with one
+    [pixel][TOF][column] array per run; the latter is always written with all its columns.
+    If `as_5col` is False, only the first four columns of a 2D array will be written.
     """
     with open(output_path, "a") as fd:
         # Determine how many columns to write
         if isinstance(data, list):
-            four_cols = True
+            four_cols = False
         else:
             four_cols = not as_5col and data.shape[1] > 4
 
