@@ -487,10 +487,14 @@ def write_reflectivity_data(output_path: str, data: list | np.ndarray, col_names
 
         # write numerical columns
         if isinstance(data, list):
-            # [TOF][pixel][parameter]
-            for tof_item in data:
-                for pixel_item in tof_item:
-                    np.savetxt(fd, pixel_item, delimiter="\t", fmt="%-18e")
+            # [run][pixel][TOF][column]: one block per pixel, ended by a blank line. Plotting tools join
+            # consecutive blocks into one surface, so end each run with a second blank line to keep them
+            # from joining the last pixel of a run to the first pixel of the next run.
+            for i_run, run_data in enumerate(data):
+                if i_run > 0:
+                    fd.write("\n")
+                for pixel_data in run_data:
+                    np.savetxt(fd, pixel_data, delimiter="\t", fmt="%-18e")
                     fd.write("\n")
         else:
             if four_cols:

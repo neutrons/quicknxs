@@ -598,3 +598,25 @@ def test_header_states_data_type(tmp_path, mock_nexus_data, kwargs, expected):
     assert type_lines == [f"# Type: {expected}"]
     _, data_list, _, _ = read_reduced_file(str(output_path))
     assert len(data_list) == 1
+
+
+def test_write_raw_offspec_separates_runs(tmp_path):
+    """Runs are separated by two blank lines and pixels within a run by one.
+
+    Plotting tools (e.g. gnuplot) join consecutive blank-line-separated scans into one surface, and treat
+    a double blank line as the end of that surface. Without it, the last pixel of one run is joined to the
+    first pixel of the next run. This is the convention of the Off-Specular preview data export.
+    """
+    output_path = tmp_path / "OffSpec_Off_Off.dat"
+    n_pixel = 3
+    data = [np.ones((n_pixel, n_tof, 7)) for n_tof in (4, 2, 5)]
+    write_reflectivity_data(output_path, data, OFFSPEC_COL_NAMES)
+
+    text = output_path.read_text().split("# [Data]\n")[1].split("\n", 1)[1]  # drop the column names
+    runs = [run for run in text.split("\n\n\n") if run.strip()]
+    assert len(runs) == len(data)
+    for run, expected in zip(runs, data):
+        pixels = [pixel for pixel in run.split("\n\n") if pixel.strip()]
+        assert len(pixels) == n_pixel
+        assert all(len(pixel.strip().splitlines()) == expected.shape[1] for pixel in pixels)
+    assert np.loadtxt(output_path).shape == (n_pixel * (4 + 2 + 5), 7)
