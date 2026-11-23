@@ -536,3 +536,87 @@ def test_determine_which_files_to_sum_with_range_format():
 
 if __name__ == "__main__":
     pytest.main([__file__])
+
+
+OFFSPEC_COL_NAMES = [
+    "Qx [1/A]",
+    "Qz [1/A]",
+    "ki_z [1/A]",
+    "kf_z [1/A]",
+    "ki_z-kf_z [1/A]",
+    "I [a.u.]",
+    "dI [a.u.]",
+]
+
+
+def _data_column_names(file_path) -> list[str]:
+    """Return the column names from the line following ``# [Data]``."""
+    lines = file_path.read_text().splitlines()
+    names_line = lines[lines.index("# [Data]") + 1]
+    return [name.strip() for name in names_line.lstrip("#").split("\t")]
+
+
+def test_write_raw_offspec_names_every_column(tmp_path):
+    """Raw off-specular data (one [pixel][TOF][column] array per run) has 7 columns, all of them named."""
+    output_path = tmp_path / "OffSpec_Off_Off.dat"
+    n_pixel, n_tof = 2, 3
+    data = [np.arange(n_pixel * n_tof * 7, dtype=float).reshape(n_pixel, n_tof, 7) for _ in range(2)]
+    write_reflectivity_data(output_path, data, OFFSPEC_COL_NAMES, as_5col=False)
+
+    assert _data_column_names(output_path) == OFFSPEC_COL_NAMES
+    written = np.loadtxt(output_path)
+    assert written.shape == (2 * n_pixel * n_tof, len(OFFSPEC_COL_NAMES))
+
+
+@pytest.mark.parametrize(("as_5col", "n_expected"), [(True, 5), (False, 4)])
+def test_write_reflectivity_column_names_match_data(tmp_path, as_5col, n_expected):
+    """For 2D reflectivity data, the number of column names equals the number of columns written."""
+    output_path = tmp_path / "Specular_Off_Off.dat"
+    col_names = ["Qz [1/A]", "R [a.u.]", "dR [a.u.]", "dQz [1/A]", "theta [rad]"]
+    write_reflectivity_data(output_path, np.ones((3, 5)), col_names, as_5col=as_5col)
+
+    assert _data_column_names(output_path) == col_names[:n_expected]
+    assert np.loadtxt(output_path).shape == (3, n_expected)
+
+
+@pytest.mark.parametrize(("kwargs", "expected"), [({}, "Specular"), ({"data_type": "OffSpec"}, "OffSpec")])
+def test_header_states_data_type(tmp_path, mock_nexus_data, kwargs, expected):
+    """The ``# Type:`` header line names the kind of data in the file, and the file still loads."""
+    output_path = tmp_path / "header_type.dat"
+    write_reflectivity_header(
+        {1: [mock_nexus_data(30002)]},
+        1,
+        [mock_nexus_data(30001)],
+        output_path,
+        "Off_Off",
+        include_offspec=True,
+        **kwargs,
+    )
+    write_reflectivity_data(output_path, [np.zeros((2, 3, 7))], OFFSPEC_COL_NAMES)
+
+    type_lines = [line for line in output_path.read_text().splitlines() if line.startswith("# Type:")]
+    assert type_lines == [f"# Type: {expected}"]
+    _, data_list, _, _ = read_reduced_file(str(output_path))
+    assert len(data_list) == 1
+
+
+def test_write_raw_offspec_separates_runs(tmp_path):
+    """Runs are separated by two blank lines and pixels within a run by one.
+
+    Plotting tools (e.g. gnuplot) join consecutive blank-line-separated scans into one surface, and treat
+    a double blank line as the end of that surface. Without it, the last pixel of one run is joined to the
+    first pixel of the next run. This is the convention of the Off-Specular preview data export.
+    """
+    output_path = tmp_path / "OffSpec_Off_Off.dat"
+    n_pixel = 3
+    data = [np.ones((n_pixel, n_tof, 7)) for n_tof in (4, 2, 5)]
+    write_reflectivity_data(output_path, data, OFFSPEC_COL_NAMES)
+
+    text = output_path.read_text().split("# [Data]\n")[1].split("\n", 1)[1]  # drop the column names
+    runs = [run for run in text.split("\n\n\n") if run.strip()]
+    assert len(runs) == len(data)
+    for run, expected in zip(runs, data):
+        pixels = [pixel for pixel in run.split("\n\n") if pixel.strip()]
+        assert len(pixels) == n_pixel
+        assert all(len(pixel.strip().splitlines()) == expected.shape[1] for pixel in pixels)
+    assert np.loadtxt(output_path).shape == (n_pixel * (4 + 2 + 5), 7)
