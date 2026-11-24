@@ -574,19 +574,20 @@ class ProcessingWorkflow:
 
                 try:
                     n_total = len(S[0])
-                    # P_0 and P_N are the number of points to cut in TOF on each side
-                    p_0 = item.cross_sections[pol_state].configuration.cut_first_n_points
-                    p_n = n_total - item.cross_sections[pol_state].configuration.cut_last_n_points
+                    # TOF ascends along the arrays, so Q descends: the last (high-Q) points of the
+                    # reflectivity curve are cut from the start and the first (low-Q) points from the end
+                    tof_start = item.cross_sections[pol_state].configuration.cut_last_n_points
+                    tof_stop = n_total - item.cross_sections[pol_state].configuration.cut_first_n_points
 
                     rdata = np.array(
                         [
-                            Qx[:, p_0:p_n],
-                            Qz[:, p_0:p_n],
-                            ki_z[:, p_0:p_n],
-                            kf_z[:, p_0:p_n],
-                            ki_z[:, p_0:p_n] - kf_z[:, p_0:p_n],
-                            S[:, p_0:p_n],
-                            dS[:, p_0:p_n],
+                            Qx[:, tof_start:tof_stop],
+                            Qz[:, tof_start:tof_stop],
+                            ki_z[:, tof_start:tof_stop],
+                            kf_z[:, tof_start:tof_stop],
+                            ki_z[:, tof_start:tof_stop] - kf_z[:, tof_start:tof_stop],
+                            S[:, tof_start:tof_stop],
+                            dS[:, tof_start:tof_stop],
                         ]
                     ).transpose((1, 2, 0))
                     combined_data.append(rdata)
