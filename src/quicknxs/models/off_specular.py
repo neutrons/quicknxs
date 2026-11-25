@@ -155,16 +155,18 @@ def merge(reduction_list: list["NexusData"], pol_state: str) -> tuple[np.ndarray
 
         try:
             n_total = len(S[0])
-            p_0 = item.cross_sections[pol_state].configuration.cut_first_n_points
-            p_n = n_total - item.cross_sections[pol_state].configuration.cut_last_n_points
+            # TOF ascends along the arrays, so Q descends: the last (high-Q) points of the
+            # reflectivity curve are cut from the start and the first (low-Q) points from the end
+            tof_start = item.cross_sections[pol_state].configuration.cut_last_n_points
+            tof_stop = n_total - item.cross_sections[pol_state].configuration.cut_first_n_points
 
-            # NOTE: need to unravel the arrays from [TOF][pixel] to [q_points]
-            Qx = np.ravel(Qx[:, p_0:p_n])
-            Qz = np.ravel(Qz[:, p_0:p_n])
-            ki_z = np.ravel(ki_z[:, p_0:p_n])
-            kf_z = np.ravel(kf_z[:, p_0:p_n])
-            S = np.ravel(S[:, p_0:p_n])
-            dS = np.ravel(dS[:, p_0:p_n])
+            # NOTE: need to unravel the arrays from [pixel][TOF] to [q_points]
+            Qx = np.ravel(Qx[:, tof_start:tof_stop])
+            Qz = np.ravel(Qz[:, tof_start:tof_stop])
+            ki_z = np.ravel(ki_z[:, tof_start:tof_stop])
+            kf_z = np.ravel(kf_z[:, tof_start:tof_stop])
+            S = np.ravel(S[:, tof_start:tof_stop])
+            dS = np.ravel(dS[:, tof_start:tof_stop])
 
             _qx = np.concatenate((_qx, Qx))
             _qz = np.concatenate((_qz, Qz))

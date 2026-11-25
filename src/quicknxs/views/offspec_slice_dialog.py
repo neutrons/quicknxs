@@ -117,15 +117,16 @@ class OffSpecSliceDialog(QtWidgets.QDialog):
             Qx, Qz, ki_z, kf_z, I, _ = (offspec.Qx, offspec.Qz, offspec.ki_z, offspec.kf_z, offspec.S, offspec.dS)
 
             n_total = len(I[0])
-            # P_0 and P_N are the number of points to cut in TOF on each side
-            p_0 = item.cross_sections[first_state].configuration.cut_first_n_points
-            p_n = n_total - item.cross_sections[first_state].configuration.cut_last_n_points
+            # TOF ascends along the arrays, so Q descends: the last (high-Q) points of the
+            # reflectivity curve are cut from the start and the first (low-Q) points from the end
+            tof_start = item.cross_sections[first_state].configuration.cut_last_n_points
+            tof_stop = n_total - item.cross_sections[first_state].configuration.cut_first_n_points
 
-            Qx = Qx[:, p_0:p_n]
-            Qz = Qz[:, p_0:p_n]
-            ki_z = ki_z[:, p_0:p_n]
-            kf_z = kf_z[:, p_0:p_n]
-            I = I[:, p_0:p_n]
+            Qx = Qx[:, tof_start:tof_stop]
+            Qz = Qz[:, tof_start:tof_stop]
+            ki_z = ki_z[:, tof_start:tof_stop]
+            kf_z = kf_z[:, tof_start:tof_stop]
+            I = I[:, tof_start:tof_stop]
 
             # Extend the X and Y limits of the plotting area
             try:
